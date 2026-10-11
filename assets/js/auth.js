@@ -347,7 +347,7 @@ async function recoverPassword(email) {
 
     try {
         var { error } = await client.auth.resetPasswordForEmail(email, {
-            redirectTo: window.location.origin + '/index.html'
+            redirectTo: window.location.origin + '/login.html'
         });
 
         if (error) throw error;
@@ -405,11 +405,11 @@ async function logoutUser() {
         await client.auth.signOut();
         localStorage.removeItem('auloo_user');
         localStorage.removeItem('auloo_saved_email');
-        window.location.href = 'index.html';
+        window.location.href = 'login.html';
     } catch (error) {
         localStorage.removeItem('auloo_user');
         localStorage.removeItem('auloo_saved_email');
-        window.location.href = 'index.html';
+        window.location.href = 'login.html';
     }
 }
 

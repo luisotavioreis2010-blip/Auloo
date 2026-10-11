@@ -20,7 +20,7 @@
     /* ==============================================
        1. CONSTANTES E ESTADO
        ============================================== */
-    var PAGINA_LOGIN = 'index.html';
+    var PAGINA_LOGIN = 'login.html';
     var CHAVES_LOGOUT = ['auloo_user', 'auloo_saved_email'];
     var TIMEOUT_SIGNOUT_MS = 3000;
     var TAMANHO_MAX_FOTO = 5 * 1024 * 1024;

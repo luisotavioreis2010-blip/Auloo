@@ -191,9 +191,6 @@
     /* Trava a altura do card do login para que ele não "pule" ao
        alternar com os modos forgot/cadastro. */
     function aplicarAlturaLogin() {
-        /* Não medir durante interação: form.offsetHeight força reflow
-           e, se o teclado estiver animando, alimenta o ciclo de
-           reflow → resize → reflow. */
         if (!form) return;
         if (campoEmFoco() || tecladoAberto()) return;
         if (form.classList.contains('modo-forgot')) return;
@@ -252,8 +249,6 @@
         if (raiz.getAttribute('data-layout') !== layout) {
             raiz.setAttribute('data-layout', layout);
         }
-        /* setAttribute com o mesmo valor ainda pode disparar recálculo de
-           estilo; só escrever se realmente mudou. */
         var alturaAtual = raiz.getAttribute('data-altura');
         var alturaNova  = window.innerHeight <= ALTURA_BAIXA_PX ? 'baixa' : 'normal';
         if (alturaAtual !== alturaNova) {
@@ -274,8 +269,6 @@
 
         var orientacao = orientacaoAtual();
 
-        /* Girou o aparelho: descarta o estado do teclado e reavalia o
-           layout várias vezes, pois os navegadores atualizam a janela aos poucos. */
         function aoGirar() {
             var nova = orientacaoAtual();
             if (nova === orientacao) return;
@@ -305,9 +298,6 @@
             }, 400);
         });
 
-        /* Vigia: se o teclado já fechou mas sobrou modo foco ou deslocamento,
-           ou o layout ficou defasado, corrige sozinho.
-           Não roda com campo em foco para não competir com a digitação. */
         setInterval(function () {
             if (campoEmFoco() || tecladoAberto()) return;
             if (raiz.classList.contains('kb-focus') || offsetAtual !== 0 ||
@@ -353,9 +343,6 @@
         return fields[fields.length - 1] || null;
     }
 
-    /* O iOS pode deixar o container rolado ao fechar o teclado.
-       Guardar para não disparar scroll event à toa (isso cancela a
-       animação do teclado e reinicia o ciclo). */
     function resetarScroll() {
         var container = $('login-container');
         if (container && container.scrollTop > 0) container.scrollTop = 0;
@@ -368,9 +355,7 @@
         raiz.style.setProperty('--kb-offset', '0px');
     }
 
-    /* Altura visível acima do teclado (usada no modo foco do layout row:
-       navbar some e o campo isolado centraliza nesse espaço). */
-    var razaoTeclado = 0.5;   /* topo do teclado / altura do app; aprendida na 1ª medição */
+    var razaoTeclado = 0.5;
 
     function atualizarAlturaVisivel() {
         if (tecladoAberto()) {
@@ -382,9 +367,6 @@
         }
     }
 
-    /* As caixas do código (OTP) precisam ficar paradas: cada dígito troca
-       o foco e, sem isso, o form sobe/desce junto com o teclado.
-       Checa a CLASSE (barato) em vez de consultar o DOM (força reflow). */
     function modoOtpAtivo() {
         if (ehLayoutRow()) return false;
         return form.classList.contains('modo-otp');
@@ -394,13 +376,11 @@
         atualizarAlturaVisivel();
         if (!tecladoAberto()) { resetarKbOffset(); return; }
 
-        /* Modo OTP no mobile em pé: o teclado NÃO desloca o form. */
         if (modoOtpAtivo()) {
             resetarKbOffset();
             return;
         }
 
-        /* Row: o CSS centraliza o campo em --kb-visivel; sem deslocamento. */
         if (ehLayoutRow() && raiz.classList.contains('kb-focus')) {
             resetarKbOffset();
             return;
@@ -441,7 +421,7 @@
         vvHeightAnterior = h;
         clearTimeout(timerEstabilidade);
 
-        if (diff > 0) executarAjuste();   /* teclado fechando: imediato */
+        if (diff > 0) executarAjuste();
         else timerEstabilidade = setTimeout(executarAjuste, ESTABILIDADE_MS);
     }
 
@@ -459,21 +439,14 @@
 
         document.addEventListener('focusin', function (e) {
             if (!e.target || e.target.tagName !== 'INPUT') return;
-            /* Só agenda UM ajuste imediato. Os setTimeout(500/900) geravam
-               reflows em série durante a animação do teclado. */
             agendarAposEstabilidade();
         });
 
-        /* Ao sair do campo: espera um instante (o foco pode ir para outro
-           campo), então devolve o card ao lugar de uma vez só.
-           IMPORTANTE: não faz resetarScroll enquanto o teclado está aberto —
-           isso cancela a animação e reinicia o ciclo de foco/resize. */
         document.addEventListener('focusout', function () {
             setTimeout(function () {
                 if (campoEmFoco()) return;
                 clearTimeout(timerEstabilidade);
                 executarAjuste();
-                /* Só reseta o scroll depois que o teclado fechou de fato. */
                 setTimeout(function () {
                     if (!campoEmFoco() && !tecladoAberto()) resetarScroll();
                 }, 300);
@@ -489,7 +462,6 @@
 
     /* ============================================================
        4. MODO FOCO (row)
-       Com o teclado aberto no layout row, só o campo ativo aparece.
        ============================================================ */
     function limparAtivos() {
         Array.prototype.forEach.call(
@@ -498,14 +470,12 @@
         );
     }
 
-    /* Guarda o input marcado para não refazer o trabalho a cada focusin
-       (o focusin dispara várias vezes no Android, mesmo sem trocar de campo). */
     var ativoAtual = null;
 
     function setupModoFoco() {
         function marcarAtivo(input) {
             if (!ehLayoutRow()) return;
-            if (input === ativoAtual) return;   /* nada mudou */
+            if (input === ativoAtual) return;
             ativoAtual = input;
 
             var container = input.closest('.field, .otp-caixas');
@@ -513,8 +483,6 @@
 
             limparAtivos();
             container.setAttribute('data-ativo', 'true');
-            /* Estimativa até o teclado ser medido: evita o campo "pular"
-               de lugar quando a altura real chega. */
             if (!tecladoAberto()) {
                 raiz.style.setProperty('--kb-visivel', Math.round(getAppH() * razaoTeclado) + 'px');
             }
@@ -568,11 +536,6 @@
         return lista[0] || null;
     }
 
-    /* Escolhe pai + referência da mensagem (ela aparece ACIMA da ref):
-       1. Forgot / cadastro → 1º campo visível do modo
-       2. Modo foco (row)   → campo ativo
-       3. Row normal        → .divisor-login da coluna social
-       4. Stacked           → 1º .field do login (entre título e input) */
     function escolherPaiMensagem() {
         var modoAtivo = form.querySelector('.forgot-form');
         if (modoAtivo) {
@@ -599,13 +562,10 @@
         return { parent: form, ref: null };
     }
 
-    /* Pai com display: contents (coluna de login no tablet) não tem caixa:
-       a mensagem usa o próprio .form como referência. */
     function paiPosicionavel(el) {
         return (el && getComputedStyle(el).display === 'contents') ? form : el;
     }
 
-    /* Posiciona ANTES de tornar visível — sem "pulo" no fade-in. */
     function posicionarMensagem(msg) {
         var escolha = escolherPaiMensagem();
         var parent  = paiPosicionavel(escolha.parent);
@@ -634,7 +594,7 @@
         msg.appendChild(p);
 
         posicionarMensagem(msg);
-        void msg.offsetHeight;           /* força reflow antes do fade-in */
+        void msg.offsetHeight;
         msg.classList.add('visivel');
 
         temporizadorMensagem = setTimeout(function () {
@@ -656,8 +616,6 @@
         botao.textContent = textoOriginal;
     }
 
-    /* Executa `acao` com spinner no botão. Se ela retornar true, o botão
-       permanece em loading (ex.: redirecionamento em andamento). */
     async function executarComBotao(botao, textoOriginal, acao) {
         if (botao.disabled) return;
         mostrarLoading(botao);
@@ -807,12 +765,7 @@
 
     /* ============================================================
        9. CADASTRO (e-mail → código → senha)
-       Mesmo molde do "esqueci a senha": só o conteúdo muda.
-         Etapa 1: e-mail                   botão ENVIAR CÓDIGO
-         Etapa 2: 6 dígitos                botão CONFIRMAR
-         Etapa 3: senha + confirmar senha  botão CONFIRMAR
        ============================================================ */
-    /* Borda vermelha enquanto "confirmar" diverge da senha */
     function ligarConfirmacao(senha, confirmar) {
         confirmar.addEventListener('input', function () {
             var diverge = confirmar.value.length > 0 && confirmar.value !== senha.value;
@@ -820,7 +773,6 @@
         });
     }
 
-    /* Acrescenta o olho (clonado do login, mesmos ícones) ao campo */
     function adicionarOlho(input) {
         var modelo = $('btn-olho');
         if (!modelo) return;
@@ -841,8 +793,6 @@
         return html;
     }
 
-    /* Digitação, backspace e colar nas caixas; chama aoCompletar(codigo)
-       quando as 6 estiverem preenchidas. */
     function ligarCaixasCodigo(caixas, aoCompletar) {
         function codigo() {
             return caixas.map(function (c) { return c.value; }).join('');
@@ -891,7 +841,6 @@
 
         var painel = $('cadastro-form');
 
-        /* Troca o conteúdo do painel mantendo ilustração, tamanho e posição */
         function trocarEtapa(html) {
             limparAtivos();
             ativoAtual = null;
@@ -906,7 +855,6 @@
         var BOTAO_VOLTAR =
             '<button type="button" id="btn-voltar-cadastro" class="button3">← Voltar para o login</button>';
 
-        /* ---------- Etapa 1: e-mail ---------- */
         function etapaEmail() {
             form.classList.remove('modo-otp');
 
@@ -964,7 +912,6 @@
             aoPressionarEnter(emailCad, enviarCodigo);
         }
 
-        /* ---------- Etapa 2: código de 6 dígitos ---------- */
         function etapaCodigo() {
             trocarEtapa(
                 '<div class="otp-caixas" id="caixas-cadastro">' + caixasCodigoHtml() + '</div>' +
@@ -972,8 +919,6 @@
                 '<button type="button" id="btn-voltar-cadastro" class="button3">← Alterar e-mail</button>'
             );
 
-            /* Flag para o CSS travar o transform e o JS zerar o offset:
-               as caixas não devem subir/descer com o teclado. */
             form.classList.add('modo-otp');
 
             $('btn-voltar-cadastro').addEventListener('click', etapaEmail);
@@ -1013,7 +958,6 @@
             ligarCaixasCodigo(caixas, verificar);
             caixas[0].focus();
 
-            /* Rola uma única vez para as caixas ficarem acima do teclado. */
             setTimeout(function () {
                 var alvo = $('caixas-cadastro');
                 if (alvo && alvo.scrollIntoView) {
@@ -1022,7 +966,6 @@
             }, 300);
         }
 
-        /* ---------- Etapa 2: senha + confirmar ---------- */
         function etapaSenha() {
             form.classList.remove('modo-otp');
 
@@ -1277,7 +1220,6 @@
     setupOlhoSenha();
     setupLoginSocial();
 
-    /* Enter nunca deve enviar o <form> nativamente */
     form.addEventListener('submit', function (e) { e.preventDefault(); });
 
     botaoLogin.addEventListener('click',  fazerLogin);
