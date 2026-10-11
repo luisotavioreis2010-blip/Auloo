@@ -1,0 +1,9 @@
+﻿*.bak
+*.txt
+*.ps1
+supabase/.temp/
+.env
+.env.local
+node_modules/
+.DS_Store
+Thumbs.db

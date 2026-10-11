@@ -1,0 +1,675 @@
+﻿/* ==============================================
+   DASHBOARD.JS — v13
+
+   Seções
+   1. Constantes e estado
+   2. Tela: viewport, layout e posição da ficha
+   3. Utilitários
+   4. Perfil (carregar, renderizar, sair)
+   5. Mensagens e containers de edição
+   6. Ações do perfil (nome, senha, foto)
+   7. Layout (gaveta, ficha, overlay)
+   8. Calendário
+   9. Inicialização
+
+   Depende de `supabaseClient` (global, criado em config.js/auth.js).
+   ============================================== */
+(function () {
+    'use strict';
+
+    /* ==============================================
+       1. CONSTANTES E ESTADO
+       ============================================== */
+    var PAGINA_LOGIN = 'index.html';
+    var CHAVES_LOGOUT = ['auloo_user', 'auloo_saved_email'];
+    var TIMEOUT_SIGNOUT_MS = 3000;
+    var TAMANHO_MAX_FOTO = 5 * 1024 * 1024;
+    var EXTENSOES_FOTO = {
+        'image/jpeg': 'jpg',
+        'image/png': 'png',
+        'image/gif': 'gif',
+        'image/webp': 'webp'
+    };
+    var IDS_CONTAINERS_EDICAO = ['container-editar-nome', 'container-editar-senha'];
+    var MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+                 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    var DIAS_SEMANA = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira',
+                       'Quinta-feira', 'Sexta-feira', 'Sábado'];
+
+    /* mesmo limite usado no CSS: acima disso o layout é desktop */
+    var mqCompacto = window.matchMedia('(max-width: 1366px)');
+
+    var perfil = { usuario: null, nome: 'Usuário', email: '', avatarUrl: null };
+
+    function $(id) { return document.getElementById(id); }
+
+    function getDb() {
+        return typeof supabaseClient !== 'undefined' ? supabaseClient : null;
+    }
+
+    /* ==============================================
+       2. TELA: VIEWPORT, LAYOUT E POSIÇÃO DA FICHA
+       ============================================== */
+
+    function campoEmFoco() {
+        var ativo = document.activeElement;
+        return !!ativo && (ativo.tagName === 'INPUT' || ativo.tagName === 'TEXTAREA');
+    }
+
+    /* Fixa duas coisas no <html>, lidas pelo CSS:
+         --viewport-h   altura real da janela
+         data-layout    "row" (janela mais larga que alta) ou "stacked"
+       Com um campo de texto focado o teclado virtual está aberto e a
+       janela fica menor: nesse caso NADA muda, e o layout continua o mesmo
+       (é isso que mantém a ficha em tela cheia ao tocar num input). */
+    function sincronizarTela() {
+        if (campoEmFoco()) return;
+
+        var raiz = document.documentElement;
+        raiz.style.setProperty('--viewport-h', window.innerHeight + 'px');
+        raiz.setAttribute('data-layout', window.innerWidth > window.innerHeight ? 'row' : 'stacked');
+    }
+
+    /* No layout em linha a ficha cobre da borda esquerda do calendário
+       até a borda direita da tela; o CSS lê --ficha-row-w só nesse layout. */
+    function ajustarLarguraFicha() {
+        var calendario = document.querySelector('.calendario-container');
+        if (!calendario) return;
+        var esquerda = calendario.getBoundingClientRect().left;
+        document.documentElement.style.setProperty('--ficha-row-w', (window.innerWidth - esquerda) + 'px');
+    }
+
+    function resetarScroll() {
+        window.scrollTo(0, 0);
+        var main = document.querySelector('.dashboard-main');
+        var ficha = $('sidebar-perfil');
+        if (main) main.scrollTop = 0;
+        if (ficha) ficha.scrollTop = 0;
+    }
+
+    function setupTela() {
+        var temporizador = null;
+        var ultimaLargura = window.innerWidth;
+
+        /* ao redimensionar (ou girar o aparelho) espera estabilizar e relê a tela */
+        window.addEventListener('resize', function () {
+            clearTimeout(temporizador);
+            temporizador = setTimeout(function () {
+                sincronizarTela();
+
+                if (window.innerWidth !== ultimaLargura) {
+                    ultimaLargura = window.innerWidth;
+                    resetarScroll();
+                }
+                ajustarLarguraFicha();
+            }, 250);
+        });
+
+        /* teclado: ao focar, abre espaço para rolar o campo; ao sair, relê a tela */
+        document.addEventListener('focusin', function (e) {
+            var campo = e.target;
+            if (!campo.matches || !campo.matches('input, textarea')) return;
+
+            document.body.classList.add('campo-focado');
+            setTimeout(function () {
+                if (document.activeElement === campo) {
+                    campo.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                }
+            }, 300);
+        });
+
+        document.addEventListener('focusout', function () {
+            setTimeout(function () {
+                if (campoEmFoco()) return;
+                document.body.classList.remove('campo-focado');
+                sincronizarTela();
+                ajustarLarguraFicha();
+            }, 350);
+        });
+
+        /* a posição do calendário muda quando a imagem carrega ou o layout troca */
+        if ('ResizeObserver' in window) {
+            var observador = new ResizeObserver(ajustarLarguraFicha);
+            var alvos = document.querySelectorAll('.ilustracao-container, .calendario-container');
+            for (var i = 0; i < alvos.length; i++) observador.observe(alvos[i]);
+        }
+        ajustarLarguraFicha();
+    }
+
+    /* ==============================================
+       3. UTILITÁRIOS
+       ============================================== */
+
+    /* Lança o erro do Supabase (que não lança sozinho) e devolve os dados */
+    function verificar(resultado) {
+        if (resultado && resultado.error) throw resultado.error;
+        return resultado ? resultado.data : null;
+    }
+
+    function formatarNome(nome, email) {
+        var texto = (nome || '').trim() || email || '';
+        if (texto.indexOf('@') !== -1) texto = texto.split('@')[0];
+        if (!texto) return 'Usuário';
+        return texto.charAt(0).toUpperCase() + texto.slice(1);
+    }
+
+    function criarIniciais(nome) {
+        var partes = (nome || 'Usuário').trim().split(/\s+/);
+        var primeira = partes[0].charAt(0).toUpperCase();
+        var ultima = partes.length > 1 ? partes[partes.length - 1].charAt(0).toUpperCase() : '';
+        var span = document.createElement('span');
+        span.className = 'avatar-iniciais';
+        span.textContent = primeira + ultima;
+        return span;
+    }
+
+    function renderizarAvatar(container, avatarUrl, nome) {
+        if (!container) return;
+        container.textContent = '';
+
+        if (!avatarUrl || avatarUrl === 'null') {
+            container.appendChild(criarIniciais(nome));
+            return;
+        }
+
+        var img = document.createElement('img');
+        img.className = 'foto-perfil';
+        img.alt = 'Foto de perfil';
+        img.onerror = function () {
+            img.remove();
+            container.appendChild(criarIniciais(nome));
+        };
+        img.src = avatarUrl;
+        container.appendChild(img);
+    }
+
+    /* Desabilita o botão durante a ação (evita clique duplo) e trata erros */
+    async function executarAcao(botao, acao) {
+        if (botao.disabled) return;
+        botao.disabled = true;
+        try {
+            await acao();
+        } catch (erro) {
+            mostrarMensagem('Erro: ' + (erro && erro.message ? erro.message : erro), 'erro');
+        } finally {
+            botao.disabled = false;
+        }
+    }
+
+    /* ==============================================
+       4. PERFIL
+       ============================================== */
+
+    function renderizarPerfil() {
+        renderizarAvatar($('perfil-usuario'), perfil.avatarUrl, perfil.nome);
+        renderizarAvatar($('sidebar-perfil-foto'), perfil.avatarUrl, perfil.nome);
+
+        var nome = $('sidebar-perfil-nome');
+        var email = $('sidebar-perfil-email');
+        if (nome) nome.textContent = perfil.nome;
+        if (email) email.textContent = perfil.email;
+    }
+
+    function irParaLogin() {
+        window.location.href = PAGINA_LOGIN;
+    }
+
+    async function carregarPerfil() {
+        var db = getDb();
+        if (!db) { irParaLogin(); return; }
+
+        try {
+            var sessao = verificar(await db.auth.getSession());
+            if (!sessao || !sessao.session) { irParaLogin(); return; }
+
+            var usuario = sessao.session.user;
+            var meta = usuario.user_metadata || {};
+            var nome = meta.full_name || meta.name || null;
+            var avatarUrl = meta.avatar_url || meta.picture || null;
+
+            var consulta = await db.from('profiles')
+                .select('full_name, avatar_url')
+                .eq('id', usuario.id)
+                .maybeSingle();
+
+            if (consulta.error) {
+                console.warn('Não foi possível ler a tabela profiles:', consulta.error.message);
+            } else if (consulta.data) {
+                if (consulta.data.full_name) nome = consulta.data.full_name;
+                if (consulta.data.avatar_url) avatarUrl = consulta.data.avatar_url;
+            }
+
+            perfil.usuario = usuario;
+            perfil.email = usuario.email || '';
+            perfil.nome = formatarNome(nome, perfil.email);
+            perfil.avatarUrl = avatarUrl;
+            renderizarPerfil();
+        } catch (erro) {
+            console.error('Erro ao carregar perfil:', erro);
+        }
+    }
+
+    async function fazerLogout() {
+        var db = getDb();
+
+        /* espera o signOut (com limite de tempo) antes de limpar e sair */
+        try {
+            if (db) {
+                await Promise.race([
+                    db.auth.signOut(),
+                    new Promise(function (resolve) { setTimeout(resolve, TIMEOUT_SIGNOUT_MS); })
+                ]);
+            }
+        } catch (erro) {
+            console.warn('Erro no signOut (ignorado):', erro);
+        }
+
+        try {
+            CHAVES_LOGOUT.forEach(function (chave) { localStorage.removeItem(chave); });
+            Object.keys(localStorage)
+                .filter(function (chave) { return chave.indexOf('sb-') === 0; })
+                .forEach(function (chave) { localStorage.removeItem(chave); });
+            sessionStorage.clear();
+        } catch (erro) {
+            console.warn('Erro ao limpar storage:', erro);
+        }
+
+        irParaLogin();
+    }
+
+    /* ==============================================
+       5. MENSAGENS E CONTAINERS DE EDIÇÃO
+       ============================================== */
+
+    var temporizadorMensagem = null;
+
+    function mostrarMensagem(texto, tipo) {
+        tipo = tipo || 'sucesso';
+
+        clearTimeout(temporizadorMensagem);
+        var anterior = $('mensagem-sidebar');
+        if (anterior) anterior.remove();
+
+        var msg = document.createElement('div');
+        msg.id = 'mensagem-sidebar';
+        msg.className = 'mensagem-sidebar mensagem-sidebar--' + tipo;
+        msg.setAttribute('role', tipo === 'erro' ? 'alert' : 'status');
+        msg.textContent = texto;
+
+        var referencia = $('container-editar-senha');
+        if (referencia && referencia.parentNode) {
+            referencia.parentNode.insertBefore(msg, referencia);
+        } else {
+            var menu = document.querySelector('.ficha-menu');
+            if (menu) menu.insertBefore(msg, menu.firstChild);
+        }
+
+        temporizadorMensagem = setTimeout(function () {
+            msg.classList.add('saindo');
+            setTimeout(function () { msg.remove(); }, 500);
+        }, 3000);
+    }
+
+    function fecharContainer(id) {
+        var container = $(id);
+        if (container) container.style.display = 'none';
+    }
+
+    /* abre o container pedido (fechando os outros) ou fecha se já estava aberto */
+    function alternarContainer(id) {
+        var alvo = $(id);
+        if (!alvo) return;
+        var abrir = alvo.style.display !== 'block';
+        IDS_CONTAINERS_EDICAO.forEach(fecharContainer);
+        if (abrir) alvo.style.display = 'block';
+    }
+
+    /* ==============================================
+       6. AÇÕES DO PERFIL
+       ============================================== */
+
+    async function salvarNome() {
+        var input = $('input-novo-nome');
+        var novoNome = input ? input.value.trim() : '';
+        if (!novoNome) { mostrarMensagem('Digite um nome válido!', 'erro'); return; }
+
+        var db = getDb();
+        if (!db || !perfil.usuario) { mostrarMensagem('Erro: usuário não autenticado!', 'erro'); return; }
+
+        verificar(await db.auth.updateUser({ data: { full_name: novoNome } }));
+        verificar(await db.from('profiles').upsert({
+            id: perfil.usuario.id,
+            full_name: novoNome,
+            email: perfil.email,
+            updated_at: new Date().toISOString()
+        }));
+
+        perfil.nome = formatarNome(novoNome, perfil.email);
+        renderizarPerfil();
+        fecharContainer('container-editar-nome');
+        mostrarMensagem('Nome atualizado!');
+    }
+
+    async function alterarSenha() {
+        var inputAtual = $('input-senha-atual');
+        var inputNova = $('input-senha-nova');
+        var senhaAtual = inputAtual ? inputAtual.value : '';
+        var senhaNova = inputNova ? inputNova.value : '';
+
+        if (!senhaAtual || !senhaNova) { mostrarMensagem('Preencha todos os campos!', 'erro'); return; }
+        if (senhaNova.length < 8) { mostrarMensagem('Senha deve ter 8+ caracteres!', 'erro'); return; }
+
+        var db = getDb();
+        if (!db || !perfil.usuario) { mostrarMensagem('Erro de configuração!', 'erro'); return; }
+
+        /* confirma a senha atual antes de trocar */
+        var login = await db.auth.signInWithPassword({ email: perfil.email, password: senhaAtual });
+        if (login.error) {
+            var credenciaisInvalidas = login.error.code === 'invalid_credentials' || login.error.status === 400;
+            mostrarMensagem(credenciaisInvalidas ? 'Senha atual incorreta!' : 'Erro: ' + login.error.message, 'erro');
+            return;
+        }
+
+        verificar(await db.auth.updateUser({ password: senhaNova }));
+
+        if (inputAtual) inputAtual.value = '';
+        if (inputNova) inputNova.value = '';
+        fecharContainer('container-editar-senha');
+        mostrarMensagem('Senha atualizada!');
+    }
+
+    async function enviarFoto(arquivo) {
+        var db = getDb();
+        if (!db || !perfil.usuario) { mostrarMensagem('Erro: usuário não autenticado!', 'erro'); return; }
+
+        var extensao = EXTENSOES_FOTO[arquivo.type];
+        if (!extensao) { mostrarMensagem('Formato não suportado!', 'erro'); return; }
+        if (arquivo.size > TAMANHO_MAX_FOTO) { mostrarMensagem('Imagem muito grande! Máximo 5MB.', 'erro'); return; }
+
+        try {
+            mostrarMensagem('Enviando foto...');
+
+            var caminho = perfil.usuario.id + '/avatar_' + perfil.usuario.id + '_' + Date.now() + '.' + extensao;
+
+            verificar(await db.storage.from('avatars').upload(caminho, arquivo, {
+                cacheControl: '3600',
+                contentType: arquivo.type
+            }));
+
+            var urlPublica = db.storage.from('avatars').getPublicUrl(caminho).data.publicUrl;
+
+            verificar(await db.auth.updateUser({ data: { avatar_url: urlPublica } }));
+            verificar(await db.from('profiles').upsert({
+                id: perfil.usuario.id,
+                avatar_url: urlPublica,
+                updated_at: new Date().toISOString()
+            }));
+
+            perfil.avatarUrl = urlPublica;
+            renderizarPerfil();
+            mostrarMensagem('Foto atualizada!');
+        } catch (erro) {
+            mostrarMensagem('Erro: ' + (erro && erro.message ? erro.message : erro), 'erro');
+        }
+    }
+
+    function setupPerfil() {
+        var btnSair = $('btn-sair');
+        if (btnSair) {
+            btnSair.addEventListener('click', function () {
+                btnSair.disabled = true;
+                fazerLogout();
+            });
+        }
+
+        /* nome */
+        var btnEditarNome = $('btn-editar-nome');
+        if (btnEditarNome) {
+            btnEditarNome.addEventListener('click', function (e) {
+                e.preventDefault();
+                alternarContainer('container-editar-nome');
+                var input = $('input-novo-nome');
+                if (input) input.value = perfil.nome;
+            });
+        }
+
+        var btnSalvarNome = $('btn-salvar-nome');
+        if (btnSalvarNome) {
+            btnSalvarNome.addEventListener('click', function (e) {
+                e.preventDefault();
+                executarAcao(btnSalvarNome, salvarNome);
+            });
+        }
+
+        /* senha */
+        var btnEditarSenha = $('btn-editar-senha');
+        if (btnEditarSenha) {
+            btnEditarSenha.addEventListener('click', function (e) {
+                e.preventDefault();
+                alternarContainer('container-editar-senha');
+                var atual = $('input-senha-atual');
+                var nova = $('input-senha-nova');
+                if (atual) atual.value = '';
+                if (nova) nova.value = '';
+            });
+        }
+
+        var btnConfirmarSenha = $('btn-confirmar-senha');
+        if (btnConfirmarSenha) {
+            btnConfirmarSenha.addEventListener('click', function (e) {
+                e.preventDefault();
+                executarAcao(btnConfirmarSenha, alterarSenha);
+            });
+        }
+
+        /* mostrar/ocultar senha */
+        var olhos = document.querySelectorAll('.btn-olho-senha');
+        Array.prototype.forEach.call(olhos, function (botao) {
+            botao.addEventListener('click', function () {
+                var input = $(botao.getAttribute('data-target'));
+                var aberto = botao.querySelector('.icone-olho-aberto');
+                var fechado = botao.querySelector('.icone-olho-fechado');
+                if (!input || !aberto || !fechado) return;
+
+                var mostrar = input.type === 'password';
+                input.type = mostrar ? 'text' : 'password';
+                aberto.style.display = mostrar ? 'block' : 'none';
+                fechado.style.display = mostrar ? 'none' : 'block';
+            });
+        });
+
+        /* foto */
+        var btnEditarFoto = $('btn-editar-foto');
+        var inputFoto = $('input-foto');
+        if (btnEditarFoto && inputFoto) {
+            btnEditarFoto.addEventListener('click', function () { inputFoto.click(); });
+            inputFoto.addEventListener('change', function () {
+                var arquivo = inputFoto.files[0];
+                inputFoto.value = '';
+                if (arquivo) enviarFoto(arquivo);
+            });
+        }
+    }
+
+    /* ==============================================
+       7. LAYOUT: GAVETA, FICHA E OVERLAY
+       ============================================== */
+
+    function setupLayout() {
+        var sidebar = $('sidebar');
+        var ficha = $('sidebar-perfil');
+        var overlay = $('gaveta-overlay');
+        var perfilBotao = $('perfil-botao');
+        var fichaFechar = $('ficha-fechar');
+        var btnHamburger = $('btn-hamburger');
+
+        function sidebarAberta() { return !!sidebar && sidebar.classList.contains('aberta'); }
+        function fichaAberta() { return !!ficha && ficha.classList.contains('ativa'); }
+
+        function atualizarEstado() {
+            if (overlay) {
+                overlay.classList.toggle('ativa', sidebarAberta() || (mqCompacto.matches && fichaAberta()));
+            }
+            if (btnHamburger) btnHamburger.setAttribute('aria-expanded', String(sidebarAberta()));
+            if (perfilBotao) perfilBotao.setAttribute('aria-expanded', String(fichaAberta()));
+        }
+
+        function abrirSidebar() {
+            if (sidebar) sidebar.classList.add('aberta');
+            atualizarEstado();
+        }
+
+        function fecharSidebar() {
+            if (sidebar) sidebar.classList.remove('aberta');
+            atualizarEstado();
+        }
+
+        function abrirFicha() {
+            if (!ficha) return;
+            ficha.classList.add('ativa');
+            document.body.classList.add('ficha-aberta');
+            ajustarLarguraFicha();
+            atualizarEstado();
+        }
+
+        function fecharFicha() {
+            if (!ficha) return;
+            if (ficha.contains(document.activeElement)) document.activeElement.blur();
+            ficha.classList.remove('ativa');
+            document.body.classList.remove('ficha-aberta');
+            atualizarEstado();
+        }
+
+        if (perfilBotao) {
+            perfilBotao.addEventListener('click', function () {
+                if (fichaAberta()) fecharFicha(); else abrirFicha();
+            });
+        }
+
+        if (fichaFechar) fichaFechar.addEventListener('click', fecharFicha);
+
+        if (btnHamburger) {
+            btnHamburger.addEventListener('click', function () {
+                if (sidebarAberta()) fecharSidebar(); else abrirSidebar();
+            });
+        }
+
+        if (overlay) {
+            overlay.addEventListener('click', function () {
+                fecharSidebar();
+                fecharFicha();
+            });
+        }
+
+        /* clique fora fecha a gaveta e a ficha */
+        document.addEventListener('click', function (e) {
+            var alvo = e.target;
+
+            if (sidebarAberta() && !sidebar.contains(alvo) &&
+                !(btnHamburger && btnHamburger.contains(alvo))) {
+                fecharSidebar();
+            }
+
+            /* com um campo focado (teclado aberto) a ficha não fecha por clique fora */
+            if (fichaAberta() && !ficha.contains(alvo) &&
+                !(perfilBotao && perfilBotao.contains(alvo)) && !campoEmFoco()) {
+                fecharFicha();
+            }
+        });
+
+        /* tocar num item do menu fecha a gaveta no modo compacto */
+        if (sidebar) {
+            sidebar.addEventListener('click', function (e) {
+                if (mqCompacto.matches && e.target.closest('.sidebar-link')) fecharSidebar();
+            });
+        }
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key !== 'Escape') return;
+            fecharSidebar();
+            fecharFicha();
+        });
+
+        /* ao cruzar o breakpoint, a gaveta volta ao estado fechado */
+        mqCompacto.addEventListener('change', fecharSidebar);
+    }
+
+    /* ==============================================
+       8. CALENDÁRIO
+       ============================================== */
+
+    function setupCalendario() {
+        var titulo = $('calendario-titulo');
+        var subtitulo = $('calendario-subtitulo');
+        var diasContainer = $('calendario-dias');
+        if (!titulo || !diasContainer) return;
+
+        var agora = new Date();
+        var mes = agora.getMonth();
+        var ano = agora.getFullYear();
+
+        function desenhar() {
+            var hoje = new Date();
+            var primeiroDiaSemana = new Date(ano, mes, 1).getDay();
+            var diasNoMes = new Date(ano, mes + 1, 0).getDate();
+            var diasMesAnterior = new Date(ano, mes, 0).getDate();
+            var celulas = [];
+            var i;
+
+            titulo.textContent = MESES[mes] + ' ' + ano;
+            if (subtitulo) subtitulo.textContent = DIAS_SEMANA[hoje.getDay()];
+
+            for (i = primeiroDiaSemana - 1; i >= 0; i--) {
+                celulas.push('<span class="dia-outro-mes">' + (diasMesAnterior - i) + '</span>');
+            }
+
+            for (i = 1; i <= diasNoMes; i++) {
+                var ehHoje = i === hoje.getDate() && mes === hoje.getMonth() && ano === hoje.getFullYear();
+                celulas.push('<span' + (ehHoje ? ' class="dia-atual"' : '') + '>' + i + '</span>');
+            }
+
+            var faltam = (7 - (celulas.length % 7)) % 7;
+            for (i = 1; i <= faltam; i++) {
+                celulas.push('<span class="dia-outro-mes">' + i + '</span>');
+            }
+
+            diasContainer.innerHTML = celulas.join('');
+        }
+
+        function mudarMes(delta) {
+            mes += delta;
+            if (mes < 0) { mes = 11; ano--; }
+            if (mes > 11) { mes = 0; ano++; }
+            desenhar();
+        }
+
+        var btnAnterior = $('btn-mes-anterior');
+        var btnProximo = $('btn-proximo-mes');
+        if (btnAnterior) btnAnterior.addEventListener('click', function () { mudarMes(-1); });
+        if (btnProximo) btnProximo.addEventListener('click', function () { mudarMes(1); });
+
+        desenhar();
+    }
+
+    /* ==============================================
+       9. INICIALIZAÇÃO
+       ============================================== */
+
+    /* o <html> já recebe data-layout/--viewport-h por um script inline no <head>;
+       aqui só garantimos o valor (caso esse script seja removido) */
+    sincronizarTela();
+
+    function iniciar() {
+        setupTela();
+        setupPerfil();
+        setupLayout();
+        setupCalendario();
+        carregarPerfil();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', iniciar);
+    } else {
+        iniciar();
+    }
+})();

@@ -1,0 +1,1542 @@
+﻿@charset "UTF-8";
+/* ============================================================
+   LOGIN.CSS
+
+   Layouts (mesma lógica do login.js):
+   - Celular em pé ........ ≤ 599px
+   - Celular deitado/row ... 568–950px, paisagem, altura ≤ 500px
+                             (data-layout="row")
+   - Tablet empilhado ...... 600–1023px (+ 1024px em retrato)
+   - Notebook / desktop .... ≥ 1025px (+ 1024px em paisagem)
+   - Desktop grande ........ ≥ 1367px
+
+   Índice:
+   1. Variáveis          7. Mensagem
+   2. Reset e base       8. Modos especiais (forgot / OTP / nova senha)
+   3. Navbar e fundo     9. Carregamento dos botões
+   4. Ilustração        10. Layouts por tela
+   5. Container e card  11. Acessibilidade
+   6. Campos, botões, sociais
+   ============================================================ */
+
+/* ============================================================
+   1. VARIÁVEIS
+   ============================================================ */
+:root {
+    --fundo: #E5D9C0;
+    --card: #F8F2E4;
+    --campo: #FAF7F0;
+    --papel-rgb: 239, 229, 207;
+    --vinho: #4A0E0E;
+    --vinho-borda: 92, 26, 26;
+    --dourado: #B8894A;
+    --dourado-rgb: 184, 137, 74;
+    --tinta: #1A1614;
+    --tinta-suave: #6B5F4A;
+    --erro: #E74C3C;
+    --erro-rgb: 231, 76, 60;
+
+    --fonte-titulo: 'Playfair Display', Georgia, serif;
+    --fonte-texto: 'Cormorant Garamond', Georgia, serif;
+    --fonte-corpo: 'Poppins', sans-serif;
+
+    /* A segunda declaração vence onde `dvh` é suportado */
+    --viewport-h: 100vh;
+    --viewport-h: 100dvh;
+
+    --navbar-h: 54px;
+    --navbar-px: 1.5rem;
+    --logo-size: 1.4rem;
+    --logo-ls: 4px;
+
+    --form-w: 480px;
+    --form-pad: 2rem 1.5rem 1.5rem;
+    --form-gap: 1rem;
+
+    --heading-size: 2.4rem;
+    --heading-ls: 10px;
+    --heading-mb: 1.3em;
+    --heading-pb: 1rem;
+
+    --field-h: 54px;
+    --field-pad: 1em 1.2em;
+    --icon-size: 1.1em;
+    --btn-h: 50px;
+    --btn-size: 0.9rem;
+    --btn-ls: 4px;
+    --link-size: 0.9rem;
+    --link-ls: 2px;
+
+    --social-size: 46px;
+    --social-img: 22px;
+    --social-gap: 0.8rem;
+
+    --lottie-size: 260px;
+    --otp-w: 52px;
+    --otp-h: 62px;
+
+    /* Atualizadas pelo login.js */
+    --app-h: 100dvh;
+    --kb-offset: 0px;
+}
+
+/* ============================================================
+   2. RESET E BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; }
+* { margin: 0; padding: 0; }
+
+html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html {
+    background-color: var(--fundo);
+}
+
+html, body {
+    width: 100%;
+    min-height: var(--viewport-h);
+}
+
+body {
+    font-family: var(--fonte-corpo);
+    color: var(--tinta);
+    background-color: var(--fundo);
+    overflow: hidden;
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+/* 16px evita o zoom automático do iOS ao focar um campo */
+input {
+    font-size: 16px;
+    line-height: 1.4;
+    -webkit-appearance: none;
+    appearance: none;
+    -webkit-user-select: text;
+    user-select: text;
+}
+
+button { font: inherit; }
+
+[hidden] { display: none !important; }
+
+/* Durante a rotação, desliga transições para não "piscar" */
+html.rotating,
+html.rotating *,
+html.rotating *::before,
+html.rotating *::after { transition: none !important; }
+html.rotating .ilustracao-login { opacity: 0 !important; }
+
+/* ============================================================
+   3. NAVBAR E FUNDO
+   ============================================================ */
+.navbar-desktop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: var(--navbar-h);
+    padding: 0 var(--navbar-px);
+    background-color: var(--fundo);
+}
+
+.navbar-desktop::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: var(--navbar-px);
+    right: var(--navbar-px);
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, rgba(var(--dourado-rgb), 0.6) 50%, transparent 100%);
+}
+
+.navbar-logo {
+    font-family: var(--fonte-titulo);
+    font-size: var(--logo-size);
+    font-weight: 700;
+    letter-spacing: var(--logo-ls);
+    line-height: 1;
+    color: var(--vinho);
+}
+
+.navbar-logo-dot { color: var(--dourado); }
+
+.desktop-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: radial-gradient(ellipse at 30% 40%, #E5D9C0 0%, #D9C4A0 60%, #C9B896 100%);
+}
+
+.desktop-bg::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 35%, rgba(var(--vinho-borda), 0.08) 100%);
+}
+
+/* ============================================================
+   4. ILUSTRAÇÃO
+   ============================================================ */
+.ilustracao-login { display: none; }
+
+.ilustracao-login img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+@keyframes ilustracaoFlutuar {
+    0%, 100% { transform: translateY(-50%); }
+    50%      { transform: translateY(calc(-50% - 22px)); }
+}
+
+@keyframes ilustracaoMobile {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-16px); }
+}
+
+/* ============================================================
+   5. CONTAINER E CARD
+   ============================================================ */
+.login-container {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    width: 100%;
+    height: var(--viewport-h);
+    padding: var(--navbar-h) 1.5rem max(0px, env(safe-area-inset-bottom));
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    overflow-anchor: none;
+}
+
+.login-formulario {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: var(--form-w);
+    margin: auto;
+}
+
+.login-formulario.aberto {
+    display: flex;
+    animation: formEntrar 0.4s ease backwards;
+}
+
+@keyframes formEntrar {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Só opacidade: um transform aqui sobrescreve o deslocamento do .forgot-form
+   durante a animação e o conteúdo "pula" quando ela termina. */
+@keyframes fadeOpacidade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.form {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--form-gap);
+    width: 100%;
+    padding: var(--form-pad);
+    background: var(--card);
+    border: 1px solid rgba(var(--dourado-rgb), 0.5);
+    border-radius: 4px;
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.5),
+        0 2px 6px rgba(var(--vinho-borda), 0.08),
+        0 24px 70px rgba(var(--vinho-borda), 0.2);
+}
+
+/* A estrela do topo/base do card fica "flutuando" sem fundo — como o
+   card tem fundo var(--card), ela se funde perfeitamente. */
+.form::before,
+.form::after {
+    content: '\2726';
+    position: absolute;
+    left: 50%;
+    z-index: 3;
+    transform: translateX(-50%);
+    padding: 0 0.5rem;
+    font-size: 0.9rem;
+    line-height: 1;
+    color: var(--dourado);
+}
+
+.form::before { top: -0.5rem; }
+.form::after  { bottom: -0.5rem; }
+
+.form-coluna {
+    display: flex;
+    flex-direction: column;
+    gap: var(--form-gap);
+    width: 100%;
+}
+
+/* Elementos que servem de pai para a .mensagem (position: absolute) */
+.form-coluna-login,
+.form-coluna-sociais,
+.forgot-form { position: relative; }
+
+/* ============================================================
+   6. CABEÇALHO, CAMPOS, BOTÕES, DIVISOR, SOCIAIS
+   ============================================================ */
+#heading {
+    position: relative;
+    margin: 0.3em auto var(--heading-mb);
+    padding-bottom: var(--heading-pb);
+    font-family: var(--fonte-titulo);
+    font-size: var(--heading-size);
+    font-weight: 700;
+    letter-spacing: var(--heading-ls);
+    text-indent: var(--heading-ls);
+    text-align: center;
+    text-transform: uppercase;
+    line-height: 1;
+    color: var(--vinho);
+}
+
+#heading .logo-dot { color: var(--dourado); }
+
+#heading::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 80px;
+    height: 1px;
+    transform: translateX(-50%);
+    background: linear-gradient(90deg, transparent, rgba(var(--dourado-rgb), 0.9) 50%, transparent);
+}
+
+.field {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.7em;
+    width: 100%;
+    min-height: var(--field-h);
+    padding: var(--field-pad);
+    background-color: var(--campo);
+    border: 2px solid rgba(var(--vinho-borda), 0.3);
+    border-radius: 2px;
+    box-shadow:
+        inset 0 2px 3px rgba(var(--vinho-borda), 0.06),
+        0 1px 2px rgba(255, 255, 255, 0.6);
+    transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.field:hover {
+    background-color: #FFFFFF;
+    border-color: rgba(var(--vinho-borda), 0.45);
+}
+
+.field:focus-within {
+    background-color: #FFFFFF;
+    border-color: var(--dourado);
+    box-shadow:
+        inset 0 2px 3px rgba(var(--vinho-borda), 0.04),
+        0 0 0 4px rgba(var(--dourado-rgb), 0.18);
+}
+
+.input-icon {
+    flex-shrink: 0;
+    width: var(--icon-size);
+    height: var(--icon-size);
+    fill: var(--vinho);
+    opacity: 0.85;
+}
+
+.input-field {
+    width: 100%;
+    background: none;
+    border: none;
+    outline: none;
+    font-family: var(--fonte-texto);
+    font-weight: 500;
+    color: var(--tinta);
+}
+
+.input-field::placeholder {
+    font-style: italic;
+    font-weight: 400;
+    letter-spacing: 1.2px;
+    color: var(--tinta-suave);
+    opacity: 0.85;
+}
+
+.field-senha .input-field { padding-right: 2.5rem; }
+
+.btn-olho {
+    position: absolute;
+    top: 50%;
+    right: 15px;
+    z-index: 10;
+    padding: 0;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    opacity: 0.7;
+    transform: translateY(-50%);
+    transition: opacity 0.2s ease;
+}
+
+.btn-olho:hover { opacity: 1; }
+
+.btn-olho svg { display: block; width: 18px; height: 18px; fill: var(--vinho); }
+.btn-olho .olho-aberto { display: none; }
+.btn-olho.mostrando .olho-aberto { display: block; }
+.btn-olho.mostrando .olho-fechado { display: none; }
+
+.form .btn {
+    display: flex;
+    justify-content: center;
+    gap: 0.6rem;
+    width: 100%;
+    margin-top: 0.5rem;
+}
+
+.button1,
+.button2 {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: var(--btn-h);
+    padding: 0.8em 1em;
+    font-family: var(--fonte-texto);
+    font-size: var(--btn-size);
+    font-weight: 600;
+    letter-spacing: var(--btn-ls);
+    text-transform: uppercase;
+    color: var(--vinho);
+    background-color: transparent;
+    border: 1.5px solid rgba(var(--vinho-borda), 0.45);
+    border-radius: 2px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.button3 {
+    width: 100%;
+    max-width: 100%;
+    margin: 0.3rem auto 0;
+    padding: 0.6em 1em;
+    font-family: var(--fonte-texto);
+    font-size: var(--link-size);
+    font-style: italic;
+    letter-spacing: var(--link-ls);
+    color: rgba(var(--vinho-borda), 0.75);
+    background-color: transparent;
+    border: none;
+    text-decoration: underline;
+    text-decoration-color: rgba(var(--dourado-rgb), 0.6);
+    text-underline-offset: 7px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+@media (hover: hover) {
+    .button1:hover:not(:disabled),
+    .button2:hover:not(:disabled) {
+        color: var(--card);
+        background-color: var(--dourado);
+        border-color: var(--dourado);
+        box-shadow: 0 10px 30px rgba(var(--dourado-rgb), 0.35);
+        transform: translateY(-1px);
+    }
+
+    .button3:hover {
+        color: var(--dourado);
+        text-decoration-color: var(--dourado);
+    }
+}
+
+.divisor-login {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+    margin: 0.6rem 0;
+}
+
+.divisor-login span:first-child,
+.divisor-login span:last-child {
+    flex: 1;
+    height: 1px;
+}
+
+.divisor-login span:first-child {
+    background: linear-gradient(90deg, transparent, rgba(var(--dourado-rgb), 0.75));
+}
+
+.divisor-login span:last-child {
+    background: linear-gradient(90deg, rgba(var(--dourado-rgb), 0.75), transparent);
+}
+
+.divisor-login span:nth-child(2) {
+    font-family: var(--fonte-texto);
+    font-size: 0.8rem;
+    font-style: italic;
+    letter-spacing: 3px;
+    white-space: nowrap;
+    color: rgba(var(--vinho-borda), 0.7);
+}
+
+.botoes-sociais {
+    display: flex;
+    justify-content: center;
+    gap: var(--social-gap);
+    margin-top: 0.3rem;
+}
+
+.botao-social {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--social-size);
+    height: var(--social-size);
+    padding: 0;
+    background: #FFFFFF;
+    border: 1.5px solid rgba(var(--dourado-rgb), 0.45);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.botao-social img {
+    width: var(--social-img);
+    height: var(--social-img);
+    object-fit: contain;
+    filter: grayscale(0.3);
+}
+
+@media (hover: hover) {
+    .botao-social:hover {
+        background: rgba(var(--dourado-rgb), 0.15);
+        border-color: var(--dourado);
+        transform: scale(1.1);
+    }
+}
+
+/* ============================================================
+   7. MENSAGEM
+   Posicionada pelo login.js (bottom em px) em relação ao pai.
+   ============================================================ */
+.mensagem {
+    position: absolute;
+    left: 50%;
+    bottom: 100%;
+    z-index: 20;
+    width: calc(100% - 2.5rem);
+    max-width: min(320px, calc(100% - 2.5rem));
+    padding: 0.7em 1.1em;
+    opacity: 0;
+    background: rgba(var(--papel-rgb), 0.55);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    border-radius: 5px;
+    box-shadow:
+        0 1px 2px rgba(var(--vinho-borda), 0.03),
+        0 2px 6px rgba(var(--vinho-borda), 0.03),
+        0 12px 32px rgba(var(--vinho-borda), 0.07);
+    pointer-events: none;
+    transform: translateX(-50%) translateY(8px);
+    transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+/* Nos modos forgot / cadastro / nova senha a mensagem ocupa exatamente
+   a mesma largura do input que fica abaixo dela (o .forgot-form). */
+.forgot-form > .mensagem {
+    width: 100%;
+    max-width: 100%;
+}
+
+.mensagem.visivel {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-50%) translateY(0);
+}
+
+.mensagem::before,
+.mensagem::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 1px;
+    pointer-events: none;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(var(--dourado-rgb), 0.28) 45%,
+        rgba(var(--dourado-rgb), 0.28) 55%,
+        transparent 100%
+    );
+}
+
+.mensagem::before { top: 0; }
+.mensagem::after  { bottom: 0; }
+
+.mensagem--erro::before,
+.mensagem--erro::after {
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(var(--erro-rgb), 0.2) 45%,
+        rgba(var(--erro-rgb), 0.2) 55%,
+        transparent 100%
+    );
+}
+
+.mensagem p {
+    font-family: var(--fonte-texto);
+    font-size: 1.15rem;
+    font-weight: 500;
+    font-style: italic;
+    letter-spacing: 0.6px;
+    line-height: 1.3;
+    text-align: center;
+    text-rendering: optimizeLegibility;
+    color: var(--vinho);
+}
+
+.mensagem--erro p { color: #6B1010; }
+
+/* ============================================================
+   8. MODOS ESPECIAIS (Forgot / OTP / Nova senha)
+   ============================================================ */
+.form.modo-forgot .form-coluna { display: none; }
+
+#container-forgot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 460px;
+    margin: 0 auto;
+    gap: 1rem;
+    text-align: center;
+    animation: fadeIn 0.4s ease backwards;
+}
+
+.form.modo-forgot #container-forgot { flex: 0 1 auto; }
+
+#forgot-lottie {
+    flex-shrink: 0;
+    width: var(--lottie-size);
+    height: var(--lottie-size);
+    max-width: 80vw;
+    max-height: 80vw;
+}
+
+#forgot-lottie svg,
+#forgot-lottie canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.forgot-form {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.85rem;
+    width: 100%;
+    max-width: 340px;
+}
+
+.forgot-form .button1 {
+    flex: 0 0 auto;
+    width: 100%;
+    margin-top: 0.5rem;
+}
+
+.forgot-form .button3 {
+    align-self: center;
+    width: auto;
+    margin: 0.5rem auto 0;
+    padding: 0.6em 0;
+}
+
+/* ---------- 8.2 Caixas do código (cadastro) ---------- */
+.otp-caixas {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: center;
+    gap: 0.4rem;
+    margin-top: 1.5rem;
+}
+
+.codigo-input {
+    width: var(--otp-w);
+    height: var(--otp-h);
+    padding: 0 0 0.3em;
+    font-family: var(--fonte-titulo);
+    font-size: 2rem;
+    font-weight: 500;
+    font-style: italic;
+    text-align: center;
+    color: var(--vinho);
+    background: transparent;
+    border: none;
+    border-bottom: 1.5px solid rgba(var(--vinho-borda), 0.25);
+    border-radius: 0;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.codigo-input:hover { border-bottom-color: rgba(var(--vinho-borda), 0.5); }
+
+.codigo-input:focus {
+    border-bottom-color: var(--dourado);
+    border-bottom-width: 2px;
+}
+
+/* ---------- 8.3 Variante de dois campos (cadastro e nova senha) ---------- */
+#container-forgot.modo-dois-campos { gap: 1rem; }
+
+/* A ilustração do cadastro/nova senha usa exatamente o mesmo tamanho
+   do forgot simples (--lottie-size), mantendo a consistência visual
+   em todas as telas — inclusive no mobile em pé. */
+#container-forgot.modo-dois-campos #forgot-lottie {
+    width: var(--lottie-size);
+    height: var(--lottie-size);
+    max-width: 80vw;
+    max-height: 80vw;
+}
+
+#container-forgot.modo-dois-campos .forgot-form { gap: 0.85rem; }
+
+.aparece { animation: fadeOpacidade 0.4s ease backwards; }
+
+/* Seis caixas do código dentro do .forgot-form: encolhem para caber */
+.forgot-form .otp-caixas {
+    width: 100%;
+    margin-top: 0;
+}
+
+.forgot-form .codigo-input {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+    max-width: var(--otp-w);
+}
+
+/* ============================================================
+   9. CARREGAMENTO DOS BOTÕES
+   ============================================================ */
+.button1:disabled,
+.button2:disabled {
+    color: var(--card);
+    background-color: var(--dourado);
+    border-color: var(--dourado);
+    box-shadow: 0 10px 30px rgba(var(--dourado-rgb), 0.35);
+    cursor: wait;
+}
+
+.button-loading {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--card);
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: girar 0.8s linear infinite;
+}
+
+@keyframes girar { to { transform: rotate(360deg); } }
+
+/* ============================================================
+   10. LAYOUTS POR TELA
+   ============================================================ */
+
+/* ---------- 10.1 Tablet empilhado (600–1023 + 1024 em retrato) ---------- */
+@media (min-width: 600px) and (max-width: 1023px),
+       (width: 1024px) and (orientation: portrait) {
+
+    html:not([data-layout="row"]) {
+        --form-w: 100%;
+        --form-pad: 2rem;
+        --lottie-size: 400px;
+        --otp-w: 56px;
+        --otp-h: 64px;
+        --ilustracao-w: 72vw;
+        --ilustracao-max: 640px;
+    }
+
+    html:not([data-layout="row"]),
+    html:not([data-layout="row"]) body {
+        position: fixed;
+        inset: 0;
+        overflow: hidden;
+        background-color: var(--card);
+    }
+
+    html:not([data-layout="row"]) .desktop-bg { display: none; }
+
+    html:not([data-layout="row"]) .login-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: var(--app-h);
+        padding: var(--navbar-h) 0 0;
+        overflow: hidden;
+        background-color: var(--card);
+    }
+
+    html:not([data-layout="row"]) .login-formulario {
+        position: absolute;
+        inset: 0;
+        justify-content: center;
+        max-width: 100%;
+        margin: 0;
+        padding: var(--form-pad);
+    }
+
+    html:not([data-layout="row"]) .form {
+        max-width: 600px;
+        min-height: 0;
+        padding: 0;
+        background: transparent;
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+        transform: translateY(var(--kb-offset, 0px));
+        transition: transform 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+        will-change: transform;
+    }
+
+    html:not([data-layout="row"]) .form::before,
+    html:not([data-layout="row"]) .form::after,
+    html:not([data-layout="row"]) #heading { display: none; }
+
+    html:not([data-layout="row"]) .form-coluna { flex: 0 0 auto; }
+
+    /* Rodapé em duas seções lado a lado:
+       "Forgot Password"  |  "ou continue com" + sociais.
+       A coluna de login vira `display: contents` para seus filhos
+       participarem da grade do .form. */
+    html:not([data-layout="row"]) .form {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        align-items: center;
+        gap: var(--form-gap) 0;
+    }
+
+    html:not([data-layout="row"]) .form-coluna-login { display: contents; }
+
+    html:not([data-layout="row"]) .form-coluna-login > .ilustracao-login,
+    html:not([data-layout="row"]) .form-coluna-login > .field,
+    html:not([data-layout="row"]) .form-coluna-login > .btn { grid-column: 1 / -1; }
+
+    html:not([data-layout="row"]) .form-coluna-login > .button3 {
+        grid-column: 1;
+        justify-self: center;
+        align-self: center;
+        width: auto;
+        margin: 0;
+        padding: 0.6em 0.2em;
+    }
+
+    html:not([data-layout="row"]) .form-coluna-sociais {
+        grid-column: 2;
+        align-self: stretch;
+        justify-content: center;
+        gap: 0.9rem;
+        padding: 0.4rem 0 0.4rem 1rem;
+        background: linear-gradient(180deg, transparent 0%, rgba(var(--dourado-rgb), 0.7) 50%, transparent 100%)
+                    left center / 1px 100% no-repeat;
+    }
+
+    /* A estrela do divisor no tablet usa var(--card), que é exatamente
+       o fundo da área (body e .login-container são var(--card)). */
+    html:not([data-layout="row"]) .form-coluna-sociais::after {
+        content: '\2726';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        padding: 0.35rem 0;
+        font-size: 0.8rem;
+        line-height: 1;
+        color: var(--dourado);
+        background: var(--card);
+        transform: translate(-50%, -50%);
+    }
+
+    html:not([data-layout="row"]) .divisor-login { margin: 0; gap: 0.6rem; }
+    html:not([data-layout="row"]) .divisor-login span:nth-child(2) { font-size: 0.75rem; letter-spacing: 2px; }
+    html:not([data-layout="row"]) .botoes-sociais { margin-top: 0; }
+
+    html:not([data-layout="row"]) .ilustracao-login {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 0 0 calc(-1 * var(--form-gap) + 0.4rem);
+        pointer-events: none;
+    }
+
+    html:not([data-layout="row"]) .ilustracao-login img {
+        width: var(--ilustracao-w);
+        max-width: min(100%, var(--ilustracao-max));
+        object-fit: contain;
+        filter: drop-shadow(0 12px 28px rgba(var(--vinho-borda), 0.12));
+    }
+
+    /* Forgot / OTP: centraliza e compensa o padding transparente dos Lottie */
+    html:not([data-layout="row"]) .form.modo-forgot {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+        justify-content: center;
+        gap: 0;
+    }
+
+    html:not([data-layout="row"]) #container-forgot {
+        max-width: 520px;
+        gap: 0;
+    }
+
+    html:not([data-layout="row"]) #forgot-lottie { margin-bottom: 0.75rem; }
+    html:not([data-layout="row"]) .forgot-form {
+        max-width: 420px;
+        gap: 1.1rem;
+    }
+
+    html:not([data-layout="row"]) .forgot-form .field {
+        min-height: 64px;
+        padding: 1.2em 1.4em;
+    }
+
+    html:not([data-layout="row"]) .forgot-form .button1 {
+        margin-top: 0.25rem;
+        min-height: 54px;
+    }
+
+    html:not([data-layout="row"]) .codigo-input { font-size: 2.2rem; }
+    html:not([data-layout="row"]) #container-forgot.modo-dois-campos #forgot-lottie {
+        width: 240px;
+        height: 240px;
+        margin-bottom: 0;
+    }
+}
+
+/* ---------- 10.2 Notebook / iPad deitado (1024–1366) ---------- */
+@media (min-width: 1024px) and (max-width: 1366px) {
+    :root { --form-w: 460px; }
+
+    /* Forgot Password, "ou continue com" e sociais mais próximos */
+    .form-coluna-sociais { gap: 0.9rem; }
+    .divisor-login { margin: 0.2rem 0 0; }
+    .botoes-sociais { margin-top: 0; }
+}
+
+/* ---------- 10.3 Desktop / paisagem (≥1025 + 1024 em paisagem) ---------- */
+@media (min-width: 1025px),
+       (width: 1024px) and (orientation: landscape) {
+
+
+    .login-container {
+        justify-content: flex-end;
+        padding-right: 5%;
+    }
+
+    .login-formulario { margin: auto 0 auto auto; }
+
+    .form.modo-forgot {
+        justify-content: center;
+        align-items: stretch;
+    }
+
+    .ilustracao-login {
+        position: fixed;
+        top: calc(50% + var(--navbar-h) / 2);
+        left: 0;
+        right: calc(var(--form-w) + 5vw + 1rem);
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 3rem;
+        opacity: 0.95;
+        pointer-events: none;
+        transform: translateY(-50%);
+        animation: ilustracaoFlutuar 6s ease-in-out infinite;
+    }
+
+    .ilustracao-login img {
+        max-width: 1000px;
+        max-height: 720px;
+        object-fit: contain;
+        filter: drop-shadow(0 30px 60px rgba(var(--vinho-borda), 0.12));
+    }
+
+    /* No forgot/cadastro só a ilustração permanece na coluna de login */
+    .form.modo-forgot .form-coluna-login { display: block; }
+    .form.modo-forgot .form-coluna-login > *:not(.ilustracao-login) { display: none; }
+}
+
+@media (min-width: 1024px) and (max-width: 1366px) and (orientation: landscape) {
+    #forgot-lottie { margin-bottom: 2rem; }
+}
+
+/* ---------- 10.4 Desktop grande (≥1367) ---------- */
+@media (min-width: 1367px) {
+    :root {
+        --navbar-h: 90px;
+        --navbar-px: 3.5rem;
+        --logo-size: 2rem;
+        --logo-ls: 6px;
+
+        --form-w: 500px;
+        --form-pad: 4.5rem 3rem 4rem;
+        --form-gap: 1.5rem;
+
+        --heading-ls: 12px;
+        --heading-mb: 1.5em;
+        --heading-pb: 1.2rem;
+
+        --field-h: 58px;
+        --field-pad: 1.1em 1.3em;
+        --icon-size: 1.3rem;
+        --btn-h: 56px;
+        --btn-size: 1rem;
+        --btn-ls: 5px;
+        --link-size: 1rem;
+        --link-ls: 3px;
+
+        --social-size: 52px;
+        --social-img: 26px;
+        --social-gap: 1rem;
+
+        --lottie-size: 340px;
+        --otp-w: 60px;
+        --otp-h: 68px;
+    }
+
+    .login-container { padding-bottom: 0; }
+    .ilustracao-login img { max-width: 1300px; max-height: 900px; }
+
+    .codigo-input { font-size: 2.4rem; }
+    .mensagem p { font-size: 1.3rem; }
+
+    #container-forgot.modo-dois-campos #forgot-lottie {
+        width: 260px;
+        height: 260px;
+    }
+}
+
+/* ---------- 10.5 Celular em pé (≤599) ---------- */
+@media (max-width: 599px) {
+    :root {
+        --navbar-h: 52px;
+        --navbar-px: 1rem;
+        --logo-size: 1.2rem;
+        --logo-ls: 3px;
+
+        --form-pad: 3rem 1.5rem 2rem;
+        --form-gap: 1.1rem;
+        --field-h: 50px;
+        --btn-h: 48px;
+        --btn-size: 0.85rem;
+
+        --lottie-size: 260px;
+        --otp-w: 46px;
+        --otp-h: 58px;
+
+        --ilustracao-h: 50vw;
+        --ilustracao-zoom: 1.6;
+    }
+
+    html, body {
+        position: fixed;
+        inset: 0;
+        overflow: hidden;
+    }
+
+    .login-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: var(--app-h);
+        padding: var(--navbar-h) 0 0;
+        overflow: hidden;
+        background-color: var(--card);
+    }
+
+    .login-formulario {
+        position: relative;
+        align-self: stretch;
+        max-width: 100%;
+        margin: 0;
+        flex-shrink: 0;
+    }
+
+    .form {
+        flex: 1 0 auto;
+        justify-content: center;
+        min-height: 0;
+        background: transparent;
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+        transform: translateY(var(--kb-offset, 0px));
+        transition: transform 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+        will-change: transform;
+    }
+
+    .form::before,
+    .form::after,
+    #heading { display: none; }
+
+    .form-coluna { flex-shrink: 0; }
+
+    .form-coluna-login {
+        flex: 1 0 0%;
+        min-height: 0;
+    }
+
+    /* e-mail → senha e senha → botão com a MESMA distância visual */
+    .form-coluna-login > .field + .field { margin-top: -0.55rem; }
+    .form .btn { margin-top: -0.55rem; }
+
+    .ilustracao-login {
+        flex: 1 1 auto;
+        min-height: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 0;
+        overflow: hidden;
+        pointer-events: none;
+        animation: ilustracaoMobile 6s ease-in-out infinite;
+    }
+
+    .ilustracao-login img {
+        width: auto;
+        height: var(--ilustracao-h);
+        max-width: 100%;
+        max-height: 100%;
+        flex-shrink: 0;
+        transform: scale(var(--ilustracao-zoom));
+        transform-origin: 50% 50%;
+        filter: drop-shadow(0 12px 28px rgba(var(--vinho-borda), 0.12));
+    }
+
+    /* ---------------------------------------------------------
+       FORGOT PASSWORD — espelha o SIGN UP:
+       - mesmo tamanho de mail
+       - mesmo gap entre ilustração e form
+       - mesmas margens (sem translateY nem margin-bottom extra)
+       --------------------------------------------------------- */
+    html:not([data-layout="row"]) .form.modo-forgot #forgot-lottie:not(.modo-dois-campos *) {
+        width: min(86vw, 310px);
+        height: min(86vw, 310px);
+        max-width: none;
+        max-height: none;
+        margin-bottom: 0;
+        transform: none;
+    }
+
+    /* ---------------------------------------------------------
+       SIGN UP / NOVA SENHA — mantém o tamanho de referência.
+       --------------------------------------------------------- */
+    html:not([data-layout="row"]) #container-forgot.modo-dois-campos #forgot-lottie {
+        width: min(86vw, 310px);
+        height: min(86vw, 310px);
+        max-width: none;
+        max-height: none;
+        margin-bottom: 0;
+        transform: none;
+    }
+
+    /* Uniformiza o gap entre ilustração e formulário nos dois modos */
+    html:not([data-layout="row"]) .form.modo-forgot #container-forgot,
+    html:not([data-layout="row"]) #container-forgot.modo-dois-campos {
+        gap: 1rem;
+    }
+
+    /* Uniformiza o gap interno do .forgot-form */
+    html:not([data-layout="row"]) .form.modo-forgot .forgot-form,
+    html:not([data-layout="row"]) #container-forgot.modo-dois-campos .forgot-form {
+        gap: 0.85rem;
+    }
+
+    /* Modo OTP no mobile em pé: o form fica parado — o teclado não o desloca.
+       (O login.js também zera o --kb-offset quando .modo-otp está presente.) */
+    .form.modo-forgot.modo-otp {
+        transform: none !important;
+    }
+}
+
+@media (max-width: 480px) {
+    :root {
+        --form-pad: 2rem 1rem 1.5rem;
+        --field-h: 46px;
+        --field-pad: 0.7em 1em;
+        --btn-h: 44px;
+        --btn-size: 0.78rem;
+        --social-size: 42px;
+        --lottie-size: 240px;
+        --otp-w: 42px;
+        --otp-h: 54px;
+        --ilustracao-h: 48vw;
+    }
+
+    .forgot-form { max-width: 280px; gap: 0.6rem; }
+
+    .codigo-input { font-size: 1.65rem; }
+    .mensagem p { font-size: 1rem; letter-spacing: 0.4px; }
+
+    /* Mantém a mesma distância entre os dois campos e até o botão */
+    .form-coluna-login > .field + .field { margin-top: -0.7rem; }
+    .form .btn { margin-top: -0.7rem; }
+
+    /* Forgot e Sign up com o MESMO tamanho de mail, menor que ≥480px */
+    html:not([data-layout="row"]) .form.modo-forgot #forgot-lottie:not(.modo-dois-campos *),
+    html:not([data-layout="row"]) #container-forgot.modo-dois-campos #forgot-lottie {
+        width: min(88vw, 290px);
+        height: min(88vw, 290px);
+        max-width: none;
+        max-height: none;
+        margin-bottom: 0;
+        transform: none;
+    }
+}
+
+/* Telas baixas (data-altura definido pelo login.js) */
+@media (max-width: 599px) {
+    :root[data-altura="baixa"] {
+        --form-pad: 1.5rem 1rem 1.5rem;
+        --form-gap: 0.8rem;
+        --field-h: 44px;
+        --btn-h: 42px;
+        --social-size: 40px;
+        --social-img: 20px;
+        --ilustracao-h: 42vw;
+    }
+
+    /* Forgot e Sign up com o MESMO tamanho em telas baixas */
+    html:not([data-layout="row"])[data-altura="baixa"] .form.modo-forgot #forgot-lottie:not(.modo-dois-campos *),
+    html:not([data-layout="row"])[data-altura="baixa"] #container-forgot.modo-dois-campos #forgot-lottie {
+        width: min(76vw, 260px);
+        height: min(76vw, 260px);
+        max-width: none;
+        max-height: none;
+        margin-bottom: 0;
+        transform: none;
+    }
+}
+
+/* ---------- 10.6 Celular deitado (row) ---------- */
+/* Mesma condição do MQ_ROW no login.js — se mudar aqui, mude lá. */
+@media (min-width: 568px) and (max-width: 950px) and (orientation: landscape) and (max-height: 500px) {
+    :root[data-layout="row"] {
+        --navbar-h: 46px;
+        --navbar-px: 1rem;
+        --logo-size: 1.1rem;
+        --logo-ls: 3px;
+
+        --form-pad: 1rem 1.5rem;
+        --field-h: 42px;
+        --field-pad: 0.6em 0.95em;
+        --icon-size: 1rem;
+        --btn-h: 42px;
+        --btn-size: 0.72rem;
+        --btn-ls: 2.5px;
+        --link-size: 0.72rem;
+
+        --social-size: 44px;
+        --social-img: 21px;
+
+        --lottie-size: 200px;
+        --otp-w: 44px;
+        --otp-h: 52px;
+    }
+
+    html[data-layout="row"],
+    html[data-layout="row"] body {
+        position: fixed;
+        inset: 0;
+        overflow: hidden;
+        height: var(--app-h);
+        overscroll-behavior: none;
+    }
+
+    html[data-layout="row"] .login-container {
+        height: 100%;
+        padding: var(--navbar-h) 0 0;
+        overflow: hidden;            /* fallback */
+        overflow: clip;
+        overflow-clip-margin: 150px;
+        overscroll-behavior: none;
+        background-color: var(--fundo);
+    }
+
+    html[data-layout="row"] .login-formulario {
+        align-self: stretch;
+        max-width: 100%;
+        margin: 0;
+        justify-content: center;
+    }
+
+    html[data-layout="row"] .form {
+        flex: 0 0 auto;
+        flex-direction: row;
+        align-items: stretch;
+        justify-content: center;
+        gap: 0;
+        min-height: 0;
+        background: transparent;
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+        transform: translateY(var(--kb-offset, 0px));
+        transition: transform 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+        will-change: transform;
+    }
+
+    html[data-layout="row"] .form::before,
+    html[data-layout="row"] .form::after,
+    html[data-layout="row"] .ilustracao-login,
+    html[data-layout="row"] #heading { display: none; }
+
+    html[data-layout="row"] .form-coluna {
+        flex: 1 1 50%;
+        justify-content: center;
+        min-width: 0;
+        gap: 0.7rem;
+        padding: 0 1.5rem;
+    }
+
+    html[data-layout="row"] .form-coluna-sociais {
+        gap: 1.1rem;
+        margin-top: 0;
+        padding-top: 0;
+    }
+
+    /* Divisória elegante entre as duas seções (inputs | sociais):
+       linha em degradê no lado esquerdo da coluna + ornamento ✦ */
+    html[data-layout="row"] .form-coluna-sociais {
+        background: linear-gradient(180deg, transparent 0%, rgba(var(--dourado-rgb), 0.7) 50%, transparent 100%)
+                    left center / 1px 92% no-repeat;
+    }
+
+    /* No row o fundo real é var(--fundo), então a estrela usa var(--fundo)
+       (antes usava var(--card), o que criava um quadradinho de cor diferente). */
+    html[data-layout="row"] .form-coluna-sociais::after {
+        content: '\2726';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        padding: 0.4rem 0;
+        font-size: 0.8rem;
+        line-height: 1;
+        color: var(--dourado);
+        background: var(--fundo);
+        transform: translate(-50%, -50%);
+    }
+
+    html[data-layout="row"] .form.modo-forgot { align-items: center; }
+
+    html[data-layout="row"] .form-coluna-sociais .divisor-login span:nth-child(2) {
+        font-size: 0.95rem;
+        color: rgba(var(--vinho-borda), 0.75);
+    }
+
+    html[data-layout="row"] .form .btn { margin-top: 0.15rem; }
+
+    html[data-layout="row"] .forgot-form {
+        max-width: 340px;
+        gap: 0.7rem;
+    }
+
+    html[data-layout="row"] #container-forgot .forgot-form { transform: translateY(1.75rem); }
+    html[data-layout="row"].kb-focus #container-forgot .forgot-form { transform: none; }
+
+    html[data-layout="row"] .forgot-form .button1 { margin-top: 0; }
+
+    html[data-layout="row"] .form.modo-forgot { padding: 0.5rem 2rem; }
+
+    html[data-layout="row"] #container-forgot {
+        position: relative;
+        display: grid;
+        grid-template-columns: 0.8fr 1fr;
+        align-items: center;
+        column-gap: 3rem;
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    /* Divisória entre a ilustração e o formulário (forgot / nova senha).
+       Fica no centro do espaço entre as duas colunas da grade.
+       Usa var(--fundo) porque é o fundo real no row. */
+    html[data-layout="row"] #container-forgot::before {
+        content: '';
+        position: absolute;
+        left: calc((100% - 3rem) * 0.8 / 1.8 + 1.5rem);
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        background: linear-gradient(180deg, transparent 0%, rgba(var(--dourado-rgb), 0.7) 50%, transparent 100%);
+    }
+
+    html[data-layout="row"] #container-forgot::after {
+        content: '\2726';
+        position: absolute;
+        left: calc((100% - 3rem) * 0.8 / 1.8 + 1.5rem);
+        top: 50%;
+        padding: 0.35rem 0;
+        font-size: 0.8rem;
+        line-height: 1;
+        color: var(--dourado);
+        background: var(--fundo);
+        transform: translate(-50%, -50%);
+    }
+
+    html[data-layout="row"].kb-focus #container-forgot::before,
+    html[data-layout="row"].kb-focus #container-forgot::after { display: none; }
+
+    html[data-layout="row"] .otp-caixas { gap: 0.35rem; }
+    html[data-layout="row"] .codigo-input { font-size: 1.6rem; }
+    html[data-layout="row"] #forgot-lottie { justify-self: center; }
+
+    html[data-layout="row"] .form-coluna-login .mensagem p,
+    html[data-layout="row"] .form-coluna-sociais .mensagem p { font-size: 1rem; }
+
+    /* Modo foco (row): a navbar some e o campo isolado centraliza entre
+       o topo da tela e o teclado (--kb-visivel vem do JS). */
+    html[data-layout="row"] .navbar-desktop { transition: transform 0.25s ease, opacity 0.2s ease; }
+
+    html[data-layout="row"].kb-focus .navbar-desktop {
+        transform: translateY(-100%);
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    html[data-layout="row"].kb-focus .login-container {
+        height: var(--kb-visivel, 100%);
+        padding-top: 0;
+    }
+
+    html[data-layout="row"].kb-focus .form { transform: none; }
+
+    /* Modo foco (row) — LOGIN: só o campo ativo fica visível */
+    html[data-layout="row"].kb-focus .form {
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem 2rem;
+    }
+
+    html[data-layout="row"].kb-focus .form-coluna-login {
+        flex: 1 1 100%;
+        max-width: 560px;
+        padding: 0;
+    }
+
+    html[data-layout="row"].kb-focus .form-coluna-sociais { display: none; }
+
+    html[data-layout="row"].kb-focus .form-coluna-login > *:not([data-ativo="true"]) { display: none; }
+
+    html[data-layout="row"].kb-focus .form-coluna-login > [data-ativo="true"] {
+        width: 100%;
+        margin: 0;
+    }
+
+    /* Modo foco (row) — FORGOT */
+    html[data-layout="row"].kb-focus .form.modo-forgot { padding: 1.5rem 2rem; }
+
+    html[data-layout="row"].kb-focus #container-forgot {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        max-width: 560px;
+        margin: 0 auto;
+        padding: 0;
+        gap: 0;
+    }
+
+    html[data-layout="row"].kb-focus #forgot-lottie { display: none; }
+
+    html[data-layout="row"].kb-focus .forgot-form {
+        width: 100%;
+        max-width: 100%;
+        gap: 0;
+    }
+
+    html[data-layout="row"].kb-focus .forgot-form > *:not([data-ativo="true"]) { display: none; }
+
+    html[data-layout="row"].kb-focus .forgot-form > [data-ativo="true"] {
+        width: 100%;
+        margin: 0;
+    }
+
+    /* Modo foco (row) — OTP: só as caixas ficam visíveis */
+}
+
+@media (max-width: 700px) {
+    :root[data-layout="row"] {
+        --form-pad: 0.8rem 1rem;
+        --field-h: 36px;
+        --field-pad: 0.5em 0.8em;
+        --btn-h: 36px;
+        --btn-size: 0.65rem;
+        --btn-ls: 2px;
+        --social-size: 36px;
+        --social-img: 17px;
+        --lottie-size: 150px;
+        --otp-w: 36px;
+        --otp-h: 44px;
+    }
+
+    html[data-layout="row"] .form-coluna { gap: 0.45rem; padding: 0 0.8rem; }
+    html[data-layout="row"] .codigo-input { font-size: 1.4rem; }
+    html[data-layout="row"] .form .btn { margin-top: 0.4rem; }
+
+    html[data-layout="row"] .forgot-form { max-width: 300px; gap: 0.6rem; }
+    html[data-layout="row"] #container-forgot .forgot-form { transform: translateY(1.25rem); }
+    html[data-layout="row"].kb-focus #container-forgot .forgot-form { transform: none; }
+
+    html[data-layout="row"] .form-coluna-sociais .mensagem p,
+    html[data-layout="row"] .form-coluna-login .mensagem p {
+        font-size: 0.95rem;
+        letter-spacing: 0.4px;
+    }
+}
+
+/* ============================================================
+   11. ACESSIBILIDADE
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
+}
