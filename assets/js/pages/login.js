@@ -11,7 +11,7 @@
 
    Dependências globais (auth.js): validateEmail, loginUser,
    checkEmailExists, validarSenhaForte, sendSignupCode,
-   checkSignupCode, verifySignupCode, recoverPassword.
+   verifySignupCode, recoverPassword.
    ============================================================ */
 (function () {
     'use strict';
@@ -31,8 +31,6 @@
     var ESTABILIDADE_MS    = 120;
     var PROVEDORES_SOCIAIS = ['google', 'discord', 'github'];
 
-    /* Mesma condição do CSS para [data-layout="row"] (bloco 10.6):
-       celular deitado — paisagem, baixo e estreito. */
     var MQ_ROW = '(min-width: 568px) and (max-width: 950px) and (orientation: landscape) and (max-height: 500px)';
 
     var ICONE_EMAIL =
@@ -55,7 +53,6 @@
 
     var animacoesLottie = [];
 
-    /* Impede o zoom por pinça no iOS (o viewport sozinho não basta) */
     document.addEventListener('gesturestart', function (e) { e.preventDefault(); });
 
     function getDb() {
@@ -77,7 +74,6 @@
         return valor ? String(valor).replace(/[<>]/g, '') : '';
     }
 
-    /* Estado compartilhado com auth.js (lido via window.*) */
     function definirContexto(modoForgot, email, senha) {
         window.modoForgotPassword = modoForgot;
         window.emailVerificacao   = email || null;
@@ -102,10 +98,6 @@
     /* ============================================================
        2. VIEWPORT, ALTURA FIXA E LAYOUT
        ============================================================ */
-
-    /* O layout row é decidido UMA vez por sincronizarTela() e lido do
-       atributo. Assim JS e CSS nunca divergem — nem com o teclado
-       aberto, quando innerHeight encolhe e "parece" paisagem. */
     function ehLayoutRow() {
         return raiz.getAttribute('data-layout') === 'row';
     }
@@ -133,14 +125,10 @@
         return !!ativo && (ativo.tagName === 'INPUT' || ativo.tagName === 'TEXTAREA');
     }
 
-    /* Sem campo em foco não há teclado — evita falso positivo quando
-       a janela é redimensionada (ex.: DevTools, rotação). */
     function tecladoAberto() {
         return campoEmFoco() && (getAppH() - getAlturaVisivel()) > LIMITE_TECLADO_PX;
     }
 
-    /* --app-h = altura "sem teclado": cresce na hora, mas só diminui depois
-       que a janela assenta (resize/rotação reais), nunca por causa do teclado. */
     function setupAlturaFixa() {
         var maiorAltura = 0;
         var larguraMedida = 0;
@@ -160,9 +148,6 @@
             var h = window.innerHeight;
             if (h > maiorAltura) aplicar(h);
 
-            /* Reduzir só depois que a janela "assentar" e sem campo em foco.
-               Reduzir na hora faz o card subir enquanto o teclado ainda está
-               fechando e depois cair de volta. */
             clearTimeout(timerAssentar);
             timerAssentar = setTimeout(function () {
                 if (!campoEmFoco() && window.innerHeight !== maiorAltura) {
@@ -185,8 +170,6 @@
         medir();
     }
 
-    /* Trava a altura do card do login para que ele não "pule" ao
-       alternar com os modos forgot/cadastro. */
     function aplicarAlturaLogin() {
         if (!form) return;
         if (campoEmFoco() || tecladoAberto()) return;
@@ -211,8 +194,6 @@
         timerAltura = setTimeout(aplicarAlturaLogin, 150);
     }
 
-    /* Orientação física do aparelho. Não depende da altura da janela, que
-       encolhe com o teclado e faria um tablet em pé "parecer" deitado. */
     function orientacaoAtual() {
         if (window.screen && screen.orientation && screen.orientation.type) {
             return screen.orientation.type.indexOf('landscape') === 0 ? 'L' : 'P';
@@ -228,8 +209,6 @@
                 orientacaoAtual() === 'L') ? 'row' : 'stacked';
     }
 
-    /* Zera tudo que depende do teclado (usado ao girar o aparelho e pelo
-       vigia): sem campo em foco, sem modo foco, sem deslocamentos. */
     function reiniciarEstadoTeclado() {
         if (campoEmFoco()) document.activeElement.blur();
         limparAtivos();
@@ -253,10 +232,6 @@
         }
     }
 
-    /* Qualquer mudança real de geometria (girar o aparelho, trocar o
-       dispositivo no DevTools, redimensionar a janela) invalida o que foi
-       medido antes. O teclado virtual NÃO muda a largura nem a orientação,
-       então ele nunca é confundido com isso. */
     function setupTela() {
         var temporizador = null;
         var orientacao = orientacaoAtual();
@@ -285,7 +260,7 @@
 
             raiz.classList.add('rotating');
             reiniciarEstadoTeclado();
-            form.style.minHeight = '';          /* altura medida no layout antigo */
+            form.style.minHeight = '';
 
             reavaliar();
             [60, 250, 600, 1100, 1800].forEach(function (ms) { setTimeout(reavaliar, ms); });
@@ -306,8 +281,6 @@
             }, 400);
         });
 
-        /* Vigia: se o teclado já fechou mas sobrou modo foco, deslocamento
-           ou layout defasado, corrige sozinho. */
         setInterval(function () {
             if (document.hidden || campoEmFoco() || tecladoAberto()) return;
             if (raiz.classList.contains('kb-focus') || offsetAtual !== 0 ||
@@ -798,7 +771,7 @@
         }
 
         function verificar() {
-            if (codigo().length === caixas.length) aoCompletar(codigo());
+            if (codigo().length === caixas.length && aoCompletar) aoCompletar(codigo());
         }
 
         caixas.forEach(function (caixa, indice) {
@@ -877,11 +850,8 @@
                 }
 
                 executarComBotao(btn, 'ENVIAR CÓDIGO', async function () {
-                    /* Sem checkEmailExists aqui: a própria send-signup-otp já recusa
-                       e-mails cadastrados, e assim nada além dela é chamado. */
                     definirContexto(false, email, null);
 
-                    /* Edge Function: só envia o código; NÃO cria o usuário */
                     var envio = await sendSignupCode(email);
                     if (!envio.success) {
                         var jaCadastrado = envio.message &&
@@ -918,31 +888,18 @@
             var caixas = Array.prototype.slice.call($('caixas-cadastro').querySelectorAll('.codigo-input'));
             var btn    = $('btn-cadastro-acao');
 
-            /* O código é conferido já aqui; a conta só é criada no último
-               passo, depois das senhas. */
+            /* O código é guardado em memória. A validação real acontece
+               no verifySignupCode, no final, junto com a criação da conta. */
             function avancar() {
                 var codigo = caixas.map(function (c) { return c.value; }).join('');
                 if (codigo.length < caixas.length) {
                     mostrarMensagem('Digite os 6 dígitos do código!', 'erro');
                     return;
                 }
-
-                executarComBotao(btn, 'CONFIRMAR', async function () {
-                    var resultado = await checkSignupCode(estado.email, codigo);
-                    if (!resultado.success) {
-                        mostrarMensagem(resultado.message || 'Código incorreto. Tente novamente.', 'erro');
-                        caixas.forEach(function (c) { c.value = ''; });
-                        caixas[0].focus();
-                        return false;
-                    }
-                    estado.codigo = codigo;
-                    etapaSenha();
-                    return false;
-                });
+                estado.codigo = codigo;
+                etapaSenha();
             }
 
-            /* O código só é conferido ao clicar em CONFIRMAR (ou Enter),
-               nunca ao digitar o último número. */
             btn.addEventListener('click', avancar);
             ligarCaixasCodigo(caixas, function () {});
             caixas.forEach(function (caixa) { aoPressionarEnter(caixa, avancar); });
@@ -992,7 +949,6 @@
 
                     if (!criacao.success) {
                         var msg = criacao.message || 'Não foi possível criar a conta.';
-                        /* código errado/expirado: volta para digitar o código de novo */
                         if (/c[óo]digo|code|expir|inv[áa]lid/i.test(msg)) {
                             estado.codigo = '';
                             etapaCodigo();
@@ -1001,7 +957,6 @@
                         return false;
                     }
 
-                    /* Conta criada: já entra e vai para o dashboard */
                     var entrada = await loginUser(estado.email, senha.value);
                     if (entrada.success) {
                         mostrarMensagem('Conta criada! Entrando...', 'sucesso');
