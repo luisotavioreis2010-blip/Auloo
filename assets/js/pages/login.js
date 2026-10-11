@@ -1163,16 +1163,15 @@
     setupTeclado();
     setupModoFoco();
 
-    /* Menu da navbar (hamburguer): abre/fecha, fecha ao clicar fora, Esc e mudar layout */
-    function setupMenuNavbar() {
-        var botao = document.getElementById('navbar-menu-btn');
-        var menu  = document.getElementById('navbar-menu');
+    /* Botao "Saiba mais": abre/fecha o painel, fecha ao clicar fora, Esc e mudar layout */
+    function setupMenuSaiba() {
+        var botao = document.getElementById('navbar-saiba-btn');
+        var menu  = document.getElementById('navbar-saiba-menu');
         if (!botao || !menu) return;
 
         function definir(aberto) {
             menu.hidden = !aberto;
             botao.setAttribute('aria-expanded', aberto ? 'true' : 'false');
-            botao.setAttribute('aria-label', aberto ? 'Fechar menu' : 'Abrir menu');
         }
 
         botao.addEventListener('click', function (e) {
@@ -1192,7 +1191,7 @@
         window.addEventListener('orientationchange', function () { definir(false); });
     }
 
-    setupMenuNavbar();
+    setupMenuSaiba();
     setupOlhoSenha();
     setupLoginSocial();
 

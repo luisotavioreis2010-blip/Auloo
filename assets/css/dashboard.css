@@ -607,11 +607,67 @@ input, textarea, .ficha-email {
 
 .ficha-item:hover { color: var(--vinho); border-bottom-color: var(--dourado); }
 
-a.ficha-item { text-decoration: none; }
+/* Saiba mais (acordeao com portfolio, termos e privacidade) */
+.ficha-saiba > summary { list-style: none; cursor: pointer; }
+.ficha-saiba > summary::-webkit-details-marker { display: none; }
+.ficha-saiba > summary:focus-visible { outline: 2px solid var(--dourado); outline-offset: 2px; }
 
-.ficha-item-legal:first-of-type { margin-top: 0; }
-.ficha-item-legal { color: var(--tinta-suave, var(--tinta)); }
-.ficha-item-legal:hover { color: var(--vinho); }
+.ficha-seta {
+    width: 11px;
+    height: 8px;
+    margin-left: auto;
+    align-self: center;
+    color: var(--dourado);
+    transition: transform var(--transicao);
+}
+
+.ficha-saiba[open] > summary { color: var(--vinho); border-bottom-color: var(--dourado); }
+.ficha-saiba[open] .ficha-seta { transform: rotate(180deg); }
+
+.ficha-saiba-lista {
+    display: flex;
+    flex-direction: column;
+    margin: 0.4rem 0 0.6rem;
+    padding: 0.2rem 1rem;
+    background: var(--papel-claro);
+    border: 1px solid rgba(184, 137, 74, 0.4);
+    border-left: 2px solid var(--dourado);
+    animation: ficha-saiba-in 0.22s ease both;
+}
+
+@keyframes ficha-saiba-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.ficha-saiba-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding: 0.8rem 0;
+    border-bottom: 1px solid rgba(184, 137, 74, 0.25);
+    color: var(--tinta);
+    text-decoration: none;
+    transition: color var(--transicao), padding-left var(--transicao);
+}
+
+.ficha-saiba-item:last-child { border-bottom: none; }
+.ficha-saiba-item:hover { color: var(--vinho); padding-left: 0.35rem; }
+
+.ficha-saiba-item strong {
+    font-family: var(--fonte-display);
+    font-size: 1.05rem;
+    font-weight: 600;
+    line-height: 1.25;
+}
+
+.ficha-saiba-item small {
+    font-family: var(--fonte-corpo);
+    font-size: 0.62rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--tinta-suave);
+}
 
 .ficha-romano {
     min-width: 2rem;

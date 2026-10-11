@@ -365,6 +365,35 @@
             .btn-primario, .btn-secundario { text-align: center; }
         }
 
+
+        /* ---------- Botao voltar ---------- */
+        .btn-voltar {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.6rem 1.2rem;
+            font-family: var(--fonte-corpo);
+            font-size: 0.72rem;
+            font-weight: 500;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            text-decoration: none;
+            color: var(--vinho);
+            background: transparent;
+            border: 1px solid var(--dourado);
+            border-radius: 2px;
+            transition: background 0.25s, color 0.25s;
+        }
+
+        .btn-voltar:hover { background: var(--vinho); color: var(--papel); border-color: var(--vinho); }
+        .btn-voltar svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+        html[data-origem="dashboard"] .nav-links .btn-entrar { display: none; }
+        html[data-origem="nenhuma"] .nav-links .btn-voltar { display: none; }
+
+        @media (max-width: 640px) {
+            .nav-links a.btn-voltar { display: inline-flex; padding: 0.55rem 0.9rem; letter-spacing: 1.5px; font-size: 0.66rem; }
+        }
     </style>
 </head>
 <body>
@@ -372,6 +401,7 @@
 <nav class="navbar" aria-label="Principal">
     <a href="/" class="logo" translate="no">Auloo<span class="logo-dot">.</span></a>
     <div class="nav-links">
+        <a href="/" class="btn-voltar" data-voltar><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M14 8H2M7 3 2 8l5 5"/></svg><span data-voltar-texto>Voltar</span></a>
         <a href="#recursos">Recursos</a>
         <a href="#sobre">Sobre</a>
         <a href="/login.html" class="btn-entrar">Entrar</a>
@@ -446,12 +476,13 @@
 <footer>
     <a href="/" class="logo" translate="no">Auloo<span class="logo-dot">.</span></a>
     <div class="footer-links">
-        <a href="/privacidade.html">Política de Privacidade</a>
-        <a href="/termos.html">Termos de Serviço</a>
+        <a href="/privacidade.html" data-manter-origem>Política de Privacidade</a>
+        <a href="/termos.html" data-manter-origem>Termos de Serviço</a>
         <a href="/login.html">Entrar</a>
     </div>
     <p class="copy">&copy; 2026 Auloo. Plataforma educacional.</p>
 </footer>
 
+<script src="assets/js/voltar.js"></script>
 </body>
 </html>

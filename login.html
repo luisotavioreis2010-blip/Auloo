@@ -19,19 +19,30 @@
 <body>
 
     <nav class="navbar-desktop" aria-label="Principal">
-        <div class="navbar-esq">
-            <button type="button" class="navbar-menu-btn" id="navbar-menu-btn" aria-label="Abrir menu" aria-expanded="false" aria-controls="navbar-menu">
-                <span class="navbar-menu-barras" aria-hidden="true"><i></i><i></i><i></i></span>
-            </button>
-            <span class="navbar-logo" translate="no">Auloo<span class="navbar-logo-dot">.</span></span>
+        <span class="navbar-logo" translate="no">Auloo<span class="navbar-logo-dot">.</span></span>
 
-            <div class="navbar-menu" id="navbar-menu" hidden>
-                <span class="navbar-menu-titulo">Informações</span>
-                <a class="navbar-menu-item" href="termos.html"><span class="navbar-menu-num">I</span><span>Termos de Uso</span></a>
-                <a class="navbar-menu-item" href="privacidade.html"><span class="navbar-menu-num">II</span><span>Privacidade</span></a>
+        <div class="navbar-saiba-wrap">
+            <button type="button" class="navbar-saiba" id="navbar-saiba-btn" aria-haspopup="true" aria-expanded="false" aria-controls="navbar-saiba-menu">
+                <span>Saiba mais</span>
+                <svg class="navbar-saiba-seta" viewBox="0 0 12 8" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M1 1.5l5 5 5-5"/></svg>
+            </button>
+
+            <div class="saiba-menu" id="navbar-saiba-menu" role="menu" hidden>
+                <span class="saiba-titulo">Conheça mais</span>
+                <a class="saiba-item" href="index.html?de=login" role="menuitem">
+                    <span class="saiba-num">I</span>
+                    <span class="saiba-corpo"><strong>Conheça o Auloo</strong><small>Portfólio e visão geral</small></span>
+                </a>
+                <a class="saiba-item" href="termos.html?de=login" role="menuitem">
+                    <span class="saiba-num">II</span>
+                    <span class="saiba-corpo"><strong>Regras da Casa</strong><small>Termos de uso</small></span>
+                </a>
+                <a class="saiba-item" href="privacidade.html?de=login" role="menuitem">
+                    <span class="saiba-num">III</span>
+                    <span class="saiba-corpo"><strong>Seus Dados</strong><small>Política de privacidade</small></span>
+                </a>
             </div>
         </div>
-        <a class="navbar-saiba" href="index.html">Saiba mais</a>
     </nav>
 
     <div class="desktop-bg" aria-hidden="true"></div>
