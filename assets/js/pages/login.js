@@ -11,7 +11,7 @@
 
    Dependências globais (auth.js): validateEmail, loginUser,
    checkEmailExists, validarSenhaForte, sendSignupCode,
-   verifySignupCode, recoverPassword.
+   checkSignupCode, verifySignupCode, recoverPassword.
    ============================================================ */
 (function () {
     'use strict';
@@ -826,38 +826,6 @@
         });
     }
 
-    /* Confere o código SEM criar a conta (a função só valida e mantém o
-       código pendente; a conta nasce no último passo, com a senha). */
-    async function conferirCodigo(email, codigo) {
-        var db = getDb();
-        if (!db) return { success: false, message: 'Erro de configuração. Recarregue a página.' };
-
-        try {
-            var resposta = await db.functions.invoke('verify-signup-otp', {
-                body: { email: String(email).trim().toLowerCase(), code: String(codigo), check_only: true }
-            });
-
-            if (resposta.error) {
-                var msg = 'Código inválido.';
-                if (typeof extrairMensagemErro === 'function') {
-                    msg = await extrairMensagemErro(resposta.error, msg);
-                }
-                /* Função antiga ainda publicada (não conhece check_only): segue
-                   para a senha; o código é conferido no passo final. */
-                if (/dados incompletos/i.test(msg)) return { success: true, adiado: true };
-                return { success: false, message: msg };
-            }
-            if (resposta.data && resposta.data.error) {
-                if (/dados incompletos/i.test(resposta.data.error)) return { success: true, adiado: true };
-                return { success: false, message: resposta.data.error };
-            }
-            return { success: true };
-        } catch (erro) {
-            console.error(erro);
-            return { success: false, message: 'Erro inesperado.' };
-        }
-    }
-
     function mostrarCadastro() {
         var emailInicial = sanitizar(inputEmail.value);
         var estado = { email: '', codigo: '' };
@@ -960,7 +928,7 @@
                 }
 
                 executarComBotao(btn, 'CONFIRMAR', async function () {
-                    var resultado = await conferirCodigo(estado.email, codigo);
+                    var resultado = await checkSignupCode(estado.email, codigo);
                     if (!resultado.success) {
                         mostrarMensagem(resultado.message || 'Código incorreto. Tente novamente.', 'erro');
                         caixas.forEach(function (c) { c.value = ''; });
@@ -1033,8 +1001,18 @@
                         return false;
                     }
 
+                    /* Conta criada: já entra e vai para o dashboard */
+                    var entrada = await loginUser(estado.email, senha.value);
+                    if (entrada.success) {
+                        mostrarMensagem('Conta criada! Entrando...', 'sucesso');
+                        setTimeout(function () {
+                            window.location.href = PAGINA_DASHBOARD;
+                        }, 500);
+                        return true;
+                    }
+
                     voltarParaLogin();
-                    mostrarMensagem('Conta criada com sucesso!', 'sucesso');
+                    mostrarMensagem('Conta criada! Faça login.', 'sucesso');
                     return true;
                 });
             }
