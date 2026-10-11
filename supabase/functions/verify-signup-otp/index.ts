@@ -37,8 +37,8 @@ serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
   try {
-    const { email, code, password, full_name } = await req.json()
-    if (!email || !code || !password) return json({ error: 'Dados incompletos.' }, 400)
+    const { email, code, password, full_name, check_only } = await req.json()
+    if (!email || !code || (!password && !check_only)) return json({ error: 'Dados incompletos.' }, 400)
 
     const normalized = String(email).trim().toLowerCase()
     const nome = full_name || normalized.split('@')[0]
@@ -74,6 +74,10 @@ serve(async (req: Request) => {
         .eq('email', normalized)
       return json({ error: 'Codigo invalido.' }, 400)
     }
+
+    // Só conferência (passo do código): nada é criado nem apagado; o código
+    // continua válido para o passo final, que traz a senha.
+    if (check_only) return json({ success: true, checked: true })
 
     // Código correto. Se sobrou um usuário NÃO confirmado de tentativas antigas
     // (status "Waiting for verification"), aproveita-o em vez de falhar com

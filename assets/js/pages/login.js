@@ -378,19 +378,9 @@
         }
     }
 
-    function modoOtpAtivo() {
-        if (ehLayoutRow()) return false;
-        return form.classList.contains('modo-otp');
-    }
-
     function calcularKbOffset() {
         atualizarAlturaVisivel();
         if (!tecladoAberto()) { resetarKbOffset(); return; }
-
-        if (modoOtpAtivo()) {
-            resetarKbOffset();
-            return;
-        }
 
         if (ehLayoutRow() && raiz.classList.contains('kb-focus')) {
             resetarKbOffset();
@@ -664,7 +654,6 @@
         animacoesLottie.forEach(function (animacao) { animacao.destroy(); });
         animacoesLottie = [];
 
-        form.classList.remove('modo-otp');
         ativoAtual = null;
 
         var anterior = $('container-forgot');
@@ -682,7 +671,6 @@
     function voltarParaLogin() {
         removerContainersDeModo();
         form.classList.remove('modo-forgot');
-        form.classList.remove('modo-otp');
         ativoAtual = null;
         definirContexto(false, null, null);
 
@@ -838,6 +826,34 @@
         });
     }
 
+    /* Confere o código SEM criar a conta (a função só valida e mantém o
+       código pendente; a conta nasce no último passo, com a senha). */
+    async function conferirCodigo(email, codigo) {
+        var db = getDb();
+        if (!db) return { success: false, message: 'Erro de configuração. Recarregue a página.' };
+
+        try {
+            var resposta = await db.functions.invoke('verify-signup-otp', {
+                body: { email: String(email).trim().toLowerCase(), code: String(codigo), check_only: true }
+            });
+
+            if (resposta.error) {
+                var msg = 'Código inválido.';
+                if (typeof extrairMensagemErro === 'function') {
+                    msg = await extrairMensagemErro(resposta.error, msg);
+                }
+                return { success: false, message: msg };
+            }
+            if (resposta.data && resposta.data.error) {
+                return { success: false, message: resposta.data.error };
+            }
+            return { success: true };
+        } catch (erro) {
+            console.error(erro);
+            return { success: false, message: 'Erro inesperado.' };
+        }
+    }
+
     function mostrarCadastro() {
         var emailInicial = sanitizar(inputEmail.value);
         var estado = { email: '', codigo: '' };
@@ -867,8 +883,6 @@
             '<button type="button" id="btn-voltar-cadastro" class="button3">← Voltar para o login</button>';
 
         function etapaEmail() {
-            form.classList.remove('modo-otp');
-
             trocarEtapa(
                 '<div class="field">' + ICONE_EMAIL +
                     '<input type="email" id="email-cadastro" class="input-field" ' +
@@ -927,23 +941,32 @@
                 '<button type="button" id="btn-voltar-cadastro" class="button3">← Alterar e-mail</button>'
             );
 
-            form.classList.add('modo-otp');
-
             $('btn-voltar-cadastro').addEventListener('click', etapaEmail);
 
             var caixas = Array.prototype.slice.call($('caixas-cadastro').querySelectorAll('.codigo-input'));
             var btn    = $('btn-cadastro-acao');
 
-            /* A conta só é criada no último passo: código e senha seguem juntos
-               para o servidor, que confere o código e então cria o usuário. */
+            /* O código é conferido já aqui; a conta só é criada no último
+               passo, depois das senhas. */
             function avancar() {
                 var codigo = caixas.map(function (c) { return c.value; }).join('');
                 if (codigo.length < caixas.length) {
                     mostrarMensagem('Digite os 6 dígitos do código!', 'erro');
                     return;
                 }
-                estado.codigo = codigo;
-                etapaSenha();
+
+                executarComBotao(btn, 'CONFIRMAR', async function () {
+                    var resultado = await conferirCodigo(estado.email, codigo);
+                    if (!resultado.success) {
+                        mostrarMensagem(resultado.message || 'Código incorreto. Tente novamente.', 'erro');
+                        caixas.forEach(function (c) { c.value = ''; });
+                        caixas[0].focus();
+                        return false;
+                    }
+                    estado.codigo = codigo;
+                    etapaSenha();
+                    return false;
+                });
             }
 
             btn.addEventListener('click', avancar);
@@ -952,8 +975,6 @@
         }
 
         function etapaSenha() {
-            form.classList.remove('modo-otp');
-
             trocarEtapa(
                 '<div class="field field-senha">' + ICONE_CADEADO +
                     '<input type="password" id="senha-cadastro" class="input-field" ' +

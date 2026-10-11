@@ -90,9 +90,6 @@ html {
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
     -webkit-tap-highlight-color: transparent;
-}
-
-html {
     background-color: var(--fundo);
 }
 
@@ -1153,19 +1150,7 @@ html.rotating .ilustracao-login { opacity: 0 !important; }
        - mesmo gap entre ilustração e form
        - mesmas margens (sem translateY nem margin-bottom extra)
        --------------------------------------------------------- */
-    html:not([data-layout="row"]) .form.modo-forgot #forgot-lottie:not(.modo-dois-campos *) {
-        width: min(86vw, 310px);
-        height: min(86vw, 310px);
-        max-width: none;
-        max-height: none;
-        margin-bottom: 0;
-        transform: none;
-    }
-
-    /* ---------------------------------------------------------
-       SIGN UP / NOVA SENHA — mantém o tamanho de referência.
-       --------------------------------------------------------- */
-    html:not([data-layout="row"]) #container-forgot.modo-dois-campos #forgot-lottie {
+    html:not([data-layout="row"]) #container-forgot #forgot-lottie {
         width: min(86vw, 310px);
         height: min(86vw, 310px);
         max-width: none;
@@ -1184,12 +1169,6 @@ html.rotating .ilustracao-login { opacity: 0 !important; }
     html:not([data-layout="row"]) .form.modo-forgot .forgot-form,
     html:not([data-layout="row"]) #container-forgot.modo-dois-campos .forgot-form {
         gap: 0.85rem;
-    }
-
-    /* Modo OTP no mobile em pé: o form fica parado — o teclado não o desloca.
-       (O login.js também zera o --kb-offset quando .modo-otp está presente.) */
-    .form.modo-forgot.modo-otp {
-        transform: none !important;
     }
 }
 
@@ -1217,8 +1196,7 @@ html.rotating .ilustracao-login { opacity: 0 !important; }
     .form .btn { margin-top: -0.7rem; }
 
     /* Forgot e Sign up com o MESMO tamanho de mail, menor que ≥480px */
-    html:not([data-layout="row"]) .form.modo-forgot #forgot-lottie:not(.modo-dois-campos *),
-    html:not([data-layout="row"]) #container-forgot.modo-dois-campos #forgot-lottie {
+    html:not([data-layout="row"]) #container-forgot #forgot-lottie {
         width: min(88vw, 290px);
         height: min(88vw, 290px);
         max-width: none;
@@ -1241,8 +1219,7 @@ html.rotating .ilustracao-login { opacity: 0 !important; }
     }
 
     /* Forgot e Sign up com o MESMO tamanho em telas baixas */
-    html:not([data-layout="row"])[data-altura="baixa"] .form.modo-forgot #forgot-lottie:not(.modo-dois-campos *),
-    html:not([data-layout="row"])[data-altura="baixa"] #container-forgot.modo-dois-campos #forgot-lottie {
+    html:not([data-layout="row"])[data-altura="baixa"] #container-forgot #forgot-lottie {
         width: min(76vw, 260px);
         height: min(76vw, 260px);
         max-width: none;
@@ -1522,7 +1499,6 @@ html.rotating .ilustracao-login { opacity: 0 !important; }
 
     html[data-layout="row"] .forgot-form { max-width: 300px; gap: 0.6rem; }
     html[data-layout="row"] #container-forgot .forgot-form { transform: translateY(1.25rem); }
-    html[data-layout="row"].kb-focus #container-forgot .forgot-form { transform: none; }
 
     html[data-layout="row"] .form-coluna-sociais .mensagem p,
     html[data-layout="row"] .form-coluna-login .mensagem p {
