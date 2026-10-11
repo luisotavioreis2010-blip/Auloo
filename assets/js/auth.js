@@ -1,10 +1,10 @@
-Ôªø// ==============================================
+// ==============================================
 // AUTH.JS - Fluxo novo (OTP + senha antes de criar)
 // ==============================================
 
 function getSupabaseClient() {
     if (!supabaseClient) {
-        console.error('Supabase n√£o inicializado');
+        console.error('Supabase n„o inicializado');
         return null;
     }
     return supabaseClient;
@@ -19,10 +19,10 @@ function validateEmail(email) {
 // ===== VALIDAR SENHA FORTE =====
 function validarSenhaForte(senha) {
     if (senha.length < 8) return { valida: false, mensagem: 'Pelo menos 8 caracteres!' };
-    if (!/[A-Z]/.test(senha)) return { valida: false, mensagem: 'Falta letra mai√∫scula!' };
-    if (!/[a-z]/.test(senha)) return { valida: false, mensagem: 'Falta letra min√∫scula!' };
-    if (!/[0-9]/.test(senha)) return { valida: false, mensagem: 'Falta um n√∫mero!' };
-    if (!/[!@#$%^&*(),.?":{}|<>]/.test(senha)) return { valida: false, mensagem: 'Falta um s√≠mbolo!' };
+    if (!/[A-Z]/.test(senha)) return { valida: false, mensagem: 'Falta letra mai˙scula!' };
+    if (!/[a-z]/.test(senha)) return { valida: false, mensagem: 'Falta letra min˙scula!' };
+    if (!/[0-9]/.test(senha)) return { valida: false, mensagem: 'Falta um n˙mero!' };
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(senha)) return { valida: false, mensagem: 'Falta um sÌmbolo!' };
     return { valida: true, mensagem: 'Senha forte!' };
 }
 
@@ -59,7 +59,7 @@ async function checkEmailExists(email) {
             return { exists: false };
         }
 
-        console.log(data.exists ? 'Email EXISTE' : 'Email N√ÉO existe');
+        console.log(data.exists ? 'Email EXISTE' : 'Email N√O existe');
         return { exists: !!data.exists };
 
     } catch (error) {
@@ -68,13 +68,13 @@ async function checkEmailExists(email) {
     }
 }
 
-// ===== ENVIAR C√ìDIGO DE CADASTRO (n√£o cria usu√°rio ainda) =====
+// ===== ENVIAR C”DIGO DE CADASTRO (n„o cria usu·rio ainda) =====
 async function sendSignupCode(email) {
     var client = getSupabaseClient();
-    if (!client) return { success: false, message: 'Erro de configura√ß√£o.' };
+    if (!client) return { success: false, message: 'Erro de configuraÁ„o.' };
 
     try {
-        console.log('Enviando c√≥digo de cadastro para:', email);
+        console.log('Enviando cÛdigo de cadastro para:', email);
 
         var { data, error } = await client.functions.invoke('send-signup-otp', {
             body: { email: String(email).trim().toLowerCase() }
@@ -82,7 +82,7 @@ async function sendSignupCode(email) {
 
         if (error) {
             console.error('Erro na Edge Function:', error);
-            var msg = await extrairMensagemErro(error, 'Erro ao enviar c√≥digo.');
+            var msg = await extrairMensagemErro(error, 'Erro ao enviar cÛdigo.');
             return { success: false, message: msg };
         }
 
@@ -97,13 +97,13 @@ async function sendSignupCode(email) {
     }
 }
 
-// ===== VERIFICAR C√ìDIGO E S√ì ENT√ÉO CRIAR A CONTA =====
+// ===== VERIFICAR C”DIGO E S” ENT√O CRIAR A CONTA =====
 async function verifySignupCode(email, code, password, fullName) {
     var client = getSupabaseClient();
-    if (!client) return { success: false, message: 'Erro de configura√ß√£o.' };
+    if (!client) return { success: false, message: 'Erro de configuraÁ„o.' };
 
     try {
-        console.log('Verificando c√≥digo de cadastro...');
+        console.log('Verificando cÛdigo de cadastro...');
 
         var { data, error } = await client.functions.invoke('verify-signup-otp', {
             body: {
@@ -116,7 +116,7 @@ async function verifySignupCode(email, code, password, fullName) {
 
         if (error) {
             console.error('Erro na Edge Function:', error);
-            var msg = await extrairMensagemErro(error, 'C√≥digo inv√°lido.');
+            var msg = await extrairMensagemErro(error, 'CÛdigo inv·lido.');
             return { success: false, message: msg };
         }
 
@@ -134,7 +134,7 @@ async function verifySignupCode(email, code, password, fullName) {
 // ===== LOGIN =====
 async function loginUser(email, password) {
     var client = getSupabaseClient();
-    if (!client) return { success: false, message: 'Erro de configura√ß√£o.' };
+    if (!client) return { success: false, message: 'Erro de configuraÁ„o.' };
 
     try {
         var { data, error } = await client.auth.signInWithPassword({
@@ -162,7 +162,7 @@ async function loginUser(email, password) {
     }
 }
 
-// ===== SALVAR USU√ÅRIO NO BANCO =====
+// ===== SALVAR USU¡RIO NO BANCO =====
 async function saveUserToDatabase(user) {
     var client = getSupabaseClient();
     if (!client || !user || !user.id) return;
@@ -171,7 +171,7 @@ async function saveUserToDatabase(user) {
         var fullName = user.user_metadata?.full_name ||
                         user.user_metadata?.name ||
                         user.email?.split('@')[0] ||
-                        'Usu√°rio';
+                        'Usu·rio';
 
         var userData = {
             id: user.id,
@@ -189,22 +189,22 @@ async function saveUserToDatabase(user) {
             console.error('Erro ao salvar perfil:', error);
         }
     } catch (error) {
-        console.error('Erro ao salvar usu√°rio:', error);
+        console.error('Erro ao salvar usu·rio:', error);
     }
 }
 
 // ===== RECUPERAR SENHA =====
 async function recoverPassword(email) {
     var client = getSupabaseClient();
-    if (!client) return { success: false, message: 'Erro de configura√ß√£o.' };
+    if (!client) return { success: false, message: 'Erro de configuraÁ„o.' };
 
     try {
         var { error } = await client.auth.resetPasswordForEmail(email, {
-            redirectTo: window.location.origin + '/login.html'
+            redirectTo: window.location.origin + '/'
         });
 
         if (error) throw error;
-        return { success: true, message: 'Link de recupera√ß√£o enviado!' };
+        return { success: true, message: 'Link de recuperaÁ„o enviado!' };
     } catch (error) {
         return { success: false, message: 'Erro ao enviar link.' };
     }
@@ -213,7 +213,7 @@ async function recoverPassword(email) {
 // ===== ATUALIZAR SENHA =====
 async function updatePassword(newPassword) {
     var client = getSupabaseClient();
-    if (!client) return { success: false, message: 'Erro de configura√ß√£o.' };
+    if (!client) return { success: false, message: 'Erro de configuraÁ„o.' };
 
     try {
         var { error } = await client.auth.updateUser({ password: newPassword });
@@ -231,7 +231,7 @@ async function updatePassword(newPassword) {
 // ===== VERIFICAR SENHA ATUAL =====
 async function verifyCurrentPassword(email, password) {
     var client = getSupabaseClient();
-    if (!client) return { success: false, message: 'Erro de configura√ß√£o.' };
+    if (!client) return { success: false, message: 'Erro de configuraÁ„o.' };
 
     try {
         var { error } = await client.auth.signInWithPassword({
@@ -258,15 +258,15 @@ async function logoutUser() {
         await client.auth.signOut();
         localStorage.removeItem('auloo_user');
         localStorage.removeItem('auloo_saved_email');
-        window.location.href = 'login.html';
+        window.location.href = '/';
     } catch (error) {
         localStorage.removeItem('auloo_user');
         localStorage.removeItem('auloo_saved_email');
-        window.location.href = 'login.html';
+        window.location.href = '/';
     }
 }
 
-// ===== SANITIZA√á√ÉO =====
+// ===== SANITIZA«√O =====
 function sanitizar(texto) {
     if (!texto) return '';
     var div = document.createElement('div');
@@ -303,4 +303,4 @@ window.auth = {
     logoutUser
 };
 
-console.log('‚úÖ Auth.js carregado!');
+console.log('? Auth.js carregado!');
