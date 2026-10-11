@@ -20,6 +20,19 @@ async function sha256(text: string) {
     .map((b: number) => b.toString(16).padStart(2, '0')).join('')
 }
 
+// Procura um usuário do Auth pelo e-mail (o admin API não filtra por e-mail).
+async function acharUsuario(supabase: any, email: string) {
+  const porPagina = 200
+  for (let pagina = 1; pagina <= 10; pagina++) {
+    const { data, error } = await supabase.auth.admin.listUsers({ page: pagina, perPage: porPagina })
+    if (error || !data) return null
+    const achado = data.users.find((u: any) => (u.email || '').toLowerCase() === email)
+    if (achado) return achado
+    if (data.users.length < porPagina) return null
+  }
+  return null
+}
+
 serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
@@ -28,6 +41,7 @@ serve(async (req: Request) => {
     if (!email || !code || !password) return json({ error: 'Dados incompletos.' }, 400)
 
     const normalized = String(email).trim().toLowerCase()
+    const nome = full_name || normalized.split('@')[0]
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
@@ -61,25 +75,46 @@ serve(async (req: Request) => {
       return json({ error: 'Codigo invalido.' }, 400)
     }
 
-    const { data: created, error: createErr } = await supabase.auth.admin.createUser({
-      email: normalized,
-      password,
-      email_confirm: true,
-      user_metadata: { full_name: full_name || normalized.split('@')[0] },
-    })
+    // Código correto. Se sobrou um usuário NÃO confirmado de tentativas antigas
+    // (status "Waiting for verification"), aproveita-o em vez de falhar com
+    // "already registered". Usuário já confirmado = e-mail realmente em uso.
+    let userId: string | null = null
+    const existente = await acharUsuario(supabase, normalized)
 
-    if (createErr) return json({ error: createErr.message }, 400)
+    if (existente) {
+      if (existente.email_confirmed_at) {
+        await supabase.from('signup_pending').delete().eq('email', normalized)
+        return json({ error: 'Este email ja esta cadastrado.' }, 400)
+      }
+
+      const { data: atualizado, error: updErr } = await supabase.auth.admin.updateUserById(existente.id, {
+        password,
+        email_confirm: true,
+        user_metadata: { full_name: nome },
+      })
+      if (updErr) return json({ error: updErr.message }, 400)
+      userId = atualizado.user.id
+    } else {
+      const { data: created, error: createErr } = await supabase.auth.admin.createUser({
+        email: normalized,
+        password,
+        email_confirm: true,
+        user_metadata: { full_name: nome },
+      })
+      if (createErr) return json({ error: createErr.message }, 400)
+      userId = created.user.id
+    }
 
     await supabase.from('profiles').upsert({
-      id: created.user.id,
+      id: userId,
       email: normalized,
-      full_name: full_name || normalized.split('@')[0],
+      full_name: nome,
       updated_at: new Date().toISOString(),
     }, { onConflict: 'id' })
 
     await supabase.from('signup_pending').delete().eq('email', normalized)
 
-    return json({ success: true, user_id: created.user.id })
+    return json({ success: true, user_id: userId })
   } catch (e) {
     console.error(e)
     return json({ error: String(e) }, 500)

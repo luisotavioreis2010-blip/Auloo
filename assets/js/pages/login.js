@@ -891,19 +891,15 @@
                 }
 
                 executarComBotao(btn, 'ENVIAR CÓDIGO', async function () {
-                    var existente = await checkEmailExists(email);
-                    if (existente.exists) {
-                        mostrarMensagem('Este e-mail já está cadastrado. Faça login!', 'erro');
-                        return false;
-                    }
-
+                    /* Sem checkEmailExists aqui: a própria send-signup-otp já recusa
+                       e-mails cadastrados, e assim nada além dela é chamado. */
                     definirContexto(false, email, null);
 
                     /* Edge Function: só envia o código; NÃO cria o usuário */
                     var envio = await sendSignupCode(email);
                     if (!envio.success) {
                         var jaCadastrado = envio.message &&
-                            /already registered|j[áa] cadastrad/i.test(envio.message);
+                            /already registered|j[áa]\s+(est[áa]\s+)?cadastrad/i.test(envio.message);
                         mostrarMensagem(
                             jaCadastrado
                                 ? 'Este e-mail já está cadastrado. Faça login!'
