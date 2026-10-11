@@ -18,8 +18,20 @@
 </head>
 <body>
 
-    <nav class="navbar-desktop">
-        <span class="navbar-logo" translate="no">Auloo<span class="navbar-logo-dot">.</span></span>
+    <nav class="navbar-desktop" aria-label="Principal">
+        <div class="navbar-esq">
+            <button type="button" class="navbar-menu-btn" id="navbar-menu-btn" aria-label="Abrir menu" aria-expanded="false" aria-controls="navbar-menu">
+                <span class="navbar-menu-barras" aria-hidden="true"><i></i><i></i><i></i></span>
+            </button>
+            <span class="navbar-logo" translate="no">Auloo<span class="navbar-logo-dot">.</span></span>
+
+            <div class="navbar-menu" id="navbar-menu" hidden>
+                <span class="navbar-menu-titulo">Informações</span>
+                <a class="navbar-menu-item" href="termos.html"><span class="navbar-menu-num">I</span><span>Termos de Uso</span></a>
+                <a class="navbar-menu-item" href="privacidade.html"><span class="navbar-menu-num">II</span><span>Privacidade</span></a>
+            </div>
+        </div>
+        <a class="navbar-saiba" href="index.html">Saiba mais</a>
     </nav>
 
     <div class="desktop-bg" aria-hidden="true"></div>

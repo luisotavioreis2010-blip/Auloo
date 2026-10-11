@@ -607,6 +607,12 @@ input, textarea, .ficha-email {
 
 .ficha-item:hover { color: var(--vinho); border-bottom-color: var(--dourado); }
 
+a.ficha-item { text-decoration: none; }
+
+.ficha-item-legal:first-of-type { margin-top: 0; }
+.ficha-item-legal { color: var(--tinta-suave, var(--tinta)); }
+.ficha-item-legal:hover { color: var(--vinho); }
+
 .ficha-romano {
     min-width: 2rem;
     font-family: var(--fonte-display);
@@ -1447,4 +1453,3 @@ html.redimensionando *::after {
         transition-delay: 0s !important;
     }
 }
-

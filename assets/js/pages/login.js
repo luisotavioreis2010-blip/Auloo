@@ -1162,6 +1162,37 @@
     setupTela();
     setupTeclado();
     setupModoFoco();
+
+    /* Menu da navbar (hamburguer): abre/fecha, fecha ao clicar fora, Esc e mudar layout */
+    function setupMenuNavbar() {
+        var botao = document.getElementById('navbar-menu-btn');
+        var menu  = document.getElementById('navbar-menu');
+        if (!botao || !menu) return;
+
+        function definir(aberto) {
+            menu.hidden = !aberto;
+            botao.setAttribute('aria-expanded', aberto ? 'true' : 'false');
+            botao.setAttribute('aria-label', aberto ? 'Fechar menu' : 'Abrir menu');
+        }
+
+        botao.addEventListener('click', function (e) {
+            e.stopPropagation();
+            definir(menu.hidden);
+        });
+
+        document.addEventListener('click', function (e) {
+            if (!menu.hidden && !menu.contains(e.target)) definir(false);
+        });
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && !menu.hidden) { definir(false); botao.focus(); }
+        });
+
+        window.addEventListener('resize', function () { definir(false); });
+        window.addEventListener('orientationchange', function () { definir(false); });
+    }
+
+    setupMenuNavbar();
     setupOlhoSenha();
     setupLoginSocial();
 
