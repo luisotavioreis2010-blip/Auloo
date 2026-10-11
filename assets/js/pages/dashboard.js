@@ -61,9 +61,11 @@
          data-layout    "row" (janela mais larga que alta) ou "stacked"
        Com um campo de texto focado o teclado virtual está aberto e a
        janela fica menor: nesse caso NADA muda, e o layout continua o mesmo
-       (é isso que mantém a ficha em tela cheia ao tocar num input). */
-    function sincronizarTela() {
-        if (campoEmFoco()) return;
+       (é isso que mantém a ficha em tela cheia ao tocar num input).
+       `forcar` ignora essa trava — usado quando a janela mudou de verdade
+       (girar o aparelho, trocar de dispositivo, redimensionar). */
+    function sincronizarTela(forcar) {
+        if (!forcar && campoEmFoco()) return;
 
         var raiz = document.documentElement;
         raiz.style.setProperty('--viewport-h', window.innerHeight + 'px');
@@ -88,21 +90,53 @@
     }
 
     function setupTela() {
+        var raiz = document.documentElement;
         var temporizador = null;
+        var temporizadorQuieto = null;
         var ultimaLargura = window.innerWidth;
+        var ultimaAltura = window.innerHeight;
 
-        /* ao redimensionar (ou girar o aparelho) espera estabilizar e relê a tela */
-        window.addEventListener('resize', function () {
+        function reavaliar(forcar) {
+            sincronizarTela(forcar);
+            ajustarLarguraFicha();
+        }
+
+        /* Mudou a largura (ou a orientação): é uma mudança real de janela,
+           não o teclado. Descarta o estado do teclado e relê tudo. */
+        function aoRedimensionar() {
+            var larguraMudou = window.innerWidth !== ultimaLargura;
+            var orientacaoMudou = (window.innerWidth > window.innerHeight) !== (ultimaLargura > ultimaAltura);
+            ultimaLargura = window.innerWidth;
+            ultimaAltura = window.innerHeight;
+
+            /* sem animações enquanto a tela é redimensionada: evita a gaveta
+               e a ficha "deslizando" ao cruzar um breakpoint */
+            raiz.classList.add('redimensionando');
+            clearTimeout(temporizadorQuieto);
+            temporizadorQuieto = setTimeout(function () {
+                raiz.classList.remove('redimensionando');
+            }, 400);
+
+            if (larguraMudou || orientacaoMudou) {
+                if (campoEmFoco()) document.activeElement.blur();
+                document.body.classList.remove('campo-focado');
+                sincronizarTela(true);
+                resetarScroll();
+            }
+
             clearTimeout(temporizador);
             temporizador = setTimeout(function () {
-                sincronizarTela();
-
-                if (window.innerWidth !== ultimaLargura) {
-                    ultimaLargura = window.innerWidth;
-                    resetarScroll();
-                }
-                ajustarLarguraFicha();
+                reavaliar(larguraMudou || orientacaoMudou);
+                if (larguraMudou || orientacaoMudou) resetarScroll();
             }, 250);
+        }
+
+        window.addEventListener('resize', aoRedimensionar);
+        window.addEventListener('orientationchange', function () {
+            /* alguns navegadores só atualizam as dimensões depois do evento */
+            [100, 400, 900].forEach(function (ms) {
+                setTimeout(function () { reavaliar(!campoEmFoco()); }, ms);
+            });
         });
 
         /* teclado: ao focar, abre espaço para rolar o campo; ao sair, relê a tela */
@@ -122,8 +156,7 @@
             setTimeout(function () {
                 if (campoEmFoco()) return;
                 document.body.classList.remove('campo-focado');
-                sincronizarTela();
-                ajustarLarguraFicha();
+                reavaliar(false);
             }, 350);
         });
 
@@ -570,8 +603,11 @@
                 fecharSidebar();
             }
 
-            /* com um campo focado (teclado aberto) a ficha não fecha por clique fora */
-            if (fichaAberta() && !ficha.contains(alvo) &&
+            /* Só no modo compacto (a ficha cobre a tela) um clique fora fecha.
+               No desktop ela fica ao lado do conteúdo e da sidebar: passar o
+               mouse ou clicar na sidebar não pode fechá-la. Com um campo
+               focado (teclado aberto) também não fecha. */
+            if (mqCompacto.matches && fichaAberta() && !ficha.contains(alvo) &&
                 !(perfilBotao && perfilBotao.contains(alvo)) && !campoEmFoco()) {
                 fecharFicha();
             }
@@ -590,8 +626,20 @@
             fecharFicha();
         });
 
-        /* ao cruzar o breakpoint, a gaveta volta ao estado fechado */
-        mqCompacto.addEventListener('change', fecharSidebar);
+        /* ao cruzar o breakpoint desktop <-> compacto o layout muda por
+           completo: gaveta e ficha voltam ao estado fechado e a tela é relida */
+        function aoCruzarBreakpoint() {
+            fecharSidebar();
+            fecharFicha();
+            if (campoEmFoco()) document.activeElement.blur();
+            document.body.classList.remove('campo-focado');
+            sincronizarTela(true);
+            resetarScroll();
+            ajustarLarguraFicha();
+        }
+
+        if (mqCompacto.addEventListener) mqCompacto.addEventListener('change', aoCruzarBreakpoint);
+        else if (mqCompacto.addListener) mqCompacto.addListener(aoCruzarBreakpoint);
     }
 
     /* ==============================================

@@ -59,7 +59,8 @@
     --transicao: 0.3s var(--ease);
 
     /* altura útil da tela — o JS trava no valor real (teclado não afeta) */
-    --viewport-h: 100lvh;
+    --viewport-h: 100vh;
+    --viewport-h: 100dvh;
 
     /* layout */
     --navbar-h: 68px;
@@ -776,7 +777,8 @@ input, textarea, .ficha-email {
     align-items: center;
     justify-content: center;
     gap: var(--main-gap);
-    min-height: calc(100lvh - var(--navbar-h));
+    min-height: calc(100vh - var(--navbar-h));
+    min-height: calc(100dvh - var(--navbar-h));
     margin-left: var(--sidebar-colapsada);
     padding: var(--main-pad);
 }
@@ -1419,6 +1421,18 @@ input, textarea, .ficha-email {
         --link-pad-x: 1.1rem;
         --volume-pad: 1.2rem 1.3rem 2.5rem;
     }
+}
+
+/* ==============================================
+   Durante o redimensionamento (classe posta pelo dashboard.js) nada
+   anima: a gaveta e a ficha não "deslizam" ao cruzar um breakpoint.
+   ============================================== */
+html.redimensionando,
+html.redimensionando *,
+html.redimensionando *::before,
+html.redimensionando *::after {
+    transition: none !important;
+    animation: none !important;
 }
 
 /* ==============================================

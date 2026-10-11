@@ -179,10 +179,8 @@
         window.addEventListener('resize', medir);
 
         window.addEventListener('orientationchange', function () {
-            raiz.classList.add('rotating');
             maiorAltura = 0;
-            [50, 300, 600].forEach(function (ms) { setTimeout(medir, ms); });
-            setTimeout(function () { raiz.classList.remove('rotating'); }, ROTATING_MS);
+            [50, 300, 600, 1000].forEach(function (ms) { setTimeout(medir, ms); });
         });
 
         medir();
@@ -256,8 +254,20 @@
         }
     }
 
+    /* Qualquer mudança real de geometria (girar o aparelho, trocar o
+       dispositivo no DevTools, redimensionar a janela) invalida o que foi
+       medido antes. O teclado virtual NÃO muda a largura nem a orientação,
+       então ele nunca é confundido com isso. */
     function setupTela() {
         var temporizador = null;
+        var orientacao = orientacaoAtual();
+        var largura = window.innerWidth;
+
+        function reavaliar() {
+            sincronizarTela();
+            agendarAltura();
+            resetarScroll();
+        }
 
         function agendar() {
             clearTimeout(temporizador);
@@ -267,29 +277,28 @@
             }, 250);
         }
 
-        var orientacao = orientacaoAtual();
-
-        function aoGirar() {
-            var nova = orientacaoAtual();
-            if (nova === orientacao) return;
-            orientacao = nova;
+        function aoMudarGeometria() {
+            var novaOrientacao = orientacaoAtual();
+            var novaLargura = window.innerWidth;
+            if (novaOrientacao === orientacao && novaLargura === largura) return;
+            orientacao = novaOrientacao;
+            largura = novaLargura;
 
             raiz.classList.add('rotating');
             reiniciarEstadoTeclado();
-            [60, 250, 600, 1100, 1800].forEach(function (ms) {
-                setTimeout(function () {
-                    sincronizarTela();
-                    agendarAltura();
-                    resetarScroll();
-                }, ms);
-            });
-            setTimeout(function () { raiz.classList.remove('rotating'); }, 700);
+            form.style.minHeight = '';          /* altura medida no layout antigo */
+
+            reavaliar();
+            [60, 250, 600, 1100, 1800].forEach(function (ms) { setTimeout(reavaliar, ms); });
+            setTimeout(function () { raiz.classList.remove('rotating'); }, ROTATING_MS + 300);
         }
 
-        window.addEventListener('resize', function () { aoGirar(); agendar(); });
-        window.addEventListener('orientationchange', function () { aoGirar(); agendar(); });
+        function aoRedimensionar() { aoMudarGeometria(); agendar(); }
+
+        window.addEventListener('resize', aoRedimensionar);
+        window.addEventListener('orientationchange', aoRedimensionar);
         if (window.screen && screen.orientation && screen.orientation.addEventListener) {
-            screen.orientation.addEventListener('change', function () { aoGirar(); agendar(); });
+            screen.orientation.addEventListener('change', aoRedimensionar);
         }
 
         document.addEventListener('focusout', function () {
@@ -298,8 +307,10 @@
             }, 400);
         });
 
+        /* Vigia: se o teclado já fechou mas sobrou modo foco, deslocamento
+           ou layout defasado, corrige sozinho. */
         setInterval(function () {
-            if (campoEmFoco() || tecladoAberto()) return;
+            if (document.hidden || campoEmFoco() || tecladoAberto()) return;
             if (raiz.classList.contains('kb-focus') || offsetAtual !== 0 ||
                 raiz.style.getPropertyValue('--kb-visivel')) {
                 limparAtivos();
@@ -308,6 +319,7 @@
                 raiz.style.removeProperty('--kb-visivel');
                 resetarScroll();
             }
+            aoMudarGeometria();
             sincronizarTela();
         }, 1500);
     }
@@ -957,13 +969,6 @@
             btn.addEventListener('click', verificar);
             ligarCaixasCodigo(caixas, verificar);
             caixas[0].focus();
-
-            setTimeout(function () {
-                var alvo = $('caixas-cadastro');
-                if (alvo && alvo.scrollIntoView) {
-                    alvo.scrollIntoView({ block: 'center', behavior: 'smooth' });
-                }
-            }, 300);
         }
 
         function etapaSenha() {
