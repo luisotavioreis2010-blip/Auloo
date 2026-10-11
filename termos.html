@@ -2,63 +2,441 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Termos de Serviço do Auloo: regras de uso da plataforma, responsabilidades e condições da conta.">
     <title>Termos de Serviço | Auloo</title>
     <link rel="icon" type="image/png" href="assets/img/logo/auloo-logo.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600;1,700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400;1,500&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/global.css">
     <style>
-        body { background: #F0E8D8; font-family: Georgia, serif; color: #1A1614; padding: 2rem 1rem; }
-        main { max-width: 800px; margin: 0 auto; background: #F8F2E4; padding: 3rem 2.5rem; border: 1px solid #C9B896; line-height: 1.7; }
-        h1 { color: #4A0E0E; font-size: 2rem; margin-bottom: 2rem; }
-        h2 { color: #4A0E0E; font-size: 1.3rem; margin: 2rem 0 1rem; }
-        p, li { font-size: 1rem; margin-bottom: 1rem; }
-        a { color: #B8894A; }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --vinho: #4A0E0E;
+            --vinho-escuro: #3D0F0F;
+            --dourado: #B8894A;
+            --dourado-claro: #D9BC8A;
+            --fundo: #E5D9C0;
+            --creme: #F0E8D8;
+            --papel: #F8F2E4;
+            --tinta: #1A1614;
+            --tinta-suave: #6B5F4A;
+            --linha: rgba(184, 137, 74, 0.45);
+            --linha-suave: rgba(184, 137, 74, 0.25);
+
+            --fonte-titulo: 'Playfair Display', Georgia, serif;
+            --fonte-texto: 'Cormorant Garamond', Georgia, serif;
+            --fonte-corpo: 'Poppins', system-ui, sans-serif;
+
+            --gutter: clamp(1.25rem, 5vw, 3rem);
+            --navbar-h: 64px;
+        }
+
+        html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+
+        body {
+            font-family: var(--fonte-corpo);
+            color: var(--tinta);
+            background: var(--creme);
+            line-height: 1.65;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+        }
+
+        a { color: inherit; }
+
+        :focus-visible { outline: 2px solid var(--dourado); outline-offset: 3px; }
+
+        /* ---------- Navbar ---------- */
+        .navbar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: var(--navbar-h);
+            padding: 0 var(--gutter);
+            padding-top: env(safe-area-inset-top);
+            background: rgba(229, 217, 192, 0.92);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--linha);
+        }
+
+        .logo {
+            font-family: var(--fonte-titulo);
+            font-size: 1.45rem;
+            font-weight: 700;
+            font-style: italic;
+            letter-spacing: 3px;
+            color: var(--vinho);
+            text-decoration: none;
+        }
+
+        .logo-dot { color: var(--dourado); font-style: normal; }
+
+        .nav-links { display: flex; align-items: center; gap: clamp(1rem, 3vw, 2.25rem); }
+
+        .nav-links a {
+            font-size: 0.72rem;
+            font-weight: 500;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            text-decoration: none;
+            color: var(--tinta);
+            transition: color 0.25s;
+        }
+
+        .nav-links a:hover { color: var(--dourado); }
+
+        .nav-links .btn-entrar {
+            padding: 0.65rem 1.4rem;
+            color: var(--papel);
+            background: var(--vinho);
+            border-radius: 2px;
+            transition: background 0.25s;
+        }
+
+        .nav-links .btn-entrar:hover { background: var(--dourado); color: var(--papel); }
+
+        /* ---------- Ornamento e rótulos ---------- */
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.9rem;
+            font-size: 0.7rem;
+            font-weight: 500;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--dourado);
+        }
+
+        .eyebrow::before, .eyebrow::after {
+            content: '';
+            width: 2rem;
+            height: 1px;
+            background: var(--dourado);
+        }
+
+        .ornamento {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            color: var(--dourado);
+            font-size: 0.8rem;
+        }
+
+        .ornamento::before, .ornamento::after {
+            content: '';
+            flex: 0 1 5rem;
+            height: 1px;
+            background: var(--linha);
+        }
+
+        /* ---------- Botões ---------- */
+        .btn-primario, .btn-secundario {
+            display: inline-block;
+            padding: 1.05rem 2.4rem;
+            font-size: 0.72rem;
+            font-weight: 500;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            text-decoration: none;
+            border-radius: 2px;
+            transition: background 0.25s, color 0.25s, border-color 0.25s;
+        }
+
+        .btn-primario { background: var(--vinho); color: var(--papel); border: 1px solid var(--vinho); }
+        .btn-primario:hover { background: var(--dourado); border-color: var(--dourado); }
+
+        .btn-secundario { color: var(--vinho); border: 1px solid var(--vinho); }
+        .btn-secundario:hover { background: var(--vinho); color: var(--papel); }
+
+        /* ---------- Rodapé ---------- */
+        footer {
+            padding: 3.5rem var(--gutter) calc(2.5rem + env(safe-area-inset-bottom));
+            background: var(--vinho-escuro);
+            color: rgba(250, 246, 238, 0.7);
+            text-align: center;
+        }
+
+        footer .logo { display: inline-block; margin-bottom: 1.75rem; color: #FAF6EE; }
+
+        .footer-links {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.75rem 2.25rem;
+            margin-bottom: 2rem;
+        }
+
+        .footer-links a {
+            font-size: 0.7rem;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            text-decoration: none;
+            color: var(--dourado-claro);
+            transition: color 0.25s;
+        }
+
+        .footer-links a:hover { color: #fff; }
+
+        footer .copy {
+            padding-top: 1.75rem;
+            border-top: 1px solid rgba(217, 188, 138, 0.2);
+            font-family: var(--fonte-texto);
+            font-size: 1rem;
+            font-style: italic;
+            letter-spacing: 0.4px;
+        }
+
+        @media (max-width: 640px) {
+            .navbar { --navbar-h: 56px; }
+            .nav-links a:not(.btn-entrar) { display: none; }
+            .logo { font-size: 1.25rem; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html { scroll-behavior: auto; }
+            *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+        }
+
+        .documento {
+            padding: calc(var(--navbar-h) + clamp(2.5rem, 7vw, 5rem)) var(--gutter) clamp(3.5rem, 8vw, 6rem);
+            background: radial-gradient(ellipse at 50% 0%, #F5EDDD 0%, var(--fundo) 80%);
+        }
+
+        .documento-inner {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: clamp(2rem, 6vw, 4.5rem) clamp(1.35rem, 6vw, 4.5rem);
+            background: var(--papel);
+            border: 1px solid var(--linha);
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.5), 0 24px 70px rgba(74, 14, 14, 0.14);
+        }
+
+        .documento-cabecalho {
+            padding-bottom: clamp(1.75rem, 4vw, 2.75rem);
+            margin-bottom: clamp(0.5rem, 2vw, 1.5rem);
+            text-align: center;
+            border-bottom: 1px solid var(--linha);
+        }
+
+        .documento-cabecalho .eyebrow { margin-bottom: 1.5rem; }
+
+        .documento h1 {
+            font-family: var(--fonte-titulo);
+            font-size: clamp(2rem, 6vw, 3.2rem);
+            font-weight: 700;
+            font-style: italic;
+            line-height: 1.1;
+            letter-spacing: -0.3px;
+            color: var(--vinho);
+            margin-bottom: 1.1rem;
+        }
+
+        .atualizacao {
+            font-family: var(--fonte-texto);
+            font-size: 1.15rem;
+            font-style: italic;
+            color: var(--tinta-suave);
+        }
+
+        .secao {
+            display: grid;
+            grid-template-columns: 3.5rem 1fr;
+            column-gap: clamp(0.75rem, 3vw, 2rem);
+            padding: clamp(1.5rem, 4vw, 2.25rem) 0;
+            border-bottom: 1px solid var(--linha-suave);
+        }
+
+        .secao:last-of-type { border-bottom: 0; }
+
+        .secao-num {
+            padding-top: 0.2rem;
+            font-family: var(--fonte-titulo);
+            font-size: 1.1rem;
+            font-style: italic;
+            letter-spacing: 2px;
+            color: var(--dourado);
+        }
+
+        .secao h2 {
+            font-family: var(--fonte-titulo);
+            font-size: clamp(1.25rem, 3vw, 1.6rem);
+            font-weight: 600;
+            font-style: italic;
+            line-height: 1.25;
+            color: var(--vinho);
+            margin-bottom: 0.9rem;
+        }
+
+        .secao p, .secao li { font-size: 0.95rem; line-height: 1.8; color: var(--tinta); }
+        .secao p + p, .secao p + ul, .secao ul + p { margin-top: 0.9rem; }
+
+        .secao ul { list-style: none; }
+
+        .secao li {
+            position: relative;
+            padding-left: 1.35rem;
+            margin-top: 0.55rem;
+        }
+
+        .secao li::before {
+            content: '\2726';
+            position: absolute;
+            left: 0;
+            top: 0.15rem;
+            font-size: 0.6rem;
+            line-height: 1.9;
+            color: var(--dourado);
+        }
+
+        .secao strong { font-weight: 600; color: var(--vinho); }
+
+        .secao a, .voltar a {
+            color: var(--vinho);
+            text-decoration: underline;
+            text-decoration-color: var(--dourado);
+            text-underline-offset: 3px;
+            transition: color 0.25s;
+        }
+
+        .secao a:hover, .voltar a:hover { color: var(--dourado); }
+
+        .voltar {
+            padding-top: clamp(1.75rem, 4vw, 2.5rem);
+            margin-top: 0.5rem;
+            border-top: 1px solid var(--linha);
+            text-align: center;
+        }
+
+        .voltar a {
+            font-size: 0.72rem;
+            font-weight: 500;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            text-decoration: none;
+        }
+
+        @media (max-width: 560px) {
+            .secao { grid-template-columns: 1fr; }
+            .secao-num { padding: 0 0 0.35rem; font-size: 0.95rem; }
+        }
+
     </style>
 </head>
 <body>
-<main>
-    <h1>Termos de Serviço</h1>
-    <p>Última atualização: Outubro de 2026</p>
 
-    <h2>1. Aceitação dos termos</h2>
-    <p>Ao criar uma conta no Auloo, você concorda com estes Termos de Serviço. Se não concordar, não utilize a plataforma.</p>
+<nav class="navbar" aria-label="Principal">
+    <a href="/" class="logo" translate="no">Auloo<span class="logo-dot">.</span></a>
+    <div class="nav-links">
+        <a href="/">Início</a>
+        <a href="/login.html" class="btn-entrar">Entrar</a>
+    </div>
+</nav>
 
-    <h2>2. Descrição do serviço</h2>
-    <p>O Auloo é uma plataforma educacional que oferece painel de estudos, calendário e ferramentas de organização para estudantes.</p>
+<main class="documento">
+    <article class="documento-inner">
+        <header class="documento-cabecalho">
+            <span class="eyebrow">Documento legal</span>
+            <h1>Termos de Serviço</h1>
+            <p class="atualizacao">Última atualização: outubro de 2026</p>
+        </header>
 
-    <h2>3. Conta do usuário</h2>
-    <ul>
-        <li>Você é responsável pela veracidade dos dados fornecidos</li>
-        <li>Você é responsável por manter sua senha em segurança</li>
-        <li>É proibido criar contas com informações falsas</li>
-        <li>Não é permitido compartilhar sua conta com terceiros</li>
-    </ul>
+        <section class="secao">
+            <span class="secao-num" aria-hidden="true">01</span>
+            <div>
+                <h2>Aceitação dos termos</h2>
+                <p>Ao criar uma conta no Auloo, você concorda com estes Termos de Serviço. Se não concordar, não utilize a plataforma.</p>
+            </div>
+        </section>
+        <section class="secao">
+            <span class="secao-num" aria-hidden="true">02</span>
+            <div>
+                <h2>Descrição do serviço</h2>
+                <p>O Auloo é uma plataforma educacional que oferece painel de estudos, calendário e ferramentas de organização para estudantes.</p>
+            </div>
+        </section>
+        <section class="secao">
+            <span class="secao-num" aria-hidden="true">03</span>
+            <div>
+                <h2>Conta do usuário</h2>
+                <ul>
+                    <li>Você é responsável pela veracidade dos dados fornecidos</li>
+                    <li>Você é responsável por manter sua senha em segurança</li>
+                    <li>É proibido criar contas com informações falsas</li>
+                    <li>Não é permitido compartilhar sua conta com terceiros</li>
+                </ul>
+            </div>
+        </section>
+        <section class="secao">
+            <span class="secao-num" aria-hidden="true">04</span>
+            <div>
+                <h2>Uso aceitável</h2>
+                <p>Você concorda em <strong>não</strong>:</p>
+                <ul>
+                    <li>Usar a plataforma para atividades ilegais</li>
+                    <li>Tentar acessar contas de outros usuários</li>
+                    <li>Fazer engenharia reversa do sistema</li>
+                    <li>Sobrecarregar os servidores com requisições maliciosas</li>
+                </ul>
+            </div>
+        </section>
+        <section class="secao">
+            <span class="secao-num" aria-hidden="true">05</span>
+            <div>
+                <h2>Propriedade intelectual</h2>
+                <p>Todo o conteúdo do Auloo (código, design, marca) é protegido por direitos autorais. Você recebe uma licença limitada e não exclusiva para uso pessoal.</p>
+            </div>
+        </section>
+        <section class="secao">
+            <span class="secao-num" aria-hidden="true">06</span>
+            <div>
+                <h2>Suspensão de contas</h2>
+                <p>Podemos suspender ou encerrar contas que violem estes termos, sem aviso prévio.</p>
+            </div>
+        </section>
+        <section class="secao">
+            <span class="secao-num" aria-hidden="true">07</span>
+            <div>
+                <h2>Limitação de responsabilidade</h2>
+                <p>O Auloo é fornecido &ldquo;como está&rdquo;. Não garantimos disponibilidade ininterrupta nem nos responsabilizamos por eventuais perdas de dados.</p>
+            </div>
+        </section>
+        <section class="secao">
+            <span class="secao-num" aria-hidden="true">08</span>
+            <div>
+                <h2>Alterações nos termos</h2>
+                <p>Podemos atualizar estes termos a qualquer momento. Alterações significativas serão comunicadas por e-mail.</p>
+            </div>
+        </section>
+        <section class="secao">
+            <span class="secao-num" aria-hidden="true">09</span>
+            <div>
+                <h2>Contato</h2>
+                <p>Dúvidas: <a href="mailto:luisotavioreis2010@gmail.com">luisotavioreis2010@gmail.com</a></p>
+            </div>
+        </section>
 
-    <h2>4. Uso aceitável</h2>
-    <p>Você concorda em NÃO:</p>
-    <ul>
-        <li>Usar a plataforma para atividades ilegais</li>
-        <li>Tentar acessar contas de outros usuários</li>
-        <li>Fazer engenharia reversa do sistema</li>
-        <li>Sobrecarregar os servidores com requisições maliciosas</li>
-    </ul>
-
-    <h2>5. Propriedade intelectual</h2>
-    <p>Todo o conteúdo do Auloo (código, design, marca) é protegido por direitos autorais. Você recebe uma licença limitada e não exclusiva para uso pessoal.</p>
-
-    <h2>6. Suspensão de contas</h2>
-    <p>Podemos suspender ou encerrar contas que violem estes termos, sem aviso prévio.</p>
-
-    <h2>7. Limitação de responsabilidade</h2>
-    <p>O Auloo é fornecido "como está". Não garantimos disponibilidade ininterrupta nem nos responsabilizamos por eventuais perdas de dados.</p>
-
-    <h2>8. Alterações nos termos</h2>
-    <p>Podemos atualizar estes termos a qualquer momento. Alterações significativas serão comunicadas por e-mail.</p>
-
-    <h2>9. Contato</h2>
-    <p>Dúvidas: <a href="mailto:luisotavioreis2010@gmail.com">luisotavioreis2010@gmail.com</a></p>
-
-    <p style="margin-top: 3rem; text-align: center;"><a href="/">← Voltar para o Auloo</a></p>
+        <p class="voltar"><a href="/">&larr; Voltar para o Auloo</a></p>
+    </article>
 </main>
+
+<footer>
+    <a href="/" class="logo" translate="no">Auloo<span class="logo-dot">.</span></a>
+    <div class="footer-links">
+        <a href="/privacidade.html">Política de Privacidade</a>
+        <a href="/termos.html">Termos de Serviço</a>
+        <a href="/login.html">Entrar</a>
+    </div>
+    <p class="copy">&copy; 2026 Auloo. Plataforma educacional.</p>
+</footer>
+
 </body>
 </html>
