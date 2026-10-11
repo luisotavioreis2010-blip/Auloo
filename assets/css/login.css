@@ -333,11 +333,12 @@ html.rotating .ilustracao-login { opacity: 0 !important; }
 
 html[data-layout="row"] .navbar-saiba { padding: 0.45rem 0.9rem; }
 
-/* nunca ultrapassa a tela: rola por dentro se faltar altura */
+/* nunca ultrapassa a tela: se faltar altura, rola por dentro (com pequena folga embaixo) */
 .saiba-menu {
-    max-height: calc(var(--app-h, 100dvh) - var(--navbar-h) - 1.4rem);
+    max-height: calc(var(--app-h, 100dvh) - var(--navbar-h) - 1.2rem);
     overflow-y: auto;
     overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
 }
 
 /* celular deitado: as tres opcoes lado a lado, sem cortar */
