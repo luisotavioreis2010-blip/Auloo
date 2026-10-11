@@ -7,7 +7,7 @@
    3. Offset do teclado            9. Cadastro (e-mail → código → senha)
    4. Modo foco (row)             10. Nova senha
    5. Mensagens                   11. Olho da senha e login social
-   6. Modos do card               12. Menu navbar e inicialização
+   6. Modos do card               12. Inicialização
 
    Dependências globais (auth.js): validateEmail, loginUser,
    checkEmailExists, validarSenhaForte, sendSignupCode,
@@ -888,6 +888,8 @@
             var caixas = Array.prototype.slice.call($('caixas-cadastro').querySelectorAll('.codigo-input'));
             var btn    = $('btn-cadastro-acao');
 
+            /* O código é guardado em memória. A validação real acontece
+               no verifySignupCode, no final, junto com a criação da conta. */
             function avancar() {
                 var codigo = caixas.map(function (c) { return c.value; }).join('');
                 if (codigo.length < caixas.length) {
@@ -1151,41 +1153,7 @@
     }
 
     /* ============================================================
-       12. MENU HAMBÚRGUER DA NAVBAR
-       ============================================================ */
-    function setupMenuNavbar() {
-        var botao = $('menu-hamburger');
-        var dropdown = $('menu-dropdown');
-        if (!botao || !dropdown) return;
-
-        function abrir() {
-            dropdown.hidden = false;
-            botao.setAttribute('aria-expanded', 'true');
-        }
-
-        function fechar() {
-            dropdown.hidden = true;
-            botao.setAttribute('aria-expanded', 'false');
-        }
-
-        botao.addEventListener('click', function (e) {
-            e.stopPropagation();
-            if (dropdown.hidden) abrir(); else fechar();
-        });
-
-        document.addEventListener('click', function (e) {
-            if (dropdown.hidden) return;
-            if (dropdown.contains(e.target) || botao.contains(e.target)) return;
-            fechar();
-        });
-
-        document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape' && !dropdown.hidden) fechar();
-        });
-    }
-
-    /* ============================================================
-       13. INICIALIZAÇÃO
+       12. INICIALIZAÇÃO
        ============================================================ */
     if (!form) return;
 
@@ -1196,7 +1164,6 @@
     setupModoFoco();
     setupOlhoSenha();
     setupLoginSocial();
-    setupMenuNavbar();
 
     form.addEventListener('submit', function (e) { e.preventDefault(); });
 

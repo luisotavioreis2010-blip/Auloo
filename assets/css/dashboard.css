@@ -1448,16 +1448,3 @@ html.redimensionando *::after {
     }
 }
 
-/* ==============================================
-   LINKS NA FICHA DO LEITOR (privacidade / termos)
-   ============================================== */
-a.ficha-item {
-    text-decoration: none;
-    color: var(--tinta);
-    cursor: pointer;
-}
-
-a.ficha-item:hover {
-    color: var(--vinho);
-    border-bottom-color: var(--dourado);
-}
