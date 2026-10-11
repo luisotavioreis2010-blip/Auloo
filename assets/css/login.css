@@ -333,6 +333,42 @@ html.rotating .ilustracao-login { opacity: 0 !important; }
 
 html[data-layout="row"] .navbar-saiba { padding: 0.45rem 0.9rem; }
 
+/* nunca ultrapassa a tela: rola por dentro se faltar altura */
+.saiba-menu {
+    max-height: calc(var(--app-h, 100dvh) - var(--navbar-h) - 1.4rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+/* celular deitado: as tres opcoes lado a lado, sem cortar */
+html[data-layout="row"] .saiba-menu {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: min(640px, calc(100vw - 2 * var(--navbar-px)));
+    padding: 0.3rem 0.5rem 0.6rem;
+}
+
+html[data-layout="row"] .saiba-menu:not([hidden]) { display: grid; }
+html[data-layout="row"] .saiba-menu::before { right: 2rem; }
+
+html[data-layout="row"] .saiba-titulo { grid-column: 1 / -1; padding: 0.7rem 1rem 0.3rem; }
+
+html[data-layout="row"] .saiba-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+    margin: 0;
+    padding: 0.8rem 0.9rem;
+    border-bottom: none;
+    border-right: 1px solid rgba(var(--dourado-rgb), 0.22);
+}
+
+html[data-layout="row"] .saiba-item:last-child { border-right: none; }
+html[data-layout="row"] .saiba-num { font-size: 1.25rem; }
+html[data-layout="row"] .saiba-corpo strong { font-size: 1rem; }
+html[data-layout="row"] .saiba-corpo small { font-size: 0.95rem; }
+html[data-layout="row"] .saiba-item::after { display: none; }
+
 .desktop-bg {
     position: fixed;
     inset: 0;

@@ -1283,7 +1283,7 @@ input, textarea, .ficha-email {
         align-items: flex-start;
         justify-content: center;
         gap: 1rem;
-        padding: 0.8rem 1.2rem 1rem 1rem;
+        padding: 0.9rem 1.2rem 0.9rem 1rem;
     }
 
     /* centraliza na vertical sem cortar o topo quando precisa rolar */
@@ -1312,7 +1312,8 @@ input, textarea, .ficha-email {
 }
 
 /* ---------- 8.3 celular em linha (paisagem) ---------- */
-@media (max-width: 900px) {
+/* inclui celulares largos (ex.: 932x430), que passam de 900px mas continuam baixos */
+@media (max-width: 900px), (max-height: 500px) {
     :root:where([data-layout="row"]) {
         --navbar-h: 52px;
         --navbar-px: 1rem;
