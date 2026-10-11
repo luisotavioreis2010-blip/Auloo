@@ -1,5 +1,5 @@
 ﻿// ==============================================
-// AUTH.JS - Completo (check-email via Edge Function)
+// AUTH.JS - Fluxo novo (OTP + senha antes de criar)
 // ==============================================
 
 function getSupabaseClient() {
@@ -131,116 +131,6 @@ async function verifySignupCode(email, code, password, fullName) {
     }
 }
 
-// ===== ENVIAR CÓDIGO DE VERIFICAÇÃO (mantido p/ compatibilidade) =====
-async function sendVerificationCode(email) {
-    var client = getSupabaseClient();
-    if (!client) return { success: false, message: 'Erro de configuração.' };
-
-    try {
-        console.log('Enviando código para:', email);
-
-        var { error } = await client.auth.signInWithOtp({
-            email: email,
-            options: {
-                shouldCreateUser: true,
-                emailRedirectTo: window.location.origin + '/dashboard.html'
-            }
-        });
-
-        if (error) {
-            console.error('Erro ao enviar código:', error);
-            return { success: false, message: error.message || 'Erro ao enviar código.' };
-        }
-
-        return { success: true, message: 'Código enviado com sucesso!' };
-    } catch (error) {
-        console.error('Erro inesperado:', error);
-        return { success: false, message: 'Erro inesperado. Tente novamente.' };
-    }
-}
-
-// ===== VERIFICAR CÓDIGO (compatibilidade) =====
-async function verifyCodeWithSupabase(email, code) {
-    var client = getSupabaseClient();
-    if (!client) return { success: false, message: 'Erro de configuração.' };
-
-    try {
-        console.log('Verificando código:', code);
-
-        var { data, error } = await client.auth.verifyOtp({
-            email: email,
-            token: code,
-            type: 'email'
-        });
-
-        if (error) {
-            console.error('Erro na verificação:', error);
-            return { success: false, message: 'Código inválido ou expirado.' };
-        }
-
-        if (data.user) {
-            await saveUserToDatabase(data.user);
-            localStorage.setItem('auloo_user', JSON.stringify(data.user));
-            localStorage.setItem('auloo_saved_email', email);
-            return { success: true, user: data.user };
-        }
-
-        return { success: false, message: 'Erro ao verificar código.' };
-    } catch (error) {
-        console.error('Erro na verificação:', error);
-        return { success: false, message: 'Erro ao verificar código.' };
-    }
-}
-
-// ===== VERIFICAR CÓDIGO E JÁ DEFINIR SENHA =====
-async function verifyCodeAndSetPassword(email, code, password) {
-    var client = getSupabaseClient();
-    if (!client) return { success: false, message: 'Erro de configuração.' };
-
-    try {
-        console.log('Verificando código e definindo senha...');
-
-        var { data, error } = await client.auth.verifyOtp({
-            email: email,
-            token: code,
-            type: 'email'
-        });
-
-        if (error) {
-            console.error('Erro na verificação:', error);
-            return { success: false, message: 'Código inválido ou expirado.' };
-        }
-
-        if (!data.user) {
-            return { success: false, message: 'Erro ao verificar código.' };
-        }
-
-        if (password) {
-            var { error: pwdError } = await client.auth.updateUser({ password: password });
-
-            if (pwdError) {
-                console.error('Erro ao definir senha:', pwdError);
-                return {
-                    success: true,
-                    user: data.user,
-                    warning: 'Conta criada, mas senha não foi definida. Use "Forgot Password".'
-                };
-            }
-        }
-
-        await saveUserToDatabase(data.user);
-
-        localStorage.setItem('auloo_user', JSON.stringify(data.user));
-        localStorage.setItem('auloo_saved_email', email);
-
-        return { success: true, user: data.user };
-
-    } catch (error) {
-        console.error('Erro na verificação:', error);
-        return { success: false, message: 'Erro ao verificar código.' };
-    }
-}
-
 // ===== LOGIN =====
 async function loginUser(email, password) {
     var client = getSupabaseClient();
@@ -267,43 +157,6 @@ async function loginUser(email, password) {
         }
 
         return { success: false, message: 'Erro ao fazer login.' };
-    } catch (error) {
-        return { success: false, message: 'Erro inesperado.' };
-    }
-}
-
-// ===== CRIAR USUÁRIO =====
-async function createUserWithPassword(email, password, name) {
-    var client = getSupabaseClient();
-    if (!client) return { success: false, message: 'Erro de configuração.' };
-
-    try {
-        var { data, error } = await client.auth.signUp({
-            email: email,
-            password: password,
-            options: {
-                data: { full_name: name || email.split('@')[0] },
-                emailRedirectTo: window.location.origin + '/dashboard.html'
-            }
-        });
-
-        if (error) {
-            if (error.message.includes('already registered')) {
-                return { success: false, message: 'Este e-mail já está cadastrado.' };
-            }
-            return { success: false, message: error.message };
-        }
-
-        if (data.user) {
-            await saveUserToDatabase(data.user);
-            if (data.session) {
-                localStorage.setItem('auloo_user', JSON.stringify(data.user));
-                localStorage.setItem('auloo_saved_email', email);
-            }
-            return { success: true, user: data.user, session: data.session };
-        }
-
-        return { success: false, message: 'Erro ao criar conta.' };
     } catch (error) {
         return { success: false, message: 'Erro inesperado.' };
     }
@@ -440,13 +293,9 @@ window.auth = {
     mostrarLoading,
     restaurarBotao,
     checkEmailExists,
-    sendVerificationCode,
     sendSignupCode,
-    verifyCodeWithSupabase,
     verifySignupCode,
-    verifyCodeAndSetPassword,
     loginUser,
-    createUserWithPassword,
     saveUserToDatabase,
     recoverPassword,
     updatePassword,
