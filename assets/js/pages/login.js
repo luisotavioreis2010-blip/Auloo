@@ -842,9 +842,13 @@
                 if (typeof extrairMensagemErro === 'function') {
                     msg = await extrairMensagemErro(resposta.error, msg);
                 }
+                /* Função antiga ainda publicada (não conhece check_only): segue
+                   para a senha; o código é conferido no passo final. */
+                if (/dados incompletos/i.test(msg)) return { success: true, adiado: true };
                 return { success: false, message: msg };
             }
             if (resposta.data && resposta.data.error) {
+                if (/dados incompletos/i.test(resposta.data.error)) return { success: true, adiado: true };
                 return { success: false, message: resposta.data.error };
             }
             return { success: true };
@@ -969,8 +973,11 @@
                 });
             }
 
+            /* O código só é conferido ao clicar em CONFIRMAR (ou Enter),
+               nunca ao digitar o último número. */
             btn.addEventListener('click', avancar);
-            ligarCaixasCodigo(caixas, avancar);
+            ligarCaixasCodigo(caixas, function () {});
+            caixas.forEach(function (caixa) { aoPressionarEnter(caixa, avancar); });
             caixas[0].focus();
         }
 
