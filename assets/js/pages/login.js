@@ -10,9 +10,8 @@
    6. Modos do card               12. Inicialização
 
    Dependências globais (auth.js): validateEmail, loginUser,
-   checkEmailExists, validarSenhaForte, sendVerificationCode,
-   verifyCodeWithSupabase, updatePassword, saveUserToDatabase,
-   createUserWithPassword, recoverPassword.
+   checkEmailExists, validarSenhaForte, sendSignupCode,
+   verifySignupCode, recoverPassword.
    ============================================================ */
 (function () {
     'use strict';
@@ -179,10 +178,8 @@
         window.addEventListener('resize', medir);
 
         window.addEventListener('orientationchange', function () {
-            raiz.classList.add('rotating');
             maiorAltura = 0;
-            [50, 300, 600].forEach(function (ms) { setTimeout(medir, ms); });
-            setTimeout(function () { raiz.classList.remove('rotating'); }, ROTATING_MS);
+            [50, 300, 600, 1000].forEach(function (ms) { setTimeout(medir, ms); });
         });
 
         medir();
@@ -256,8 +253,20 @@
         }
     }
 
+    /* Qualquer mudança real de geometria (girar o aparelho, trocar o
+       dispositivo no DevTools, redimensionar a janela) invalida o que foi
+       medido antes. O teclado virtual NÃO muda a largura nem a orientação,
+       então ele nunca é confundido com isso. */
     function setupTela() {
         var temporizador = null;
+        var orientacao = orientacaoAtual();
+        var largura = window.innerWidth;
+
+        function reavaliar() {
+            sincronizarTela();
+            agendarAltura();
+            resetarScroll();
+        }
 
         function agendar() {
             clearTimeout(temporizador);
@@ -267,29 +276,28 @@
             }, 250);
         }
 
-        var orientacao = orientacaoAtual();
-
-        function aoGirar() {
-            var nova = orientacaoAtual();
-            if (nova === orientacao) return;
-            orientacao = nova;
+        function aoMudarGeometria() {
+            var novaOrientacao = orientacaoAtual();
+            var novaLargura = window.innerWidth;
+            if (novaOrientacao === orientacao && novaLargura === largura) return;
+            orientacao = novaOrientacao;
+            largura = novaLargura;
 
             raiz.classList.add('rotating');
             reiniciarEstadoTeclado();
-            [60, 250, 600, 1100, 1800].forEach(function (ms) {
-                setTimeout(function () {
-                    sincronizarTela();
-                    agendarAltura();
-                    resetarScroll();
-                }, ms);
-            });
-            setTimeout(function () { raiz.classList.remove('rotating'); }, 700);
+            form.style.minHeight = '';          /* altura medida no layout antigo */
+
+            reavaliar();
+            [60, 250, 600, 1100, 1800].forEach(function (ms) { setTimeout(reavaliar, ms); });
+            setTimeout(function () { raiz.classList.remove('rotating'); }, ROTATING_MS + 300);
         }
 
-        window.addEventListener('resize', function () { aoGirar(); agendar(); });
-        window.addEventListener('orientationchange', function () { aoGirar(); agendar(); });
+        function aoRedimensionar() { aoMudarGeometria(); agendar(); }
+
+        window.addEventListener('resize', aoRedimensionar);
+        window.addEventListener('orientationchange', aoRedimensionar);
         if (window.screen && screen.orientation && screen.orientation.addEventListener) {
-            screen.orientation.addEventListener('change', function () { aoGirar(); agendar(); });
+            screen.orientation.addEventListener('change', aoRedimensionar);
         }
 
         document.addEventListener('focusout', function () {
@@ -298,8 +306,10 @@
             }, 400);
         });
 
+        /* Vigia: se o teclado já fechou mas sobrou modo foco, deslocamento
+           ou layout defasado, corrige sozinho. */
         setInterval(function () {
-            if (campoEmFoco() || tecladoAberto()) return;
+            if (document.hidden || campoEmFoco() || tecladoAberto()) return;
             if (raiz.classList.contains('kb-focus') || offsetAtual !== 0 ||
                 raiz.style.getPropertyValue('--kb-visivel')) {
                 limparAtivos();
@@ -308,6 +318,7 @@
                 raiz.style.removeProperty('--kb-visivel');
                 resetarScroll();
             }
+            aoMudarGeometria();
             sincronizarTela();
         }, 1500);
     }
@@ -829,7 +840,7 @@
 
     function mostrarCadastro() {
         var emailInicial = sanitizar(inputEmail.value);
-        var estado = { email: '', verificacao: null };
+        var estado = { email: '', codigo: '' };
 
         abrirModo(
             '<div id="container-forgot" class="modo-dois-campos">' +
@@ -888,10 +899,11 @@
 
                     definirContexto(false, email, null);
 
-                    var envio = await sendVerificationCode(email);
+                    /* Edge Function: só envia o código; NÃO cria o usuário */
+                    var envio = await sendSignupCode(email);
                     if (!envio.success) {
                         var jaCadastrado = envio.message &&
-                            envio.message.indexOf('already registered') !== -1;
+                            /already registered|j[áa] cadastrad/i.test(envio.message);
                         mostrarMensagem(
                             jaCadastrado
                                 ? 'Este e-mail já está cadastrado. Faça login!'
@@ -925,45 +937,22 @@
 
             var caixas = Array.prototype.slice.call($('caixas-cadastro').querySelectorAll('.codigo-input'));
             var btn    = $('btn-cadastro-acao');
-            var verificando = false;
 
-            function codigoDigitado() {
-                return caixas.map(function (c) { return c.value; }).join('');
-            }
-
-            function verificar() {
-                var codigo = codigoDigitado();
+            /* A conta só é criada no último passo: código e senha seguem juntos
+               para o servidor, que confere o código e então cria o usuário. */
+            function avancar() {
+                var codigo = caixas.map(function (c) { return c.value; }).join('');
                 if (codigo.length < caixas.length) {
                     mostrarMensagem('Digite os 6 dígitos do código!', 'erro');
                     return;
                 }
-                if (verificando) return;
-                verificando = true;
-
-                executarComBotao(btn, 'CONFIRMAR', async function () {
-                    var resultado = await verifyCodeWithSupabase(estado.email, codigo);
-                    if (!resultado.success) {
-                        mostrarMensagem('Código incorreto. Tente novamente.', 'erro');
-                        caixas.forEach(function (c) { c.value = ''; });
-                        caixas[0].focus();
-                        return false;
-                    }
-                    estado.verificacao = resultado;
-                    etapaSenha();
-                    return false;
-                }).then(function () { verificando = false; }, function () { verificando = false; });
+                estado.codigo = codigo;
+                etapaSenha();
             }
 
-            btn.addEventListener('click', verificar);
-            ligarCaixasCodigo(caixas, verificar);
+            btn.addEventListener('click', avancar);
+            ligarCaixasCodigo(caixas, avancar);
             caixas[0].focus();
-
-            setTimeout(function () {
-                var alvo = $('caixas-cadastro');
-                if (alvo && alvo.scrollIntoView) {
-                    alvo.scrollIntoView({ block: 'center', behavior: 'smooth' });
-                }
-            }, 300);
         }
 
         function etapaSenha() {
@@ -1005,20 +994,19 @@
                 executarComBotao(btn, 'CONFIRMAR', async function () {
                     definirContexto(false, estado.email, senha.value);
 
-                    if (estado.verificacao.user) {
-                        await updatePassword(senha.value);
-                        saveUserToDatabase(estado.verificacao.user);
-                    } else {
-                        var criacao = await createUserWithPassword(
-                            estado.email, senha.value, estado.email.split('@')[0]
-                        );
-                        if (!criacao.success) {
-                            mostrarMensagem(
-                                criacao.message || 'Não foi possível criar a conta.',
-                                'erro'
-                            );
-                            return false;
+                    var criacao = await verifySignupCode(
+                        estado.email, estado.codigo, senha.value, estado.email.split('@')[0]
+                    );
+
+                    if (!criacao.success) {
+                        var msg = criacao.message || 'Não foi possível criar a conta.';
+                        /* código errado/expirado: volta para digitar o código de novo */
+                        if (/c[óo]digo|code|expir|inv[áa]lid/i.test(msg)) {
+                            estado.codigo = '';
+                            etapaCodigo();
                         }
+                        mostrarMensagem(msg, 'erro');
+                        return false;
                     }
 
                     voltarParaLogin();
