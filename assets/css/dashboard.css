@@ -627,45 +627,63 @@ input, textarea, .ficha-email {
 .ficha-saiba-lista {
     display: flex;
     flex-direction: column;
-    margin: 0.4rem 0 0.6rem;
-    padding: 0.2rem 1rem;
+    margin: 0.5rem 0 0.7rem;
+    padding: 0.2rem 0.4rem;
     background: var(--papel-claro);
-    border: 1px solid rgba(184, 137, 74, 0.4);
-    border-left: 2px solid var(--dourado);
-    animation: ficha-saiba-in 0.22s ease both;
+    border: 1px solid rgba(184, 137, 74, 0.45);
+    box-shadow: inset 0 0 0 3px var(--papel-claro), inset 0 0 0 4px rgba(184, 137, 74, 0.22);
+    animation: ficha-saiba-in 0.24s ease both;
 }
 
 @keyframes ficha-saiba-in {
-    from { opacity: 0; transform: translateY(-4px); }
+    from { opacity: 0; transform: translateY(-6px); }
     to   { opacity: 1; transform: translateY(0); }
 }
 
 .ficha-saiba-item {
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: 0.15rem;
-    padding: 0.8rem 0;
+    padding: 0.85rem 2rem 0.85rem 1rem;
     border-bottom: 1px solid rgba(184, 137, 74, 0.25);
     color: var(--tinta);
     text-decoration: none;
-    transition: color var(--transicao), padding-left var(--transicao);
+    transition: background-color var(--transicao), color var(--transicao);
 }
 
 .ficha-saiba-item:last-child { border-bottom: none; }
-.ficha-saiba-item:hover { color: var(--vinho); padding-left: 0.35rem; }
+.ficha-saiba-item:hover { background-color: rgba(184, 137, 74, 0.12); color: var(--vinho); }
+
+.ficha-saiba-item::after {
+    content: '\2192';
+    position: absolute;
+    right: 0.9rem;
+    top: 50%;
+    font-family: var(--fonte-display);
+    font-size: 1.1rem;
+    color: var(--dourado);
+    opacity: 0;
+    transform: translate(-6px, -50%);
+    transition: opacity var(--transicao), transform var(--transicao);
+}
+
+.ficha-saiba-item:hover::after { opacity: 1; transform: translate(0, -50%); }
 
 .ficha-saiba-item strong {
-    font-family: var(--fonte-display);
-    font-size: 1.05rem;
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1rem;
     font-weight: 600;
+    letter-spacing: 0.3px;
     line-height: 1.25;
 }
 
 .ficha-saiba-item small {
-    font-family: var(--fonte-corpo);
-    font-size: 0.62rem;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
+    font-family: var(--fonte-display);
+    font-size: 1.05rem;
+    font-style: italic;
+    font-weight: 500;
+    line-height: 1.2;
     color: var(--tinta-suave);
 }
 

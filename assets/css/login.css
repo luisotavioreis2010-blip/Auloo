@@ -208,76 +208,118 @@ html.rotating .ilustracao-login { opacity: 0 !important; }
 
 .saiba-menu {
     position: absolute;
-    top: calc(100% + 0.9rem);
+    top: calc(100% + 0.95rem);
     right: 0;
-    width: 300px;
+    width: 330px;
     max-width: calc(100vw - 2 * var(--navbar-px));
-    padding: 1rem 1.3rem 0.5rem;
+    padding: 0.4rem 0 0.5rem;
     background: var(--card);
-    border: 1px solid rgba(var(--dourado-rgb), 0.5);
-    border-top: 2px solid var(--dourado);
-    box-shadow: 0 16px 36px rgba(var(--vinho-borda), 0.2);
-    animation: saiba-in 0.22s ease both;
+    border: 1px solid rgba(var(--dourado-rgb), 0.55);
+    box-shadow: 0 20px 44px rgba(var(--vinho-borda), 0.22), inset 0 0 0 4px var(--card), inset 0 0 0 5px rgba(var(--dourado-rgb), 0.25);
+    animation: saiba-in 0.24s ease both;
+}
+
+/* setinha apontando para o botao */
+.saiba-menu::before {
+    content: '';
+    position: absolute;
+    top: -7px;
+    right: 2.2rem;
+    width: 12px;
+    height: 12px;
+    background: var(--card);
+    border-top: 1px solid rgba(var(--dourado-rgb), 0.55);
+    border-left: 1px solid rgba(var(--dourado-rgb), 0.55);
+    transform: rotate(45deg);
 }
 
 .saiba-menu[hidden] { display: none; }
 
 @keyframes saiba-in {
-    from { opacity: 0; transform: translateY(-6px); }
+    from { opacity: 0; transform: translateY(-8px); }
     to   { opacity: 1; transform: translateY(0); }
 }
 
 .saiba-titulo {
-    display: block;
-    padding-bottom: 0.7rem;
-    border-bottom: 1px solid rgba(var(--dourado-rgb), 0.35);
-    font-family: var(--fonte-corpo);
-    font-size: 0.62rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 1.1rem 1.6rem 0.5rem;
+    font-family: var(--fonte-texto);
+    font-size: 1rem;
+    font-style: italic;
     font-weight: 500;
-    letter-spacing: 3px;
-    text-transform: uppercase;
+    letter-spacing: 1px;
     color: var(--dourado);
 }
 
+.saiba-titulo::before,
+.saiba-titulo::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(var(--dourado-rgb), 0.55));
+}
+
+.saiba-titulo::after { transform: scaleX(-1); }
+
 .saiba-item {
+    position: relative;
     display: flex;
-    align-items: flex-start;
-    gap: 1rem;
-    padding: 0.95rem 0;
-    border-bottom: 1px solid rgba(var(--dourado-rgb), 0.2);
+    align-items: center;
+    gap: 1.1rem;
+    margin: 0 0.5rem;
+    padding: 0.95rem 1.1rem;
     color: var(--tinta);
     text-decoration: none;
-    transition: color 0.25s ease, padding-left 0.25s ease;
+    border-bottom: 1px solid rgba(var(--dourado-rgb), 0.22);
+    transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 .saiba-item:last-child { border-bottom: none; }
-.saiba-item:hover { color: var(--vinho); padding-left: 0.4rem; }
+.saiba-item:hover { background-color: rgba(var(--dourado-rgb), 0.12); color: var(--vinho); }
 
 .saiba-num {
-    min-width: 1.6rem;
-    padding-top: 0.15rem;
+    min-width: 2rem;
     font-family: var(--fonte-titulo);
-    font-size: 0.85rem;
+    font-size: 1.55rem;
     font-style: italic;
-    color: var(--dourado);
+    font-weight: 500;
+    line-height: 1;
+    color: rgba(var(--dourado-rgb), 0.85);
 }
 
-.saiba-corpo { display: flex; flex-direction: column; gap: 0.15rem; }
+.saiba-corpo { display: flex; flex: 1; flex-direction: column; gap: 0.2rem; min-width: 0; }
 
 .saiba-corpo strong {
     font-family: var(--fonte-titulo);
-    font-size: 1.05rem;
+    font-size: 1.12rem;
     font-weight: 600;
-    line-height: 1.25;
+    letter-spacing: 0.3px;
+    line-height: 1.2;
 }
 
 .saiba-corpo small {
-    font-family: var(--fonte-corpo);
-    font-size: 0.66rem;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
+    font-family: var(--fonte-texto);
+    font-size: 1.05rem;
+    font-style: italic;
+    font-weight: 500;
+    line-height: 1.2;
     color: var(--tinta-suave);
 }
+
+.saiba-item::after {
+    content: '\2192';
+    font-family: var(--fonte-titulo);
+    font-size: 1.1rem;
+    color: var(--dourado);
+    opacity: 0;
+    transform: translateX(-6px);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.saiba-item:hover::after,
+.saiba-item:focus-visible::after { opacity: 1; transform: translateX(0); }
 
 @media (max-width: 599px) {
     .navbar-saiba { padding: 0.55rem 0.85rem; font-size: 0.64rem; letter-spacing: 2px; }
@@ -285,7 +327,8 @@ html.rotating .ilustracao-login { opacity: 0 !important; }
 
 @media (min-width: 1367px) {
     .navbar-saiba { font-size: 0.78rem; padding: 0.75rem 1.4rem; }
-    .saiba-menu { width: 340px; }
+    .saiba-menu { width: 370px; }
+    .saiba-corpo strong { font-size: 1.2rem; }
 }
 
 html[data-layout="row"] .navbar-saiba { padding: 0.45rem 0.9rem; }
