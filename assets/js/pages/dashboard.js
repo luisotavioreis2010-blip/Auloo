@@ -1,5 +1,6 @@
 ﻿/* ==============================================
-   DASHBOARD.JS - v16 (com fechamento automatico do Saiba Mais)
+   DASHBOARD.JS - v17
+   Saiba mais com mesmo padrao dos outros itens
    ============================================== */
 (function () {
     'use strict';
@@ -17,7 +18,14 @@
         'image/gif': 'gif',
         'image/webp': 'webp'
     };
-    var IDS_CONTAINERS_EDICAO = ['container-editar-nome', 'container-editar-senha'];
+
+    /* Agora o "Saiba mais" e apenas mais um container */
+    var IDS_CONTAINERS_EDICAO = [
+        'container-editar-nome',
+        'container-editar-senha',
+        'container-saiba-mais'
+    ];
+
     var MESES = ['Janeiro', 'Fevereiro', 'Marco', 'Abril', 'Maio', 'Junho',
                  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
     var DIAS_SEMANA = ['Domingo', 'Segunda-feira', 'Terca-feira', 'Quarta-feira',
@@ -306,23 +314,13 @@
         if (container) container.style.display = 'none';
     }
 
+    /* A MESMA logica para todos os containers (nome, senha, saiba mais) */
     function alternarContainer(id) {
         var alvo = $(id);
         if (!alvo) return;
         var abrir = alvo.style.display !== 'block';
         IDS_CONTAINERS_EDICAO.forEach(fecharContainer);
-        if (abrir) {
-            alvo.style.display = 'block';
-            fecharSaibaMais();
-        }
-    }
-
-    /* Fecha o <details> do "Saiba mais" (usado quando outra aba abre) */
-    function fecharSaibaMais() {
-        var detalhes = document.querySelectorAll('.ficha-saiba[open]');
-        Array.prototype.forEach.call(detalhes, function (d) {
-            d.removeAttribute('open');
-        });
+        if (abrir) alvo.style.display = 'block';
     }
 
     /* ==============================================
@@ -421,6 +419,22 @@
             });
         }
 
+        /* Mudar foto */
+        var btnEditarFoto = $('btn-editar-foto');
+        var inputFoto = $('input-foto');
+        if (btnEditarFoto && inputFoto) {
+            btnEditarFoto.addEventListener('click', function () {
+                /* Fecha os outros containers ao clicar em Mudar Foto */
+                IDS_CONTAINERS_EDICAO.forEach(fecharContainer);
+                inputFoto.click();
+            });
+            inputFoto.addEventListener('change', function () {
+                var arquivo = inputFoto.files[0];
+                inputFoto.value = '';
+                if (arquivo) enviarFoto(arquivo);
+            });
+        }
+
         /* Editar nome */
         var btnEditarNome = $('btn-editar-nome');
         if (btnEditarNome) {
@@ -463,6 +477,15 @@
             });
         }
 
+        /* Saiba mais - MESMA logica dos outros */
+        var btnSaibaMais = $('btn-saiba-mais');
+        if (btnSaibaMais) {
+            btnSaibaMais.addEventListener('click', function (e) {
+                e.preventDefault();
+                alternarContainer('container-saiba-mais');
+            });
+        }
+
         /* Olho de senha */
         var olhos = document.querySelectorAll('.btn-olho-senha');
         Array.prototype.forEach.call(olhos, function (botao) {
@@ -475,41 +498,6 @@
                 input.type = mostrar ? 'text' : 'password';
                 aberto.style.display = mostrar ? 'block' : 'none';
                 fechado.style.display = mostrar ? 'none' : 'block';
-            });
-        });
-
-        /* Foto */
-        var btnEditarFoto = $('btn-editar-foto');
-        var inputFoto = $('input-foto');
-        if (btnEditarFoto && inputFoto) {
-            btnEditarFoto.addEventListener('click', function () {
-                fecharSaibaMais();
-                inputFoto.click();
-            });
-            inputFoto.addEventListener('change', function () {
-                var arquivo = inputFoto.files[0];
-                inputFoto.value = '';
-                if (arquivo) enviarFoto(arquivo);
-            });
-        }
-
-        /* Abrir "Saiba mais" fecha os containers de edicao */
-        var detalhesSaiba = document.querySelector('.ficha-saiba');
-        if (detalhesSaiba) {
-            detalhesSaiba.addEventListener('toggle', function () {
-                if (detalhesSaiba.open) {
-                    IDS_CONTAINERS_EDICAO.forEach(fecharContainer);
-                }
-            });
-        }
-
-        /* Clicar fora do "Saiba mais" tambem fecha */
-        document.addEventListener('click', function (e) {
-            var detalhes = document.querySelectorAll('.ficha-saiba[open]');
-            Array.prototype.forEach.call(detalhes, function (d) {
-                if (!d.contains(e.target)) {
-                    d.removeAttribute('open');
-                }
             });
         });
     }
@@ -552,7 +540,7 @@
             if (ficha.contains(document.activeElement)) document.activeElement.blur();
             ficha.classList.remove('ativa');
             document.body.classList.remove('ficha-aberta');
-            fecharSaibaMais();
+            IDS_CONTAINERS_EDICAO.forEach(fecharContainer);
             atualizarEstado();
         }
 
@@ -670,7 +658,7 @@
     }
 
     /* ==============================================
-       9. AUTH LISTENER - OAuth (Google/GitHub/Discord)
+       9. AUTH LISTENER - OAuth
        ============================================== */
     function setupAuthListener() {
         var db = getDb();
@@ -691,7 +679,6 @@
         });
     }
 
-    /* OAuth: o Supabase precisa de tempo para processar o token da URL */
     function aguardarOAuthEEntrar() {
         var tentativas = 0;
         var maxTentativas = 40;
