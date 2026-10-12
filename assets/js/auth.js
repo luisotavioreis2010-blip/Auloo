@@ -207,7 +207,7 @@ async function recoverPassword(email) {
 
     try {
         var { error } = await client.auth.resetPasswordForEmail(email, {
-            redirectTo: window.location.origin + '/'
+            redirectTo: window.location.origin + '/login.html'
         });
 
         if (error) throw error;
