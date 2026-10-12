@@ -1,15 +1,15 @@
 ﻿/* ============================================================
    LOGIN.JS
 
-   Seções:
-   1. Constantes e utilitários     7. Login
+   Secoes:
+   1. Constantes e utilitarios     7. Login
    2. Viewport, altura e layout    8. Esqueci a senha
-   3. Offset do teclado            9. Cadastro (e-mail → código → senha)
+   3. Offset do teclado            9. Cadastro (e-mail -> codigo -> senha)
    4. Modo foco (row)             10. Nova senha
    5. Mensagens                   11. Olho da senha e login social
-   6. Modos do card               12. Inicialização
+   6. Modos do card               12. Inicializacao
 
-   Dependências globais (auth.js): validateEmail, loginUser,
+   Dependencias globais (auth.js): validateEmail, loginUser,
    checkEmailExists, validarSenhaForte, sendSignupCode,
    verifySignupCode, recoverPassword.
    ============================================================ */
@@ -17,7 +17,7 @@
     'use strict';
 
     /* ============================================================
-       1. CONSTANTES E UTILITÁRIOS
+       1. CONSTANTES E UTILITARIOS
        ============================================================ */
     var PAGINA_DASHBOARD   = 'dashboard.html';
     var LOTTIE_PATH        = 'assets/img/animacoes/mail-animation.json';
@@ -660,7 +660,7 @@
        ============================================================ */
     function validarCredenciais(email, senha) {
         if (!email || !senha)      return 'Digite e-mail e senha!';
-        if (!validateEmail(email)) return 'E-mail inválido!';
+        if (!validateEmail(email)) return 'E-mail invalido!';
         return '';
     }
 
@@ -697,7 +697,7 @@
                         'placeholder="E-mail" autocomplete="email" aria-label="E-mail">' +
                     '</div>' +
                     '<button type="button" id="btn-enviar-link" class="button1">ENVIAR LINK</button>' +
-                    '<button type="button" id="btn-voltar-forgot" class="button3">← Voltar para o login</button>' +
+                    '<button type="button" id="btn-voltar-forgot" class="button3">Voltar para o login</button>' +
                 '</div>' +
             '</div>'
         );
@@ -709,14 +709,14 @@
         function enviarLink() {
             var email = sanitizar(inputForgot.value);
             if (!email || !validateEmail(email)) {
-                mostrarMensagem('Digite um e-mail válido!', 'erro');
+                mostrarMensagem('Digite um e-mail valido!', 'erro');
                 return;
             }
 
             executarComBotao(btnEnviar, 'ENVIAR LINK', async function () {
                 var existente = await checkEmailExists(email);
                 if (!existente.exists) {
-                    mostrarMensagem('E-mail não cadastrado!', 'erro');
+                    mostrarMensagem('E-mail nao cadastrado!', 'erro');
                     return false;
                 }
 
@@ -736,7 +736,7 @@
     }
 
     /* ============================================================
-       9. CADASTRO (e-mail → código → senha)
+       9. CADASTRO (e-mail -> codigo -> senha)
        ============================================================ */
     function ligarConfirmacao(senha, confirmar) {
         confirmar.addEventListener('input', function () {
@@ -760,7 +760,7 @@
         for (var i = 0; i < 6; i++) {
             html += '<input type="text" maxlength="1" class="codigo-input" ' +
                     'inputmode="numeric" autocomplete="one-time-code" ' +
-                    'aria-label="Dígito ' + (i + 1) + '">';
+                    'aria-label="Digito ' + (i + 1) + '">';
         }
         return html;
     }
@@ -825,7 +825,7 @@
         }
 
         var BOTAO_VOLTAR =
-            '<button type="button" id="btn-voltar-cadastro" class="button3">← Voltar para o login</button>';
+            '<button type="button" id="btn-voltar-cadastro" class="button3">Voltar para o login</button>';
 
         function etapaEmail() {
             trocarEtapa(
@@ -833,7 +833,7 @@
                     '<input type="email" id="email-cadastro" class="input-field" ' +
                     'placeholder="E-mail" autocomplete="email" aria-label="E-mail">' +
                 '</div>' +
-                '<button type="button" id="btn-cadastro-acao" class="button1">ENVIAR CÓDIGO</button>' +
+                '<button type="button" id="btn-cadastro-acao" class="button1">ENVIAR CODIGO</button>' +
                 BOTAO_VOLTAR
             );
             $('btn-voltar-cadastro').addEventListener('click', voltarParaLogin);
@@ -845,11 +845,11 @@
             function enviarCodigo() {
                 var email = sanitizar(emailCad.value);
                 if (!email || !validateEmail(email)) {
-                    mostrarMensagem('Digite um e-mail válido!', 'erro');
+                    mostrarMensagem('Digite um e-mail valido!', 'erro');
                     return;
                 }
 
-                executarComBotao(btn, 'ENVIAR CÓDIGO', async function () {
+                executarComBotao(btn, 'ENVIAR CODIGO', async function () {
                     definirContexto(false, email, null);
 
                     var envio = await sendSignupCode(email);
@@ -858,8 +858,8 @@
                             /already registered|j[áa]\s+(est[áa]\s+)?cadastrad/i.test(envio.message);
                         mostrarMensagem(
                             jaCadastrado
-                                ? 'Este e-mail já está cadastrado. Faça login!'
-                                : (envio.message || 'Erro ao enviar código!'),
+                                ? 'Este e-mail ja esta cadastrado. Faca login!'
+                                : (envio.message || 'Erro ao enviar codigo!'),
                             'erro'
                         );
                         return false;
@@ -867,7 +867,7 @@
 
                     estado.email = email;
                     etapaCodigo();
-                    mostrarMensagem('Código enviado! Verifique seu e-mail.', 'sucesso');
+                    mostrarMensagem('Codigo enviado! Verifique seu e-mail.', 'sucesso');
                     return false;
                 });
             }
@@ -880,7 +880,7 @@
             trocarEtapa(
                 '<div class="otp-caixas" id="caixas-cadastro">' + caixasCodigoHtml() + '</div>' +
                 '<button type="button" id="btn-cadastro-acao" class="button1">CONFIRMAR</button>' +
-                '<button type="button" id="btn-voltar-cadastro" class="button3">← Alterar e-mail</button>'
+                '<button type="button" id="btn-voltar-cadastro" class="button3">Alterar e-mail</button>'
             );
 
             $('btn-voltar-cadastro').addEventListener('click', etapaEmail);
@@ -891,7 +891,7 @@
             function avancar() {
                 var codigo = caixas.map(function (c) { return c.value; }).join('');
                 if (codigo.length < caixas.length) {
-                    mostrarMensagem('Digite os 6 dígitos do código!', 'erro');
+                    mostrarMensagem('Digite os 6 digitos do codigo!', 'erro');
                     return;
                 }
                 estado.codigo = codigo;
@@ -934,7 +934,7 @@
                     return;
                 }
                 if (senha.value !== confirmar.value) {
-                    mostrarMensagem('As senhas não coincidem!', 'erro');
+                    mostrarMensagem('As senhas nao coincidem!', 'erro');
                     return;
                 }
 
@@ -946,7 +946,7 @@
                     );
 
                     if (!criacao.success) {
-                        var msg = criacao.message || 'Não foi possível criar a conta.';
+                        var msg = criacao.message || 'Nao foi possivel criar a conta.';
                         if (/c[óo]digo|code|expir|inv[áa]lid/i.test(msg)) {
                             estado.codigo = '';
                             etapaCodigo();
@@ -965,7 +965,7 @@
                     }
 
                     voltarParaLogin();
-                    mostrarMensagem('Conta criada! Faça login.', 'sucesso');
+                    mostrarMensagem('Conta criada! Faca login.', 'sucesso');
                     return true;
                 });
             }
@@ -980,7 +980,7 @@
     }
 
     /* ============================================================
-       10. NOVA SENHA (link de recuperação)
+       10. NOVA SENHA (link de recuperacao)
        ============================================================ */
     function limparUrl() {
         window.history.replaceState(null, '', window.location.pathname);
@@ -1004,7 +1004,7 @@
 
         aguardarSupabase().then(function (db) {
             if (!db) {
-                falhaRecovery('Não foi possível validar o link. Tente novamente.');
+                falhaRecovery('Nao foi possivel validar o link. Tente novamente.');
                 return null;
             }
 
@@ -1023,7 +1023,7 @@
 
             var sessao = resultado.data && resultado.data.session;
             if (resultado.error || !sessao) {
-                falhaRecovery('Link inválido ou expirado. Tente novamente.');
+                falhaRecovery('Link invalido ou expirado. Tente novamente.');
                 return;
             }
 
@@ -1032,7 +1032,7 @@
             mostrarNovaSenha();
         }).catch(function (erro) {
             console.error(erro);
-            falhaRecovery('Link inválido ou expirado. Tente novamente.');
+            falhaRecovery('Link invalido ou expirado. Tente novamente.');
         });
     }
 
@@ -1052,7 +1052,7 @@
                         'aria-label="Confirmar nova senha">' +
                     '</div>' +
                     '<button type="button" id="btn-salvar-senha" class="button1">CONFIRMAR</button>' +
-                    '<button type="button" id="btn-voltar-nova" class="button3">← Voltar para o login</button>' +
+                    '<button type="button" id="btn-voltar-nova" class="button3">Voltar para o login</button>' +
                 '</div>' +
             '</div>'
         );
@@ -1073,14 +1073,14 @@
                 return;
             }
             if (novaSenha.value !== confirmar.value) {
-                mostrarMensagem('As senhas não coincidem!', 'erro');
+                mostrarMensagem('As senhas nao coincidem!', 'erro');
                 return;
             }
 
             executarComBotao(btnSalvar, 'CONFIRMAR', async function () {
                 var db = getDb();
                 if (!db) {
-                    mostrarMensagem('Erro de configuração. Recarregue a página.', 'erro');
+                    mostrarMensagem('Erro de configuracao. Recarregue a pagina.', 'erro');
                     return false;
                 }
 
@@ -1129,11 +1129,11 @@
             botao.addEventListener('click', function () {
                 var db = getDb();
                 if (!db) {
-                    mostrarMensagem('Erro de configuração. Recarregue a página.', 'erro');
+                    mostrarMensagem('Erro de configuracao. Recarregue a pagina.', 'erro');
                     return;
                 }
 
-                // Evita cliques duplos
+                /* Evita clique duplo */
                 if (botao.dataset.carregando === '1') return;
                 botao.dataset.carregando = '1';
                 botao.style.opacity = '0.6';
@@ -1152,9 +1152,9 @@
                         botao.dataset.carregando = '0';
                         botao.style.opacity = '';
                         botao.style.pointerEvents = '';
-                        mostrarMensagem('Não foi possível entrar com ' + provedor + '.', 'erro');
+                        mostrarMensagem('Nao foi possivel entrar com ' + provedor + '.', 'erro');
                     }
-                    // Se deu certo, o navegador já está sendo redirecionado — não precisa reativar
+                    /* Se deu certo, o navegador ja esta sendo redirecionado */
                 }).catch(function (erro) {
                     console.error(erro);
                     botao.dataset.carregando = '0';
@@ -1167,7 +1167,7 @@
     }
 
     /* ============================================================
-       12. INICIALIZAÇÃO
+       12. INICIALIZACAO
        ============================================================ */
     if (!form) return;
 
@@ -1177,7 +1177,7 @@
     setupTeclado();
     setupModoFoco();
 
-    /* Botao "Saiba mais": abre/fecha o painel, fecha ao clicar fora, Esc e mudar layout */
+    /* Botao "Saiba mais": abre/fecha o painel */
     function setupMenuSaiba() {
         var botao = document.getElementById('navbar-saiba-btn');
         var menu  = document.getElementById('navbar-saiba-menu');

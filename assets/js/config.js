@@ -1,5 +1,5 @@
 ﻿// ==============================================
-// CONFIG.JS — Supabase com retry e detecção OAuth
+// CONFIG.JS - Supabase com retry e deteccao OAuth
 // ==============================================
 
 var SUPABASE_CONFIG = {
@@ -12,7 +12,7 @@ var supabaseClient = null;
 function inicializarSupabase() {
     try {
         if (typeof window.supabase === 'undefined' || !window.supabase.createClient) {
-            console.warn('Supabase ainda não carregou, tentando novamente em 200ms...');
+            console.warn('Supabase ainda nao carregou, tentando novamente...');
             setTimeout(inicializarSupabase, 200);
             return false;
         }
@@ -35,7 +35,7 @@ function inicializarSupabase() {
         );
 
         window.supabaseClient = supabaseClient;
-        console.log('Supabase inicializado (detectSessionInUrl ON)');
+        console.log('Supabase inicializado');
         return true;
     } catch (error) {
         console.error('Erro ao inicializar Supabase:', error);
@@ -43,7 +43,6 @@ function inicializarSupabase() {
     }
 }
 
-// Tenta até conseguir (o CDN pode demorar)
 inicializarSupabase();
 document.addEventListener('DOMContentLoaded', inicializarSupabase);
 window.addEventListener('load', inicializarSupabase);

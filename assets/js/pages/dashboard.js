@@ -1,19 +1,5 @@
 ﻿/* ==============================================
-   DASHBOARD.JS — v14
-
-   Seções
-   1. Constantes e estado
-   2. Tela: viewport, layout e posição da ficha
-   3. Utilitários
-   4. Perfil (carregar, renderizar, sair)
-   5. Mensagens e containers de edição
-   6. Ações do perfil (nome, senha, foto)
-   7. Layout (gaveta, ficha, overlay)
-   8. Calendário
-   9. Auth listener (OAuth)
-   10. Inicialização
-
-   Depende de `supabaseClient` (global, criado em config.js/auth.js).
+   DASHBOARD.JS - v15 (com deteccao OAuth corrigida)
    ============================================== */
 (function () {
     'use strict';
@@ -32,26 +18,25 @@
         'image/webp': 'webp'
     };
     var IDS_CONTAINERS_EDICAO = ['container-editar-nome', 'container-editar-senha'];
-    var MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+    var MESES = ['Janeiro', 'Fevereiro', 'Marco', 'Abril', 'Maio', 'Junho',
                  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-    var DIAS_SEMANA = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira',
-                       'Quinta-feira', 'Sexta-feira', 'Sábado'];
+    var DIAS_SEMANA = ['Domingo', 'Segunda-feira', 'Terca-feira', 'Quarta-feira',
+                       'Quinta-feira', 'Sexta-feira', 'Sabado'];
 
-    /* mesmo limite usado no CSS: acima disso o layout é desktop */
     var mqCompacto = window.matchMedia('(max-width: 1366px)');
 
-    var perfil = { usuario: null, nome: 'Usuário', email: '', avatarUrl: null };
+    var perfil = { usuario: null, nome: 'Usuario', email: '', avatarUrl: null };
 
     function $(id) { return document.getElementById(id); }
 
     function getDb() {
-        return typeof supabaseClient !== 'undefined' ? supabaseClient : null;
+        return window.supabaseClient ||
+               (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
     }
 
     /* ==============================================
-       2. TELA: VIEWPORT, LAYOUT E POSIÇÃO DA FICHA
+       2. TELA
        ============================================== */
-
     function campoEmFoco() {
         var ativo = document.activeElement;
         return !!ativo && (ativo.tagName === 'INPUT' || ativo.tagName === 'TEXTAREA');
@@ -59,7 +44,6 @@
 
     function sincronizarTela(forcar) {
         if (!forcar && campoEmFoco()) return;
-
         var raiz = document.documentElement;
         raiz.style.setProperty('--viewport-h', window.innerHeight + 'px');
         raiz.setAttribute('data-layout', window.innerWidth > window.innerHeight ? 'row' : 'stacked');
@@ -128,7 +112,6 @@
         document.addEventListener('focusin', function (e) {
             var campo = e.target;
             if (!campo.matches || !campo.matches('input, textarea')) return;
-
             document.body.classList.add('campo-focado');
             setTimeout(function () {
                 if (document.activeElement === campo) {
@@ -154,9 +137,8 @@
     }
 
     /* ==============================================
-       3. UTILITÁRIOS
+       3. UTILITARIOS
        ============================================== */
-
     function verificar(resultado) {
         if (resultado && resultado.error) throw resultado.error;
         return resultado ? resultado.data : null;
@@ -165,12 +147,12 @@
     function formatarNome(nome, email) {
         var texto = (nome || '').trim() || email || '';
         if (texto.indexOf('@') !== -1) texto = texto.split('@')[0];
-        if (!texto) return 'Usuário';
+        if (!texto) return 'Usuario';
         return texto.charAt(0).toUpperCase() + texto.slice(1);
     }
 
     function criarIniciais(nome) {
-        var partes = (nome || 'Usuário').trim().split(/\s+/);
+        var partes = (nome || 'Usuario').trim().split(/\s+/);
         var primeira = partes[0].charAt(0).toUpperCase();
         var ultima = partes.length > 1 ? partes[partes.length - 1].charAt(0).toUpperCase() : '';
         var span = document.createElement('span');
@@ -182,12 +164,10 @@
     function renderizarAvatar(container, avatarUrl, nome) {
         if (!container) return;
         container.textContent = '';
-
         if (!avatarUrl || avatarUrl === 'null') {
             container.appendChild(criarIniciais(nome));
             return;
         }
-
         var img = document.createElement('img');
         img.className = 'foto-perfil';
         img.alt = 'Foto de perfil';
@@ -214,11 +194,9 @@
     /* ==============================================
        4. PERFIL
        ============================================== */
-
     function renderizarPerfil() {
         renderizarAvatar($('perfil-usuario'), perfil.avatarUrl, perfil.nome);
         renderizarAvatar($('sidebar-perfil-foto'), perfil.avatarUrl, perfil.nome);
-
         var nome = $('sidebar-perfil-nome');
         var email = $('sidebar-perfil-email');
         if (nome) nome.textContent = perfil.nome;
@@ -248,7 +226,7 @@
                 .maybeSingle();
 
             if (consulta.error) {
-                console.warn('Não foi possível ler a tabela profiles:', consulta.error.message);
+                console.warn('Nao foi possivel ler profiles:', consulta.error.message);
             } else if (consulta.data) {
                 if (consulta.data.full_name) nome = consulta.data.full_name;
                 if (consulta.data.avatar_url) avatarUrl = consulta.data.avatar_url;
@@ -266,7 +244,6 @@
 
     async function fazerLogout() {
         var db = getDb();
-
         try {
             if (db) {
                 await Promise.race([
@@ -275,13 +252,15 @@
                 ]);
             }
         } catch (erro) {
-            console.warn('Erro no signOut (ignorado):', erro);
+            console.warn('Erro no signOut:', erro);
         }
 
         try {
             CHAVES_LOGOUT.forEach(function (chave) { localStorage.removeItem(chave); });
             Object.keys(localStorage)
-                .filter(function (chave) { return chave.indexOf('sb-') === 0 || chave.indexOf('auloo-auth') === 0; })
+                .filter(function (chave) {
+                    return chave.indexOf('sb-') === 0 || chave.indexOf('auloo-auth') === 0;
+                })
                 .forEach(function (chave) { localStorage.removeItem(chave); });
             sessionStorage.clear();
         } catch (erro) {
@@ -292,14 +271,12 @@
     }
 
     /* ==============================================
-       5. MENSAGENS E CONTAINERS DE EDIÇÃO
+       5. MENSAGENS
        ============================================== */
-
     var temporizadorMensagem = null;
 
     function mostrarMensagem(texto, tipo) {
         tipo = tipo || 'sucesso';
-
         clearTimeout(temporizadorMensagem);
         var anterior = $('mensagem-sidebar');
         if (anterior) anterior.remove();
@@ -338,16 +315,15 @@
     }
 
     /* ==============================================
-       6. AÇÕES DO PERFIL
+       6. ACOES DO PERFIL
        ============================================== */
-
     async function salvarNome() {
         var input = $('input-novo-nome');
         var novoNome = input ? input.value.trim() : '';
-        if (!novoNome) { mostrarMensagem('Digite um nome válido!', 'erro'); return; }
+        if (!novoNome) { mostrarMensagem('Digite um nome valido!', 'erro'); return; }
 
         var db = getDb();
-        if (!db || !perfil.usuario) { mostrarMensagem('Erro: usuário não autenticado!', 'erro'); return; }
+        if (!db || !perfil.usuario) { mostrarMensagem('Erro: usuario nao autenticado!', 'erro'); return; }
 
         verificar(await db.auth.updateUser({ data: { full_name: novoNome } }));
         verificar(await db.from('profiles').upsert({
@@ -373,7 +349,7 @@
         if (senhaNova.length < 8) { mostrarMensagem('Senha deve ter 8+ caracteres!', 'erro'); return; }
 
         var db = getDb();
-        if (!db || !perfil.usuario) { mostrarMensagem('Erro de configuração!', 'erro'); return; }
+        if (!db || !perfil.usuario) { mostrarMensagem('Erro de configuracao!', 'erro'); return; }
 
         var login = await db.auth.signInWithPassword({ email: perfil.email, password: senhaAtual });
         if (login.error) {
@@ -392,15 +368,14 @@
 
     async function enviarFoto(arquivo) {
         var db = getDb();
-        if (!db || !perfil.usuario) { mostrarMensagem('Erro: usuário não autenticado!', 'erro'); return; }
+        if (!db || !perfil.usuario) { mostrarMensagem('Erro: usuario nao autenticado!', 'erro'); return; }
 
         var extensao = EXTENSOES_FOTO[arquivo.type];
-        if (!extensao) { mostrarMensagem('Formato não suportado!', 'erro'); return; }
-        if (arquivo.size > TAMANHO_MAX_FOTO) { mostrarMensagem('Imagem muito grande! Máximo 5MB.', 'erro'); return; }
+        if (!extensao) { mostrarMensagem('Formato nao suportado!', 'erro'); return; }
+        if (arquivo.size > TAMANHO_MAX_FOTO) { mostrarMensagem('Imagem muito grande! Maximo 5MB.', 'erro'); return; }
 
         try {
             mostrarMensagem('Enviando foto...');
-
             var caminho = perfil.usuario.id + '/avatar_' + perfil.usuario.id + '_' + Date.now() + '.' + extensao;
 
             verificar(await db.storage.from('avatars').upload(caminho, arquivo, {
@@ -479,7 +454,6 @@
                 var aberto = botao.querySelector('.icone-olho-aberto');
                 var fechado = botao.querySelector('.icone-olho-fechado');
                 if (!input || !aberto || !fechado) return;
-
                 var mostrar = input.type === 'password';
                 input.type = mostrar ? 'text' : 'password';
                 aberto.style.display = mostrar ? 'block' : 'none';
@@ -500,9 +474,8 @@
     }
 
     /* ==============================================
-       7. LAYOUT: GAVETA, FICHA E OVERLAY
+       7. LAYOUT
        ============================================== */
-
     function setupLayout() {
         var sidebar = $('sidebar');
         var ficha = $('sidebar-perfil');
@@ -522,15 +495,8 @@
             if (perfilBotao) perfilBotao.setAttribute('aria-expanded', String(fichaAberta()));
         }
 
-        function abrirSidebar() {
-            if (sidebar) sidebar.classList.add('aberta');
-            atualizarEstado();
-        }
-
-        function fecharSidebar() {
-            if (sidebar) sidebar.classList.remove('aberta');
-            atualizarEstado();
-        }
+        function abrirSidebar() { if (sidebar) sidebar.classList.add('aberta'); atualizarEstado(); }
+        function fecharSidebar() { if (sidebar) sidebar.classList.remove('aberta'); atualizarEstado(); }
 
         function abrirFicha() {
             if (!ficha) return;
@@ -571,12 +537,10 @@
 
         document.addEventListener('click', function (e) {
             var alvo = e.target;
-
             if (sidebarAberta() && !sidebar.contains(alvo) &&
                 !(btnHamburger && btnHamburger.contains(alvo))) {
                 fecharSidebar();
             }
-
             if (mqCompacto.matches && fichaAberta() && !ficha.contains(alvo) &&
                 !(perfilBotao && perfilBotao.contains(alvo)) && !campoEmFoco()) {
                 fecharFicha();
@@ -610,9 +574,8 @@
     }
 
     /* ==============================================
-       8. CALENDÁRIO
+       8. CALENDARIO
        ============================================== */
-
     function setupCalendario() {
         var titulo = $('calendario-titulo');
         var subtitulo = $('calendario-subtitulo');
@@ -637,12 +600,10 @@
             for (i = primeiroDiaSemana - 1; i >= 0; i--) {
                 celulas.push('<span class="dia-outro-mes">' + (diasMesAnterior - i) + '</span>');
             }
-
             for (i = 1; i <= diasNoMes; i++) {
                 var ehHoje = i === hoje.getDate() && mes === hoje.getMonth() && ano === hoje.getFullYear();
                 celulas.push('<span' + (ehHoje ? ' class="dia-atual"' : '') + '>' + i + '</span>');
             }
-
             var faltam = (7 - (celulas.length % 7)) % 7;
             for (i = 1; i <= faltam; i++) {
                 celulas.push('<span class="dia-outro-mes">' + i + '</span>');
@@ -667,36 +628,96 @@
     }
 
     /* ==============================================
-       9. AUTH LISTENER (OAuth)
-       Detecta quando o Google/GitHub/Discord redireciona
-       de volta e recarrega o perfil automaticamente.
+       9. AUTH LISTENER - CORRECAO DO OAuth
        ============================================== */
-
     function setupAuthListener() {
         var db = getDb();
         if (!db) return;
 
+        /* onAuthStateChange dispara quando o Google/GitHub volta */
         db.auth.onAuthStateChange(function (evento, sessao) {
             console.log('Auth event:', evento);
-            if (evento === 'SIGNED_IN' && sessao && sessao.user) {
+
+            if ((evento === 'SIGNED_IN' || evento === 'INITIAL_SESSION') && sessao && sessao.user) {
+                /* Preenche o perfil imediatamente com os dados da sessao */
+                var meta = sessao.user.user_metadata || {};
                 perfil.usuario = sessao.user;
                 perfil.email = sessao.user.email || '';
-                var meta = sessao.user.user_metadata || {};
-                perfil.nome = formatarNome(
-                    meta.full_name || meta.name,
-                    perfil.email
-                );
+                perfil.nome = formatarNome(meta.full_name || meta.name, perfil.email);
                 perfil.avatarUrl = meta.avatar_url || meta.picture || null;
                 renderizarPerfil();
+
+                /* Depois busca dados atualizados do banco */
                 carregarPerfil();
             }
         });
     }
 
-    /* ==============================================
-       10. INICIALIZAÇÃO
-       ============================================== */
+    /* Verifica a sessao assim que o Supabase estiver pronto */
+    function aguardarSupabaseEIniciar() {
+        var tentativas = 0;
+        var maxTentativas = 30;
 
+        function tentar() {
+            var db = getDb();
+            if (db) {
+                iniciarComDb(db);
+                return;
+            }
+            tentativas++;
+            if (tentativas >= maxTentativas) {
+                console.error('Supabase nao inicializou em tempo');
+                irParaLogin();
+                return;
+            }
+            setTimeout(tentar, 200);
+        }
+        tentar();
+    }
+
+    function iniciarComDb(db) {
+        /* 1. Verifica se ha sessao na URL (OAuth) ou storage */
+        db.auth.getSession().then(function (resultado) {
+            var sessao = resultado && resultado.data ? resultado.data.session : null;
+
+            if (!sessao) {
+                /* Sem sessao ainda - aguarda onAuthStateChange disparar */
+                console.log('Sem sessao ainda, aguardando...');
+                /* Tenta de novo apos 1s (tempo do Supabase processar OAuth da URL) */
+                setTimeout(function () {
+                    db.auth.getSession().then(function (r2) {
+                        var s2 = r2 && r2.data ? r2.data.session : null;
+                        if (!s2) {
+                            irParaLogin();
+                        } else {
+                            /* Sessao encontrada, carrega */
+                            preencherPerfil(s2.user);
+                        }
+                    });
+                }, 1000);
+            } else {
+                /* Sessao ja disponivel */
+                preencherPerfil(sessao.user);
+            }
+        }).catch(function (erro) {
+            console.error('Erro getSession:', erro);
+            irParaLogin();
+        });
+    }
+
+    function preencherPerfil(usuario) {
+        var meta = usuario.user_metadata || {};
+        perfil.usuario = usuario;
+        perfil.email = usuario.email || '';
+        perfil.nome = formatarNome(meta.full_name || meta.name, perfil.email);
+        perfil.avatarUrl = meta.avatar_url || meta.picture || null;
+        renderizarPerfil();
+        carregarPerfil();
+    }
+
+    /* ==============================================
+       10. INICIALIZACAO
+       ============================================== */
     sincronizarTela();
 
     function iniciar() {
@@ -704,8 +725,12 @@
         setupPerfil();
         setupLayout();
         setupCalendario();
+
+        /* Registra o listener PRIMEIRO (para pegar OAuth) */
         setupAuthListener();
-        carregarPerfil();
+
+        /* Depois aguarda o Supabase e verifica sessao */
+        aguardarSupabaseEIniciar();
     }
 
     if (document.readyState === 'loading') {
