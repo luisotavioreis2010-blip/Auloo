@@ -1,16 +1,16 @@
 ﻿@charset "UTF-8";
 /* ==============================================
-   DASHBOARD.CSS — v16
+   DASHBOARD.CSS — v17
 
    Estrutura
    1. Variáveis
    2. Reset, base e navbar
    3. Sidebar esquerda (estrutura)
    4. Ficha do leitor (sidebar direita)
-   5. Edição e mensagens
+   5. Containers expansivos (nome, senha, saiba mais)
    6. Conteúdo principal e calendário
-   7. DESKTOP  (≥ 1367px): sidebar recolhível, ficha empurra o conteúdo
-   8. COMPACTO (≤ 1366px): sidebar em gaveta, ficha sobreposta, body travado
+   7. DESKTOP  (≥ 1367px)
+   8. COMPACTO (≤ 1366px)
    9. Acessibilidade
    ============================================== */
 
@@ -18,7 +18,6 @@
    1. VARIÁVEIS
    ============================================== */
 :root {
-    /* paleta */
     --papel: #F0E8D8;
     --papel-claro: #F8F2E4;
     --papel-escuro: #E5D9C0;
@@ -38,19 +37,15 @@
     --sucesso: #2E7D4F;
     --erro: #B23A2E;
 
-    /* tipografia */
     --fonte-display: 'Cormorant Garamond', Georgia, serif;
     --fonte-corpo: 'Poppins', system-ui, sans-serif;
 
-    /* movimento */
     --ease: cubic-bezier(0.4, 0, 0.2, 1);
     --transicao: 0.3s var(--ease);
 
-    /* altura útil da tela */
     --viewport-h: 100vh;
     --viewport-h: 100dvh;
 
-    /* layout */
     --navbar-h: 68px;
     --sidebar-w: 300px;
     --sidebar-colapsada: 80px;
@@ -59,7 +54,6 @@
     --drawer-w: 70vw;
     --drawer-max: 400px;
 
-    /* navbar */
     --navbar-px: 1.5rem;
     --logo-size: 1.7rem;
     --logo-ls: -0.5px;
@@ -68,7 +62,6 @@
     --avatar-size: 42px;
     --hamb-size: 40px;
 
-    /* sidebar */
     --secao-pt: 4.5rem;
     --secao-px: 1.3rem;
     --menu-gap: 1rem;
@@ -84,11 +77,9 @@
     --selo-pb: 1.5rem;
     --volume-pad: 1.2rem 1.3rem 1.8rem;
 
-    /* ficha */
     --ficha-pad: 2.5rem 2rem 1.5rem;
     --foto-size: 72px;
 
-    /* conteúdo e calendário */
     --main-pad: 3rem;
     --main-gap: 3rem;
     --cal-titulo-size: 1.4rem;
@@ -610,8 +601,142 @@ input, textarea, .ficha-email {
 }
 
 /* ==============================================
-   ITENS DO "SAIBA MAIS" (dentro do container)
+   5. CONTAINERS EXPANSIVOS
+   Todos usam a mesma base visual e animação
    ============================================== */
+.container-expansivel {
+    position: relative;
+    flex-shrink: 0;
+    margin: 0.4rem 0 0.6rem;
+    padding: 1.2rem 1.3rem 1.4rem;
+    background: linear-gradient(180deg, var(--papel) 0%, var(--papel-claro) 100%);
+    border: 1px solid var(--dourado);
+    border-left-width: 2px;
+    transform-origin: top;
+    animation: surgirContainer 0.35s var(--ease) forwards;
+}
+
+.container-expansivel::before {
+    content: '\2766';
+    position: absolute;
+    top: 0.4rem;
+    right: 0.6rem;
+    font-size: 0.85rem;
+    color: var(--dourado);
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+@keyframes surgirContainer {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Labels e inputs (usado pelos containers de edição) */
+.container-expansivel label {
+    display: block;
+    margin: 0.8rem 0 0.35rem;
+    font-family: var(--fonte-corpo);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--tinta-suave);
+}
+
+.container-expansivel input {
+    width: 100%;
+    margin-bottom: 0.4rem;
+    padding: 0.7rem 0.8rem;
+    font-family: var(--fonte-display);
+    font-size: 16px;
+    font-style: italic;
+    color: var(--tinta);
+    background: rgba(255, 255, 255, 0.5);
+    border: none;
+    border-bottom: 1px solid rgba(184, 137, 74, 0.4);
+    border-radius: 0;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    transition: border-color 0.3s ease;
+}
+
+.container-expansivel input:focus { border-bottom-color: var(--dourado); }
+
+.container-expansivel input::placeholder {
+    font-family: var(--fonte-display);
+    font-size: 16px;
+    font-style: italic;
+    color: var(--tinta-clara);
+}
+
+.container-expansivel button[type="button"]:not(.btn-olho-senha) {
+    width: 100%;
+    margin-top: 1rem;
+    padding: 0.75rem 1rem;
+    font-family: var(--fonte-corpo);
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--dourado);
+    background: transparent;
+    border: 1px solid var(--dourado);
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all var(--transicao);
+}
+
+.container-expansivel button[type="button"]:not(.btn-olho-senha):hover:not(:disabled) {
+    color: var(--papel);
+    background: var(--dourado);
+}
+
+.container-expansivel button[type="button"]:disabled { opacity: 0.6; cursor: wait; }
+
+/* ---------- Olho da senha ---------- */
+.wrapper-olho-senha {
+    position: relative;
+    width: 100%;
+    margin-bottom: 0.4rem;
+}
+
+.wrapper-olho-senha input { margin-bottom: 0; padding-right: 2.2rem; }
+
+.btn-olho-senha {
+    position: absolute;
+    top: 50%;
+    right: 0.2rem;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    opacity: 0.5;
+    transform: translateY(-50%);
+    transition: opacity 0.2s ease;
+}
+
+.btn-olho-senha:hover { opacity: 1; }
+
+.btn-olho-senha svg {
+    display: block;
+    width: 14px;
+    height: 14px;
+    fill: var(--tinta-suave);
+}
+
+/* ---------- Itens do "Saiba mais" ---------- */
+#container-saiba-mais {
+    padding: 1rem 1.1rem 1.15rem;
+}
+
 .ficha-saiba-item {
     position: relative;
     display: flex;
@@ -711,141 +836,7 @@ input, textarea, .ficha-email {
     transform: translate(0, -50%);
 }
 
-/* Container do "Saiba mais" - espaçamento interno */
-#container-saiba-mais {
-    padding: 1rem 1rem 1.1rem;
-}
-
-/* ==============================================
-   5. EDIÇÃO E MENSAGENS
-   ============================================== */
-.container-senha-animado {
-    position: relative;
-    flex-shrink: 0;
-    margin: 0.4rem 0 0.6rem;
-    padding: 1.2rem 1.3rem 1.4rem;
-    overflow: hidden;
-    background: linear-gradient(180deg, var(--papel) 0%, var(--papel-claro) 100%);
-    border: 1px solid var(--dourado);
-    border-left-width: 2px;
-    transform-origin: top;
-    animation: surgirContainer 0.5s var(--ease) forwards;
-}
-
-.container-senha-animado::before {
-    content: '\2766';
-    position: absolute;
-    top: 0.4rem;
-    right: 0.6rem;
-    font-size: 0.85rem;
-    color: var(--dourado);
-    opacity: 0.6;
-    pointer-events: none;
-}
-
-@keyframes surgirContainer {
-    from { opacity: 0; max-height: 0; transform: translateY(-8px); }
-    to   { opacity: 1; max-height: 500px; transform: translateY(0); }
-}
-
-.container-senha-animado label {
-    display: block;
-    margin: 0.8rem 0 0.35rem;
-    font-family: var(--fonte-corpo);
-    font-size: 0.68rem;
-    font-weight: 700;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--tinta-suave);
-}
-
-.container-senha-animado input {
-    width: 100%;
-    margin-bottom: 0.4rem;
-    padding: 0.7rem 0.8rem;
-    font-family: var(--fonte-display);
-    font-size: 16px;
-    font-style: italic;
-    color: var(--tinta);
-    background: rgba(255, 255, 255, 0.5);
-    border: none;
-    border-bottom: 1px solid rgba(184, 137, 74, 0.4);
-    border-radius: 0;
-    outline: none;
-    -webkit-appearance: none;
-    appearance: none;
-    transition: border-color 0.3s ease;
-}
-
-.container-senha-animado input:focus { border-bottom-color: var(--dourado); }
-
-.container-senha-animado input::placeholder {
-    font-family: var(--fonte-display);
-    font-size: 16px;
-    font-style: italic;
-    color: var(--tinta-clara);
-}
-
-.container-senha-animado button[type="button"]:not(.btn-olho-senha) {
-    width: 100%;
-    margin-top: 1rem;
-    padding: 0.75rem 1rem;
-    font-family: var(--fonte-corpo);
-    font-size: 0.65rem;
-    font-weight: 700;
-    letter-spacing: 2.5px;
-    text-transform: uppercase;
-    color: var(--dourado);
-    background: transparent;
-    border: 1px solid var(--dourado);
-    border-radius: 2px;
-    cursor: pointer;
-    transition: all var(--transicao);
-}
-
-.container-senha-animado button[type="button"]:not(.btn-olho-senha):hover:not(:disabled) {
-    color: var(--papel);
-    background: var(--dourado);
-}
-
-.container-senha-animado button[type="button"]:disabled { opacity: 0.6; cursor: wait; }
-
-.wrapper-olho-senha {
-    position: relative;
-    width: 100%;
-    margin-bottom: 0.4rem;
-}
-
-.wrapper-olho-senha input { margin-bottom: 0; padding-right: 2.2rem; }
-
-.btn-olho-senha {
-    position: absolute;
-    top: 50%;
-    right: 0.2rem;
-    z-index: 5;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 24px;
-    height: 24px;
-    padding: 0;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    opacity: 0.5;
-    transform: translateY(-50%);
-    transition: opacity 0.2s ease;
-}
-
-.btn-olho-senha:hover { opacity: 1; }
-
-.btn-olho-senha svg {
-    display: block;
-    width: 14px;
-    height: 14px;
-    fill: var(--tinta-suave);
-}
-
+/* ---------- Mensagens ---------- */
 .mensagem-sidebar {
     margin: 0.5rem 0;
     padding: 0.6rem 1rem;
@@ -1477,7 +1468,7 @@ input, textarea, .ficha-email {
     html:not([data-layout="row"]) .sidebar::before { font-size: 1rem; }
 }
 
-/* ---------- 8.5 ajustes por altura (sidebar em gaveta) ---------- */
+/* ---------- 8.5 ajustes por altura ---------- */
 @media (max-width: 1366px) and (max-height: 700px) {
     :root {
         --secao-pt: 3.5rem;
@@ -1506,9 +1497,6 @@ input, textarea, .ficha-email {
     }
 }
 
-/* ==============================================
-   Durante o redimensionamento
-   ============================================== */
 html.redimensionando,
 html.redimensionando *,
 html.redimensionando *::before,

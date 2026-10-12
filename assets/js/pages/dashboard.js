@@ -1,6 +1,6 @@
 ﻿/* ==============================================
-   DASHBOARD.JS - v17
-   Saiba mais com mesmo padrao dos outros itens
+   DASHBOARD.JS - v18
+   Todos os containers usam a mesma logica
    ============================================== */
 (function () {
     'use strict';
@@ -19,8 +19,8 @@
         'image/webp': 'webp'
     };
 
-    /* Agora o "Saiba mais" e apenas mais um container */
-    var IDS_CONTAINERS_EDICAO = [
+    /* Todos os containers expansivos da ficha */
+    var IDS_CONTAINERS = [
         'container-editar-nome',
         'container-editar-senha',
         'container-saiba-mais'
@@ -279,7 +279,7 @@
     }
 
     /* ==============================================
-       5. MENSAGENS E CONTAINERS DE EDICAO
+       5. MENSAGENS E CONTAINERS EXPANSIVEIS
        ============================================== */
     var temporizadorMensagem = null;
 
@@ -311,16 +311,29 @@
 
     function fecharContainer(id) {
         var container = $(id);
-        if (container) container.style.display = 'none';
+        if (container) {
+            container.style.display = 'none';
+            container.classList.remove('aberto');
+        }
     }
 
-    /* A MESMA logica para todos os containers (nome, senha, saiba mais) */
+    function fecharTodosContainers() {
+        IDS_CONTAINERS.forEach(fecharContainer);
+    }
+
+    /* Abre um container e fecha os outros. Clicar no mesmo container fecha ele. */
     function alternarContainer(id) {
         var alvo = $(id);
         if (!alvo) return;
-        var abrir = alvo.style.display !== 'block';
-        IDS_CONTAINERS_EDICAO.forEach(fecharContainer);
-        if (abrir) alvo.style.display = 'block';
+
+        var jaAberto = alvo.classList.contains('aberto') || alvo.style.display === 'block';
+
+        fecharTodosContainers();
+
+        if (!jaAberto) {
+            alvo.style.display = 'block';
+            alvo.classList.add('aberto');
+        }
     }
 
     /* ==============================================
@@ -419,13 +432,12 @@
             });
         }
 
-        /* Mudar foto */
+        /* Mudar foto - fecha todos os containers */
         var btnEditarFoto = $('btn-editar-foto');
         var inputFoto = $('input-foto');
         if (btnEditarFoto && inputFoto) {
             btnEditarFoto.addEventListener('click', function () {
-                /* Fecha os outros containers ao clicar em Mudar Foto */
-                IDS_CONTAINERS_EDICAO.forEach(fecharContainer);
+                fecharTodosContainers();
                 inputFoto.click();
             });
             inputFoto.addEventListener('change', function () {
@@ -477,7 +489,7 @@
             });
         }
 
-        /* Saiba mais - MESMA logica dos outros */
+        /* Saiba mais - mesma logica */
         var btnSaibaMais = $('btn-saiba-mais');
         if (btnSaibaMais) {
             btnSaibaMais.addEventListener('click', function (e) {
@@ -540,7 +552,7 @@
             if (ficha.contains(document.activeElement)) document.activeElement.blur();
             ficha.classList.remove('ativa');
             document.body.classList.remove('ficha-aberta');
-            IDS_CONTAINERS_EDICAO.forEach(fecharContainer);
+            fecharTodosContainers();
             atualizarEstado();
         }
 

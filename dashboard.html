@@ -110,28 +110,31 @@
         <div class="ficha-filete"></div>
 
         <nav class="ficha-menu">
+            <!-- Mudar foto -->
             <button class="ficha-item" id="btn-editar-foto" type="button">
                 <span class="ficha-romano">&#10070;</span>
                 <span class="ficha-texto">Mudar Foto</span>
             </button>
 
+            <!-- Editar nome -->
             <button class="ficha-item" id="btn-editar-nome" type="button">
                 <span class="ficha-romano">&#9998;</span>
                 <span class="ficha-texto">Editar Nome</span>
             </button>
 
-            <div id="container-editar-nome" class="container-senha-animado" style="display:none;">
+            <div id="container-editar-nome" class="container-expansivel" style="display:none;">
                 <label for="input-novo-nome">Nome</label>
                 <input type="text" id="input-novo-nome" autocomplete="off" name="nome-usuario" placeholder="Digite seu novo nome" aria-label="Novo nome">
                 <button id="btn-salvar-nome" type="button">Salvar</button>
             </div>
 
+            <!-- Editar senha -->
             <button class="ficha-item" id="btn-editar-senha" type="button">
                 <span class="ficha-romano">&#10033;</span>
                 <span class="ficha-texto">Editar Senha</span>
             </button>
 
-            <div id="container-editar-senha" class="container-senha-animado" style="display:none;">
+            <div id="container-editar-senha" class="container-expansivel" style="display:none;">
                 <label for="input-senha-atual">Senha Atual</label>
                 <div class="wrapper-olho-senha">
                     <input type="password" id="input-senha-atual" placeholder="Senha atual" aria-label="Senha atual">
@@ -153,13 +156,13 @@
                 <button id="btn-confirmar-senha" type="button">Atualizar Senha</button>
             </div>
 
-            <!-- SAiba mais - mesmo padrao dos outros itens -->
+            <!-- Saiba mais - mesmo padrao dos outros -->
             <button class="ficha-item" id="btn-saiba-mais" type="button">
                 <span class="ficha-romano">&#10022;</span>
                 <span class="ficha-texto">Saiba mais</span>
             </button>
 
-            <div id="container-saiba-mais" class="container-senha-animado" style="display:none;">
+            <div id="container-saiba-mais" class="container-expansivel" style="display:none;">
                 <a class="ficha-saiba-item" href="/?de=dashboard">
                     <span class="ficha-saiba-num">I</span>
                     <span class="ficha-saiba-corpo">
