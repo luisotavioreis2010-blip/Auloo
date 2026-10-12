@@ -1,5 +1,5 @@
 ﻿/* ==============================================
-   DASHBOARD.JS - v15 (com deteccao OAuth corrigida)
+   DASHBOARD.JS - v16 (com fechamento automatico do Saiba Mais)
    ============================================== */
 (function () {
     'use strict';
@@ -271,7 +271,7 @@
     }
 
     /* ==============================================
-       5. MENSAGENS
+       5. MENSAGENS E CONTAINERS DE EDICAO
        ============================================== */
     var temporizadorMensagem = null;
 
@@ -311,7 +311,18 @@
         if (!alvo) return;
         var abrir = alvo.style.display !== 'block';
         IDS_CONTAINERS_EDICAO.forEach(fecharContainer);
-        if (abrir) alvo.style.display = 'block';
+        if (abrir) {
+            alvo.style.display = 'block';
+            fecharSaibaMais();
+        }
+    }
+
+    /* Fecha o <details> do "Saiba mais" (usado quando outra aba abre) */
+    function fecharSaibaMais() {
+        var detalhes = document.querySelectorAll('.ficha-saiba[open]');
+        Array.prototype.forEach.call(detalhes, function (d) {
+            d.removeAttribute('open');
+        });
     }
 
     /* ==============================================
@@ -401,6 +412,7 @@
     }
 
     function setupPerfil() {
+        /* Sair */
         var btnSair = $('btn-sair');
         if (btnSair) {
             btnSair.addEventListener('click', function () {
@@ -409,6 +421,7 @@
             });
         }
 
+        /* Editar nome */
         var btnEditarNome = $('btn-editar-nome');
         if (btnEditarNome) {
             btnEditarNome.addEventListener('click', function (e) {
@@ -419,6 +432,7 @@
             });
         }
 
+        /* Salvar nome */
         var btnSalvarNome = $('btn-salvar-nome');
         if (btnSalvarNome) {
             btnSalvarNome.addEventListener('click', function (e) {
@@ -427,6 +441,7 @@
             });
         }
 
+        /* Editar senha */
         var btnEditarSenha = $('btn-editar-senha');
         if (btnEditarSenha) {
             btnEditarSenha.addEventListener('click', function (e) {
@@ -439,6 +454,7 @@
             });
         }
 
+        /* Confirmar senha */
         var btnConfirmarSenha = $('btn-confirmar-senha');
         if (btnConfirmarSenha) {
             btnConfirmarSenha.addEventListener('click', function (e) {
@@ -447,6 +463,7 @@
             });
         }
 
+        /* Olho de senha */
         var olhos = document.querySelectorAll('.btn-olho-senha');
         Array.prototype.forEach.call(olhos, function (botao) {
             botao.addEventListener('click', function () {
@@ -461,20 +478,44 @@
             });
         });
 
+        /* Foto */
         var btnEditarFoto = $('btn-editar-foto');
         var inputFoto = $('input-foto');
         if (btnEditarFoto && inputFoto) {
-            btnEditarFoto.addEventListener('click', function () { inputFoto.click(); });
+            btnEditarFoto.addEventListener('click', function () {
+                fecharSaibaMais();
+                inputFoto.click();
+            });
             inputFoto.addEventListener('change', function () {
                 var arquivo = inputFoto.files[0];
                 inputFoto.value = '';
                 if (arquivo) enviarFoto(arquivo);
             });
         }
+
+        /* Abrir "Saiba mais" fecha os containers de edicao */
+        var detalhesSaiba = document.querySelector('.ficha-saiba');
+        if (detalhesSaiba) {
+            detalhesSaiba.addEventListener('toggle', function () {
+                if (detalhesSaiba.open) {
+                    IDS_CONTAINERS_EDICAO.forEach(fecharContainer);
+                }
+            });
+        }
+
+        /* Clicar fora do "Saiba mais" tambem fecha */
+        document.addEventListener('click', function (e) {
+            var detalhes = document.querySelectorAll('.ficha-saiba[open]');
+            Array.prototype.forEach.call(detalhes, function (d) {
+                if (!d.contains(e.target)) {
+                    d.removeAttribute('open');
+                }
+            });
+        });
     }
 
     /* ==============================================
-       7. LAYOUT
+       7. LAYOUT: GAVETA, FICHA E OVERLAY
        ============================================== */
     function setupLayout() {
         var sidebar = $('sidebar');
@@ -511,6 +552,7 @@
             if (ficha.contains(document.activeElement)) document.activeElement.blur();
             ficha.classList.remove('ativa');
             document.body.classList.remove('ficha-aberta');
+            fecharSaibaMais();
             atualizarEstado();
         }
 
@@ -628,81 +670,67 @@
     }
 
     /* ==============================================
-       9. AUTH LISTENER - CORRECAO DO OAuth
+       9. AUTH LISTENER - OAuth (Google/GitHub/Discord)
        ============================================== */
     function setupAuthListener() {
         var db = getDb();
         if (!db) return;
 
-        /* onAuthStateChange dispara quando o Google/GitHub volta */
         db.auth.onAuthStateChange(function (evento, sessao) {
             console.log('Auth event:', evento);
 
             if ((evento === 'SIGNED_IN' || evento === 'INITIAL_SESSION') && sessao && sessao.user) {
-                /* Preenche o perfil imediatamente com os dados da sessao */
                 var meta = sessao.user.user_metadata || {};
                 perfil.usuario = sessao.user;
                 perfil.email = sessao.user.email || '';
                 perfil.nome = formatarNome(meta.full_name || meta.name, perfil.email);
                 perfil.avatarUrl = meta.avatar_url || meta.picture || null;
                 renderizarPerfil();
-
-                /* Depois busca dados atualizados do banco */
                 carregarPerfil();
             }
         });
     }
 
-    /* Verifica a sessao assim que o Supabase estiver pronto */
-    function aguardarSupabaseEIniciar() {
+    /* OAuth: o Supabase precisa de tempo para processar o token da URL */
+    function aguardarOAuthEEntrar() {
         var tentativas = 0;
-        var maxTentativas = 30;
+        var maxTentativas = 40;
 
         function tentar() {
             var db = getDb();
-            if (db) {
-                iniciarComDb(db);
+            if (!db) {
+                tentativas++;
+                if (tentativas >= maxTentativas) {
+                    console.error('Supabase nao inicializou');
+                    irParaLogin();
+                    return;
+                }
+                setTimeout(tentar, 200);
                 return;
             }
-            tentativas++;
-            if (tentativas >= maxTentativas) {
-                console.error('Supabase nao inicializou em tempo');
+
+            db.auth.getSession().then(function (resultado) {
+                var sessao = resultado && resultado.data ? resultado.data.session : null;
+
+                if (sessao && sessao.user) {
+                    console.log('Sessao encontrada, entrando no dashboard');
+                    preencherPerfil(sessao.user);
+                } else {
+                    tentativas++;
+                    if (tentativas >= maxTentativas) {
+                        console.log('Nenhuma sessao apos espera, indo para login');
+                        irParaLogin();
+                        return;
+                    }
+                    setTimeout(tentar, 200);
+                }
+            }).catch(function (erro) {
+                console.error('Erro getSession:', erro);
                 irParaLogin();
-                return;
-            }
-            setTimeout(tentar, 200);
+            });
         }
+
         tentar();
-    }
-
-    function iniciarComDb(db) {
-        /* 1. Verifica se ha sessao na URL (OAuth) ou storage */
-        db.auth.getSession().then(function (resultado) {
-            var sessao = resultado && resultado.data ? resultado.data.session : null;
-
-            if (!sessao) {
-                /* Sem sessao ainda - aguarda onAuthStateChange disparar */
-                console.log('Sem sessao ainda, aguardando...');
-                /* Tenta de novo apos 1s (tempo do Supabase processar OAuth da URL) */
-                setTimeout(function () {
-                    db.auth.getSession().then(function (r2) {
-                        var s2 = r2 && r2.data ? r2.data.session : null;
-                        if (!s2) {
-                            irParaLogin();
-                        } else {
-                            /* Sessao encontrada, carrega */
-                            preencherPerfil(s2.user);
-                        }
-                    });
-                }, 1000);
-            } else {
-                /* Sessao ja disponivel */
-                preencherPerfil(sessao.user);
-            }
-        }).catch(function (erro) {
-            console.error('Erro getSession:', erro);
-            irParaLogin();
-        });
     }
 
     function preencherPerfil(usuario) {
@@ -725,12 +753,8 @@
         setupPerfil();
         setupLayout();
         setupCalendario();
-
-        /* Registra o listener PRIMEIRO (para pegar OAuth) */
         setupAuthListener();
-
-        /* Depois aguarda o Supabase e verifica sessao */
-        aguardarSupabaseEIniciar();
+        aguardarOAuthEEntrar();
     }
 
     if (document.readyState === 'loading') {
