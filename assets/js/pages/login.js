@@ -888,8 +888,6 @@
             var caixas = Array.prototype.slice.call($('caixas-cadastro').querySelectorAll('.codigo-input'));
             var btn    = $('btn-cadastro-acao');
 
-            /* O código é guardado em memória. A validação real acontece
-               no verifySignupCode, no final, junto com a criação da conta. */
             function avancar() {
                 var codigo = caixas.map(function (c) { return c.value; }).join('');
                 if (codigo.length < caixas.length) {
@@ -1135,17 +1133,33 @@
                     return;
                 }
 
+                // Evita cliques duplos
+                if (botao.dataset.carregando === '1') return;
+                botao.dataset.carregando = '1';
+                botao.style.opacity = '0.6';
+                botao.style.pointerEvents = 'none';
+
                 db.auth.signInWithOAuth({
                     provider: provedor,
                     options: {
-                        redirectTo: window.location.origin + '/' + PAGINA_DASHBOARD
+                        redirectTo: window.location.origin + '/' + PAGINA_DASHBOARD,
+                        queryParams: provedor === 'google'
+                            ? { prompt: 'select_account', access_type: 'online' }
+                            : {}
                     }
                 }).then(function (resultado) {
                     if (resultado && resultado.error) {
+                        botao.dataset.carregando = '0';
+                        botao.style.opacity = '';
+                        botao.style.pointerEvents = '';
                         mostrarMensagem('Não foi possível entrar com ' + provedor + '.', 'erro');
                     }
+                    // Se deu certo, o navegador já está sendo redirecionado — não precisa reativar
                 }).catch(function (erro) {
                     console.error(erro);
+                    botao.dataset.carregando = '0';
+                    botao.style.opacity = '';
+                    botao.style.pointerEvents = '';
                     mostrarMensagem('Ocorreu um erro. Tente novamente.', 'erro');
                 });
             });
@@ -1169,8 +1183,6 @@
         var menu  = document.getElementById('navbar-saiba-menu');
         if (!botao || !menu) return;
 
-        /* Celular deitado: o menu fica centralizado na secao direita (sociais),
-           com no minimo 5px de folga da linha divisoria e da borda da tela. */
         function posicionar() {
             var coluna = document.querySelector('.form-coluna-sociais');
             var linha = document.documentElement.getAttribute('data-layout') === 'row';
@@ -1185,7 +1197,7 @@
             var esq = sec.left + folga;
             var dir = Math.min(sec.right, window.innerWidth) - folga;
             var larg = Math.min(330, dir - esq);
-            var x = esq + (dir - esq - larg) / 2;        /* centralizado na secao */
+            var x = esq + (dir - esq - larg) / 2;
 
             menu.style.right = 'auto';
             menu.style.left = (x - wrap.left) + 'px';

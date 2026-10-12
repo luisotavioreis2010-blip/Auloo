@@ -1,16 +1,17 @@
-/* ==============================================
-   DASHBOARD.JS ó v13
+Ôªø/* ==============================================
+   DASHBOARD.JS ‚Äî v14
 
-   SeÁıes
+   Se√ß√µes
    1. Constantes e estado
-   2. Tela: viewport, layout e posiÁ„o da ficha
-   3. Utilit·rios
+   2. Tela: viewport, layout e posi√ß√£o da ficha
+   3. Utilit√°rios
    4. Perfil (carregar, renderizar, sair)
-   5. Mensagens e containers de ediÁ„o
-   6. AÁıes do perfil (nome, senha, foto)
+   5. Mensagens e containers de edi√ß√£o
+   6. A√ß√µes do perfil (nome, senha, foto)
    7. Layout (gaveta, ficha, overlay)
-   8. Calend·rio
-   9. InicializaÁ„o
+   8. Calend√°rio
+   9. Auth listener (OAuth)
+   10. Inicializa√ß√£o
 
    Depende de `supabaseClient` (global, criado em config.js/auth.js).
    ============================================== */
@@ -31,15 +32,15 @@
         'image/webp': 'webp'
     };
     var IDS_CONTAINERS_EDICAO = ['container-editar-nome', 'container-editar-senha'];
-    var MESES = ['Janeiro', 'Fevereiro', 'MarÁo', 'Abril', 'Maio', 'Junho',
+    var MESES = ['Janeiro', 'Fevereiro', 'Mar√ßo', 'Abril', 'Maio', 'Junho',
                  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-    var DIAS_SEMANA = ['Domingo', 'Segunda-feira', 'TerÁa-feira', 'Quarta-feira',
-                       'Quinta-feira', 'Sexta-feira', 'S·bado'];
+    var DIAS_SEMANA = ['Domingo', 'Segunda-feira', 'Ter√ßa-feira', 'Quarta-feira',
+                       'Quinta-feira', 'Sexta-feira', 'S√°bado'];
 
-    /* mesmo limite usado no CSS: acima disso o layout È desktop */
+    /* mesmo limite usado no CSS: acima disso o layout √© desktop */
     var mqCompacto = window.matchMedia('(max-width: 1366px)');
 
-    var perfil = { usuario: null, nome: 'Usu·rio', email: '', avatarUrl: null };
+    var perfil = { usuario: null, nome: 'Usu√°rio', email: '', avatarUrl: null };
 
     function $(id) { return document.getElementById(id); }
 
@@ -48,7 +49,7 @@
     }
 
     /* ==============================================
-       2. TELA: VIEWPORT, LAYOUT E POSI«√O DA FICHA
+       2. TELA: VIEWPORT, LAYOUT E POSI√á√ÉO DA FICHA
        ============================================== */
 
     function campoEmFoco() {
@@ -56,14 +57,6 @@
         return !!ativo && (ativo.tagName === 'INPUT' || ativo.tagName === 'TEXTAREA');
     }
 
-    /* Fixa duas coisas no <html>, lidas pelo CSS:
-         --viewport-h   altura real da janela
-         data-layout    "row" (janela mais larga que alta) ou "stacked"
-       Com um campo de texto focado o teclado virtual est· aberto e a
-       janela fica menor: nesse caso NADA muda, e o layout continua o mesmo
-       (È isso que mantÈm a ficha em tela cheia ao tocar num input).
-       `forcar` ignora essa trava ó usado quando a janela mudou de verdade
-       (girar o aparelho, trocar de dispositivo, redimensionar). */
     function sincronizarTela(forcar) {
         if (!forcar && campoEmFoco()) return;
 
@@ -72,8 +65,6 @@
         raiz.setAttribute('data-layout', window.innerWidth > window.innerHeight ? 'row' : 'stacked');
     }
 
-    /* No layout em linha a ficha cobre da borda esquerda do calend·rio
-       atÈ a borda direita da tela; o CSS lÍ --ficha-row-w sÛ nesse layout. */
     function ajustarLarguraFicha() {
         var calendario = document.querySelector('.calendario-container');
         if (!calendario) return;
@@ -101,16 +92,12 @@
             ajustarLarguraFicha();
         }
 
-        /* Mudou a largura (ou a orientaÁ„o): È uma mudanÁa real de janela,
-           n„o o teclado. Descarta o estado do teclado e relÍ tudo. */
         function aoRedimensionar() {
             var larguraMudou = window.innerWidth !== ultimaLargura;
             var orientacaoMudou = (window.innerWidth > window.innerHeight) !== (ultimaLargura > ultimaAltura);
             ultimaLargura = window.innerWidth;
             ultimaAltura = window.innerHeight;
 
-            /* sem animaÁıes enquanto a tela È redimensionada: evita a gaveta
-               e a ficha "deslizando" ao cruzar um breakpoint */
             raiz.classList.add('redimensionando');
             clearTimeout(temporizadorQuieto);
             temporizadorQuieto = setTimeout(function () {
@@ -133,13 +120,11 @@
 
         window.addEventListener('resize', aoRedimensionar);
         window.addEventListener('orientationchange', function () {
-            /* alguns navegadores sÛ atualizam as dimensıes depois do evento */
             [100, 400, 900].forEach(function (ms) {
                 setTimeout(function () { reavaliar(!campoEmFoco()); }, ms);
             });
         });
 
-        /* teclado: ao focar, abre espaÁo para rolar o campo; ao sair, relÍ a tela */
         document.addEventListener('focusin', function (e) {
             var campo = e.target;
             if (!campo.matches || !campo.matches('input, textarea')) return;
@@ -160,7 +145,6 @@
             }, 350);
         });
 
-        /* a posiÁ„o do calend·rio muda quando a imagem carrega ou o layout troca */
         if ('ResizeObserver' in window) {
             var observador = new ResizeObserver(ajustarLarguraFicha);
             var alvos = document.querySelectorAll('.ilustracao-container, .calendario-container');
@@ -170,10 +154,9 @@
     }
 
     /* ==============================================
-       3. UTILIT¡RIOS
+       3. UTILIT√ÅRIOS
        ============================================== */
 
-    /* LanÁa o erro do Supabase (que n„o lanÁa sozinho) e devolve os dados */
     function verificar(resultado) {
         if (resultado && resultado.error) throw resultado.error;
         return resultado ? resultado.data : null;
@@ -182,12 +165,12 @@
     function formatarNome(nome, email) {
         var texto = (nome || '').trim() || email || '';
         if (texto.indexOf('@') !== -1) texto = texto.split('@')[0];
-        if (!texto) return 'Usu·rio';
+        if (!texto) return 'Usu√°rio';
         return texto.charAt(0).toUpperCase() + texto.slice(1);
     }
 
     function criarIniciais(nome) {
-        var partes = (nome || 'Usu·rio').trim().split(/\s+/);
+        var partes = (nome || 'Usu√°rio').trim().split(/\s+/);
         var primeira = partes[0].charAt(0).toUpperCase();
         var ultima = partes.length > 1 ? partes[partes.length - 1].charAt(0).toUpperCase() : '';
         var span = document.createElement('span');
@@ -216,7 +199,6 @@
         container.appendChild(img);
     }
 
-    /* Desabilita o bot„o durante a aÁ„o (evita clique duplo) e trata erros */
     async function executarAcao(botao, acao) {
         if (botao.disabled) return;
         botao.disabled = true;
@@ -266,7 +248,7 @@
                 .maybeSingle();
 
             if (consulta.error) {
-                console.warn('N„o foi possÌvel ler a tabela profiles:', consulta.error.message);
+                console.warn('N√£o foi poss√≠vel ler a tabela profiles:', consulta.error.message);
             } else if (consulta.data) {
                 if (consulta.data.full_name) nome = consulta.data.full_name;
                 if (consulta.data.avatar_url) avatarUrl = consulta.data.avatar_url;
@@ -285,7 +267,6 @@
     async function fazerLogout() {
         var db = getDb();
 
-        /* espera o signOut (com limite de tempo) antes de limpar e sair */
         try {
             if (db) {
                 await Promise.race([
@@ -300,7 +281,7 @@
         try {
             CHAVES_LOGOUT.forEach(function (chave) { localStorage.removeItem(chave); });
             Object.keys(localStorage)
-                .filter(function (chave) { return chave.indexOf('sb-') === 0; })
+                .filter(function (chave) { return chave.indexOf('sb-') === 0 || chave.indexOf('auloo-auth') === 0; })
                 .forEach(function (chave) { localStorage.removeItem(chave); });
             sessionStorage.clear();
         } catch (erro) {
@@ -311,7 +292,7 @@
     }
 
     /* ==============================================
-       5. MENSAGENS E CONTAINERS DE EDI«√O
+       5. MENSAGENS E CONTAINERS DE EDI√á√ÉO
        ============================================== */
 
     var temporizadorMensagem = null;
@@ -348,7 +329,6 @@
         if (container) container.style.display = 'none';
     }
 
-    /* abre o container pedido (fechando os outros) ou fecha se j· estava aberto */
     function alternarContainer(id) {
         var alvo = $(id);
         if (!alvo) return;
@@ -358,16 +338,16 @@
     }
 
     /* ==============================================
-       6. A«’ES DO PERFIL
+       6. A√á√ïES DO PERFIL
        ============================================== */
 
     async function salvarNome() {
         var input = $('input-novo-nome');
         var novoNome = input ? input.value.trim() : '';
-        if (!novoNome) { mostrarMensagem('Digite um nome v·lido!', 'erro'); return; }
+        if (!novoNome) { mostrarMensagem('Digite um nome v√°lido!', 'erro'); return; }
 
         var db = getDb();
-        if (!db || !perfil.usuario) { mostrarMensagem('Erro: usu·rio n„o autenticado!', 'erro'); return; }
+        if (!db || !perfil.usuario) { mostrarMensagem('Erro: usu√°rio n√£o autenticado!', 'erro'); return; }
 
         verificar(await db.auth.updateUser({ data: { full_name: novoNome } }));
         verificar(await db.from('profiles').upsert({
@@ -393,9 +373,8 @@
         if (senhaNova.length < 8) { mostrarMensagem('Senha deve ter 8+ caracteres!', 'erro'); return; }
 
         var db = getDb();
-        if (!db || !perfil.usuario) { mostrarMensagem('Erro de configuraÁ„o!', 'erro'); return; }
+        if (!db || !perfil.usuario) { mostrarMensagem('Erro de configura√ß√£o!', 'erro'); return; }
 
-        /* confirma a senha atual antes de trocar */
         var login = await db.auth.signInWithPassword({ email: perfil.email, password: senhaAtual });
         if (login.error) {
             var credenciaisInvalidas = login.error.code === 'invalid_credentials' || login.error.status === 400;
@@ -413,11 +392,11 @@
 
     async function enviarFoto(arquivo) {
         var db = getDb();
-        if (!db || !perfil.usuario) { mostrarMensagem('Erro: usu·rio n„o autenticado!', 'erro'); return; }
+        if (!db || !perfil.usuario) { mostrarMensagem('Erro: usu√°rio n√£o autenticado!', 'erro'); return; }
 
         var extensao = EXTENSOES_FOTO[arquivo.type];
-        if (!extensao) { mostrarMensagem('Formato n„o suportado!', 'erro'); return; }
-        if (arquivo.size > TAMANHO_MAX_FOTO) { mostrarMensagem('Imagem muito grande! M·ximo 5MB.', 'erro'); return; }
+        if (!extensao) { mostrarMensagem('Formato n√£o suportado!', 'erro'); return; }
+        if (arquivo.size > TAMANHO_MAX_FOTO) { mostrarMensagem('Imagem muito grande! M√°ximo 5MB.', 'erro'); return; }
 
         try {
             mostrarMensagem('Enviando foto...');
@@ -455,7 +434,6 @@
             });
         }
 
-        /* nome */
         var btnEditarNome = $('btn-editar-nome');
         if (btnEditarNome) {
             btnEditarNome.addEventListener('click', function (e) {
@@ -474,7 +452,6 @@
             });
         }
 
-        /* senha */
         var btnEditarSenha = $('btn-editar-senha');
         if (btnEditarSenha) {
             btnEditarSenha.addEventListener('click', function (e) {
@@ -495,7 +472,6 @@
             });
         }
 
-        /* mostrar/ocultar senha */
         var olhos = document.querySelectorAll('.btn-olho-senha');
         Array.prototype.forEach.call(olhos, function (botao) {
             botao.addEventListener('click', function () {
@@ -511,7 +487,6 @@
             });
         });
 
-        /* foto */
         var btnEditarFoto = $('btn-editar-foto');
         var inputFoto = $('input-foto');
         if (btnEditarFoto && inputFoto) {
@@ -594,7 +569,6 @@
             });
         }
 
-        /* clique fora fecha a gaveta e a ficha */
         document.addEventListener('click', function (e) {
             var alvo = e.target;
 
@@ -603,17 +577,12 @@
                 fecharSidebar();
             }
 
-            /* SÛ no modo compacto (a ficha cobre a tela) um clique fora fecha.
-               No desktop ela fica ao lado do conte˙do e da sidebar: passar o
-               mouse ou clicar na sidebar n„o pode fech·-la. Com um campo
-               focado (teclado aberto) tambÈm n„o fecha. */
             if (mqCompacto.matches && fichaAberta() && !ficha.contains(alvo) &&
                 !(perfilBotao && perfilBotao.contains(alvo)) && !campoEmFoco()) {
                 fecharFicha();
             }
         });
 
-        /* tocar num item do menu fecha a gaveta no modo compacto */
         if (sidebar) {
             sidebar.addEventListener('click', function (e) {
                 if (mqCompacto.matches && e.target.closest('.sidebar-link')) fecharSidebar();
@@ -626,8 +595,6 @@
             fecharFicha();
         });
 
-        /* ao cruzar o breakpoint desktop <-> compacto o layout muda por
-           completo: gaveta e ficha voltam ao estado fechado e a tela È relida */
         function aoCruzarBreakpoint() {
             fecharSidebar();
             fecharFicha();
@@ -643,7 +610,7 @@
     }
 
     /* ==============================================
-       8. CALEND¡RIO
+       8. CALEND√ÅRIO
        ============================================== */
 
     function setupCalendario() {
@@ -700,11 +667,36 @@
     }
 
     /* ==============================================
-       9. INICIALIZA«√O
+       9. AUTH LISTENER (OAuth)
+       Detecta quando o Google/GitHub/Discord redireciona
+       de volta e recarrega o perfil automaticamente.
        ============================================== */
 
-    /* o <html> j· recebe data-layout/--viewport-h por um script inline no <head>;
-       aqui sÛ garantimos o valor (caso esse script seja removido) */
+    function setupAuthListener() {
+        var db = getDb();
+        if (!db) return;
+
+        db.auth.onAuthStateChange(function (evento, sessao) {
+            console.log('Auth event:', evento);
+            if (evento === 'SIGNED_IN' && sessao && sessao.user) {
+                perfil.usuario = sessao.user;
+                perfil.email = sessao.user.email || '';
+                var meta = sessao.user.user_metadata || {};
+                perfil.nome = formatarNome(
+                    meta.full_name || meta.name,
+                    perfil.email
+                );
+                perfil.avatarUrl = meta.avatar_url || meta.picture || null;
+                renderizarPerfil();
+                carregarPerfil();
+            }
+        });
+    }
+
+    /* ==============================================
+       10. INICIALIZA√á√ÉO
+       ============================================== */
+
     sincronizarTela();
 
     function iniciar() {
@@ -712,6 +704,7 @@
         setupPerfil();
         setupLayout();
         setupCalendario();
+        setupAuthListener();
         carregarPerfil();
     }
 

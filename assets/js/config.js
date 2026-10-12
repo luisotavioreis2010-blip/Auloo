@@ -1,5 +1,5 @@
 ﻿// ==============================================
-// CONFIG.JS - detectSessionInUrl ON (OAuth + recovery funcionam)
+// CONFIG.JS — Supabase com retry e detecção OAuth
 // ==============================================
 
 var SUPABASE_CONFIG = {
@@ -11,40 +11,42 @@ var supabaseClient = null;
 
 function inicializarSupabase() {
     try {
-        if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
-            supabaseClient = window.supabase.createClient(
-                SUPABASE_CONFIG.url,
-                SUPABASE_CONFIG.anonKey,
-                {
-                    auth: {
-                        persistSession: true,
-                        autoRefreshToken: true,
-                        detectSessionInUrl: true,
-                        flowType: 'pkce'
-                    }
-                }
-            );
-
-            window.supabaseClient = supabaseClient;
-
-            console.log('Supabase inicializado (detectSessionInUrl ON)');
-            return true;
+        if (typeof window.supabase === 'undefined' || !window.supabase.createClient) {
+            console.warn('Supabase ainda não carregou, tentando novamente em 200ms...');
+            setTimeout(inicializarSupabase, 200);
+            return false;
         }
 
-        console.error('Biblioteca Supabase nao carregada');
-        return false;
+        if (supabaseClient) return true;
+
+        supabaseClient = window.supabase.createClient(
+            SUPABASE_CONFIG.url,
+            SUPABASE_CONFIG.anonKey,
+            {
+                auth: {
+                    persistSession: true,
+                    autoRefreshToken: true,
+                    detectSessionInUrl: true,
+                    flowType: 'pkce',
+                    storage: window.localStorage,
+                    storageKey: 'auloo-auth'
+                }
+            }
+        );
+
+        window.supabaseClient = supabaseClient;
+        console.log('Supabase inicializado (detectSessionInUrl ON)');
+        return true;
     } catch (error) {
         console.error('Erro ao inicializar Supabase:', error);
         return false;
     }
 }
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', inicializarSupabase);
-} else {
-    inicializarSupabase();
-}
+// Tenta até conseguir (o CDN pode demorar)
+inicializarSupabase();
+document.addEventListener('DOMContentLoaded', inicializarSupabase);
+window.addEventListener('load', inicializarSupabase);
 
 window.SUPABASE_CONFIG = SUPABASE_CONFIG;
-
 console.log('Config.js carregado!');
