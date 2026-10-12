@@ -1,12 +1,30 @@
 ﻿/* ==============================================
-   DASHBOARD.JS - v20
-   Corrige: iPad em pe nao retrocede ao focar input
+   DASHBOARD.JS — v21 (arquitetura limpa)
+
+   Princípio:
+   - A ficha do leitor e' um overlay. Ela nao reage a resize/teclado.
+   - O layout do dashboard so' muda quando o USUARIO muda (abrir/fechar gaveta, ficha).
+   - O viewport e' sincronizado 1x, e depois so' quando ha' mudanca real (fora de foco).
+
+   Secoes:
+   1. Estado
+   2. Utilitarios de tela
+   3. Sincronizacao de viewport (unica fonte da verdade)
+   4. Utilidades
+   5. Perfil (carregar / renderizar / logout)
+   6. Mensagens e containers expansivos
+   7. Acoes do perfil (nome / senha / foto)
+   8. Ficha do leitor (abrir / fechar / overlay)
+   9. Gaveta lateral (abrir / fechar)
+   10. Calendario
+   11. Auth (OAuth listener)
+   12. Inicializacao
    ============================================== */
 (function () {
     'use strict';
 
     /* ==============================================
-       1. CONSTANTES E ESTADO
+       1. ESTADO
        ============================================== */
     var PAGINA_LOGIN = '/login.html';
 
@@ -31,14 +49,21 @@
     var DIAS_SEMANA = ['Domingo', 'Segunda-feira', 'Terca-feira', 'Quarta-feira',
                        'Quinta-feira', 'Sexta-feira', 'Sabado'];
 
-    /* Breakpoints */
+    /* Breakpoint unico: abaixo disso o dashboard esta em modo compacto */
     var mqCompacto = window.matchMedia('(max-width: 1366px)');
-    /* iPad em pe / tablet vertical */
-    var mqTabletRetrato = window.matchMedia(
-        '(min-width: 768px) and (max-width: 1366px) and (orientation: portrait)'
-    );
 
-    var perfil = { usuario: null, nome: 'Usuario', email: '', avatarUrl: null };
+    /* Estado do usuario (nunca lido de classes CSS) */
+    var perfil = {
+        usuario: null,
+        nome: 'Usuario',
+        email: '',
+        avatarUrl: null
+    };
+
+    var estado = {
+        fichaAberta: false,
+        gavetaAberta: false
+    };
 
     function $(id) { return document.getElementById(id); }
 
@@ -48,46 +73,39 @@
     }
 
     /* ==============================================
-       2. TELA
+       2. UTILITARIOS DE TELA
        ============================================== */
+
+    /* Ha um campo de texto focado? */
     function campoEmFoco() {
         var ativo = document.activeElement;
         return !!ativo && (ativo.tagName === 'INPUT' || ativo.tagName === 'TEXTAREA');
     }
 
-    function emTabletRetrato() {
-        return mqTabletRetrato.matches;
+    /* A viewport atual e' mais larga do que alta? */
+    function ehPaisagem() {
+        return window.innerWidth > window.innerHeight;
     }
 
-    /* Detecta teclado aberto pela altura real (visualViewport) */
-    function tecladoVirtualAberto() {
-        if (!window.visualViewport) return false;
-        var vv = window.visualViewport;
-        return (window.innerHeight - vv.height) > 100;
-    }
-
-    /* Deve ignorar mudancas de layout? */
-    function deveIgnorarLayout() {
-        if (campoEmFoco()) return true;
-        if (emTabletRetrato() && tecladoVirtualAberto()) return true;
-        return false;
-    }
-
-    function sincronizarTela(forcar) {
-        if (!forcar && deveIgnorarLayout()) return;
-
+    /* Escreve --viewport-h e data-layout no <html> */
+    function aplicarViewport() {
         var raiz = document.documentElement;
         raiz.style.setProperty('--viewport-h', window.innerHeight + 'px');
-        raiz.setAttribute('data-layout', window.innerWidth > window.innerHeight ? 'row' : 'stacked');
+        raiz.setAttribute('data-layout', ehPaisagem() ? 'row' : 'stacked');
     }
 
-    function ajustarLarguraFicha() {
+    /* Largura da ficha no modo "row": da esquerda do calendario ate a borda */
+    function aplicarLarguraFichaRow() {
         var calendario = document.querySelector('.calendario-container');
         if (!calendario) return;
         var esquerda = calendario.getBoundingClientRect().left;
-        document.documentElement.style.setProperty('--ficha-row-w', (window.innerWidth - esquerda) + 'px');
+        document.documentElement.style.setProperty(
+            '--ficha-row-w',
+            (window.innerWidth - esquerda) + 'px'
+        );
     }
 
+    /* Reseta scroll de tudo (usado ao trocar de layout) */
     function resetarScroll() {
         window.scrollTo(0, 0);
         var main = document.querySelector('.dashboard-main');
@@ -96,101 +114,90 @@
         if (ficha) ficha.scrollTop = 0;
     }
 
-    function setupTela() {
-        var raiz = document.documentElement;
-        var temporizador = null;
-        var temporizadorQuieto = null;
-        var ultimaLargura = window.innerWidth;
-        var ultimaAltura = window.innerHeight;
+    /* ==============================================
+       3. SINCRONIZACAO DE VIEWPORT
+       ============================================== */
 
-        function reavaliar(forcar) {
-            if (!forcar && deveIgnorarLayout()) return;
-            sincronizarTela(forcar);
-            ajustarLarguraFicha();
-        }
+    /*
+       Esta e' a UNICA funcao que escreve --viewport-h e data-layout.
+       Ela e' chamada em 3 situacoes especificas:
+         1. No boot
+         2. Quando a janela muda de tamanho E o usuario NAO esta digitando
+         3. Quando a orientacao muda de verdade
 
-        function aoRedimensionar() {
-            /* Em tablet em pe com teclado aberto: ignora completamente */
-            if (emTabletRetrato() && (campoEmFoco() || tecladoVirtualAberto())) return;
+       Ela NAO e' chamada em:
+         - focusin / focusout
+         - teclado virtual abrindo/fechando
+         - resize causado por teclado
+    */
 
-            var larguraMudou = window.innerWidth !== ultimaLargura;
-            var orientacaoMudou = (window.innerWidth > window.innerHeight) !== (ultimaLargura > ultimaAltura);
-            ultimaLargura = window.innerWidth;
-            ultimaAltura = window.innerHeight;
+    var ultimaLargura = 0;
+    var ultimaAltura = 0;
+    var timerResize = null;
+    var timerFimResize = null;
 
-            raiz.classList.add('redimensionando');
-            clearTimeout(temporizadorQuieto);
-            temporizadorQuieto = setTimeout(function () {
-                raiz.classList.remove('redimensionando');
+    function sincronizarViewport(forcar) {
+        /* Nunca mexe no layout enquanto o usuario esta digitando */
+        if (!forcar && campoEmFoco()) return;
+
+        var larguraAtual = window.innerWidth;
+        var alturaAtual = window.innerHeight;
+
+        /* Ignora mudancas puramente de altura (teclado virtual) */
+        var larguraMudou = larguraAtual !== ultimaLargura;
+        var orientacaoMudou = (larguraAtual > alturaAtual) !== (ultimaLargura > ultimaAltura);
+
+        ultimaLargura = larguraAtual;
+        ultimaAltura = alturaAtual;
+
+        if (!forcar && !larguraMudou && !orientacaoMudou) return;
+
+        aplicarViewport();
+        aplicarLarguraFichaRow();
+    }
+
+    function ligarSincronizacaoViewport() {
+        /* Estado inicial */
+        ultimaLargura = window.innerWidth;
+        ultimaAltura = window.innerHeight;
+        aplicarViewport();
+        aplicarLarguraFichaRow();
+
+        /* Resize com debounce */
+        window.addEventListener('resize', function () {
+            /* Se ha campo focado, NADA acontece */
+            if (campoEmFoco()) return;
+
+            clearTimeout(timerResize);
+            clearTimeout(timerFimResize);
+
+            /* Marca o <html> para desligar transicoes durante o resize */
+            document.documentElement.classList.add('redimensionando');
+
+            timerResize = setTimeout(function () {
+                sincronizarViewport(false);
+            }, 150);
+
+            /* Depois que o usuario para de redimensionar, tira a classe */
+            timerFimResize = setTimeout(function () {
+                document.documentElement.classList.remove('redimensionando');
             }, 400);
+        });
 
-            if (larguraMudou || orientacaoMudou) {
-                if (campoEmFoco()) document.activeElement.blur();
-                document.body.classList.remove('campo-focado');
-                sincronizarTela(true);
-                resetarScroll();
-            }
-
-            clearTimeout(temporizador);
-            temporizador = setTimeout(function () {
-                reavaliar(larguraMudou || orientacaoMudou);
-                if (larguraMudou || orientacaoMudou) resetarScroll();
-            }, 250);
-        }
-
-        window.addEventListener('resize', aoRedimensionar);
+        /* Orientation change: o navegador demora a atualizar as dimensoes */
         window.addEventListener('orientationchange', function () {
-            [100, 400, 900].forEach(function (ms) {
+            [100, 300, 600].forEach(function (ms) {
                 setTimeout(function () {
-                    /* Em tablet em pe, nao reavalia ao girar se estiver com campo focado */
-                    if (emTabletRetrato() && campoEmFoco()) return;
-                    reavaliar(false);
+                    if (campoEmFoco()) return;
+                    sincronizarViewport(true);
+                    resetarScroll();
                 }, ms);
             });
         });
-
-        document.addEventListener('focusin', function (e) {
-            var campo = e.target;
-            if (!campo.matches || !campo.matches('input, textarea')) return;
-            document.body.classList.add('campo-focado');
-
-            /* Em tablet em pe, nao faz scroll automatico */
-            if (emTabletRetrato()) return;
-
-            setTimeout(function () {
-                if (document.activeElement === campo) {
-                    campo.scrollIntoView({ block: 'center', behavior: 'smooth' });
-                }
-            }, 300);
-        });
-
-        document.addEventListener('focusout', function () {
-            setTimeout(function () {
-                if (campoEmFoco()) return;
-                document.body.classList.remove('campo-focado');
-
-                /* Em tablet em pe, nao reavalia ao sair do input */
-                if (emTabletRetrato()) return;
-                /* Se teclado ainda esta aberto, tambem nao */
-                if (tecladoVirtualAberto()) return;
-
-                reavaliar(false);
-            }, 350);
-        });
-
-        if ('ResizeObserver' in window) {
-            var observador = new ResizeObserver(function () {
-                if (emTabletRetrato() && (campoEmFoco() || tecladoVirtualAberto())) return;
-                ajustarLarguraFicha();
-            });
-            var alvos = document.querySelectorAll('.ilustracao-container, .calendario-container');
-            for (var i = 0; i < alvos.length; i++) observador.observe(alvos[i]);
-        }
-        ajustarLarguraFicha();
     }
 
     /* ==============================================
-       3. UTILITARIOS
+       4. UTILIDADES
        ============================================== */
     function verificar(resultado) {
         if (resultado && resultado.error) throw resultado.error;
@@ -207,7 +214,9 @@
     function criarIniciais(nome) {
         var partes = (nome || 'Usuario').trim().split(/\s+/);
         var primeira = partes[0].charAt(0).toUpperCase();
-        var ultima = partes.length > 1 ? partes[partes.length - 1].charAt(0).toUpperCase() : '';
+        var ultima = partes.length > 1
+            ? partes[partes.length - 1].charAt(0).toUpperCase()
+            : '';
         var span = document.createElement('span');
         span.className = 'avatar-iniciais';
         span.textContent = primeira + ultima;
@@ -217,10 +226,12 @@
     function renderizarAvatar(container, avatarUrl, nome) {
         if (!container) return;
         container.textContent = '';
+
         if (!avatarUrl || avatarUrl === 'null') {
             container.appendChild(criarIniciais(nome));
             return;
         }
+
         var img = document.createElement('img');
         img.className = 'foto-perfil';
         img.alt = 'Foto de perfil';
@@ -245,11 +256,12 @@
     }
 
     /* ==============================================
-       4. PERFIL
+       5. PERFIL
        ============================================== */
     function renderizarPerfil() {
         renderizarAvatar($('perfil-usuario'), perfil.avatarUrl, perfil.nome);
         renderizarAvatar($('sidebar-perfil-foto'), perfil.avatarUrl, perfil.nome);
+
         var nome = $('sidebar-perfil-nome');
         var email = $('sidebar-perfil-email');
         if (nome) nome.textContent = perfil.nome;
@@ -258,6 +270,15 @@
 
     function irParaLogin() {
         window.location.href = PAGINA_LOGIN;
+    }
+
+    function aplicarDadosPerfil(usuario) {
+        var meta = usuario.user_metadata || {};
+        perfil.usuario = usuario;
+        perfil.email = usuario.email || '';
+        perfil.nome = formatarNome(meta.full_name || meta.name, perfil.email);
+        perfil.avatarUrl = meta.avatar_url || meta.picture || null;
+        renderizarPerfil();
     }
 
     async function carregarPerfil() {
@@ -269,27 +290,23 @@
             if (!sessao || !sessao.session) { irParaLogin(); return; }
 
             var usuario = sessao.session.user;
-            var meta = usuario.user_metadata || {};
-            var nome = meta.full_name || meta.name || null;
-            var avatarUrl = meta.avatar_url || meta.picture || null;
+            aplicarDadosPerfil(usuario);
 
+            /* Busca dados atualizados do banco (opcional) */
             var consulta = await db.from('profiles')
                 .select('full_name, avatar_url')
                 .eq('id', usuario.id)
                 .maybeSingle();
 
-            if (consulta.error) {
-                console.warn('Nao foi possivel ler profiles:', consulta.error.message);
-            } else if (consulta.data) {
-                if (consulta.data.full_name) nome = consulta.data.full_name;
-                if (consulta.data.avatar_url) avatarUrl = consulta.data.avatar_url;
+            if (!consulta.error && consulta.data) {
+                if (consulta.data.full_name) {
+                    perfil.nome = formatarNome(consulta.data.full_name, perfil.email);
+                }
+                if (consulta.data.avatar_url) {
+                    perfil.avatarUrl = consulta.data.avatar_url;
+                }
+                renderizarPerfil();
             }
-
-            perfil.usuario = usuario;
-            perfil.email = usuario.email || '';
-            perfil.nome = formatarNome(nome, perfil.email);
-            perfil.avatarUrl = avatarUrl;
-            renderizarPerfil();
         } catch (erro) {
             console.error('Erro ao carregar perfil:', erro);
         }
@@ -301,7 +318,7 @@
             if (db) {
                 await Promise.race([
                     db.auth.signOut(),
-                    new Promise(function (resolve) { setTimeout(resolve, TIMEOUT_SIGNOUT_MS); })
+                    new Promise(function (r) { setTimeout(r, TIMEOUT_SIGNOUT_MS); })
                 ]);
             }
         } catch (erro) {
@@ -309,12 +326,12 @@
         }
 
         try {
-            CHAVES_LOGOUT.forEach(function (chave) { localStorage.removeItem(chave); });
+            CHAVES_LOGOUT.forEach(function (c) { localStorage.removeItem(c); });
             Object.keys(localStorage)
-                .filter(function (chave) {
-                    return chave.indexOf('sb-') === 0 || chave.indexOf('auloo-auth') === 0;
+                .filter(function (c) {
+                    return c.indexOf('sb-') === 0 || c.indexOf('auloo-auth') === 0;
                 })
-                .forEach(function (chave) { localStorage.removeItem(chave); });
+                .forEach(function (c) { localStorage.removeItem(c); });
             sessionStorage.clear();
         } catch (erro) {
             console.warn('Erro ao limpar storage:', erro);
@@ -324,13 +341,14 @@
     }
 
     /* ==============================================
-       5. MENSAGENS E CONTAINERS EXPANSIVEIS
+       6. MENSAGENS E CONTAINERS EXPANSIVOS
        ============================================== */
     var temporizadorMensagem = null;
 
     function mostrarMensagem(texto, tipo) {
         tipo = tipo || 'sucesso';
         clearTimeout(temporizadorMensagem);
+
         var anterior = $('mensagem-sidebar');
         if (anterior) anterior.remove();
 
@@ -371,7 +389,6 @@
         if (!alvo) return;
 
         var jaAberto = alvo.classList.contains('aberto') || alvo.style.display === 'block';
-
         fecharTodosContainers();
 
         if (!jaAberto) {
@@ -381,7 +398,7 @@
     }
 
     /* ==============================================
-       6. ACOES DO PERFIL
+       7. ACOES DO PERFIL
        ============================================== */
     async function salvarNome() {
         var input = $('input-novo-nome');
@@ -389,7 +406,10 @@
         if (!novoNome) { mostrarMensagem('Digite um nome valido!', 'erro'); return; }
 
         var db = getDb();
-        if (!db || !perfil.usuario) { mostrarMensagem('Erro: usuario nao autenticado!', 'erro'); return; }
+        if (!db || !perfil.usuario) {
+            mostrarMensagem('Erro: usuario nao autenticado!', 'erro');
+            return;
+        }
 
         verificar(await db.auth.updateUser({ data: { full_name: novoNome } }));
         verificar(await db.from('profiles').upsert({
@@ -411,16 +431,36 @@
         var senhaAtual = inputAtual ? inputAtual.value : '';
         var senhaNova = inputNova ? inputNova.value : '';
 
-        if (!senhaAtual || !senhaNova) { mostrarMensagem('Preencha todos os campos!', 'erro'); return; }
-        if (senhaNova.length < 8) { mostrarMensagem('Senha deve ter 8+ caracteres!', 'erro'); return; }
+        if (!senhaAtual || !senhaNova) {
+            mostrarMensagem('Preencha todos os campos!', 'erro');
+            return;
+        }
+        if (senhaNova.length < 8) {
+            mostrarMensagem('Senha deve ter 8+ caracteres!', 'erro');
+            return;
+        }
 
         var db = getDb();
-        if (!db || !perfil.usuario) { mostrarMensagem('Erro de configuracao!', 'erro'); return; }
+        if (!db || !perfil.usuario) {
+            mostrarMensagem('Erro de configuracao!', 'erro');
+            return;
+        }
 
-        var login = await db.auth.signInWithPassword({ email: perfil.email, password: senhaAtual });
+        var login = await db.auth.signInWithPassword({
+            email: perfil.email,
+            password: senhaAtual
+        });
+
         if (login.error) {
-            var credenciaisInvalidas = login.error.code === 'invalid_credentials' || login.error.status === 400;
-            mostrarMensagem(credenciaisInvalidas ? 'Senha atual incorreta!' : 'Erro: ' + login.error.message, 'erro');
+            var credenciaisInvalidas =
+                login.error.code === 'invalid_credentials' ||
+                login.error.status === 400;
+            mostrarMensagem(
+                credenciaisInvalidas
+                    ? 'Senha atual incorreta!'
+                    : 'Erro: ' + login.error.message,
+                'erro'
+            );
             return;
         }
 
@@ -434,15 +474,23 @@
 
     async function enviarFoto(arquivo) {
         var db = getDb();
-        if (!db || !perfil.usuario) { mostrarMensagem('Erro: usuario nao autenticado!', 'erro'); return; }
+        if (!db || !perfil.usuario) {
+            mostrarMensagem('Erro: usuario nao autenticado!', 'erro');
+            return;
+        }
 
         var extensao = EXTENSOES_FOTO[arquivo.type];
         if (!extensao) { mostrarMensagem('Formato nao suportado!', 'erro'); return; }
-        if (arquivo.size > TAMANHO_MAX_FOTO) { mostrarMensagem('Imagem muito grande! Maximo 5MB.', 'erro'); return; }
+        if (arquivo.size > TAMANHO_MAX_FOTO) {
+            mostrarMensagem('Imagem muito grande! Maximo 5MB.', 'erro');
+            return;
+        }
 
         try {
             mostrarMensagem('Enviando foto...');
-            var caminho = perfil.usuario.id + '/avatar_' + perfil.usuario.id + '_' + Date.now() + '.' + extensao;
+
+            var caminho = perfil.usuario.id +
+                          '/avatar_' + perfil.usuario.id + '_' + Date.now() + '.' + extensao;
 
             verificar(await db.storage.from('avatars').upload(caminho, arquivo, {
                 cacheControl: '3600',
@@ -466,7 +514,7 @@
         }
     }
 
-    function setupPerfil() {
+    function ligarBotoesPerfil() {
         /* Sair */
         var btnSair = $('btn-sair');
         if (btnSair) {
@@ -542,7 +590,7 @@
             });
         }
 
-        /* Olho de senha */
+        /* Olhos de senha */
         var olhos = document.querySelectorAll('.btn-olho-senha');
         Array.prototype.forEach.call(olhos, function (botao) {
             botao.addEventListener('click', function () {
@@ -550,6 +598,7 @@
                 var aberto = botao.querySelector('.icone-olho-aberto');
                 var fechado = botao.querySelector('.icone-olho-fechado');
                 if (!input || !aberto || !fechado) return;
+
                 var mostrar = input.type === 'password';
                 input.type = mostrar ? 'text' : 'password';
                 aberto.style.display = mostrar ? 'block' : 'none';
@@ -559,115 +608,186 @@
     }
 
     /* ==============================================
-       7. LAYOUT: GAVETA, FICHA E OVERLAY
+       8. FICHA DO LEITOR (abrir / fechar / overlay)
        ============================================== */
-    function setupLayout() {
-        var sidebar = $('sidebar');
-        var ficha = $('sidebar-perfil');
+
+    function atualizarOverlay() {
         var overlay = $('gaveta-overlay');
+        if (!overlay) return;
+
+        var deveMostrar = estado.gavetaAberta ||
+                          (mqCompacto.matches && estado.fichaAberta);
+
+        overlay.classList.toggle('ativa', deveMostrar);
+    }
+
+    function abrirFicha() {
+        var ficha = $('sidebar-perfil');
+        if (!ficha) return;
+
+        estado.fichaAberta = true;
+        ficha.classList.add('ativa');
+        document.body.classList.add('ficha-aberta');
+        aplicarLarguraFichaRow();
+        atualizarOverlay();
+
         var perfilBotao = $('perfil-botao');
-        var fichaFechar = $('ficha-fechar');
-        var btnHamburger = $('btn-hamburger');
+        if (perfilBotao) perfilBotao.setAttribute('aria-expanded', 'true');
+    }
 
-        function sidebarAberta() { return !!sidebar && sidebar.classList.contains('aberta'); }
-        function fichaAberta() { return !!ficha && ficha.classList.contains('ativa'); }
+    function fecharFicha() {
+        var ficha = $('sidebar-perfil');
+        if (!ficha) return;
 
-        function atualizarEstado() {
-            if (overlay) {
-                overlay.classList.toggle('ativa', sidebarAberta() || (mqCompacto.matches && fichaAberta()));
-            }
-            if (btnHamburger) btnHamburger.setAttribute('aria-expanded', String(sidebarAberta()));
-            if (perfilBotao) perfilBotao.setAttribute('aria-expanded', String(fichaAberta()));
+        estado.fichaAberta = false;
+        ficha.classList.remove('ativa');
+        document.body.classList.remove('ficha-aberta');
+        fecharTodosContainers();
+        atualizarOverlay();
+
+        var perfilBotao = $('perfil-botao');
+        if (perfilBotao) perfilBotao.setAttribute('aria-expanded', 'false');
+
+        /* Blur fora da ficha, se necessario */
+        if (ficha.contains(document.activeElement)) {
+            document.activeElement.blur();
         }
+    }
 
-        function abrirSidebar() { if (sidebar) sidebar.classList.add('aberta'); atualizarEstado(); }
-        function fecharSidebar() { if (sidebar) sidebar.classList.remove('aberta'); atualizarEstado(); }
-
-        function abrirFicha() {
-            if (!ficha) return;
-            ficha.classList.add('ativa');
-            document.body.classList.add('ficha-aberta');
-            ajustarLarguraFicha();
-            atualizarEstado();
-        }
-
-        function fecharFicha() {
-            if (!ficha) return;
-            if (ficha.contains(document.activeElement)) document.activeElement.blur();
-            ficha.classList.remove('ativa');
-            document.body.classList.remove('ficha-aberta');
-            fecharTodosContainers();
-            atualizarEstado();
-        }
-
-        if (perfilBotao) {
-            perfilBotao.addEventListener('click', function () {
-                if (fichaAberta()) fecharFicha(); else abrirFicha();
-            });
-        }
-
-        if (fichaFechar) fichaFechar.addEventListener('click', fecharFicha);
-
-        if (btnHamburger) {
-            btnHamburger.addEventListener('click', function () {
-                if (sidebarAberta()) fecharSidebar(); else abrirSidebar();
-            });
-        }
-
-        if (overlay) {
-            overlay.addEventListener('click', function () {
-                fecharSidebar();
-                fecharFicha();
-            });
-        }
-
-        /* Fecha a ficha ao clicar fora, MAS nao em tablet em pe
-           e nem com campo focado */
-        document.addEventListener('click', function (e) {
-            var alvo = e.target;
-
-            if (sidebarAberta() && !sidebar.contains(alvo) &&
-                !(btnHamburger && btnHamburger.contains(alvo))) {
-                fecharSidebar();
-            }
-
-            if (mqCompacto.matches && fichaAberta() &&
-                !ficha.contains(alvo) &&
-                !(perfilBotao && perfilBotao.contains(alvo)) &&
-                !campoEmFoco() &&
-                !emTabletRetrato()) {
-                fecharFicha();
-            }
-        });
-
-        if (sidebar) {
-            sidebar.addEventListener('click', function (e) {
-                if (mqCompacto.matches && e.target.closest('.sidebar-link')) fecharSidebar();
-            });
-        }
-
-        document.addEventListener('keydown', function (e) {
-            if (e.key !== 'Escape') return;
-            fecharSidebar();
-            fecharFicha();
-        });
-
-        function aoCruzarBreakpoint() {
-            fecharSidebar();
-            fecharFicha();
-            if (campoEmFoco()) document.activeElement.blur();
-            document.body.classList.remove('campo-focado');
-            sincronizarTela(true);
-            resetarScroll();
-            ajustarLarguraFicha();
-        }
-
-        if (mqCompacto.addEventListener) mqCompacto.addEventListener('change', aoCruzarBreakpoint);
-        else if (mqCompacto.addListener) mqCompacto.addListener(aoCruzarBreakpoint);
+    function alternarFicha() {
+        if (estado.fichaAberta) fecharFicha();
+        else abrirFicha();
     }
 
     /* ==============================================
-       8. CALENDARIO
+       9. GAVETA LATERAL (abrir / fechar)
+       ============================================== */
+    function abrirGaveta() {
+        var sidebar = $('sidebar');
+        if (!sidebar) return;
+
+        estado.gavetaAberta = true;
+        sidebar.classList.add('aberta');
+        atualizarOverlay();
+
+        var btnHamburger = $('btn-hamburger');
+        if (btnHamburger) btnHamburger.setAttribute('aria-expanded', 'true');
+    }
+
+    function fecharGaveta() {
+        var sidebar = $('sidebar');
+        if (!sidebar) return;
+
+        estado.gavetaAberta = false;
+        sidebar.classList.remove('aberta');
+        atualizarOverlay();
+
+        var btnHamburger = $('btn-hamburger');
+        if (btnHamburger) btnHamburger.setAttribute('aria-expanded', 'false');
+    }
+
+    function alternarGaveta() {
+        if (estado.gavetaAberta) fecharGaveta();
+        else abrirGaveta();
+    }
+
+    /* ==============================================
+       10. LIGAR BOTOES E EVENTOS DA FICHA/GAVETA
+       ============================================== */
+    function ligarFichaEGaveta() {
+        var perfilBotao = $('perfil-botao');
+        var fichaFechar = $('ficha-fechar');
+        var btnHamburger = $('btn-hamburger');
+        var overlay = $('gaveta-overlay');
+        var sidebar = $('sidebar');
+        var ficha = $('sidebar-perfil');
+
+        /* Botao do avatar */
+        if (perfilBotao) {
+            perfilBotao.addEventListener('click', alternarFicha);
+        }
+
+        /* Botao X da ficha */
+        if (fichaFechar) {
+            fichaFechar.addEventListener('click', fecharFicha);
+        }
+
+        /* Botao hamburger */
+        if (btnHamburger) {
+            btnHamburger.addEventListener('click', alternarGaveta);
+        }
+
+        /* Overlay: fecha os dois */
+        if (overlay) {
+            overlay.addEventListener('click', function () {
+                fecharGaveta();
+                fecharFicha();
+            });
+        }
+
+        /* Fecha a ficha ao clicar fora dela.
+           Nao fecha se:
+             - o clique foi dentro da ficha
+             - o clique foi no proprio botao que abre
+             - o clique foi no overlay (ja tratado acima)
+             - ha um campo focado (teclado virtual aberto)
+        */
+        document.addEventListener('click', function (e) {
+            var alvo = e.target;
+
+            /* Gaveta: fecha ao clicar fora */
+            if (estado.gavetaAberta &&
+                sidebar && !sidebar.contains(alvo) &&
+                !(btnHamburger && btnHamburger.contains(alvo))) {
+                fecharGaveta();
+            }
+
+            /* Ficha: fecha ao clicar fora, MAS apenas em modo compacto */
+            if (mqCompacto.matches && estado.fichaAberta &&
+                ficha && !ficha.contains(alvo) &&
+                !(perfilBotao && perfilBotao.contains(alvo)) &&
+                !(overlay && overlay.contains(alvo)) &&
+                !campoEmFoco()) {
+                fecharFicha();
+            }
+        });
+
+        /* Item do menu: fecha a gaveta em modo compacto */
+        if (sidebar) {
+            sidebar.addEventListener('click', function (e) {
+                if (mqCompacto.matches && e.target.closest('.sidebar-link')) {
+                    fecharGaveta();
+                }
+            });
+        }
+
+        /* Esc fecha tudo */
+        document.addEventListener('keydown', function (e) {
+            if (e.key !== 'Escape') return;
+            fecharGaveta();
+            fecharFicha();
+        });
+
+        /* Ao cruzar o breakpoint desktop <-> compacto, reseta tudo */
+        function aoCruzarBreakpoint() {
+            fecharGaveta();
+            fecharFicha();
+            if (campoEmFoco()) document.activeElement.blur();
+            document.body.classList.remove('campo-focado');
+            aplicarViewport();
+            aplicarLarguraFichaRow();
+            resetarScroll();
+        }
+
+        if (mqCompacto.addEventListener) {
+            mqCompacto.addEventListener('change', aoCruzarBreakpoint);
+        } else if (mqCompacto.addListener) {
+            mqCompacto.addListener(aoCruzarBreakpoint);
+        }
+    }
+
+    /* ==============================================
+       11. CALENDARIO
        ============================================== */
     function setupCalendario() {
         var titulo = $('calendario-titulo');
@@ -694,7 +814,9 @@
                 celulas.push('<span class="dia-outro-mes">' + (diasMesAnterior - i) + '</span>');
             }
             for (i = 1; i <= diasNoMes; i++) {
-                var ehHoje = i === hoje.getDate() && mes === hoje.getMonth() && ano === hoje.getFullYear();
+                var ehHoje = i === hoje.getDate() &&
+                             mes === hoje.getMonth() &&
+                             ano === hoje.getFullYear();
                 celulas.push('<span' + (ehHoje ? ' class="dia-atual"' : '') + '>' + i + '</span>');
             }
             var faltam = (7 - (celulas.length % 7)) % 7;
@@ -714,35 +836,36 @@
 
         var btnAnterior = $('btn-mes-anterior');
         var btnProximo = $('btn-proximo-mes');
-        if (btnAnterior) btnAnterior.addEventListener('click', function () { mudarMes(-1); });
-        if (btnProximo) btnProximo.addEventListener('click', function () { mudarMes(1); });
+        if (btnAnterior) {
+            btnAnterior.addEventListener('click', function () { mudarMes(-1); });
+        }
+        if (btnProximo) {
+            btnProximo.addEventListener('click', function () { mudarMes(1); });
+        }
 
         desenhar();
     }
 
     /* ==============================================
-       9. AUTH LISTENER - OAuth
+       12. AUTH (OAuth listener + boot)
        ============================================== */
-    function setupAuthListener() {
+
+    function ligarAuthListener() {
         var db = getDb();
         if (!db) return;
 
         db.auth.onAuthStateChange(function (evento, sessao) {
             console.log('Auth event:', evento);
 
-            if ((evento === 'SIGNED_IN' || evento === 'INITIAL_SESSION') && sessao && sessao.user) {
-                var meta = sessao.user.user_metadata || {};
-                perfil.usuario = sessao.user;
-                perfil.email = sessao.user.email || '';
-                perfil.nome = formatarNome(meta.full_name || meta.name, perfil.email);
-                perfil.avatarUrl = meta.avatar_url || meta.picture || null;
-                renderizarPerfil();
-                carregarPerfil();
-            }
+            var relevante = (evento === 'SIGNED_IN' || evento === 'INITIAL_SESSION');
+            if (!relevante || !sessao || !sessao.user) return;
+
+            aplicarDadosPerfil(sessao.user);
+            carregarPerfil();
         });
     }
 
-    function aguardarOAuthEEntrar() {
+    function aguardarSessao() {
         var tentativas = 0;
         var maxTentativas = 40;
 
@@ -763,17 +886,17 @@
                 var sessao = resultado && resultado.data ? resultado.data.session : null;
 
                 if (sessao && sessao.user) {
-                    console.log('Sessao encontrada, entrando no dashboard');
-                    preencherPerfil(sessao.user);
-                } else {
-                    tentativas++;
-                    if (tentativas >= maxTentativas) {
-                        console.log('Nenhuma sessao apos espera, indo para login');
-                        irParaLogin();
-                        return;
-                    }
-                    setTimeout(tentar, 200);
+                    aplicarDadosPerfil(sessao.user);
+                    carregarPerfil();
+                    return;
                 }
+
+                tentativas++;
+                if (tentativas >= maxTentativas) {
+                    irParaLogin();
+                    return;
+                }
+                setTimeout(tentar, 200);
             }).catch(function (erro) {
                 console.error('Erro getSession:', erro);
                 irParaLogin();
@@ -783,28 +906,24 @@
         tentar();
     }
 
-    function preencherPerfil(usuario) {
-        var meta = usuario.user_metadata || {};
-        perfil.usuario = usuario;
-        perfil.email = usuario.email || '';
-        perfil.nome = formatarNome(meta.full_name || meta.name, perfil.email);
-        perfil.avatarUrl = meta.avatar_url || meta.picture || null;
-        renderizarPerfil();
-        carregarPerfil();
-    }
-
     /* ==============================================
-       10. INICIALIZACAO
+       13. INICIALIZACAO
        ============================================== */
-    sincronizarTela();
 
     function iniciar() {
-        setupTela();
-        setupPerfil();
-        setupLayout();
+        /* 1. Viewport primeiro (para o CSS ter os valores certos) */
+        ligarSincronizacaoViewport();
+
+        /* 2. Ligar todos os botoes e eventos */
+        ligarBotoesPerfil();
+        ligarFichaEGaveta();
+
+        /* 3. Componentes visuais */
         setupCalendario();
-        setupAuthListener();
-        aguardarOAuthEEntrar();
+
+        /* 4. Auth */
+        ligarAuthListener();
+        aguardarSessao();
     }
 
     if (document.readyState === 'loading') {
