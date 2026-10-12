@@ -1,6 +1,6 @@
 ﻿@charset "UTF-8";
 /* ==============================================
-   DASHBOARD.CSS — v17
+   DASHBOARD.CSS — v18
 
    Estrutura
    1. Variáveis
@@ -616,7 +616,8 @@ input, textarea, .ficha-email {
     animation: surgirContainer 0.35s var(--ease) forwards;
 }
 
-.container-expansivel::before {
+/* Ornamento (floral heart) - apenas nos containers de edicao (nome/senha) */
+.container-expansivel:not(#container-saiba-mais)::before {
     content: '\2766';
     position: absolute;
     top: 0.4rem;
