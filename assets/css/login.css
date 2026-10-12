@@ -1673,28 +1673,11 @@ html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
     }
 
     /* ---------------------------------------------------------
-       Espaco extra embaixo: evita que os botoes "voltar"
-       (Forgot / Sign Up) encostem na borda inferior da tela
+       Espaco extra embaixo: SO o suficiente para o botao "voltar"
+       nao colar na borda inferior da tela
        --------------------------------------------------------- */
     html[data-layout="row"] .forgot-form {
-        padding-bottom: 2.5rem;
-    }
-
-    html[data-layout="row"] #container-forgot .forgot-form {
-        transform: translateY(0.5rem);
-    }
-
-    html[data-layout="row"].kb-focus #container-forgot .forgot-form {
-        transform: none;
-        padding-bottom: 1rem;
-    }
-
-    html[data-layout="row"].kb-focus .form-coluna-login {
-        padding-bottom: 2.5rem;
-    }
-
-    html[data-layout="row"].kb-focus .forgot-form {
-        padding-bottom: 2rem;
+        padding-bottom: 0.8rem;
     }
 }
 
@@ -1728,11 +1711,7 @@ html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
 
     /* Espaco extra embaixo em telas muito estreitas */
     html[data-layout="row"] .forgot-form {
-        padding-bottom: 2.2rem;
-    }
-
-    html[data-layout="row"] .form-coluna-login {
-        padding-bottom: 2.5rem;
+        padding-bottom: 0.6rem;
     }
 }
 

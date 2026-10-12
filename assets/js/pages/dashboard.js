@@ -1,5 +1,5 @@
 ﻿/* ==============================================
-   DASHBOARD.JS - v19
+   DASHBOARD.JS - v20
    Corrige: iPad em pe nao retrocede ao focar input
    ============================================== */
 (function () {
@@ -33,7 +33,7 @@
 
     /* Breakpoints */
     var mqCompacto = window.matchMedia('(max-width: 1366px)');
-    /* iPad em pe / tablet vertical: 768px a 1366px e orientacao portrait */
+    /* iPad em pe / tablet vertical */
     var mqTabletRetrato = window.matchMedia(
         '(min-width: 768px) and (max-width: 1366px) and (orientation: portrait)'
     );
@@ -59,9 +59,22 @@
         return mqTabletRetrato.matches;
     }
 
+    /* Detecta teclado aberto pela altura real (visualViewport) */
+    function tecladoVirtualAberto() {
+        if (!window.visualViewport) return false;
+        var vv = window.visualViewport;
+        return (window.innerHeight - vv.height) > 100;
+    }
+
+    /* Deve ignorar mudancas de layout? */
+    function deveIgnorarLayout() {
+        if (campoEmFoco()) return true;
+        if (emTabletRetrato() && tecladoVirtualAberto()) return true;
+        return false;
+    }
+
     function sincronizarTela(forcar) {
-        /* Nunca mexe no layout enquanto um campo esta focado */
-        if (!forcar && campoEmFoco()) return;
+        if (!forcar && deveIgnorarLayout()) return;
 
         var raiz = document.documentElement;
         raiz.style.setProperty('--viewport-h', window.innerHeight + 'px');
@@ -91,14 +104,14 @@
         var ultimaAltura = window.innerHeight;
 
         function reavaliar(forcar) {
+            if (!forcar && deveIgnorarLayout()) return;
             sincronizarTela(forcar);
             ajustarLarguraFicha();
         }
 
         function aoRedimensionar() {
-            /* Em tablet em pe, com o teclado aberto, NAO reavalia nada.
-               O teclado virtual reduz a altura e bagunça o layout. */
-            if (emTabletRetrato() && campoEmFoco()) return;
+            /* Em tablet em pe com teclado aberto: ignora completamente */
+            if (emTabletRetrato() && (campoEmFoco() || tecladoVirtualAberto())) return;
 
             var larguraMudou = window.innerWidth !== ultimaLargura;
             var orientacaoMudou = (window.innerWidth > window.innerHeight) !== (ultimaLargura > ultimaAltura);
@@ -128,7 +141,11 @@
         window.addEventListener('resize', aoRedimensionar);
         window.addEventListener('orientationchange', function () {
             [100, 400, 900].forEach(function (ms) {
-                setTimeout(function () { reavaliar(!campoEmFoco()); }, ms);
+                setTimeout(function () {
+                    /* Em tablet em pe, nao reavalia ao girar se estiver com campo focado */
+                    if (emTabletRetrato() && campoEmFoco()) return;
+                    reavaliar(false);
+                }, ms);
             });
         });
 
@@ -137,7 +154,7 @@
             if (!campo.matches || !campo.matches('input, textarea')) return;
             document.body.classList.add('campo-focado');
 
-            /* Em tablet em pe, nao faz scroll automatico nem reavalia */
+            /* Em tablet em pe, nao faz scroll automatico */
             if (emTabletRetrato()) return;
 
             setTimeout(function () {
@@ -154,6 +171,8 @@
 
                 /* Em tablet em pe, nao reavalia ao sair do input */
                 if (emTabletRetrato()) return;
+                /* Se teclado ainda esta aberto, tambem nao */
+                if (tecladoVirtualAberto()) return;
 
                 reavaliar(false);
             }, 350);
@@ -161,8 +180,7 @@
 
         if ('ResizeObserver' in window) {
             var observador = new ResizeObserver(function () {
-                /* Em tablet em pe com teclado, ignora */
-                if (emTabletRetrato() && campoEmFoco()) return;
+                if (emTabletRetrato() && (campoEmFoco() || tecladoVirtualAberto())) return;
                 ajustarLarguraFicha();
             });
             var alvos = document.querySelectorAll('.ilustracao-container, .calendario-container');
@@ -603,8 +621,8 @@
             });
         }
 
-        /* So fecha a ficha se clicar FORA dela, sem teclado aberto,
-           e NAO estiver em tablet em pe */
+        /* Fecha a ficha ao clicar fora, MAS nao em tablet em pe
+           e nem com campo focado */
         document.addEventListener('click', function (e) {
             var alvo = e.target;
 
