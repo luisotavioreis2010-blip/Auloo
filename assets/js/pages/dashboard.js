@@ -1,6 +1,7 @@
 ﻿/* ==============================================
-   DASHBOARD.JS - v21
+   DASHBOARD.JS - v22
    Com suporte a "Criar Senha" para contas Google
+   E correção do iPad (ficha não retrocede ao focar input)
    ============================================== */
 (function () {
     'use strict';
@@ -51,6 +52,13 @@
         return !!ativo && (ativo.tagName === 'INPUT' || ativo.tagName === 'TEXTAREA');
     }
 
+    /* Detecta se a mudanca de viewport veio do teclado virtual */
+    function veioDoTeclado() {
+        if (!window.visualViewport) return false;
+        var vv = window.visualViewport;
+        return (window.innerHeight - vv.height) > 100;
+    }
+
     function sincronizarTela(forcar) {
         if (!forcar && campoEmFoco()) return;
         var raiz = document.documentElement;
@@ -76,72 +84,84 @@
     function setupTela() {
         var raiz = document.documentElement;
         var temporizador = null;
-        var temporizadorQuieto = null;
         var ultimaLargura = window.innerWidth;
         var ultimaAltura = window.innerHeight;
 
-        function reavaliar(forcar) {
-            sincronizarTela(forcar);
+        function sincronizarTelaSeNecessario() {
+            /* Nunca reavalia com campo focado ou teclado aberto */
+            if (campoEmFoco()) return;
+            if (veioDoTeclado()) return;
+
+            var larguraAtual = window.innerWidth;
+            var alturaAtual = window.innerHeight;
+
+            /* So mexe no layout se a LARGURA mudou de verdade */
+            var larguraMudou = larguraAtual !== ultimaLargura;
+            var orientacaoMudou = (larguraAtual > alturaAtual) !== (ultimaLargura > ultimaAltura);
+
+            ultimaLargura = larguraAtual;
+            ultimaAltura = alturaAtual;
+
+            if (!larguraMudou && !orientacaoMudou) return;
+
+            raiz.classList.add('redimensionando');
+
+            sincronizarTela(true);
             ajustarLarguraFicha();
+            resetarScroll();
+
+            setTimeout(function () {
+                raiz.classList.remove('redimensionando');
+            }, 400);
         }
 
         function aoRedimensionar() {
-            var larguraMudou = window.innerWidth !== ultimaLargura;
-            var orientacaoMudou = (window.innerWidth > window.innerHeight) !== (ultimaLargura > ultimaAltura);
-            ultimaLargura = window.innerWidth;
-            ultimaAltura = window.innerHeight;
-
-            raiz.classList.add('redimensionando');
-            clearTimeout(temporizadorQuieto);
-            temporizadorQuieto = setTimeout(function () {
-                raiz.classList.remove('redimensionando');
-            }, 400);
-
-            if (larguraMudou || orientacaoMudou) {
-                if (campoEmFoco()) document.activeElement.blur();
-                document.body.classList.remove('campo-focado');
-                sincronizarTela(true);
-                resetarScroll();
-            }
+            /* Ignora completamente se ha campo focado */
+            if (campoEmFoco()) return;
+            /* Ignora se veio do teclado virtual */
+            if (veioDoTeclado()) return;
 
             clearTimeout(temporizador);
-            temporizador = setTimeout(function () {
-                reavaliar(larguraMudou || orientacaoMudou);
-                if (larguraMudou || orientacaoMudou) resetarScroll();
-            }, 250);
+            temporizador = setTimeout(sincronizarTelaSeNecessario, 250);
         }
 
         window.addEventListener('resize', aoRedimensionar);
         window.addEventListener('orientationchange', function () {
             [100, 400, 900].forEach(function (ms) {
-                setTimeout(function () { reavaliar(!campoEmFoco()); }, ms);
+                setTimeout(function () {
+                    if (campoEmFoco()) return;
+                    sincronizarTelaSeNecessario();
+                }, ms);
             });
         });
 
+        /* Foco: so marca o body com campo-focado, NAO reavalia */
         document.addEventListener('focusin', function (e) {
             var campo = e.target;
             if (!campo.matches || !campo.matches('input, textarea')) return;
             document.body.classList.add('campo-focado');
-            setTimeout(function () {
-                if (document.activeElement === campo) {
-                    campo.scrollIntoView({ block: 'center', behavior: 'smooth' });
-                }
-            }, 300);
         });
 
         document.addEventListener('focusout', function () {
             setTimeout(function () {
                 if (campoEmFoco()) return;
                 document.body.classList.remove('campo-focado');
-                reavaliar(false);
+                /* NAO reavalia — o layout ja esta correto */
             }, 350);
         });
 
+        /* ResizeObserver: so ajusta largura da ficha, sem reavaliar layout */
         if ('ResizeObserver' in window) {
-            var observador = new ResizeObserver(ajustarLarguraFicha);
+            var observador = new ResizeObserver(function () {
+                if (campoEmFoco()) return;
+                if (veioDoTeclado()) return;
+                ajustarLarguraFicha();
+            });
             var alvos = document.querySelectorAll('.ilustracao-container, .calendario-container');
             for (var i = 0; i < alvos.length; i++) observador.observe(alvos[i]);
         }
+
+        sincronizarTela(true);
         ajustarLarguraFicha();
     }
 
