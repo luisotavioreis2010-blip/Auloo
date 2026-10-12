@@ -147,7 +147,7 @@ async function loginUser(email, password) {
                 if (check.exists && check.provider === 'google' && !check.hasPassword) {
                     return {
                         success: false,
-                        message: 'Esta conta foi criada com Google. Entre com Google.'
+                        message: 'Use o botao "Entrar com Google".'
                     };
                 }
 
@@ -211,7 +211,7 @@ async function recoverPassword(email) {
         });
 
         if (error) throw error;
-        return { success: true, message: 'Link de recuperacao enviado!' };
+        return { success: true, message: 'Link enviado!' };
     } catch (error) {
         return { success: false, message: 'Erro ao enviar link.' };
     }

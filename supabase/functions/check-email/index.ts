@@ -1,5 +1,6 @@
 ﻿// ==============================================
-// EDGE FUNCTION: check-email (v2 - imports confiáveis)
+// EDGE FUNCTION: check-email (v6 - FINAL)
+// Usa getUserById para pegar identities
 // ==============================================
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
@@ -11,7 +12,6 @@ const corsHeaders = {
 };
 
 Deno.serve(async (req) => {
-    // Preflight
     if (req.method === 'OPTIONS') {
         return new Response('ok', { headers: corsHeaders });
     }
@@ -20,12 +20,9 @@ Deno.serve(async (req) => {
         const supabaseUrl = Deno.env.get('SUPABASE_URL');
         const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
-        console.log('URL presente:', !!supabaseUrl);
-        console.log('Service role presente:', !!serviceRoleKey);
-
         if (!supabaseUrl || !serviceRoleKey) {
             return new Response(
-                JSON.stringify({ exists: false, error: 'Variáveis de ambiente ausentes' }),
+                JSON.stringify({ exists: false, error: 'Variaveis de ambiente ausentes' }),
                 { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             );
         }
@@ -39,36 +36,138 @@ Deno.serve(async (req) => {
 
         if (!email || typeof email !== 'string') {
             return new Response(
-                JSON.stringify({ exists: false, error: 'Email inválido' }),
+                JSON.stringify({ exists: false, error: 'Email invalido' }),
                 { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             );
         }
 
         const emailNormalizado = email.trim().toLowerCase();
-        console.log('Consultando email:', emailNormalizado);
+        console.log('Buscando email:', emailNormalizado);
 
-        const { data, error } = await supabaseAdmin
+        /* ==========================================
+           1. Achar o ID do usuario via listUsers
+           ========================================== */
+        let userIdEncontrado: string | null = null;
+        let pagina = 1;
+        const porPagina = 1000;
+
+        while (pagina <= 10 && !userIdEncontrado) {
+            const { data, error } = await supabaseAdmin.auth.admin.listUsers({
+                page: pagina,
+                perPage: porPagina,
+            });
+
+            if (error) {
+                console.error('Erro ao listar users (pagina ' + pagina + '):', error);
+                break;
+            }
+
+            if (!data || !data.users || data.users.length === 0) {
+                break;
+            }
+
+            const achado = data.users.find(
+                (u: any) => (u.email || '').toLowerCase() === emailNormalizado
+            );
+
+            if (achado) {
+                userIdEncontrado = achado.id;
+                break;
+            }
+
+            if (data.users.length < porPagina) break;
+
+            pagina++;
+        }
+
+        /* ==========================================
+           2. Se achou, busca o usuario individualmente
+              (para pegar as identities)
+           ========================================== */
+        if (userIdEncontrado) {
+            const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(
+                userIdEncontrado
+            );
+
+            if (userError || !userData || !userData.user) {
+                console.error('Erro ao buscar usuario por ID:', userError);
+                /* Fallback: retorna o que temos */
+                return new Response(
+                    JSON.stringify({
+                        exists: true,
+                        source: 'auth',
+                        provider: null,
+                        providers: [],
+                        hasPassword: false
+                    }),
+                    { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+                );
+            }
+
+            const usuario = userData.user;
+            const identities = usuario.identities || [];
+            const providers = identities.map((i: any) => i.provider);
+
+            const temSenha = providers.includes('email');
+            const temGoogle = providers.includes('google');
+
+            let providerPrincipal: string | null = null;
+            if (temSenha) providerPrincipal = 'email';
+            else if (temGoogle) providerPrincipal = 'google';
+
+            console.log('Encontrado. Providers:', providers, '| Senha:', temSenha);
+
+            return new Response(
+                JSON.stringify({
+                    exists: true,
+                    source: 'auth',
+                    provider: providerPrincipal,
+                    providers: providers,
+                    hasPassword: temSenha
+                }),
+                { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+        }
+
+        /* ==========================================
+           3. Fallback: checar na tabela profiles
+           ========================================== */
+        const { data: profile } = await supabaseAdmin
             .from('profiles')
             .select('id')
             .eq('email', emailNormalizado)
             .maybeSingle();
 
-        if (error) {
-            console.error('Erro ao consultar profiles:', JSON.stringify(error));
+        if (profile) {
+            console.log('Encontrado em profiles');
             return new Response(
-                JSON.stringify({ exists: false, error: error.message }),
-                { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+                JSON.stringify({
+                    exists: true,
+                    source: 'profiles',
+                    provider: null,
+                    providers: [],
+                    hasPassword: false
+                }),
+                { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             );
         }
 
-        console.log('Resultado:', data ? 'existe' : 'não existe');
-
+        /* ==========================================
+           4. Nao encontrado
+           ========================================== */
+        console.log('Nao encontrado');
         return new Response(
-            JSON.stringify({ exists: !!data }),
+            JSON.stringify({
+                exists: false,
+                source: null,
+                provider: null,
+                providers: [],
+                hasPassword: false
+            }),
             { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
 
-    } catch (err) {
+    } catch (err: any) {
         console.error('Erro inesperado:', err.message || String(err));
         return new Response(
             JSON.stringify({ exists: false, error: err.message || 'Erro inesperado' }),

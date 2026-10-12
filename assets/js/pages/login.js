@@ -707,13 +707,13 @@
                 }
 
                 if (existente.provider === 'google' && !existente.hasPassword) {
-                    mostrarMensagem('Esta conta foi criada com Google. Entre com Google.', 'erro');
+                    mostrarMensagem('Use o botao "Entrar com Google".', 'erro');
                     return false;
                 }
 
                 var resultado = await recoverPassword(email);
                 if (resultado.success) {
-                    mostrarMensagem('Link enviado! Verifique seu e-mail.', 'sucesso');
+                    mostrarMensagem('Link enviado!', 'sucesso');
                 } else {
                     mostrarMensagem(resultado.message || 'Erro ao enviar link!', 'erro');
                 }
@@ -847,7 +847,7 @@
 
                     if (existente.exists) {
                         if (existente.provider === 'google' && !existente.hasPassword) {
-                            mostrarMensagem('Esta conta foi criada com Google. Entre com Google.', 'erro');
+                            mostrarMensagem('Use o botao "Entrar com Google".', 'erro');
                             return false;
                         }
                         mostrarMensagem('Este e-mail ja esta cadastrado. Faca login!', 'erro');
@@ -862,7 +862,7 @@
 
                     estado.email = email;
                     etapaCodigo();
-                    mostrarMensagem('Codigo enviado! Verifique seu e-mail.', 'sucesso');
+                    mostrarMensagem('Codigo enviado!', 'sucesso');
                     return false;
                 });
             }
@@ -886,7 +886,7 @@
             function avancar() {
                 var codigo = caixas.map(function (c) { return c.value; }).join('');
                 if (codigo.length < caixas.length) {
-                    mostrarMensagem('Digite os 6 digitos do codigo!', 'erro');
+                    mostrarMensagem('Digite os 6 digitos!', 'erro');
                     return;
                 }
                 estado.codigo = codigo;
@@ -952,7 +952,7 @@
 
                     var entrada = await loginUser(estado.email, senha.value);
                     if (entrada.success) {
-                        mostrarMensagem('Conta criada! Entrando...', 'sucesso');
+                        mostrarMensagem('Conta criada!', 'sucesso');
                         setTimeout(function () {
                             window.location.href = PAGINA_DASHBOARD;
                         }, 500);
@@ -999,7 +999,7 @@
 
         aguardarSupabase().then(function (db) {
             if (!db) {
-                falhaRecovery('Nao foi possivel validar o link. Tente novamente.');
+                falhaRecovery('Nao foi possivel validar o link.');
                 return null;
             }
 
@@ -1018,7 +1018,7 @@
 
             var sessao = resultado.data && resultado.data.session;
             if (resultado.error || !sessao) {
-                falhaRecovery('Link invalido ou expirado. Tente novamente.');
+                falhaRecovery('Link invalido ou expirado.');
                 return;
             }
 
@@ -1027,7 +1027,7 @@
             mostrarNovaSenha();
         }).catch(function (erro) {
             console.error(erro);
-            falhaRecovery('Link invalido ou expirado. Tente novamente.');
+            falhaRecovery('Link invalido ou expirado.');
         });
     }
 
@@ -1075,7 +1075,7 @@
             executarComBotao(btnSalvar, 'CONFIRMAR', async function () {
                 var db = getDb();
                 if (!db) {
-                    mostrarMensagem('Erro de configuracao. Recarregue a pagina.', 'erro');
+                    mostrarMensagem('Erro de configuracao.', 'erro');
                     return false;
                 }
 
@@ -1089,7 +1089,7 @@
                 }
 
                 voltarParaLogin();
-                mostrarMensagem('Senha alterada com sucesso!', 'sucesso');
+                mostrarMensagem('Senha alterada!', 'sucesso');
                 return true;
             });
         }
@@ -1124,7 +1124,7 @@
             botao.addEventListener('click', function () {
                 var db = getDb();
                 if (!db) {
-                    mostrarMensagem('Erro de configuracao. Recarregue a pagina.', 'erro');
+                    mostrarMensagem('Erro de configuracao.', 'erro');
                     return;
                 }
 

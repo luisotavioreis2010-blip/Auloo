@@ -437,7 +437,7 @@
         if (inputNova) inputNova.value = '';
         if (inputConfirmar) inputConfirmar.value = '';
         fecharContainer('container-criar-senha');
-        mostrarMensagem('Senha criada! Agora voce pode entrar com e-mail e senha.');
+        mostrarMensagem('Senha criada!');
     }
 
     async function enviarFoto(arquivo) {
