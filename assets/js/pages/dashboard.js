@@ -1,6 +1,6 @@
 ﻿/* ==============================================
-   DASHBOARD.JS - v18
-   Todos os containers usam a mesma logica
+   DASHBOARD.JS - v19
+   Corrige: iPad em pe nao retrocede ao focar input
    ============================================== */
 (function () {
     'use strict';
@@ -8,7 +8,8 @@
     /* ==============================================
        1. CONSTANTES E ESTADO
        ============================================== */
-    var PAGINA_LOGIN = '/';
+    var PAGINA_LOGIN = '/login.html';
+
     var CHAVES_LOGOUT = ['auloo_user', 'auloo_saved_email'];
     var TIMEOUT_SIGNOUT_MS = 3000;
     var TAMANHO_MAX_FOTO = 5 * 1024 * 1024;
@@ -19,7 +20,6 @@
         'image/webp': 'webp'
     };
 
-    /* Todos os containers expansivos da ficha */
     var IDS_CONTAINERS = [
         'container-editar-nome',
         'container-editar-senha',
@@ -31,7 +31,12 @@
     var DIAS_SEMANA = ['Domingo', 'Segunda-feira', 'Terca-feira', 'Quarta-feira',
                        'Quinta-feira', 'Sexta-feira', 'Sabado'];
 
+    /* Breakpoints */
     var mqCompacto = window.matchMedia('(max-width: 1366px)');
+    /* iPad em pe / tablet vertical: 768px a 1366px e orientacao portrait */
+    var mqTabletRetrato = window.matchMedia(
+        '(min-width: 768px) and (max-width: 1366px) and (orientation: portrait)'
+    );
 
     var perfil = { usuario: null, nome: 'Usuario', email: '', avatarUrl: null };
 
@@ -50,8 +55,14 @@
         return !!ativo && (ativo.tagName === 'INPUT' || ativo.tagName === 'TEXTAREA');
     }
 
+    function emTabletRetrato() {
+        return mqTabletRetrato.matches;
+    }
+
     function sincronizarTela(forcar) {
+        /* Nunca mexe no layout enquanto um campo esta focado */
         if (!forcar && campoEmFoco()) return;
+
         var raiz = document.documentElement;
         raiz.style.setProperty('--viewport-h', window.innerHeight + 'px');
         raiz.setAttribute('data-layout', window.innerWidth > window.innerHeight ? 'row' : 'stacked');
@@ -85,6 +96,10 @@
         }
 
         function aoRedimensionar() {
+            /* Em tablet em pe, com o teclado aberto, NAO reavalia nada.
+               O teclado virtual reduz a altura e bagunça o layout. */
+            if (emTabletRetrato() && campoEmFoco()) return;
+
             var larguraMudou = window.innerWidth !== ultimaLargura;
             var orientacaoMudou = (window.innerWidth > window.innerHeight) !== (ultimaLargura > ultimaAltura);
             ultimaLargura = window.innerWidth;
@@ -121,6 +136,10 @@
             var campo = e.target;
             if (!campo.matches || !campo.matches('input, textarea')) return;
             document.body.classList.add('campo-focado');
+
+            /* Em tablet em pe, nao faz scroll automatico nem reavalia */
+            if (emTabletRetrato()) return;
+
             setTimeout(function () {
                 if (document.activeElement === campo) {
                     campo.scrollIntoView({ block: 'center', behavior: 'smooth' });
@@ -132,12 +151,20 @@
             setTimeout(function () {
                 if (campoEmFoco()) return;
                 document.body.classList.remove('campo-focado');
+
+                /* Em tablet em pe, nao reavalia ao sair do input */
+                if (emTabletRetrato()) return;
+
                 reavaliar(false);
             }, 350);
         });
 
         if ('ResizeObserver' in window) {
-            var observador = new ResizeObserver(ajustarLarguraFicha);
+            var observador = new ResizeObserver(function () {
+                /* Em tablet em pe com teclado, ignora */
+                if (emTabletRetrato() && campoEmFoco()) return;
+                ajustarLarguraFicha();
+            });
             var alvos = document.querySelectorAll('.ilustracao-container, .calendario-container');
             for (var i = 0; i < alvos.length; i++) observador.observe(alvos[i]);
         }
@@ -321,7 +348,6 @@
         IDS_CONTAINERS.forEach(fecharContainer);
     }
 
-    /* Abre um container e fecha os outros. Clicar no mesmo container fecha ele. */
     function alternarContainer(id) {
         var alvo = $(id);
         if (!alvo) return;
@@ -432,7 +458,7 @@
             });
         }
 
-        /* Mudar foto - fecha todos os containers */
+        /* Mudar foto */
         var btnEditarFoto = $('btn-editar-foto');
         var inputFoto = $('input-foto');
         if (btnEditarFoto && inputFoto) {
@@ -489,7 +515,7 @@
             });
         }
 
-        /* Saiba mais - mesma logica */
+        /* Saiba mais */
         var btnSaibaMais = $('btn-saiba-mais');
         if (btnSaibaMais) {
             btnSaibaMais.addEventListener('click', function (e) {
@@ -577,14 +603,21 @@
             });
         }
 
+        /* So fecha a ficha se clicar FORA dela, sem teclado aberto,
+           e NAO estiver em tablet em pe */
         document.addEventListener('click', function (e) {
             var alvo = e.target;
+
             if (sidebarAberta() && !sidebar.contains(alvo) &&
                 !(btnHamburger && btnHamburger.contains(alvo))) {
                 fecharSidebar();
             }
-            if (mqCompacto.matches && fichaAberta() && !ficha.contains(alvo) &&
-                !(perfilBotao && perfilBotao.contains(alvo)) && !campoEmFoco()) {
+
+            if (mqCompacto.matches && fichaAberta() &&
+                !ficha.contains(alvo) &&
+                !(perfilBotao && perfilBotao.contains(alvo)) &&
+                !campoEmFoco() &&
+                !emTabletRetrato()) {
                 fecharFicha();
             }
         });

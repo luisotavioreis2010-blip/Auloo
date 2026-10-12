@@ -377,12 +377,10 @@ html.rotating .ilustracao-login { opacity: 0 !important; }
     -webkit-overflow-scrolling: touch;
 }
 
-/* celular deitado: mesma lista vertical, um pouco mais compacta */
+/* Celular deitado */
 html[data-layout="row"] .saiba-menu::before { right: auto; left: var(--seta-x, auto); }
 html[data-layout="row"] .saiba-titulo { padding-top: 0.8rem; padding-bottom: 0.3rem; }
 html[data-layout="row"] .saiba-item { padding-top: 0.6rem; padding-bottom: 0.6rem; }
-
-/* celular deitado estreito: itens mais compactos */
 html[data-layout="row"] .saiba-item { gap: 0.7rem; margin: 0 0.3rem; padding-left: 0.7rem; padding-right: 0.7rem; }
 html[data-layout="row"] .saiba-num { width: 1.6rem; height: 1.6rem; font-size: 0.8rem; }
 html[data-layout="row"] .saiba-corpo strong { font-size: 0.85rem; }
@@ -760,7 +758,6 @@ html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
 
 /* ============================================================
    7. MENSAGEM
-   Posicionada pelo login.js (bottom em px) em relação ao pai.
    ============================================================ */
 .mensagem {
     position: absolute;
@@ -784,8 +781,6 @@ html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
     transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
-/* Nos modos forgot / cadastro / nova senha a mensagem ocupa exatamente
-   a mesma largura do input que fica abaixo dela (o .forgot-form). */
 .forgot-form > .mensagem {
     width: 100%;
     max-width: 100%;
@@ -1252,7 +1247,6 @@ html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
         height: 260px;
     }
 
-    /* Menu "Saiba mais" um pouco maior no desktop grande */
     .navbar-saiba {
         font-size: 0.72rem;
         padding: 0.65rem 1.2rem;
@@ -1377,7 +1371,6 @@ html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
         gap: 0.85rem;
     }
 
-    /* Menu "Saiba mais" compacto no mobile */
     .navbar-saiba {
         padding: 0.5rem 0.75rem;
         font-size: 0.6rem;
@@ -1678,6 +1671,31 @@ html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
         width: 100%;
         margin: 0;
     }
+
+    /* ---------------------------------------------------------
+       Espaco extra embaixo: evita que os botoes "voltar"
+       (Forgot / Sign Up) encostem na borda inferior da tela
+       --------------------------------------------------------- */
+    html[data-layout="row"] .forgot-form {
+        padding-bottom: 2.5rem;
+    }
+
+    html[data-layout="row"] #container-forgot .forgot-form {
+        transform: translateY(0.5rem);
+    }
+
+    html[data-layout="row"].kb-focus #container-forgot .forgot-form {
+        transform: none;
+        padding-bottom: 1rem;
+    }
+
+    html[data-layout="row"].kb-focus .form-coluna-login {
+        padding-bottom: 2.5rem;
+    }
+
+    html[data-layout="row"].kb-focus .forgot-form {
+        padding-bottom: 2rem;
+    }
 }
 
 @media (max-width: 700px) {
@@ -1706,6 +1724,15 @@ html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
     html[data-layout="row"] .form-coluna-login .mensagem p {
         font-size: 0.95rem;
         letter-spacing: 0.4px;
+    }
+
+    /* Espaco extra embaixo em telas muito estreitas */
+    html[data-layout="row"] .forgot-form {
+        padding-bottom: 2.2rem;
+    }
+
+    html[data-layout="row"] .form-coluna-login {
+        padding-bottom: 2.5rem;
     }
 }
 
