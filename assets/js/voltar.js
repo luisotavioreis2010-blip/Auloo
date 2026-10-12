@@ -28,8 +28,12 @@
         var destino = origem ? DESTINOS[origem] : { url: '/', rotulo: 'Voltar ao início' };
         el.setAttribute('href', destino.url);
         el.setAttribute('aria-label', destino.rotulo);
+        el.style.whiteSpace = 'nowrap';
         var texto = el.querySelector('[data-voltar-texto]');
-        if (texto) texto.textContent = destino.rotulo;
+        if (texto) {
+            texto.textContent = destino.rotulo;
+            texto.style.whiteSpace = 'nowrap';
+        }
     });
 
     /* Links que levam as paginas entre si mantem a origem. */

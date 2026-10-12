@@ -11,7 +11,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600;1,700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400;1,500&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/global.css">
     <style>
-
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {
@@ -47,7 +46,6 @@
         }
 
         a { color: inherit; }
-
         :focus-visible { outline: 2px solid var(--dourado); outline-offset: 3px; }
 
         /* ---------- Navbar ---------- */
@@ -58,7 +56,8 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            height: var(--navbar-h);
+            gap: 0.5rem;
+            min-height: var(--navbar-h);
             padding: 0 var(--gutter);
             padding-top: env(safe-area-inset-top);
             background: rgba(229, 217, 192, 0.92);
@@ -75,11 +74,17 @@
             letter-spacing: 3px;
             color: var(--vinho);
             text-decoration: none;
+            flex-shrink: 0;
         }
 
         .logo-dot { color: var(--dourado); font-style: normal; }
 
-        .nav-links { display: flex; align-items: center; gap: clamp(1rem, 3vw, 2.25rem); }
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: clamp(1rem, 3vw, 2.25rem);
+            flex-wrap: nowrap;
+        }
 
         .nav-links a {
             font-size: 0.72rem;
@@ -94,7 +99,12 @@
         .nav-links a:hover { color: var(--dourado); }
 
         .nav-links .btn-entrar {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             padding: 0.65rem 1.4rem;
+            line-height: 1;
+            white-space: nowrap;
             color: var(--papel);
             background: var(--vinho);
             border-radius: 2px;
@@ -103,7 +113,41 @@
 
         .nav-links .btn-entrar:hover { background: var(--dourado); color: var(--papel); }
 
-        /* ---------- Ornamento e rótulos ---------- */
+        .btn-voltar {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            flex-shrink: 0;
+            padding: 0.55rem 1rem;
+            font-family: var(--fonte-corpo);
+            font-size: 0.68rem;
+            font-weight: 600;
+            letter-spacing: 2px;
+            line-height: 1;
+            text-transform: uppercase;
+            white-space: nowrap;
+            text-decoration: none;
+            color: var(--vinho);
+            background: transparent;
+            border: 1px solid var(--dourado);
+            border-radius: 4px;
+            transition: background 0.25s, color 0.25s, border-color 0.25s;
+        }
+
+        .btn-voltar:hover {
+            background: var(--vinho);
+            color: var(--papel);
+            border-color: var(--vinho);
+        }
+
+        .btn-voltar svg { width: 12px; height: 12px; flex-shrink: 0; stroke-width: 2; }
+
+        html[data-origem="nenhuma"] .nav-links .btn-voltar { display: none !important; }
+        html[data-origem="dashboard"] .nav-links .btn-entrar,
+        html[data-origem="dashboard"] .footer-links a[href="/login.html"] { display: none !important; }
+
+        /* ---------- Documento ---------- */
         .eyebrow {
             display: inline-flex;
             align-items: center;
@@ -122,42 +166,6 @@
             background: var(--dourado);
         }
 
-        .ornamento {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 1rem;
-            color: var(--dourado);
-            font-size: 0.8rem;
-        }
-
-        .ornamento::before, .ornamento::after {
-            content: '';
-            flex: 0 1 5rem;
-            height: 1px;
-            background: var(--linha);
-        }
-
-        /* ---------- Botões ---------- */
-        .btn-primario, .btn-secundario {
-            display: inline-block;
-            padding: 1.05rem 2.4rem;
-            font-size: 0.72rem;
-            font-weight: 500;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            text-decoration: none;
-            border-radius: 2px;
-            transition: background 0.25s, color 0.25s, border-color 0.25s;
-        }
-
-        .btn-primario { background: var(--vinho); color: var(--papel); border: 1px solid var(--vinho); }
-        .btn-primario:hover { background: var(--dourado); border-color: var(--dourado); }
-
-        .btn-secundario { color: var(--vinho); border: 1px solid var(--vinho); }
-        .btn-secundario:hover { background: var(--vinho); color: var(--papel); }
-
-        /* ---------- Rodapé ---------- */
         footer {
             padding: 3.5rem var(--gutter) calc(2.5rem + env(safe-area-inset-bottom));
             background: var(--vinho-escuro);
@@ -192,18 +200,6 @@
             font-family: var(--fonte-texto);
             font-size: 1rem;
             font-style: italic;
-            letter-spacing: 0.4px;
-        }
-
-        @media (max-width: 640px) {
-            .navbar { --navbar-h: 56px; }
-            .nav-links a:not(.btn-entrar) { display: none; }
-            .logo { font-size: 1.25rem; }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-            html { scroll-behavior: auto; }
-            *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
         }
 
         .documento {
@@ -329,34 +325,55 @@
             .secao-num { padding: 0 0 0.35rem; font-size: 0.95rem; }
         }
 
+        /* ---------- Mobile: navbar compacta ---------- */
+        @media (max-width: 640px) {
+            .navbar {
+                --navbar-h: 54px;
+                padding-left: 0.9rem;
+                padding-right: 0.9rem;
+            }
 
-        /* ---------- Botao voltar ---------- */
-        .btn-voltar {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.6rem;
-            padding: 0.6rem 1.2rem;
-            font-family: var(--fonte-corpo);
-            font-size: 0.72rem;
-            font-weight: 500;
-            letter-spacing: 2.5px;
-            text-transform: uppercase;
-            text-decoration: none;
-            color: var(--vinho);
-            background: transparent;
-            border: 1px solid var(--dourado);
-            border-radius: 2px;
-            transition: background 0.25s, color 0.25s;
+            .logo { font-size: 1.15rem; letter-spacing: 2px; }
+
+            .nav-links { gap: 0.5rem; }
+
+            .nav-links > a:not(.btn-entrar):not(.btn-voltar) {
+                display: none !important;
+            }
+
+            .btn-voltar {
+                gap: 0.3rem;
+                padding: 0.5rem 0.7rem;
+                font-size: 0.6rem;
+                letter-spacing: 1.2px;
+                border-radius: 3px;
+            }
+
+            .btn-voltar svg { width: 11px; height: 11px; }
+
+            .btn-voltar [data-voltar-texto] { display: none !important; }
+
+            .btn-voltar::after {
+                content: 'Voltar';
+                font-size: 0.6rem;
+                letter-spacing: 1.2px;
+                font-weight: 600;
+            }
+
+            .nav-links .btn-entrar {
+                padding: 0.5rem 0.9rem;
+                font-size: 0.6rem;
+                font-weight: 600;
+                letter-spacing: 1.2px;
+                border-radius: 3px;
+            }
         }
 
-        .btn-voltar:hover { background: var(--vinho); color: var(--papel); border-color: var(--vinho); }
-        .btn-voltar svg { width: 14px; height: 14px; flex-shrink: 0; }
-
-        html[data-origem="dashboard"] .nav-links .btn-entrar,
-        html[data-origem="dashboard"] .footer-links a[href="/login.html"] { display: none; }
-
-        @media (max-width: 640px) {
-            .nav-links a.btn-voltar { display: inline-flex; padding: 0.55rem 0.9rem; letter-spacing: 1.5px; font-size: 0.66rem; }
+        @media (max-width: 380px) {
+            .navbar { padding-left: 0.7rem; padding-right: 0.7rem; }
+            .logo { font-size: 1rem; letter-spacing: 1.5px; }
+            .btn-voltar { padding: 0.45rem 0.6rem; font-size: 0.55rem; }
+            .nav-links .btn-entrar { padding: 0.45rem 0.75rem; font-size: 0.55rem; }
         }
     </style>
 </head>
@@ -365,7 +382,12 @@
 <nav class="navbar" aria-label="Principal">
     <a href="/" class="logo" translate="no">Auloo<span class="logo-dot">.</span></a>
     <div class="nav-links">
-        <a href="/" class="btn-voltar" data-voltar><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M14 8H2M7 3 2 8l5 5"/></svg><span data-voltar-texto>Voltar</span></a>
+        <a href="/" class="btn-voltar" data-voltar>
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <path d="M14 8H2M7 3 2 8l5 5"/>
+            </svg>
+            <span data-voltar-texto>Voltar</span>
+        </a>
         <a href="/login.html" class="btn-entrar">Entrar</a>
     </div>
 </nav>
@@ -385,6 +407,7 @@
                 <p>O Auloo é uma plataforma educacional online acessível em <a href="https://auloo.com.br">https://auloo.com.br</a>. Permite que usuários criem contas e acessem um painel de estudos personalizado.</p>
             </div>
         </section>
+
         <section class="secao">
             <span class="secao-num" aria-hidden="true">02</span>
             <div>
@@ -397,6 +420,7 @@
                 </ul>
             </div>
         </section>
+
         <section class="secao">
             <span class="secao-num" aria-hidden="true">03</span>
             <div>
@@ -411,6 +435,7 @@
                 </ul>
             </div>
         </section>
+
         <section class="secao">
             <span class="secao-num" aria-hidden="true">04</span>
             <div>
@@ -425,6 +450,7 @@
                 <p>Não vendemos, alugamos ou compartilhamos seus dados com terceiros para fins publicitários.</p>
             </div>
         </section>
+
         <section class="secao">
             <span class="secao-num" aria-hidden="true">05</span>
             <div>
@@ -438,6 +464,7 @@
                 </ul>
             </div>
         </section>
+
         <section class="secao">
             <span class="secao-num" aria-hidden="true">06</span>
             <div>
@@ -445,6 +472,7 @@
                 <p>Adotamos medidas técnicas como criptografia de senhas, HTTPS em todas as conexões e políticas de Row Level Security no banco de dados para proteger suas informações.</p>
             </div>
         </section>
+
         <section class="secao">
             <span class="secao-num" aria-hidden="true">07</span>
             <div>
