@@ -342,6 +342,7 @@ html[data-layout="row"] .navbar-saiba { padding: 0.45rem 0.9rem; }
 }
 
 /* celular deitado: mesma lista vertical, so um pouco mais compacta; rola se faltar altura */
+html[data-layout="row"] .saiba-menu::before { right: auto; left: var(--seta-x, auto); }
 html[data-layout="row"] .saiba-titulo { padding-top: 0.8rem; padding-bottom: 0.3rem; }
 html[data-layout="row"] .saiba-item { padding-top: 0.6rem; padding-bottom: 0.6rem; }
 
@@ -1694,3 +1695,8 @@ html[data-layout="row"] .saiba-item { padding-top: 0.6rem; padding-bottom: 0.6re
         transition-duration: 0.01ms !important;
     }
 }
+/* celular deitado estreito: itens mais compactos para os titulos nao quebrarem */
+html[data-layout="row"] .saiba-item { gap: 0.7rem; margin: 0 0.3rem; padding-left: 0.7rem; padding-right: 0.7rem; }
+html[data-layout="row"] .saiba-num { min-width: 1.5rem; font-size: 1.15rem; }
+html[data-layout="row"] .saiba-corpo strong { font-size: 0.98rem; white-space: nowrap; }
+html[data-layout="row"] .saiba-corpo small { font-size: 0.92rem; white-space: nowrap; }

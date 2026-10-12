@@ -352,7 +352,8 @@
         .btn-voltar:hover { background: var(--vinho); color: var(--papel); border-color: var(--vinho); }
         .btn-voltar svg { width: 14px; height: 14px; flex-shrink: 0; }
 
-        html[data-origem="dashboard"] .nav-links .btn-entrar { display: none; }
+        html[data-origem="dashboard"] .nav-links .btn-entrar,
+        html[data-origem="dashboard"] .footer-links a[href="/login.html"] { display: none; }
 
         @media (max-width: 640px) {
             .nav-links a.btn-voltar { display: inline-flex; padding: 0.55rem 0.9rem; letter-spacing: 1.5px; font-size: 0.66rem; }

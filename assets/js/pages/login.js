@@ -1169,7 +1169,35 @@
         var menu  = document.getElementById('navbar-saiba-menu');
         if (!botao || !menu) return;
 
+        /* Celular deitado: o menu fica centralizado na secao direita (sociais),
+           com no minimo 5px de folga da linha divisoria e da borda da tela. */
+        function posicionar() {
+            var coluna = document.querySelector('.form-coluna-sociais');
+            var linha = document.documentElement.getAttribute('data-layout') === 'row';
+
+            menu.style.left = menu.style.right = menu.style.width = '';
+            menu.style.removeProperty('--seta-x');
+            if (!linha || !coluna) return;
+
+            var folga = 5;
+            var wrap = menu.parentNode.getBoundingClientRect();
+            var sec = coluna.getBoundingClientRect();
+            var esq = sec.left + folga;
+            var dir = Math.min(sec.right, window.innerWidth) - folga;
+            var larg = Math.min(330, dir - esq);
+            var x = esq + (dir - esq - larg) / 2;        /* centralizado na secao */
+
+            menu.style.right = 'auto';
+            menu.style.left = (x - wrap.left) + 'px';
+            menu.style.width = larg + 'px';
+
+            var b = botao.getBoundingClientRect();
+            var seta = b.left + b.width / 2 - x;
+            menu.style.setProperty('--seta-x', Math.max(16, Math.min(larg - 28, seta - 6)) + 'px');
+        }
+
         function definir(aberto) {
+            if (aberto) posicionar();
             menu.hidden = !aberto;
             botao.setAttribute('aria-expanded', aberto ? 'true' : 'false');
         }
