@@ -1,24 +1,9 @@
 ﻿/* ============================================================
    LOGIN.JS
-
-   Secoes:
-   1. Constantes e utilitarios     7. Login
-   2. Viewport, altura e layout    8. Esqueci a senha
-   3. Offset do teclado            9. Cadastro (e-mail -> codigo -> senha)
-   4. Modo foco (row)             10. Nova senha
-   5. Mensagens                   11. Olho da senha e login social
-   6. Modos do card               12. Inicializacao
-
-   Dependencias globais (auth.js): validateEmail, loginUser,
-   checkEmailExists, validarSenhaForte, sendSignupCode,
-   verifySignupCode, recoverPassword.
    ============================================================ */
 (function () {
     'use strict';
 
-    /* ============================================================
-       1. CONSTANTES E UTILITARIOS
-       ============================================================ */
     var PAGINA_DASHBOARD   = 'dashboard.html';
     var LOTTIE_PATH        = 'assets/img/animacoes/mail-animation.json';
     var MENSAGEM_MIN_MS    = 1800;
@@ -448,6 +433,8 @@
 
     function setupModoFoco() {
         function marcarAtivo(input) {
+            raiz.classList.add('kb-focus');
+
             if (!ehLayoutRow()) return;
             if (input === ativoAtual) return;
             ativoAtual = input;
@@ -460,7 +447,6 @@
             if (!tecladoAberto()) {
                 raiz.style.setProperty('--kb-visivel', Math.round(getAppH() * razaoTeclado) + 'px');
             }
-            raiz.classList.add('kb-focus');
             agendarAposEstabilidade();
         }
 
@@ -720,6 +706,11 @@
                     return false;
                 }
 
+                if (existente.provider === 'google' && !existente.hasPassword) {
+                    mostrarMensagem('Esta conta foi criada com Google. Entre com Google.', 'erro');
+                    return false;
+                }
+
                 var resultado = await recoverPassword(email);
                 if (resultado.success) {
                     mostrarMensagem('Link enviado! Verifique seu e-mail.', 'sucesso');
@@ -852,16 +843,20 @@
                 executarComBotao(btn, 'ENVIAR CODIGO', async function () {
                     definirContexto(false, email, null);
 
+                    var existente = await checkEmailExists(email);
+
+                    if (existente.exists) {
+                        if (existente.provider === 'google' && !existente.hasPassword) {
+                            mostrarMensagem('Esta conta foi criada com Google. Entre com Google.', 'erro');
+                            return false;
+                        }
+                        mostrarMensagem('Este e-mail ja esta cadastrado. Faca login!', 'erro');
+                        return false;
+                    }
+
                     var envio = await sendSignupCode(email);
                     if (!envio.success) {
-                        var jaCadastrado = envio.message &&
-                            /already registered|j[áa]\s+(est[áa]\s+)?cadastrad/i.test(envio.message);
-                        mostrarMensagem(
-                            jaCadastrado
-                                ? 'Este e-mail ja esta cadastrado. Faca login!'
-                                : (envio.message || 'Erro ao enviar codigo!'),
-                            'erro'
-                        );
+                        mostrarMensagem(envio.message || 'Erro ao enviar codigo!', 'erro');
                         return false;
                     }
 
@@ -1133,16 +1128,24 @@
                     return;
                 }
 
-                /* Evita clique duplo */
                 if (botao.dataset.carregando === '1') return;
                 botao.dataset.carregando = '1';
                 botao.style.opacity = '0.6';
                 botao.style.pointerEvents = 'none';
 
+                var host = window.location.hostname;
+                var urlRedirect;
+
+                if (host === 'localhost' || host === '127.0.0.1') {
+                    urlRedirect = window.location.origin + '/dashboard.html';
+                } else {
+                    urlRedirect = 'https://auloo.com.br/dashboard.html';
+                }
+
                 db.auth.signInWithOAuth({
                     provider: provedor,
                     options: {
-                        redirectTo: window.location.origin + '/' + PAGINA_DASHBOARD,
+                        redirectTo: urlRedirect,
                         queryParams: provedor === 'google'
                             ? { prompt: 'select_account', access_type: 'online' }
                             : {}
@@ -1154,7 +1157,6 @@
                         botao.style.pointerEvents = '';
                         mostrarMensagem('Nao foi possivel entrar com ' + provedor + '.', 'erro');
                     }
-                    /* Se deu certo, o navegador ja esta sendo redirecionado */
                 }).catch(function (erro) {
                     console.error(erro);
                     botao.dataset.carregando = '0';
@@ -1177,7 +1179,6 @@
     setupTeclado();
     setupModoFoco();
 
-    /* Botao "Saiba mais": abre/fecha o painel */
     function setupMenuSaiba() {
         var botao = document.getElementById('navbar-saiba-btn');
         var menu  = document.getElementById('navbar-saiba-menu');
