@@ -167,24 +167,24 @@ html.rotating .ilustracao-login { opacity: 0 !important; }
 
 .navbar-logo-dot { color: var(--dourado); }
 
-/* ---------- Botão "Saiba mais" ---------- */
+/* Botao "Saiba mais" e painel de opcoes */
 .navbar-saiba-wrap { position: relative; margin-left: auto; }
 
 .navbar-saiba {
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.55rem 1rem;
+    gap: 0.6rem;
+    padding: 0.62rem 1.1rem;
     font-family: var(--fonte-corpo);
-    font-size: 0.68rem;
+    font-size: 0.7rem;
     font-weight: 500;
-    letter-spacing: 2px;
+    letter-spacing: 2.5px;
     text-transform: uppercase;
     white-space: nowrap;
     color: var(--vinho);
     background: transparent;
     border: 1px solid var(--dourado);
-    border-radius: 4px;
+    border-radius: 2px;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
     transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
@@ -203,67 +203,53 @@ html.rotating .ilustracao-login { opacity: 0 !important; }
     outline-offset: 2px;
 }
 
-.navbar-saiba-seta {
-    width: 10px;
-    height: 7px;
-    flex-shrink: 0;
-    transition: transform 0.25s ease;
-}
+.navbar-saiba-seta { width: 11px; height: 8px; flex-shrink: 0; transition: transform 0.25s ease; }
+.navbar-saiba[aria-expanded="true"] .navbar-saiba-seta { transform: rotate(180deg); }
 
-.navbar-saiba[aria-expanded="true"] .navbar-saiba-seta {
-    transform: rotate(180deg);
-}
-
-/* ---------- Menu "Saiba mais" compacto e refinado ---------- */
 .saiba-menu {
     position: absolute;
-    top: calc(100% + 0.7rem);
+    top: calc(100% + 0.95rem);
     right: 0;
-    width: 280px;
+    width: 330px;
     max-width: calc(100vw - 2 * var(--navbar-px));
-    padding: 0.75rem 0 0.75rem;
+    padding: 0.4rem 0 0.5rem;
     background: var(--card);
-    border: 1px solid rgba(var(--dourado-rgb), 0.5);
-    border-radius: 8px;
-    box-shadow:
-        0 12px 32px rgba(var(--vinho-borda), 0.16),
-        inset 0 0 0 3px var(--card),
-        inset 0 0 0 4px rgba(var(--dourado-rgb), 0.22);
-    animation: saiba-in 0.2s ease both;
-    overflow: hidden;
+    border: 1px solid rgba(var(--dourado-rgb), 0.55);
+    box-shadow: 0 20px 44px rgba(var(--vinho-borda), 0.22), inset 0 0 0 4px var(--card), inset 0 0 0 5px rgba(var(--dourado-rgb), 0.25);
+    animation: saiba-in 0.24s ease both;
 }
 
+/* setinha apontando para o botao */
 .saiba-menu::before {
     content: '';
     position: absolute;
-    top: -6px;
-    right: 1.6rem;
-    width: 10px;
-    height: 10px;
+    top: -7px;
+    right: 2.2rem;
+    width: 12px;
+    height: 12px;
     background: var(--card);
-    border-top: 1px solid rgba(var(--dourado-rgb), 0.5);
-    border-left: 1px solid rgba(var(--dourado-rgb), 0.5);
+    border-top: 1px solid rgba(var(--dourado-rgb), 0.55);
+    border-left: 1px solid rgba(var(--dourado-rgb), 0.55);
     transform: rotate(45deg);
 }
 
 .saiba-menu[hidden] { display: none; }
 
 @keyframes saiba-in {
-    from { opacity: 0; transform: translateY(-6px) scale(0.98); }
-    to   { opacity: 1; transform: translateY(0)    scale(1); }
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
 .saiba-titulo {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
-    padding: 0.35rem 1.1rem 0.55rem;
+    gap: 0.8rem;
+    padding: 1.1rem 1.6rem 0.5rem;
     font-family: var(--fonte-texto);
-    font-size: 0.68rem;
+    font-size: 1rem;
     font-style: italic;
     font-weight: 500;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
+    letter-spacing: 1px;
     color: var(--dourado);
 }
 
@@ -272,7 +258,7 @@ html.rotating .ilustracao-login { opacity: 0 !important; }
     content: '';
     flex: 1;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(var(--dourado-rgb), 0.5));
+    background: linear-gradient(90deg, transparent, rgba(var(--dourado-rgb), 0.55));
 }
 
 .saiba-titulo::after { transform: scaleX(-1); }
@@ -281,68 +267,41 @@ html.rotating .ilustracao-login { opacity: 0 !important; }
     position: relative;
     display: flex;
     align-items: center;
-    gap: 0.7rem;
-    margin: 0 0.35rem;
-    padding: 0.6rem 0.8rem;
+    gap: 1.1rem;
+    margin: 0 0.5rem;
+    padding: 0.95rem 1.1rem;
     color: var(--tinta);
     text-decoration: none;
-    border-radius: 5px;
-    border-bottom: none;
-    transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+    border-bottom: 1px solid rgba(var(--dourado-rgb), 0.22);
+    transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 .saiba-item:last-child { border-bottom: none; }
-
-.saiba-item:hover,
-.saiba-item:focus-visible {
-    background-color: rgba(var(--dourado-rgb), 0.13);
-    color: var(--vinho);
-    transform: translateX(2px);
-}
+.saiba-item:hover { background-color: rgba(var(--dourado-rgb), 0.12); color: var(--vinho); }
 
 .saiba-num {
-    flex-shrink: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.9rem;
-    height: 1.9rem;
+    min-width: 2rem;
     font-family: var(--fonte-titulo);
-    font-size: 0.9rem;
+    font-size: 1.55rem;
     font-style: italic;
-    font-weight: 600;
-    color: var(--dourado);
-    background: rgba(var(--dourado-rgb), 0.1);
-    border: 1px solid rgba(var(--dourado-rgb), 0.35);
-    border-radius: 50%;
-    transition: background-color 0.2s ease, color 0.2s ease;
+    font-weight: 500;
+    line-height: 1;
+    color: rgba(var(--dourado-rgb), 0.85);
 }
 
-.saiba-item:hover .saiba-num {
-    background: var(--dourado);
-    color: var(--card);
-    border-color: var(--dourado);
-}
-
-.saiba-corpo {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    gap: 0.1rem;
-    min-width: 0;
-}
+.saiba-corpo { display: flex; flex: 1; flex-direction: column; gap: 0.2rem; min-width: 0; }
 
 .saiba-corpo strong {
     font-family: var(--fonte-titulo);
-    font-size: 0.92rem;
+    font-size: 1.12rem;
     font-weight: 600;
+    letter-spacing: 0.3px;
     line-height: 1.2;
-    color: inherit;
 }
 
 .saiba-corpo small {
     font-family: var(--fonte-texto);
-    font-size: 0.78rem;
+    font-size: 1.05rem;
     font-style: italic;
     font-weight: 500;
     line-height: 1.2;
@@ -350,26 +309,31 @@ html.rotating .ilustracao-login { opacity: 0 !important; }
 }
 
 .saiba-item::after {
-    content: '→';
-    position: absolute;
-    right: 0.7rem;
-    top: 50%;
+    content: '\2192';
     font-family: var(--fonte-titulo);
-    font-size: 0.95rem;
+    font-size: 1.1rem;
     color: var(--dourado);
     opacity: 0;
-    transform: translate(-4px, -50%);
-    transition: opacity 0.2s ease, transform 0.2s ease;
-    pointer-events: none;
+    transform: translateX(-6px);
+    transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
 .saiba-item:hover::after,
-.saiba-item:focus-visible::after {
-    opacity: 1;
-    transform: translate(0, -50%);
+.saiba-item:focus-visible::after { opacity: 1; transform: translateX(0); }
+
+@media (max-width: 599px) {
+    .navbar-saiba { padding: 0.55rem 0.85rem; font-size: 0.64rem; letter-spacing: 2px; }
 }
 
-/* Nunca ultrapassa a tela */
+@media (min-width: 1367px) {
+    .navbar-saiba { font-size: 0.78rem; padding: 0.75rem 1.4rem; }
+    .saiba-menu { width: 370px; }
+    .saiba-corpo strong { font-size: 1.2rem; }
+}
+
+html[data-layout="row"] .navbar-saiba { padding: 0.45rem 0.9rem; }
+
+/* nunca ultrapassa a tela: se faltar altura, rola por dentro (com pequena folga embaixo) */
 .saiba-menu {
     max-height: calc(var(--app-h, 100dvh) - var(--navbar-h) - 1.2rem);
     overflow-y: auto;
@@ -377,16 +341,11 @@ html.rotating .ilustracao-login { opacity: 0 !important; }
     -webkit-overflow-scrolling: touch;
 }
 
-/* Celular deitado */
+/* celular deitado: mesma lista vertical, so um pouco mais compacta; rola se faltar altura */
 html[data-layout="row"] .saiba-menu::before { right: auto; left: var(--seta-x, auto); }
 html[data-layout="row"] .saiba-titulo { padding-top: 0.8rem; padding-bottom: 0.3rem; }
 html[data-layout="row"] .saiba-item { padding-top: 0.6rem; padding-bottom: 0.6rem; }
-html[data-layout="row"] .saiba-item { gap: 0.7rem; margin: 0 0.3rem; padding-left: 0.7rem; padding-right: 0.7rem; }
-html[data-layout="row"] .saiba-num { width: 1.6rem; height: 1.6rem; font-size: 0.8rem; }
-html[data-layout="row"] .saiba-corpo strong { font-size: 0.85rem; }
-html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
 
-/* ---------- Fundo decorativo ---------- */
 .desktop-bg {
     position: fixed;
     inset: 0;
@@ -486,7 +445,8 @@ html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
         0 24px 70px rgba(var(--vinho-borda), 0.2);
 }
 
-/* A estrela do topo/base do card fica "flutuando" sem fundo */
+/* A estrela do topo/base do card fica "flutuando" sem fundo — como o
+   card tem fundo var(--card), ela se funde perfeitamente. */
 .form::before,
 .form::after {
     content: '\2726';
@@ -758,6 +718,7 @@ html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
 
 /* ============================================================
    7. MENSAGEM
+   Posicionada pelo login.js (bottom em px) em relação ao pai.
    ============================================================ */
 .mensagem {
     position: absolute;
@@ -781,6 +742,8 @@ html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
     transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
+/* Nos modos forgot / cadastro / nova senha a mensagem ocupa exatamente
+   a mesma largura do input que fica abaixo dela (o .forgot-form). */
 .forgot-form > .mensagem {
     width: 100%;
     max-width: 100%;
@@ -899,7 +862,6 @@ html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
     display: flex;
     flex-wrap: nowrap;
     justify-content: center;
-    align-items: center;
     gap: 0.4rem;
     margin-top: 1.5rem;
 }
@@ -907,21 +869,18 @@ html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
 .codigo-input {
     width: var(--otp-w);
     height: var(--otp-h);
-    padding: 0;
+    padding: 0 0 0.3em;
     font-family: var(--fonte-titulo);
     font-size: 2rem;
     font-weight: 500;
     font-style: italic;
     text-align: center;
-    line-height: var(--otp-h);
     color: var(--vinho);
     background: transparent;
     border: none;
     border-bottom: 1.5px solid rgba(var(--vinho-borda), 0.25);
     border-radius: 0;
     outline: none;
-    box-sizing: border-box;
-    vertical-align: middle;
     transition: border-color 0.2s ease;
 }
 
@@ -935,6 +894,9 @@ html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
 /* ---------- 8.3 Variante de dois campos (cadastro e nova senha) ---------- */
 #container-forgot.modo-dois-campos { gap: 1rem; }
 
+/* A ilustração do cadastro/nova senha usa exatamente o mesmo tamanho
+   do forgot simples (--lottie-size), mantendo a consistência visual
+   em todas as telas — inclusive no mobile em pé. */
 #container-forgot.modo-dois-campos #forgot-lottie {
     width: var(--lottie-size);
     height: var(--lottie-size);
@@ -946,18 +908,17 @@ html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
 
 .aparece { animation: fadeOpacidade 0.4s ease backwards; }
 
+/* Seis caixas do código dentro do .forgot-form: encolhem para caber */
 .forgot-form .otp-caixas {
     width: 100%;
     margin-top: 0;
 }
 
 .forgot-form .codigo-input {
-    flex: 0 0 auto;
-    width: var(--otp-w);
+    flex: 1 1 0;
+    width: auto;
     min-width: 0;
     max-width: var(--otp-w);
-    height: var(--otp-h);
-    line-height: var(--otp-h);
 }
 
 /* ============================================================
@@ -1051,6 +1012,10 @@ html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
 
     html:not([data-layout="row"]) .form-coluna { flex: 0 0 auto; }
 
+    /* Rodapé em duas seções lado a lado:
+       "Forgot Password"  |  "ou continue com" + sociais.
+       A coluna de login vira `display: contents` para seus filhos
+       participarem da grade do .form. */
     html:not([data-layout="row"]) .form {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -1083,6 +1048,8 @@ html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
                     left center / 1px 100% no-repeat;
     }
 
+    /* A estrela do divisor no tablet usa var(--card), que é exatamente
+       o fundo da área (body e .login-container são var(--card)). */
     html:not([data-layout="row"]) .form-coluna-sociais::after {
         content: '\2726';
         position: absolute;
@@ -1115,6 +1082,7 @@ html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
         filter: drop-shadow(0 12px 28px rgba(var(--vinho-borda), 0.12));
     }
 
+    /* Forgot / OTP: centraliza e compensa o padding transparente dos Lottie */
     html:not([data-layout="row"]) .form.modo-forgot {
         display: flex;
         flex-direction: column;
@@ -1156,6 +1124,7 @@ html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
 @media (min-width: 1024px) and (max-width: 1366px) {
     :root { --form-w: 460px; }
 
+    /* Forgot Password, "ou continue com" e sociais mais próximos */
     .form-coluna-sociais { gap: 0.9rem; }
     .divisor-login { margin: 0.2rem 0 0; }
     .botoes-sociais { margin-top: 0; }
@@ -1164,6 +1133,7 @@ html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
 /* ---------- 10.3 Desktop / paisagem (≥1025 + 1024 em paisagem) ---------- */
 @media (min-width: 1025px),
        (width: 1024px) and (orientation: landscape) {
+
 
     .login-container {
         justify-content: flex-end;
@@ -1200,6 +1170,7 @@ html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
         filter: drop-shadow(0 30px 60px rgba(var(--vinho-borda), 0.12));
     }
 
+    /* No forgot/cadastro só a ilustração permanece na coluna de login */
     .form.modo-forgot .form-coluna-login { display: block; }
     .form.modo-forgot .form-coluna-login > *:not(.ilustracao-login) { display: none; }
 }
@@ -1252,13 +1223,6 @@ html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
         width: 260px;
         height: 260px;
     }
-
-    .navbar-saiba {
-        font-size: 0.72rem;
-        padding: 0.65rem 1.2rem;
-    }
-    .saiba-menu { width: 310px; }
-    .saiba-corpo strong { font-size: 1rem; }
 }
 
 /* ---------- 10.5 Celular em pé (≤599) ---------- */
@@ -1332,6 +1296,7 @@ html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
         min-height: 0;
     }
 
+    /* e-mail → senha e senha → botão com a MESMA distância visual */
     .form-coluna-login > .field + .field { margin-top: -0.55rem; }
     .form .btn { margin-top: -0.55rem; }
 
@@ -1358,6 +1323,12 @@ html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
         filter: drop-shadow(0 12px 28px rgba(var(--vinho-borda), 0.12));
     }
 
+    /* ---------------------------------------------------------
+       FORGOT PASSWORD — espelha o SIGN UP:
+       - mesmo tamanho de mail
+       - mesmo gap entre ilustração e form
+       - mesmas margens (sem translateY nem margin-bottom extra)
+       --------------------------------------------------------- */
     html:not([data-layout="row"]) #container-forgot #forgot-lottie {
         width: min(86vw, 310px);
         height: min(86vw, 310px);
@@ -1367,27 +1338,17 @@ html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
         transform: none;
     }
 
+    /* Uniformiza o gap entre ilustração e formulário nos dois modos */
     html:not([data-layout="row"]) .form.modo-forgot #container-forgot,
     html:not([data-layout="row"]) #container-forgot.modo-dois-campos {
         gap: 1rem;
     }
 
+    /* Uniformiza o gap interno do .forgot-form */
     html:not([data-layout="row"]) .form.modo-forgot .forgot-form,
     html:not([data-layout="row"]) #container-forgot.modo-dois-campos .forgot-form {
         gap: 0.85rem;
     }
-
-    .navbar-saiba {
-        padding: 0.5rem 0.75rem;
-        font-size: 0.6rem;
-        letter-spacing: 1.5px;
-    }
-    .saiba-menu {
-        width: 260px;
-        top: calc(100% + 0.55rem);
-    }
-    .saiba-corpo strong { font-size: 0.85rem; }
-    .saiba-corpo small  { font-size: 0.72rem; }
 }
 
 @media (max-width: 480px) {
@@ -1409,9 +1370,11 @@ html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
     .codigo-input { font-size: 1.65rem; }
     .mensagem p { font-size: 1rem; letter-spacing: 0.4px; }
 
+    /* Mantém a mesma distância entre os dois campos e até o botão */
     .form-coluna-login > .field + .field { margin-top: -0.7rem; }
     .form .btn { margin-top: -0.7rem; }
 
+    /* Forgot e Sign up com o MESMO tamanho de mail, menor que ≥480px */
     html:not([data-layout="row"]) #container-forgot #forgot-lottie {
         width: min(88vw, 290px);
         height: min(88vw, 290px);
@@ -1434,6 +1397,7 @@ html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
         --ilustracao-h: 42vw;
     }
 
+    /* Forgot e Sign up com o MESMO tamanho em telas baixas */
     html:not([data-layout="row"])[data-altura="baixa"] #container-forgot #forgot-lottie {
         width: min(76vw, 260px);
         height: min(76vw, 260px);
@@ -1445,6 +1409,7 @@ html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
 }
 
 /* ---------- 10.6 Celular deitado (row) ---------- */
+/* Mesma condição do MQ_ROW no login.js — se mudar aqui, mude lá. */
 @media (min-width: 568px) and (max-width: 950px) and (orientation: landscape) and (max-height: 500px) {
     :root[data-layout="row"] {
         --navbar-h: 46px;
@@ -1481,7 +1446,7 @@ html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
     html[data-layout="row"] .login-container {
         height: 100%;
         padding: var(--navbar-h) 0 0;
-        overflow: hidden;
+        overflow: hidden;            /* fallback */
         overflow: clip;
         overflow-clip-margin: 150px;
         overscroll-behavior: none;
@@ -1530,11 +1495,15 @@ html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
         padding-top: 0;
     }
 
+    /* Divisória elegante entre as duas seções (inputs | sociais):
+       linha em degradê no lado esquerdo da coluna + ornamento ✦ */
     html[data-layout="row"] .form-coluna-sociais {
         background: linear-gradient(180deg, transparent 0%, rgba(var(--dourado-rgb), 0.7) 50%, transparent 100%)
                     left center / 1px 92% no-repeat;
     }
 
+    /* No row o fundo real é var(--fundo), então a estrela usa var(--fundo)
+       (antes usava var(--card), o que criava um quadradinho de cor diferente). */
     html[data-layout="row"] .form-coluna-sociais::after {
         content: '\2726';
         position: absolute;
@@ -1579,6 +1548,9 @@ html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
         margin: 0 auto;
     }
 
+    /* Divisória entre a ilustração e o formulário (forgot / nova senha).
+       Fica no centro do espaço entre as duas colunas da grade.
+       Usa var(--fundo) porque é o fundo real no row. */
     html[data-layout="row"] #container-forgot::before {
         content: '';
         position: absolute;
@@ -1612,6 +1584,8 @@ html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
     html[data-layout="row"] .form-coluna-login .mensagem p,
     html[data-layout="row"] .form-coluna-sociais .mensagem p { font-size: 1rem; }
 
+    /* Modo foco (row): a navbar some e o campo isolado centraliza entre
+       o topo da tela e o teclado (--kb-visivel vem do JS). */
     html[data-layout="row"] .navbar-desktop { transition: transform 0.25s ease, opacity 0.2s ease; }
 
     html[data-layout="row"].kb-focus .navbar-desktop {
@@ -1627,6 +1601,7 @@ html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
 
     html[data-layout="row"].kb-focus .form { transform: none; }
 
+    /* Modo foco (row) — LOGIN: só o campo ativo fica visível */
     html[data-layout="row"].kb-focus .form {
         flex-direction: column;
         align-items: center;
@@ -1649,6 +1624,7 @@ html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
         margin: 0;
     }
 
+    /* Modo foco (row) — FORGOT */
     html[data-layout="row"].kb-focus .form.modo-forgot { padding: 1.5rem 2rem; }
 
     html[data-layout="row"].kb-focus #container-forgot {
@@ -1678,13 +1654,7 @@ html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
         margin: 0;
     }
 
-    /* ---------------------------------------------------------
-       Espaco extra embaixo: SO o suficiente para o botao "voltar"
-       nao colar na borda inferior da tela
-       --------------------------------------------------------- */
-    html[data-layout="row"] .forgot-form {
-        padding-bottom: 0.8rem;
-    }
+    /* Modo foco (row) — OTP: só as caixas ficam visíveis */
 }
 
 @media (max-width: 700px) {
@@ -1714,11 +1684,6 @@ html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
         font-size: 0.95rem;
         letter-spacing: 0.4px;
     }
-
-    /* Espaco extra embaixo em telas muito estreitas */
-    html[data-layout="row"] .forgot-form {
-        padding-bottom: 0.6rem;
-    }
 }
 
 /* ============================================================
@@ -1730,3 +1695,8 @@ html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
         transition-duration: 0.01ms !important;
     }
 }
+/* celular deitado estreito: itens mais compactos para os titulos nao quebrarem */
+html[data-layout="row"] .saiba-item { gap: 0.7rem; margin: 0 0.3rem; padding-left: 0.7rem; padding-right: 0.7rem; }
+html[data-layout="row"] .saiba-num { min-width: 1.5rem; font-size: 1.15rem; }
+html[data-layout="row"] .saiba-corpo strong { font-size: 0.98rem; white-space: nowrap; }
+html[data-layout="row"] .saiba-corpo small { font-size: 0.92rem; white-space: nowrap; }
