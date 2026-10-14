@@ -1381,7 +1381,8 @@ html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
     }
     .saiba-menu {
         width: 260px;
-        top: calc(100% + 0.55rem);
+        top: calc(100% + 0.9rem); /* folga maior da navbar */
+        right: 0;
     }
     .saiba-corpo strong { font-size: 0.85rem; }
     .saiba-corpo small  { font-size: 0.72rem; }
@@ -1416,6 +1417,10 @@ html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
         max-height: none;
         margin-bottom: 0;
         transform: none;
+    }
+
+    .saiba-menu {
+        top: calc(100% + 0.85rem);
     }
 }
 
@@ -1681,6 +1686,17 @@ html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
        --------------------------------------------------------- */
     html[data-layout="row"] .forgot-form {
         padding-bottom: 0.8rem;
+    }
+
+    /* ---------------------------------------------------------
+       Menu "Saiba mais" no modo deitado
+       O posicionamento horizontal é definido via JS (setupMenuSaiba),
+       que centraliza o menu na coluna correta:
+       - Login normal: coluna direita (botões sociais)
+       - Forgot/Cadastro/Nova senha: coluna esquerda (até a linha divisória)
+       --------------------------------------------------------- */
+    html[data-layout="row"] .saiba-menu {
+        top: calc(100% + 0.6rem);
     }
 }
 
