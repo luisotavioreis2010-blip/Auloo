@@ -1221,20 +1221,46 @@
         const menu = $('navbar-saiba-menu');
         if (!botao || !menu) return;
 
-        /* No celular deitado o menu se alinha à coluna dos botões sociais */
+        /* No celular deitado o menu se alinha à coluna correta */
         function posicionar() {
-            const coluna = document.querySelector('.form-coluna-sociais');
-
             menu.style.left = menu.style.right = menu.style.width = '';
             menu.style.removeProperty('--seta-x');
-            if (!ehLayoutRow() || !coluna) return;
+            if (!ehLayoutRow()) return;
 
             const folga = 5;
             const wrap = menu.parentNode.getBoundingClientRect();
-            const sec = coluna.getBoundingClientRect();
-            const esq = sec.left + folga;
-            const dir = Math.min(sec.right, window.innerWidth) - folga;
+            const emModoForgot = form.classList.contains('modo-forgot');
+
+            let esq, dir;
+
+            if (emModoForgot) {
+                // Modo forgot/cadastro/nova senha: centraliza na coluna esquerda
+                // (até a linha divisória do #container-forgot)
+                const containerForgot = form.querySelector('#container-forgot');
+                if (!containerForgot) return;
+
+                const formRect = form.getBoundingClientRect();
+                const containerRect = containerForgot.getBoundingClientRect();
+
+                // A linha divisória fica em 0.8/1.8 da largura do container (grid 0.8fr 1fr)
+                const larguraContainer = containerRect.width;
+                const posicaoLinha = containerRect.left + (larguraContainer * 0.8 / 1.8);
+
+                esq = formRect.left + folga;
+                dir = posicaoLinha - folga;
+            } else {
+                // Modo login normal: centraliza na coluna direita (botões sociais)
+                const coluna = document.querySelector('.form-coluna-sociais');
+                if (!coluna) return;
+
+                const sec = coluna.getBoundingClientRect();
+                esq = sec.left + folga;
+                dir = Math.min(sec.right, window.innerWidth) - folga;
+            }
+
             const larg = Math.min(330, dir - esq);
+            if (larg <= 0) return;
+
             const x = esq + (dir - esq - larg) / 2;
 
             menu.style.right = 'auto';
