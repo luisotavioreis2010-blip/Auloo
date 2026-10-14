@@ -1,6 +1,6 @@
 ﻿@charset "UTF-8";
 /* ==============================================
-   DASHBOARD.CSS — v20
+   DASHBOARD.CSS — v21
 
    Estrutura
    1. Variáveis
@@ -11,7 +11,8 @@
    6. Conteúdo principal e calendário
    7. DESKTOP  (≥ 1367px)
    8. COMPACTO (≤ 1366px)
-   9. Acessibilidade
+   9. Sistema de foco (teclado virtual)
+   10. Acessibilidade
    ============================================== */
 
 /* ==============================================
@@ -87,6 +88,10 @@
     --dias-pad: 1rem;
     --dia-pad: 0.6rem;
     --dia-size: 0.8rem;
+
+    /* Atualizadas pelo dashboard.js (sistema de foco) */
+    --kb-offset: 0px;
+    --kb-visivel: 100%;
 }
 
 /* ==============================================
@@ -1541,7 +1546,92 @@ html.redimensionando *::after {
 }
 
 /* ==============================================
-   9. ACESSIBILIDADE
+   9. SISTEMA DE FOCO (teclado virtual)
+   Mesma lógica do login, adaptada para o dashboard
+   ============================================== */
+
+/* ---------- 9.1 Modo empilhado (mobile/tablet em pé) ---------- */
+/* A ficha inteira se desloca para o input não ficar atrás do teclado */
+@media (max-width: 1366px) {
+    :root:not([data-layout="row"]) .sidebar-direita {
+        transform: translateY(var(--kb-offset, 0px));
+        transition: transform 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+        will-change: transform;
+    }
+
+    /* Quando o foco está ativo, o overlay não deve ficar em cima */
+    :root:not([data-layout="row"]).kb-focus .gaveta-overlay {
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    /* Navbar some para dar espaço ao teclado */
+    :root:not([data-layout="row"]).kb-focus .navbar {
+        transition: transform 0.25s ease, opacity 0.2s ease;
+    }
+}
+
+/* ---------- 9.2 Modo em linha (row) ---------- */
+/* No modo row, o container ativo ocupa a tela toda */
+@media (max-width: 1366px) {
+    :root[data-layout="row"].kb-focus .navbar {
+        transform: translateY(-100%);
+        opacity: 0;
+        pointer-events: none;
+        transition: transform 0.25s ease, opacity 0.2s ease;
+    }
+
+    /* Esconde a sidebar esquerda e o conteúdo principal */
+    :root[data-layout="row"].kb-focus .sidebar,
+    :root[data-layout="row"].kb-focus .dashboard-main {
+        display: none;
+    }
+
+    /* A ficha do leitor vira uma "tela cheia" só com o container ativo */
+    :root[data-layout="row"].kb-focus .sidebar-direita {
+        display: flex;
+        width: 100%;
+        height: var(--kb-visivel, 100%);
+        padding: 1.5rem 2rem;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        box-shadow: none;
+    }
+
+    /* Esconde tudo da ficha que não é o container ativo */
+    :root[data-layout="row"].kb-focus .sidebar-direita .ficha-header,
+    :root[data-layout="row"].kb-focus .sidebar-direita .ficha-filete,
+    :root[data-layout="row"].kb-focus .sidebar-direita .ficha-perfil,
+    :root[data-layout="row"].kb-focus .sidebar-direita .ficha-item,
+    :root[data-layout="row"].kb-focus .sidebar-direita .mensagem-sidebar {
+        display: none;
+    }
+
+    :root[data-layout="row"].kb-focus .sidebar-direita .container-expansivel:not([data-ativo="true"]) {
+        display: none;
+    }
+
+    :root[data-layout="row"].kb-focus .sidebar-direita .container-expansivel[data-ativo="true"] {
+        display: block;
+        width: 100%;
+        max-width: 560px;
+        margin: 0 auto;
+    }
+
+    /* Centraliza verticalmente quando o container é pequeno */
+    :root[data-layout="row"].kb-focus .sidebar-direita .ficha-menu {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex: 1;
+        width: 100%;
+        margin: 0;
+    }
+}
+
+/* ==============================================
+   10. ACESSIBILIDADE
    ============================================== */
 @media (prefers-reduced-motion: reduce) {
     .ilustracao-central { animation: none; }

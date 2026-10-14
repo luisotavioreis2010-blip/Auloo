@@ -34,6 +34,9 @@
     const MENSAGEM_SAIDA_MS = 500;
     const LIMITE_TECLADO_PX = 100;
     const REDIMENSIONANDO_MS = 400;
+    const MARGEM_TECLADO_PX = 16;
+    const ESTABILIDADE_MS = 120;
+    const WATCHDOG_MS = 1500;
 
     const IDS_CONTAINERS = [
         'container-editar-nome',
@@ -54,6 +57,7 @@
                          'Quinta-feira', 'Sexta-feira', 'Sábado'];
 
     const mqCompacto = window.matchMedia('(max-width: 1366px)');
+    const mqRow = window.matchMedia('(max-width: 1366px) and (orientation: landscape)');
 
     const perfil = { usuario: null, nome: 'Usuário', email: '', avatarUrl: null };
 
@@ -61,6 +65,13 @@
     let perfilCarregandoId = null;  // id com leitura em andamento
     let saindo = false;             // true durante o logout (evita redirecionar duas vezes)
     let temporizadorMensagem = null;
+
+    /* Estado do sistema de foco (teclado virtual) */
+    let offsetAtual = 0;             // deslocamento vertical aplicado por causa do teclado
+    let razaoTeclado = 0.5;          // proporção da tela ocupada pela área visível com teclado
+    let ajusteRaf = false;
+    let vvHeightAnterior = 0;
+    let timerEstabilidade = null;
 
     /* ==============================================
        2. UTILITÁRIOS
@@ -165,6 +176,26 @@
         return !!ativo && (ativo.tagName === 'INPUT' || ativo.tagName === 'TEXTAREA');
     }
 
+    function ehLayoutRow() {
+        return document.documentElement.getAttribute('data-layout') === 'row';
+    }
+
+    function getAlturaVisivel() {
+        const vv = window.visualViewport;
+        const h = window.innerHeight;
+        return (vv && vv.height > 0 && vv.height < h) ? vv.height : h;
+    }
+
+    function getTopoTeclado() {
+        const vv = window.visualViewport;
+        const topoVV = vv ? (vv.offsetTop + vv.height) : window.innerHeight;
+        return Math.min(topoVV, window.innerHeight);
+    }
+
+    function tecladoAberto() {
+        return campoEmFoco() && (window.innerHeight - getAlturaVisivel()) > LIMITE_TECLADO_PX;
+    }
+
     /* Detecta se a mudança de viewport veio do teclado virtual */
     function veioDoTeclado() {
         const vv = window.visualViewport;
@@ -192,6 +223,186 @@
         const ficha = $('sidebar-perfil');
         if (main) main.scrollTop = 0;
         if (ficha) ficha.scrollTop = 0;
+    }
+
+    /* ---------- Sistema de foco (mesma lógica do login) ---------- */
+    function limparAtivos() {
+        document.querySelectorAll('[data-ativo="true"]').forEach((el) => el.removeAttribute('data-ativo'));
+    }
+
+    function resetarKbOffset() {
+        if (offsetAtual === 0) return;
+        offsetAtual = 0;
+        document.documentElement.style.setProperty('--kb-offset', '0px');
+    }
+
+    function limparEstadoTeclado() {
+        limparAtivos();
+        document.documentElement.classList.remove('kb-focus');
+        resetarKbOffset();
+        document.documentElement.style.removeProperty('--kb-visivel');
+        resetarScroll();
+    }
+
+    /* Elemento que precisa ficar visível acima do teclado */
+    function escolherReferencia() {
+        const ativo = document.querySelector('[data-ativo="true"]');
+        if (ativo) return ativo;
+
+        /* Fallback: o próprio container-expansivel aberto */
+        const containerAberto = document.querySelector('.container-expansivel:not([hidden])');
+        if (containerAberto) return containerAberto;
+
+        return null;
+    }
+
+    function atualizarAlturaVisivel() {
+        if (tecladoAberto()) {
+            const topo = Math.max(0, getTopoTeclado());
+            if (window.innerHeight > 0) razaoTeclado = topo / window.innerHeight;
+            document.documentElement.style.setProperty('--kb-visivel', topo + 'px');
+        } else if (!(ehLayoutRow() && document.documentElement.classList.contains('kb-focus') && campoEmFoco())) {
+            document.documentElement.style.removeProperty('--kb-visivel');
+        }
+    }
+
+    function calcularKbOffset() {
+        atualizarAlturaVisivel();
+        if (!tecladoAberto()) { resetarKbOffset(); return; }
+
+        /* Em modo row com kb-focus, o offset é controlado pelo CSS (--kb-visivel) */
+        if (ehLayoutRow() && document.documentElement.classList.contains('kb-focus')) {
+            resetarKbOffset();
+            return;
+        }
+
+        const ref = escolherReferencia();
+        if (!ref) return;
+
+        const bottomNatural = ref.getBoundingClientRect().bottom - offsetAtual;
+        const limite = getTopoTeclado() - MARGEM_TECLADO_PX;
+        const novoOffset = bottomNatural > limite ? limite - bottomNatural : 0;
+
+        if (Math.abs(novoOffset - offsetAtual) > 2) {
+            offsetAtual = novoOffset;
+            document.documentElement.style.setProperty('--kb-offset', novoOffset + 'px');
+        }
+    }
+
+    function executarAjuste() {
+        if (ajusteRaf) return;
+        ajusteRaf = true;
+        requestAnimationFrame(() => {
+            ajusteRaf = false;
+            calcularKbOffset();
+        });
+    }
+
+    /* Teclado abrindo (altura diminui): espera estabilizar. Fechando: ajusta na hora. */
+    function agendarAposEstabilidade() {
+        const vv = window.visualViewport;
+        const h = vv ? vv.height : window.innerHeight;
+        const diff = h - vvHeightAnterior;
+        if (Math.abs(diff) <= 1) return;
+
+        vvHeightAnterior = h;
+        clearTimeout(timerEstabilidade);
+
+        if (diff > 0) executarAjuste();
+        else timerEstabilidade = setTimeout(executarAjuste, ESTABILIDADE_MS);
+    }
+
+    function agendarImediato() {
+        clearTimeout(timerEstabilidade);
+        executarAjuste();
+    }
+
+    /* Aplica kb-focus e marca o container do input como ativo */
+    function aplicarModoFoco(input) {
+        document.documentElement.classList.add('kb-focus');
+
+        const container = input.closest('.container-expansivel');
+        if (!container) return;
+
+        limparAtivos();
+        container.setAttribute('data-ativo', 'true');
+
+        if (!tecladoAberto()) {
+            document.documentElement.style.setProperty(
+                '--kb-visivel',
+                Math.round(window.innerHeight * razaoTeclado) + 'px'
+            );
+        }
+        agendarAposEstabilidade();
+    }
+
+    function removerModoFoco() {
+        limparAtivos();
+        document.documentElement.classList.remove('kb-focus');
+        agendarAposEstabilidade();
+    }
+
+    function setupModoFoco() {
+        document.addEventListener('focusin', (e) => {
+            const alvo = e.target;
+            if (!alvo || (alvo.tagName !== 'INPUT' && alvo.tagName !== 'TEXTAREA')) return;
+            if (!alvo.closest('.container-expansivel')) return;
+            aplicarModoFoco(alvo);
+        });
+
+        document.addEventListener('focusout', () => {
+            setTimeout(() => {
+                const ativo = document.activeElement;
+                if (ativo && (ativo.tagName === 'INPUT' || ativo.tagName === 'TEXTAREA') &&
+                    ativo.closest('.container-expansivel')) {
+                    aplicarModoFoco(ativo);
+                } else {
+                    removerModoFoco();
+                }
+            }, 80);
+        });
+
+        window.addEventListener('pageshow', removerModoFoco);
+    }
+
+    function setupTeclado() {
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', agendarAposEstabilidade);
+            window.visualViewport.addEventListener('scroll', agendarAposEstabilidade);
+        }
+        window.addEventListener('resize', agendarAposEstabilidade);
+
+        document.addEventListener('focusin', (e) => {
+            if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
+                agendarAposEstabilidade();
+            }
+        });
+
+        document.addEventListener('focusout', () => {
+            setTimeout(() => {
+                if (campoEmFoco()) return;
+                clearTimeout(timerEstabilidade);
+                executarAjuste();
+                setTimeout(() => {
+                    if (!campoEmFoco() && !tecladoAberto()) resetarScroll();
+                }, 300);
+            }, 80);
+        });
+
+        window.addEventListener('orientationchange', () => {
+            [50, 300, 600].forEach((ms) => setTimeout(agendarImediato, ms));
+        });
+
+        /* Watchdog: alguns navegadores móveis perdem eventos */
+        setInterval(() => {
+            if (document.hidden || campoEmFoco() || tecladoAberto()) return;
+            if (document.documentElement.classList.contains('kb-focus') || offsetAtual !== 0 ||
+                document.documentElement.style.getPropertyValue('--kb-visivel')) {
+                limparEstadoTeclado();
+            }
+        }, WATCHDOG_MS);
+
+        executarAjuste();
     }
 
     function setupTela() {
@@ -241,7 +452,7 @@
             [100, 400, 900].forEach((ms) => setTimeout(sincronizarSeNecessario, ms));
         });
 
-        /* Foco: só marca o body com campo-focado, NÃO reavalia o layout */
+        /* Foco: marca o body com campo-focado (útil para a ficha) */
         document.addEventListener('focusin', (e) => {
             const campo = e.target;
             if (campo && campo.matches && campo.matches('input, textarea')) {
@@ -933,6 +1144,8 @@
 
     function iniciar() {
         setupTela();
+        setupTeclado();
+        setupModoFoco();
         setupPerfil();
         setupLayout();
         setupCalendario();
