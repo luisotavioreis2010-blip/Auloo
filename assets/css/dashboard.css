@@ -1,6 +1,6 @@
 ﻿@charset "UTF-8";
 /* ==============================================
-   DASHBOARD.CSS — v21
+   DASHBOARD.CSS — v20
 
    Estrutura
    1. Variáveis
@@ -11,8 +11,7 @@
    6. Conteúdo principal e calendário
    7. DESKTOP  (≥ 1367px)
    8. COMPACTO (≤ 1366px)
-   9. Teclado virtual
-  10. Acessibilidade
+   9. Acessibilidade
    ============================================== */
 
 /* ==============================================
@@ -47,10 +46,6 @@
     /* Viewport: segunda declaração vence onde `dvh` é suportado */
     --viewport-h: 100vh;
     --viewport-h: 100dvh;
-
-    /* Atualizadas pelo dashboard.js (módulo KB) */
-    --kb-offset: 0px;
-    --kb-visivel: 100%;
 
     --navbar-h: 68px;
     --sidebar-w: 300px;
@@ -1217,6 +1212,8 @@ input, textarea {
         box-shadow: none;
     }
 
+    body.campo-focado .sidebar-direita { padding-bottom: 50vh; }
+
     .dashboard-main {
         flex-direction: column;
         align-items: stretch;
@@ -1519,58 +1516,7 @@ html.redimensionando *::after {
 }
 
 /* ==============================================
-   9. TECLADO VIRTUAL
-   ------------------------------------------------------------
-   O módulo KB do dashboard.js aplica `--kb-offset` quando um
-   input é focado. A transformação abaixo sobe a ficha (ou o
-   conteúdo principal) para manter o input visível acima do
-   teclado virtual, espelhando o comportamento do login.js.
-   ============================================== */
-
-/* Durante o foco, o `--kb-offset` reposiciona o container visível */
-html.kb-aberto .sidebar-direita {
-    transform: translateY(var(--kb-offset, 0px));
-    transition: transform 0.25s cubic-bezier(0.22, 0.61, 0.36, 1);
-    will-change: transform;
-}
-
-html.kb-aberto .dashboard-main {
-    transform: translateY(var(--kb-offset, 0px));
-    transition: transform 0.25s cubic-bezier(0.22, 0.61, 0.36, 1);
-    will-change: transform;
-}
-
-/* No desktop não há teclado virtual — o offset é ignorado */
-@media (min-width: 1367px) {
-    html.kb-aberto .sidebar-direita,
-    html.kb-aberto .dashboard-main {
-        transform: none;
-        transition: none;
-    }
-}
-
-/* A ficha precisa continuar rolando quando o teclado abre */
-@media (max-width: 1366px) {
-    html.kb-aberto .sidebar-direita {
-        overflow-y: auto;
-        overscroll-behavior: contain;
-    }
-}
-
-/* Campo focado dentro da ficha: reserva espaço extra para rolar */
-html.kb-aberto .sidebar-direita .container-expansivel.aberto {
-    scroll-margin-bottom: 8rem;
-}
-
-/* Em landscape muito baixo, evita que o container fique cortado */
-@media (max-width: 1366px) and (max-height: 500px) {
-    html.kb-aberto .sidebar-direita {
-        padding-bottom: max(var(--ficha-pad), 4rem);
-    }
-}
-
-/* ==============================================
-   10. ACESSIBILIDADE
+   9. ACESSIBILIDADE
    ============================================== */
 @media (prefers-reduced-motion: reduce) {
     .ilustracao-central { animation: none; }
@@ -1579,12 +1525,5 @@ html.kb-aberto .sidebar-direita .container-expansivel.aberto {
         animation-duration: 0.01ms !important;
         transition-duration: 0.01ms !important;
         transition-delay: 0s !important;
-    }
-
-    /* Mesmo com reduced-motion, o reposicionamento do teclado
-       precisa acontecer instantaneamente (não é animação decorativa) */
-    html.kb-aberto .sidebar-direita,
-    html.kb-aberto .dashboard-main {
-        transition: none;
     }
 }

@@ -40,13 +40,9 @@
     --fonte-texto: 'Cormorant Garamond', Georgia, serif;
     --fonte-corpo: 'Poppins', sans-serif;
 
-    /* Viewport: segunda declaração vence onde `dvh` é suportado */
+    /* A segunda declaração vence onde `dvh` é suportado */
     --viewport-h: 100vh;
     --viewport-h: 100dvh;
-
-    /* Atualizadas pelo login.js */
-    --app-h: 100dvh;
-    --kb-offset: 0px;
 
     --navbar-h: 54px;
     --navbar-px: 1.5rem;
@@ -78,6 +74,10 @@
     --lottie-size: 260px;
     --otp-w: 52px;
     --otp-h: 62px;
+
+    /* Atualizadas pelo login.js */
+    --app-h: 100dvh;
+    --kb-offset: 0px;
 }
 
 /* ============================================================
@@ -110,7 +110,6 @@ body {
 
 /* 16px evita o zoom automático do iOS ao focar um campo */
 input {
-    font: inherit;
     font-size: 16px;
     line-height: 1.4;
     -webkit-appearance: none;
@@ -215,15 +214,14 @@ html.rotating .ilustracao-login { opacity: 0 !important; }
     transform: rotate(180deg);
 }
 
-/* ---------- Menu "Saiba mais" ---------- */
+/* ---------- Menu "Saiba mais" compacto e refinado ---------- */
 .saiba-menu {
     position: absolute;
     top: calc(100% + 0.7rem);
     right: 0;
     width: 280px;
     max-width: calc(100vw - 2 * var(--navbar-px));
-    max-height: calc(var(--app-h, 100dvh) - var(--navbar-h) - 1.2rem);
-    padding: 0.75rem 0;
+    padding: 0.75rem 0 0.75rem;
     background: var(--card);
     border: 1px solid rgba(var(--dourado-rgb), 0.5);
     border-radius: 8px;
@@ -232,9 +230,7 @@ html.rotating .ilustracao-login { opacity: 0 !important; }
         inset 0 0 0 3px var(--card),
         inset 0 0 0 4px rgba(var(--dourado-rgb), 0.22);
     animation: saiba-in 0.2s ease both;
-    overflow: hidden auto;
-    overscroll-behavior: contain;
-    -webkit-overflow-scrolling: touch;
+    overflow: hidden;
 }
 
 .saiba-menu::before {
@@ -373,10 +369,19 @@ html.rotating .ilustracao-login { opacity: 0 !important; }
     transform: translate(0, -50%);
 }
 
+/* Nunca ultrapassa a tela */
+.saiba-menu {
+    max-height: calc(var(--app-h, 100dvh) - var(--navbar-h) - 1.2rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
 /* Celular deitado */
 html[data-layout="row"] .saiba-menu::before { right: auto; left: var(--seta-x, auto); }
 html[data-layout="row"] .saiba-titulo { padding-top: 0.8rem; padding-bottom: 0.3rem; }
-html[data-layout="row"] .saiba-item { gap: 0.7rem; margin: 0 0.3rem; padding: 0.6rem 0.7rem; }
+html[data-layout="row"] .saiba-item { padding-top: 0.6rem; padding-bottom: 0.6rem; }
+html[data-layout="row"] .saiba-item { gap: 0.7rem; margin: 0 0.3rem; padding-left: 0.7rem; padding-right: 0.7rem; }
 html[data-layout="row"] .saiba-num { width: 1.6rem; height: 1.6rem; font-size: 0.8rem; }
 html[data-layout="row"] .saiba-corpo strong { font-size: 0.85rem; }
 html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
@@ -1523,6 +1528,9 @@ html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
         gap: 1.1rem;
         margin-top: 0;
         padding-top: 0;
+    }
+
+    html[data-layout="row"] .form-coluna-sociais {
         background: linear-gradient(180deg, transparent 0%, rgba(var(--dourado-rgb), 0.7) 50%, transparent 100%)
                     left center / 1px 92% no-repeat;
     }
@@ -1617,12 +1625,13 @@ html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
         padding-top: 0;
     }
 
+    html[data-layout="row"].kb-focus .form { transform: none; }
+
     html[data-layout="row"].kb-focus .form {
         flex-direction: column;
         align-items: center;
         justify-content: center;
         padding: 1.5rem 2rem;
-        transform: none;
     }
 
     html[data-layout="row"].kb-focus .form-coluna-login {
@@ -1669,7 +1678,10 @@ html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
         margin: 0;
     }
 
-    /* Espaço extra embaixo: só o suficiente para o botão "voltar" não colar na borda */
+    /* ---------------------------------------------------------
+       Espaco extra embaixo: SO o suficiente para o botao "voltar"
+       nao colar na borda inferior da tela
+       --------------------------------------------------------- */
     html[data-layout="row"] .forgot-form {
         padding-bottom: 0.8rem;
     }
@@ -1703,7 +1715,7 @@ html[data-layout="row"] .saiba-corpo small { font-size: 0.72rem; }
         letter-spacing: 0.4px;
     }
 
-    /* Espaço extra embaixo em telas muito estreitas */
+    /* Espaco extra embaixo em telas muito estreitas */
     html[data-layout="row"] .forgot-form {
         padding-bottom: 0.6rem;
     }
