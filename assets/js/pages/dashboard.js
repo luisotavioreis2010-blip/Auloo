@@ -1,374 +1,196 @@
-﻿/* ============================================================
-   DASHBOARD.JS — v23
-   ------------------------------------------------------------
-   Suporte a:
-     - Perfil (nome, foto, senha)
-     - Criar senha para contas Google
-     - Ficha do leitor responsiva (desktop / compacto / row)
-     - Calendário mensal
+﻿/* ==============================================
+   DASHBOARD.JS — v13
 
-   Estrutura:
-     1. Constantes
-     2. Dependências (Auth)
-     3. Utilitários puros
-     4. DOM (cache)
-     5. Estado
-     6. Tela / viewport
-     7. Mensagens & containers
-     8. Perfil (carregar / renderizar / logout)
-     9. Ações do perfil (nome, senha, foto)
-    10. Layout (sidebar / ficha / overlay)
-    11. Calendário
-    12. Auth listener
-    13. Bootstrap & cleanup
-   ============================================================ */
+   Seções
+   1. Constantes e estado
+   2. Tela: viewport, layout e posição da ficha
+   3. Utilitários
+   4. Perfil (carregar, renderizar, sair)
+   5. Mensagens e containers de edição
+   6. Ações do perfil (nome, senha, foto)
+   7. Layout (gaveta, ficha, overlay)
+   8. Calendário
+   9. Inicialização
+
+   Depende de `supabaseClient` (global, criado em config.js/auth.js).
+   ============================================== */
 (function () {
     'use strict';
 
-    /* ============================================================
-       1. CONSTANTES
-       ============================================================ */
-    const CONFIG = Object.freeze({
-        PAGINA_LOGIN: 'login.html',
-
-        TIMEOUT_SIGNOUT_MS: 3000,
-        TAMANHO_MAX_FOTO: 5 * 1024 * 1024,
-        TENTATIVAS_OAUTH: 40,
-        INTERVALO_OAUTH_MS: 200,
-        MSG_VISIVEL_MS: 3000,
-        MSG_SAIDA_MS: 500,
-
-        CHAVES_LOGOUT: ['auloo_user', 'auloo_saved_email'],
-    });
-
-    const EXTENSOES_FOTO = Object.freeze({
+    /* ==============================================
+       1. CONSTANTES E ESTADO
+       ============================================== */
+    var PAGINA_LOGIN = 'login.html';
+    var CHAVES_LOGOUT = ['auloo_user', 'auloo_saved_email'];
+    var TIMEOUT_SIGNOUT_MS = 3000;
+    var TAMANHO_MAX_FOTO = 5 * 1024 * 1024;
+    var EXTENSOES_FOTO = {
         'image/jpeg': 'jpg',
-        'image/png':  'png',
-        'image/gif':  'gif',
-        'image/webp': 'webp',
-    });
+        'image/png': 'png',
+        'image/gif': 'gif',
+        'image/webp': 'webp'
+    };
+    var IDS_CONTAINERS_EDICAO = ['container-editar-nome', 'container-editar-senha'];
+    var MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+                 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    var DIAS_SEMANA = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira',
+                       'Quinta-feira', 'Sexta-feira', 'Sábado'];
 
-    const IDS_CONTAINERS = Object.freeze([
-        'container-editar-nome',
-        'container-editar-senha',
-        'container-criar-senha',
-        'container-saiba-mais',
-    ]);
+    /* mesmo limite usado no CSS: acima disso o layout é desktop */
+    var mqCompacto = window.matchMedia('(max-width: 1366px)');
 
-    const MESES = Object.freeze([
-        'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-        'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
-    ]);
+    var perfil = { usuario: null, nome: 'Usuário', email: '', avatarUrl: null };
 
-    const DIAS_SEMANA = Object.freeze([
-        'Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira',
-        'Quinta-feira', 'Sexta-feira', 'Sábado',
-    ]);
+    function $(id) { return document.getElementById(id); }
 
-    /* ============================================================
-       2. DEPENDÊNCIAS
-       ============================================================ */
-    let Auth = null;
-
-    function resolverAuth() {
-        const A = window.Auth;
-        if (!A) {
-            console.error('[dashboard] window.Auth não encontrado.');
-            return false;
-        }
-        Auth = A;
-        return true;
+    function getDb() {
+        return typeof supabaseClient !== 'undefined' ? supabaseClient : null;
     }
 
-    /* ============================================================
-       3. UTILITÁRIOS PUROS
-       ============================================================ */
-    const $ = (id) => document.getElementById(id);
-    const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
-
-    const debounce = (fn, ms) => {
-        let t;
-        return (...args) => {
-            clearTimeout(t);
-            t = setTimeout(() => fn(...args), ms);
-        };
-    };
-
-    const verificar = (resultado) => {
-        if (resultado?.error) throw resultado.error;
-        return resultado?.data ?? null;
-    };
-
-    const formatarNome = (nome, email) => {
-        let texto = String(nome || '').trim() || String(email || '');
-        if (texto.includes('@')) texto = texto.split('@')[0];
-        if (!texto) return 'Usuário';
-        return texto.charAt(0).toUpperCase() + texto.slice(1);
-    };
-
-    /* ============================================================
-       4. DOM (cache)
-       ============================================================ */
-    const raiz = document.documentElement;
-
-    const dom = {};
-
-    function montarDom() {
-        // Navbar
-        dom.btnSair = $('btn-sair');
-        dom.perfilBotao = $('perfil-botao');
-        dom.perfilUsuario = $('perfil-usuario');
-        dom.btnHamburger = $('btn-hamburger');
-
-        // Sidebar / ficha
-        dom.sidebar = $('sidebar');
-        dom.ficha = $('sidebar-perfil');
-        dom.overlay = $('gaveta-overlay');
-        dom.fichaFechar = $('ficha-fechar');
-
-        // Ficha — perfil
-        dom.fichaFoto = $('sidebar-perfil-foto');
-        dom.fichaNome = $('sidebar-perfil-nome');
-        dom.fichaEmail = $('sidebar-perfil-email');
-
-        // Ações
-        dom.btnEditarFoto = $('btn-editar-foto');
-        dom.inputFoto = $('input-foto');
-        dom.btnEditarNome = $('btn-editar-nome');
-        dom.btnSalvarNome = $('btn-salvar-nome');
-        dom.inputNovoNome = $('input-novo-nome');
-        dom.btnEditarSenha = $('btn-editar-senha');
-        dom.inputSenhaAtual = $('input-senha-atual');
-        dom.inputSenhaNova = $('input-senha-nova');
-        dom.btnConfirmarSenha = $('btn-confirmar-senha');
-        dom.inputNovaSenhaCriar = $('input-nova-senha-criar');
-        dom.inputConfirmarSenhaCriar = $('input-confirmar-senha-criar');
-        dom.btnConfirmarCriarSenha = $('btn-confirmar-criar-senha');
-        dom.btnSaibaMais = $('btn-saiba-mais');
-
-        // Calendário
-        dom.calendarioTitulo = $('calendario-titulo');
-        dom.calendarioSubtitulo = $('calendario-subtitulo');
-        dom.calendarioDias = $('calendario-dias');
-        dom.btnMesAnterior = $('btn-mes-anterior');
-        dom.btnProximoMes = $('btn-proximo-mes');
-    }
-
-    /* ============================================================
-       5. ESTADO
-       ============================================================ */
-    const perfil = {
-        usuario: null,
-        nome: 'Usuário',
-        email: '',
-        avatarUrl: null,
-    };
-
-    const estado = {
-        timers: {
-            mensagem: null,
-            resize: null,
-            redimensionando: null,
-        },
-        listeners: [],
-        resizeObserver: null,
-        calendario: { mes: 0, ano: 0 },
-    };
-
-    function on(target, evento, handler, opts) {
-        if (!target) return () => {};
-        target.addEventListener(evento, handler, opts);
-        const off = () => target.removeEventListener(evento, handler, opts);
-        estado.listeners.push(off);
-        return off;
-    }
-
-    function cleanup() {
-        Object.values(estado.timers).forEach(clearTimeout);
-        estado.listeners.forEach((off) => { try { off(); } catch (_) {} });
-        estado.listeners.length = 0;
-        estado.resizeObserver?.disconnect();
-        estado.resizeObserver = null;
-    }
-
-    /* ============================================================
-       6. TELA / VIEWPORT
-       ============================================================ */
-    const mqCompacto = window.matchMedia('(max-width: 1366px)');
+    /* ==============================================
+       2. TELA: VIEWPORT, LAYOUT E POSIÇÃO DA FICHA
+       ============================================== */
 
     function campoEmFoco() {
-        const el = document.activeElement;
-        return Boolean(el) && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA');
+        var ativo = document.activeElement;
+        return !!ativo && (ativo.tagName === 'INPUT' || ativo.tagName === 'TEXTAREA');
     }
 
-    /** Detecta se a mudança de viewport veio do teclado virtual. */
-    function veioDoTeclado() {
-        if (!window.visualViewport) return false;
-        return (window.innerHeight - window.visualViewport.height) > 100;
-    }
-
-    function sincronizarTela(forcar = false) {
+    /* Fixa duas coisas no <html>, lidas pelo CSS:
+         --viewport-h   altura real da janela
+         data-layout    "row" (janela mais larga que alta) ou "stacked"
+       Com um campo de texto focado o teclado virtual está aberto e a
+       janela fica menor: nesse caso NADA muda, e o layout continua o mesmo
+       (é isso que mantém a ficha em tela cheia ao tocar num input).
+       `forcar` ignora essa trava — usado quando a janela mudou de verdade
+       (girar o aparelho, trocar de dispositivo, redimensionar). */
+    function sincronizarTela(forcar) {
         if (!forcar && campoEmFoco()) return;
-        raiz.style.setProperty('--viewport-h', `${window.innerHeight}px`);
-        raiz.setAttribute(
-            'data-layout',
-            window.innerWidth > window.innerHeight ? 'row' : 'stacked'
-        );
+
+        var raiz = document.documentElement;
+        raiz.style.setProperty('--viewport-h', window.innerHeight + 'px');
+        raiz.setAttribute('data-layout', window.innerWidth > window.innerHeight ? 'row' : 'stacked');
     }
 
-    let calendarioContainer = null;
-
+    /* No layout em linha a ficha cobre da borda esquerda do calendário
+       até a borda direita da tela; o CSS lê --ficha-row-w só nesse layout. */
     function ajustarLarguraFicha() {
-        if (!calendarioContainer) calendarioContainer = document.querySelector('.calendario-container');
-        if (!calendarioContainer) return;
-        const esquerda = calendarioContainer.getBoundingClientRect().left;
-        raiz.style.setProperty('--ficha-row-w', `${window.innerWidth - esquerda}px`);
+        var calendario = document.querySelector('.calendario-container');
+        if (!calendario) return;
+        var esquerda = calendario.getBoundingClientRect().left;
+        document.documentElement.style.setProperty('--ficha-row-w', (window.innerWidth - esquerda) + 'px');
     }
 
     function resetarScroll() {
         window.scrollTo(0, 0);
-        const main = document.querySelector('.dashboard-main');
-        const ficha = dom.ficha;
+        var main = document.querySelector('.dashboard-main');
+        var ficha = $('sidebar-perfil');
         if (main) main.scrollTop = 0;
         if (ficha) ficha.scrollTop = 0;
     }
 
     function setupTela() {
-        let ultimaLargura = window.innerWidth;
+        var raiz = document.documentElement;
+        var temporizador = null;
+        var temporizadorQuieto = null;
+        var ultimaLargura = window.innerWidth;
+        var ultimaAltura = window.innerHeight;
 
-        function sincronizarSeNecessario() {
-            if (campoEmFoco() || veioDoTeclado()) return;
-
-            const largura = window.innerWidth;
-            const altura = window.innerHeight;
-            const larguraMudou = largura !== ultimaLargura;
-            const orientacaoMudou =
-                (largura > altura) !== (ultimaLargura > window.innerHeight);
-
-            ultimaLargura = largura;
-
-            if (!larguraMudou && !orientacaoMudou) return;
-
-            raiz.classList.add('redimensionando');
-
-            sincronizarTela(true);
+        function reavaliar(forcar) {
+            sincronizarTela(forcar);
             ajustarLarguraFicha();
-            resetarScroll();
-
-            clearTimeout(estado.timers.redimensionando);
-            estado.timers.redimensionando = setTimeout(
-                () => raiz.classList.remove('redimensionando'),
-                400
-            );
         }
 
-        const aoRedimensionar = debounce(() => {
-            if (campoEmFoco() || veioDoTeclado()) return;
-            sincronizarSeNecessario();
-        }, 250);
+        /* Mudou a largura (ou a orientação): é uma mudança real de janela,
+           não o teclado. Descarta o estado do teclado e relê tudo. */
+        function aoRedimensionar() {
+            var larguraMudou = window.innerWidth !== ultimaLargura;
+            var orientacaoMudou = (window.innerWidth > window.innerHeight) !== (ultimaLargura > ultimaAltura);
+            ultimaLargura = window.innerWidth;
+            ultimaAltura = window.innerHeight;
 
-        on(window, 'resize', aoRedimensionar);
-        on(window, 'orientationchange', () => {
-            [100, 400, 900].forEach((ms) =>
-                setTimeout(() => {
-                    if (campoEmFoco()) return;
-                    sincronizarSeNecessario();
-                }, ms)
-            );
-        });
+            /* sem animações enquanto a tela é redimensionada: evita a gaveta
+               e a ficha "deslizando" ao cruzar um breakpoint */
+            raiz.classList.add('redimensionando');
+            clearTimeout(temporizadorQuieto);
+            temporizadorQuieto = setTimeout(function () {
+                raiz.classList.remove('redimensionando');
+            }, 400);
 
-        on(document, 'focusin', (e) => {
-            if (e.target?.matches?.('input, textarea')) {
-                document.body.classList.add('campo-focado');
+            if (larguraMudou || orientacaoMudou) {
+                if (campoEmFoco()) document.activeElement.blur();
+                document.body.classList.remove('campo-focado');
+                sincronizarTela(true);
+                resetarScroll();
             }
+
+            clearTimeout(temporizador);
+            temporizador = setTimeout(function () {
+                reavaliar(larguraMudou || orientacaoMudou);
+                if (larguraMudou || orientacaoMudou) resetarScroll();
+            }, 250);
+        }
+
+        window.addEventListener('resize', aoRedimensionar);
+        window.addEventListener('orientationchange', function () {
+            /* alguns navegadores só atualizam as dimensões depois do evento */
+            [100, 400, 900].forEach(function (ms) {
+                setTimeout(function () { reavaliar(!campoEmFoco()); }, ms);
+            });
         });
 
-        on(document, 'focusout', () => {
-            setTimeout(() => {
+        /* teclado: ao focar, abre espaço para rolar o campo; ao sair, relê a tela */
+        document.addEventListener('focusin', function (e) {
+            var campo = e.target;
+            if (!campo.matches || !campo.matches('input, textarea')) return;
+
+            document.body.classList.add('campo-focado');
+            setTimeout(function () {
+                if (document.activeElement === campo) {
+                    campo.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                }
+            }, 300);
+        });
+
+        document.addEventListener('focusout', function () {
+            setTimeout(function () {
                 if (campoEmFoco()) return;
                 document.body.classList.remove('campo-focado');
+                reavaliar(false);
             }, 350);
         });
 
+        /* a posição do calendário muda quando a imagem carrega ou o layout troca */
         if ('ResizeObserver' in window) {
-            estado.resizeObserver = new ResizeObserver(() => {
-                if (campoEmFoco() || veioDoTeclado()) return;
-                ajustarLarguraFicha();
-            });
-            $$('.ilustracao-container, .calendario-container').forEach((el) =>
-                estado.resizeObserver.observe(el)
-            );
+            var observador = new ResizeObserver(ajustarLarguraFicha);
+            var alvos = document.querySelectorAll('.ilustracao-container, .calendario-container');
+            for (var i = 0; i < alvos.length; i++) observador.observe(alvos[i]);
         }
-
-        sincronizarTela(true);
         ajustarLarguraFicha();
     }
 
-    /* ============================================================
-       7. MENSAGENS & CONTAINERS
-       ============================================================ */
-    function mostrarMensagem(texto, tipo = 'sucesso') {
-        clearTimeout(estado.timers.mensagem);
+    /* ==============================================
+       3. UTILITÁRIOS
+       ============================================== */
 
-        const anterior = $('mensagem-sidebar');
-        if (anterior) anterior.remove();
-
-        const msg = document.createElement('div');
-        msg.id = 'mensagem-sidebar';
-        msg.className = `mensagem-sidebar mensagem-sidebar--${tipo}`;
-        msg.setAttribute('role', tipo === 'erro' ? 'alert' : 'status');
-        msg.textContent = texto;
-
-        const referencia = $('container-editar-senha');
-        if (referencia?.parentNode) {
-            referencia.parentNode.insertBefore(msg, referencia);
-        } else {
-            const menu = document.querySelector('.ficha-menu');
-            if (menu) menu.insertBefore(msg, menu.firstChild);
-        }
-
-        estado.timers.mensagem = setTimeout(() => {
-            msg.classList.add('saindo');
-            setTimeout(() => msg.remove(), CONFIG.MSG_SAIDA_MS);
-        }, CONFIG.MSG_VISIVEL_MS);
+    /* Lança o erro do Supabase (que não lança sozinho) e devolve os dados */
+    function verificar(resultado) {
+        if (resultado && resultado.error) throw resultado.error;
+        return resultado ? resultado.data : null;
     }
 
-    function fecharContainer(id) {
-        const container = $(id);
-        if (!container) return;
-        container.style.display = 'none';
-        container.classList.remove('aberto');
+    function formatarNome(nome, email) {
+        var texto = (nome || '').trim() || email || '';
+        if (texto.indexOf('@') !== -1) texto = texto.split('@')[0];
+        if (!texto) return 'Usuário';
+        return texto.charAt(0).toUpperCase() + texto.slice(1);
     }
 
-    function fecharTodosContainers() {
-        IDS_CONTAINERS.forEach(fecharContainer);
-    }
-
-    function alternarContainer(id) {
-        const alvo = $(id);
-        if (!alvo) return;
-
-        const jaAberto = alvo.classList.contains('aberto') || alvo.style.display === 'block';
-
-        fecharTodosContainers();
-
-        if (!jaAberto) {
-            alvo.style.display = 'block';
-            alvo.classList.add('aberto');
-        }
-    }
-
-    /* ============================================================
-       8. PERFIL
-       ============================================================ */
     function criarIniciais(nome) {
-        const partes = String(nome || 'Usuário').trim().split(/\s+/);
-        const primeira = partes[0].charAt(0).toUpperCase();
-        const ultima = partes.length > 1
-            ? partes[partes.length - 1].charAt(0).toUpperCase()
-            : '';
-
-        const span = document.createElement('span');
+        var partes = (nome || 'Usuário').trim().split(/\s+/);
+        var primeira = partes[0].charAt(0).toUpperCase();
+        var ultima = partes.length > 1 ? partes[partes.length - 1].charAt(0).toUpperCase() : '';
+        var span = document.createElement('span');
         span.className = 'avatar-iniciais';
         span.textContent = primeira + ultima;
         return span;
@@ -383,10 +205,10 @@
             return;
         }
 
-        const img = document.createElement('img');
+        var img = document.createElement('img');
         img.className = 'foto-perfil';
         img.alt = 'Foto de perfil';
-        img.onerror = () => {
+        img.onerror = function () {
             img.remove();
             container.appendChild(criarIniciais(nome));
         };
@@ -394,51 +216,57 @@
         container.appendChild(img);
     }
 
+    /* Desabilita o botão durante a ação (evita clique duplo) e trata erros */
+    async function executarAcao(botao, acao) {
+        if (botao.disabled) return;
+        botao.disabled = true;
+        try {
+            await acao();
+        } catch (erro) {
+            mostrarMensagem('Erro: ' + (erro && erro.message ? erro.message : erro), 'erro');
+        } finally {
+            botao.disabled = false;
+        }
+    }
+
+    /* ==============================================
+       4. PERFIL
+       ============================================== */
+
     function renderizarPerfil() {
-        renderizarAvatar(dom.perfilUsuario, perfil.avatarUrl, perfil.nome);
-        renderizarAvatar(dom.fichaFoto, perfil.avatarUrl, perfil.nome);
-        if (dom.fichaNome) dom.fichaNome.textContent = perfil.nome;
-        if (dom.fichaEmail) dom.fichaEmail.textContent = perfil.email;
+        renderizarAvatar($('perfil-usuario'), perfil.avatarUrl, perfil.nome);
+        renderizarAvatar($('sidebar-perfil-foto'), perfil.avatarUrl, perfil.nome);
+
+        var nome = $('sidebar-perfil-nome');
+        var email = $('sidebar-perfil-email');
+        if (nome) nome.textContent = perfil.nome;
+        if (email) email.textContent = perfil.email;
     }
 
     function irParaLogin() {
-        window.location.href = CONFIG.PAGINA_LOGIN;
-    }
-
-    function aplicarUsuario(usuario, { recarregar = false } = {}) {
-        if (!usuario) return;
-
-        const meta = usuario.user_metadata || {};
-        perfil.usuario = usuario;
-        perfil.email = usuario.email || '';
-        perfil.nome = formatarNome(meta.full_name || meta.name, perfil.email);
-        perfil.avatarUrl = meta.avatar_url || meta.picture || null;
-
-        renderizarPerfil();
-        if (recarregar) carregarPerfil();
+        window.location.href = PAGINA_LOGIN;
     }
 
     async function carregarPerfil() {
-        const db = Auth.getSupabaseClient?.();
+        var db = getDb();
         if (!db) { irParaLogin(); return; }
 
         try {
-            const sessao = verificar(await db.auth.getSession());
-            if (!sessao?.session) { irParaLogin(); return; }
+            var sessao = verificar(await db.auth.getSession());
+            if (!sessao || !sessao.session) { irParaLogin(); return; }
 
-            const usuario = sessao.session.user;
-            const meta = usuario.user_metadata || {};
-            let nome = meta.full_name || meta.name || null;
-            let avatarUrl = meta.avatar_url || meta.picture || null;
+            var usuario = sessao.session.user;
+            var meta = usuario.user_metadata || {};
+            var nome = meta.full_name || meta.name || null;
+            var avatarUrl = meta.avatar_url || meta.picture || null;
 
-            const consulta = await db
-                .from('profiles')
+            var consulta = await db.from('profiles')
                 .select('full_name, avatar_url')
                 .eq('id', usuario.id)
                 .maybeSingle();
 
             if (consulta.error) {
-                console.warn('[dashboard] profiles:', consulta.error.message);
+                console.warn('Não foi possível ler a tabela profiles:', consulta.error.message);
             } else if (consulta.data) {
                 if (consulta.data.full_name) nome = consulta.data.full_name;
                 if (consulta.data.avatar_url) avatarUrl = consulta.data.avatar_url;
@@ -450,77 +278,103 @@
             perfil.avatarUrl = avatarUrl;
             renderizarPerfil();
         } catch (erro) {
-            console.error('[dashboard] carregarPerfil:', erro);
+            console.error('Erro ao carregar perfil:', erro);
         }
     }
 
     async function fazerLogout() {
-        const db = Auth.getSupabaseClient?.();
+        var db = getDb();
 
+        /* espera o signOut (com limite de tempo) antes de limpar e sair */
         try {
             if (db) {
                 await Promise.race([
                     db.auth.signOut(),
-                    new Promise((resolve) =>
-                        setTimeout(resolve, CONFIG.TIMEOUT_SIGNOUT_MS)
-                    ),
+                    new Promise(function (resolve) { setTimeout(resolve, TIMEOUT_SIGNOUT_MS); })
                 ]);
             }
         } catch (erro) {
-            console.warn('[dashboard] signOut:', erro);
+            console.warn('Erro no signOut (ignorado):', erro);
         }
 
         try {
-            CONFIG.CHAVES_LOGOUT.forEach((chave) => localStorage.removeItem(chave));
+            CHAVES_LOGOUT.forEach(function (chave) { localStorage.removeItem(chave); });
             Object.keys(localStorage)
-                .filter((c) => c.startsWith('sb-') || c.startsWith('auloo-auth'))
-                .forEach((c) => localStorage.removeItem(c));
+                .filter(function (chave) { return chave.indexOf('sb-') === 0; })
+                .forEach(function (chave) { localStorage.removeItem(chave); });
             sessionStorage.clear();
         } catch (erro) {
-            console.warn('[dashboard] limpar storage:', erro);
+            console.warn('Erro ao limpar storage:', erro);
         }
 
         irParaLogin();
     }
 
-    /* ============================================================
-       9. AÇÕES DO PERFIL
-       ============================================================ */
-    async function executarAcao(botao, acao) {
-        if (botao.disabled) return;
-        botao.disabled = true;
-        try {
-            await acao();
-        } catch (erro) {
-            console.error('[dashboard]', erro);
-            mostrarMensagem(
-                `Erro: ${erro?.message || erro}`,
-                'erro'
-            );
-        } finally {
-            botao.disabled = false;
+    /* ==============================================
+       5. MENSAGENS E CONTAINERS DE EDIÇÃO
+       ============================================== */
+
+    var temporizadorMensagem = null;
+
+    function mostrarMensagem(texto, tipo) {
+        tipo = tipo || 'sucesso';
+
+        clearTimeout(temporizadorMensagem);
+        var anterior = $('mensagem-sidebar');
+        if (anterior) anterior.remove();
+
+        var msg = document.createElement('div');
+        msg.id = 'mensagem-sidebar';
+        msg.className = 'mensagem-sidebar mensagem-sidebar--' + tipo;
+        msg.setAttribute('role', tipo === 'erro' ? 'alert' : 'status');
+        msg.textContent = texto;
+
+        var referencia = $('container-editar-senha');
+        if (referencia && referencia.parentNode) {
+            referencia.parentNode.insertBefore(msg, referencia);
+        } else {
+            var menu = document.querySelector('.ficha-menu');
+            if (menu) menu.insertBefore(msg, menu.firstChild);
         }
+
+        temporizadorMensagem = setTimeout(function () {
+            msg.classList.add('saindo');
+            setTimeout(function () { msg.remove(); }, 500);
+        }, 3000);
     }
 
-    async function salvarNome() {
-        const novoNome = dom.inputNovoNome?.value.trim() || '';
-        if (!novoNome) {
-            mostrarMensagem('Digite um nome válido!', 'erro');
-            return;
-        }
+    function fecharContainer(id) {
+        var container = $(id);
+        if (container) container.style.display = 'none';
+    }
 
-        const db = Auth.getSupabaseClient?.();
-        if (!db || !perfil.usuario) {
-            mostrarMensagem('Erro: usuário não autenticado!', 'erro');
-            return;
-        }
+    /* abre o container pedido (fechando os outros) ou fecha se já estava aberto */
+    function alternarContainer(id) {
+        var alvo = $(id);
+        if (!alvo) return;
+        var abrir = alvo.style.display !== 'block';
+        IDS_CONTAINERS_EDICAO.forEach(fecharContainer);
+        if (abrir) alvo.style.display = 'block';
+    }
+
+    /* ==============================================
+       6. AÇÕES DO PERFIL
+       ============================================== */
+
+    async function salvarNome() {
+        var input = $('input-novo-nome');
+        var novoNome = input ? input.value.trim() : '';
+        if (!novoNome) { mostrarMensagem('Digite um nome válido!', 'erro'); return; }
+
+        var db = getDb();
+        if (!db || !perfil.usuario) { mostrarMensagem('Erro: usuário não autenticado!', 'erro'); return; }
 
         verificar(await db.auth.updateUser({ data: { full_name: novoNome } }));
         verificar(await db.from('profiles').upsert({
             id: perfil.usuario.id,
             full_name: novoNome,
             email: perfil.email,
-            updated_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
         }));
 
         perfil.nome = formatarNome(novoNome, perfil.email);
@@ -530,254 +384,178 @@
     }
 
     async function alterarSenha() {
-        const senhaAtual = dom.inputSenhaAtual?.value || '';
-        const senhaNova = dom.inputSenhaNova?.value || '';
+        var inputAtual = $('input-senha-atual');
+        var inputNova = $('input-senha-nova');
+        var senhaAtual = inputAtual ? inputAtual.value : '';
+        var senhaNova = inputNova ? inputNova.value : '';
 
-        if (!senhaAtual || !senhaNova) {
-            mostrarMensagem('Preencha todos os campos!', 'erro');
-            return;
-        }
-        if (senhaNova.length < 8) {
-            mostrarMensagem('Senha deve ter 8+ caracteres!', 'erro');
-            return;
-        }
+        if (!senhaAtual || !senhaNova) { mostrarMensagem('Preencha todos os campos!', 'erro'); return; }
+        if (senhaNova.length < 8) { mostrarMensagem('Senha deve ter 8+ caracteres!', 'erro'); return; }
 
-        const db = Auth.getSupabaseClient?.();
-        if (!db || !perfil.usuario) {
-            mostrarMensagem('Erro de configuração!', 'erro');
-            return;
-        }
+        var db = getDb();
+        if (!db || !perfil.usuario) { mostrarMensagem('Erro de configuração!', 'erro'); return; }
 
-        const login = await db.auth.signInWithPassword({
-            email: perfil.email,
-            password: senhaAtual,
-        });
-
+        /* confirma a senha atual antes de trocar */
+        var login = await db.auth.signInWithPassword({ email: perfil.email, password: senhaAtual });
         if (login.error) {
-            const invalidas = login.error.code === 'invalid_credentials'
-                || login.error.status === 400;
-            mostrarMensagem(
-                invalidas ? 'Senha atual incorreta!' : `Erro: ${login.error.message}`,
-                'erro'
-            );
+            var credenciaisInvalidas = login.error.code === 'invalid_credentials' || login.error.status === 400;
+            mostrarMensagem(credenciaisInvalidas ? 'Senha atual incorreta!' : 'Erro: ' + login.error.message, 'erro');
             return;
         }
 
         verificar(await db.auth.updateUser({ password: senhaNova }));
 
-        if (dom.inputSenhaAtual) dom.inputSenhaAtual.value = '';
-        if (dom.inputSenhaNova) dom.inputSenhaNova.value = '';
+        if (inputAtual) inputAtual.value = '';
+        if (inputNova) inputNova.value = '';
         fecharContainer('container-editar-senha');
         mostrarMensagem('Senha atualizada!');
     }
 
-    /**
-     * Verifica se o usuário já tem identidade de e-mail (senha cadastrada).
-     * Se `identities` estiver indisponível, assume true para evitar
-     * oferecer "criar senha" a quem já tem senha.
-     */
-    function usuarioTemSenha() {
-        if (!perfil.usuario) return false;
-        const identities = perfil.usuario.identities;
-        if (!Array.isArray(identities)) return true;
-        return identities.some((i) => i.provider === 'email');
-    }
-
-    async function criarSenha() {
-        const senha = dom.inputNovaSenhaCriar?.value || '';
-        const confirmacao = dom.inputConfirmarSenhaCriar?.value || '';
-
-        if (!senha || !confirmacao) {
-            mostrarMensagem('Preencha todos os campos!', 'erro');
-            return;
-        }
-        if (senha.length < 8) {
-            mostrarMensagem('Senha deve ter 8+ caracteres!', 'erro');
-            return;
-        }
-        if (senha !== confirmacao) {
-            mostrarMensagem('As senhas não coincidem!', 'erro');
-            return;
-        }
-
-        const db = Auth.getSupabaseClient?.();
-        if (!db || !perfil.usuario) {
-            mostrarMensagem('Erro de configuração!', 'erro');
-            return;
-        }
-
-        const resultado = await db.auth.updateUser({ password: senha });
-
-        if (resultado.error) {
-            mostrarMensagem(`Erro: ${resultado.error.message}`, 'erro');
-            return;
-        }
-
-        if (resultado.data?.user) perfil.usuario = resultado.data.user;
-
-        if (dom.inputNovaSenhaCriar) dom.inputNovaSenhaCriar.value = '';
-        if (dom.inputConfirmarSenhaCriar) dom.inputConfirmarSenhaCriar.value = '';
-        fecharContainer('container-criar-senha');
-        mostrarMensagem('Senha criada!');
-    }
-
     async function enviarFoto(arquivo) {
-        const db = Auth.getSupabaseClient?.();
-        if (!db || !perfil.usuario) {
-            mostrarMensagem('Erro: usuário não autenticado!', 'erro');
-            return;
-        }
+        var db = getDb();
+        if (!db || !perfil.usuario) { mostrarMensagem('Erro: usuário não autenticado!', 'erro'); return; }
 
-        const extensao = EXTENSOES_FOTO[arquivo.type];
-        if (!extensao) {
-            mostrarMensagem('Formato não suportado!', 'erro');
-            return;
-        }
-        if (arquivo.size > CONFIG.TAMANHO_MAX_FOTO) {
-            mostrarMensagem('Imagem muito grande! Máximo 5MB.', 'erro');
-            return;
-        }
+        var extensao = EXTENSOES_FOTO[arquivo.type];
+        if (!extensao) { mostrarMensagem('Formato não suportado!', 'erro'); return; }
+        if (arquivo.size > TAMANHO_MAX_FOTO) { mostrarMensagem('Imagem muito grande! Máximo 5MB.', 'erro'); return; }
 
         try {
-            const caminho = `${perfil.usuario.id}/avatar_${perfil.usuario.id}_${Date.now()}.${extensao}`;
+            mostrarMensagem('Enviando foto...');
+
+            var caminho = perfil.usuario.id + '/avatar_' + perfil.usuario.id + '_' + Date.now() + '.' + extensao;
 
             verificar(await db.storage.from('avatars').upload(caminho, arquivo, {
                 cacheControl: '3600',
-                contentType: arquivo.type,
+                contentType: arquivo.type
             }));
 
-            const urlPublica = db.storage.from('avatars').getPublicUrl(caminho).data.publicUrl;
+            var urlPublica = db.storage.from('avatars').getPublicUrl(caminho).data.publicUrl;
 
             verificar(await db.auth.updateUser({ data: { avatar_url: urlPublica } }));
             verificar(await db.from('profiles').upsert({
                 id: perfil.usuario.id,
                 avatar_url: urlPublica,
-                updated_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
             }));
 
             perfil.avatarUrl = urlPublica;
             renderizarPerfil();
             mostrarMensagem('Foto atualizada!');
         } catch (erro) {
-            console.error('[dashboard] enviarFoto:', erro);
-            mostrarMensagem(`Erro: ${erro?.message || erro}`, 'erro');
+            mostrarMensagem('Erro: ' + (erro && erro.message ? erro.message : erro), 'erro');
         }
     }
 
     function setupPerfil() {
-        // Sair
-        if (dom.btnSair) {
-            on(dom.btnSair, 'click', () => {
-                dom.btnSair.disabled = true;
+        var btnSair = $('btn-sair');
+        if (btnSair) {
+            btnSair.addEventListener('click', function () {
+                btnSair.disabled = true;
                 fazerLogout();
             });
         }
 
-        // Mudar foto
-        if (dom.btnEditarFoto && dom.inputFoto) {
-            on(dom.btnEditarFoto, 'click', () => {
-                fecharTodosContainers();
-                dom.inputFoto.click();
-            });
-            on(dom.inputFoto, 'change', () => {
-                const arquivo = dom.inputFoto.files[0];
-                dom.inputFoto.value = '';
-                if (arquivo) enviarFoto(arquivo);
-            });
-        }
-
-        // Editar nome
-        if (dom.btnEditarNome) {
-            on(dom.btnEditarNome, 'click', (e) => {
+        /* nome */
+        var btnEditarNome = $('btn-editar-nome');
+        if (btnEditarNome) {
+            btnEditarNome.addEventListener('click', function (e) {
                 e.preventDefault();
                 alternarContainer('container-editar-nome');
-                if (dom.inputNovoNome) dom.inputNovoNome.value = perfil.nome;
+                var input = $('input-novo-nome');
+                if (input) input.value = perfil.nome;
             });
         }
-        if (dom.btnSalvarNome) {
-            on(dom.btnSalvarNome, 'click', (e) => {
+
+        var btnSalvarNome = $('btn-salvar-nome');
+        if (btnSalvarNome) {
+            btnSalvarNome.addEventListener('click', function (e) {
                 e.preventDefault();
-                executarAcao(dom.btnSalvarNome, salvarNome);
+                executarAcao(btnSalvarNome, salvarNome);
             });
         }
 
-        // Botão "Senha" — decide entre editar e criar
-        if (dom.btnEditarSenha) {
-            on(dom.btnEditarSenha, 'click', (e) => {
+        /* senha */
+        var btnEditarSenha = $('btn-editar-senha');
+        if (btnEditarSenha) {
+            btnEditarSenha.addEventListener('click', function (e) {
                 e.preventDefault();
-
-                if (usuarioTemSenha()) {
-                    alternarContainer('container-editar-senha');
-                    if (dom.inputSenhaAtual) dom.inputSenhaAtual.value = '';
-                    if (dom.inputSenhaNova) dom.inputSenhaNova.value = '';
-                } else {
-                    alternarContainer('container-criar-senha');
-                    if (dom.inputNovaSenhaCriar) dom.inputNovaSenhaCriar.value = '';
-                    if (dom.inputConfirmarSenhaCriar) dom.inputConfirmarSenhaCriar.value = '';
-                }
+                alternarContainer('container-editar-senha');
+                var atual = $('input-senha-atual');
+                var nova = $('input-senha-nova');
+                if (atual) atual.value = '';
+                if (nova) nova.value = '';
             });
         }
 
-        if (dom.btnConfirmarSenha) {
-            on(dom.btnConfirmarSenha, 'click', (e) => {
+        var btnConfirmarSenha = $('btn-confirmar-senha');
+        if (btnConfirmarSenha) {
+            btnConfirmarSenha.addEventListener('click', function (e) {
                 e.preventDefault();
-                executarAcao(dom.btnConfirmarSenha, alterarSenha);
+                executarAcao(btnConfirmarSenha, alterarSenha);
             });
         }
 
-        if (dom.btnConfirmarCriarSenha) {
-            on(dom.btnConfirmarCriarSenha, 'click', (e) => {
-                e.preventDefault();
-                executarAcao(dom.btnConfirmarCriarSenha, criarSenha);
-            });
-        }
-
-        // Saiba mais
-        if (dom.btnSaibaMais) {
-            on(dom.btnSaibaMais, 'click', (e) => {
-                e.preventDefault();
-                alternarContainer('container-saiba-mais');
-            });
-        }
-
-        // Olhos de senha
-        $$('.btn-olho-senha').forEach((botao) => {
-            on(botao, 'click', () => {
-                const input = $(botao.getAttribute('data-target'));
-                const aberto = botao.querySelector('.icone-olho-aberto');
-                const fechado = botao.querySelector('.icone-olho-fechado');
+        /* mostrar/ocultar senha */
+        var olhos = document.querySelectorAll('.btn-olho-senha');
+        Array.prototype.forEach.call(olhos, function (botao) {
+            botao.addEventListener('click', function () {
+                var input = $(botao.getAttribute('data-target'));
+                var aberto = botao.querySelector('.icone-olho-aberto');
+                var fechado = botao.querySelector('.icone-olho-fechado');
                 if (!input || !aberto || !fechado) return;
 
-                const mostrar = input.type === 'password';
+                var mostrar = input.type === 'password';
                 input.type = mostrar ? 'text' : 'password';
                 aberto.style.display = mostrar ? 'block' : 'none';
                 fechado.style.display = mostrar ? 'none' : 'block';
             });
         });
+
+        /* foto */
+        var btnEditarFoto = $('btn-editar-foto');
+        var inputFoto = $('input-foto');
+        if (btnEditarFoto && inputFoto) {
+            btnEditarFoto.addEventListener('click', function () { inputFoto.click(); });
+            inputFoto.addEventListener('change', function () {
+                var arquivo = inputFoto.files[0];
+                inputFoto.value = '';
+                if (arquivo) enviarFoto(arquivo);
+            });
+        }
     }
 
-    /* ============================================================
-       10. LAYOUT (sidebar / ficha / overlay)
-       ============================================================ */
-    function setupLayout() {
-        const { sidebar, ficha, overlay, perfilBotao, fichaFechar, btnHamburger } = dom;
+    /* ==============================================
+       7. LAYOUT: GAVETA, FICHA E OVERLAY
+       ============================================== */
 
-        const sidebarAberta = () => sidebar?.classList.contains('aberta') ?? false;
-        const fichaAberta = () => ficha?.classList.contains('ativa') ?? false;
+    function setupLayout() {
+        var sidebar = $('sidebar');
+        var ficha = $('sidebar-perfil');
+        var overlay = $('gaveta-overlay');
+        var perfilBotao = $('perfil-botao');
+        var fichaFechar = $('ficha-fechar');
+        var btnHamburger = $('btn-hamburger');
+
+        function sidebarAberta() { return !!sidebar && sidebar.classList.contains('aberta'); }
+        function fichaAberta() { return !!ficha && ficha.classList.contains('ativa'); }
 
         function atualizarEstado() {
             if (overlay) {
-                overlay.classList.toggle(
-                    'ativa',
-                    sidebarAberta() || (mqCompacto.matches && fichaAberta())
-                );
+                overlay.classList.toggle('ativa', sidebarAberta() || (mqCompacto.matches && fichaAberta()));
             }
-            btnHamburger?.setAttribute('aria-expanded', String(sidebarAberta()));
-            perfilBotao?.setAttribute('aria-expanded', String(fichaAberta()));
+            if (btnHamburger) btnHamburger.setAttribute('aria-expanded', String(sidebarAberta()));
+            if (perfilBotao) perfilBotao.setAttribute('aria-expanded', String(fichaAberta()));
         }
 
-        function abrirSidebar() { sidebar?.classList.add('aberta'); atualizarEstado(); }
-        function fecharSidebar() { sidebar?.classList.remove('aberta'); atualizarEstado(); }
+        function abrirSidebar() {
+            if (sidebar) sidebar.classList.add('aberta');
+            atualizarEstado();
+        }
+
+        function fecharSidebar() {
+            if (sidebar) sidebar.classList.remove('aberta');
+            atualizarEstado();
+        }
 
         function abrirFicha() {
             if (!ficha) return;
@@ -792,58 +570,65 @@
             if (ficha.contains(document.activeElement)) document.activeElement.blur();
             ficha.classList.remove('ativa');
             document.body.classList.remove('ficha-aberta');
-            fecharTodosContainers();
             atualizarEstado();
         }
 
         if (perfilBotao) {
-            on(perfilBotao, 'click', () => {
-                fichaAberta() ? fecharFicha() : abrirFicha();
+            perfilBotao.addEventListener('click', function () {
+                if (fichaAberta()) fecharFicha(); else abrirFicha();
             });
         }
 
-        if (fichaFechar) on(fichaFechar, 'click', fecharFicha);
+        if (fichaFechar) fichaFechar.addEventListener('click', fecharFicha);
 
         if (btnHamburger) {
-            on(btnHamburger, 'click', () => {
-                sidebarAberta() ? fecharSidebar() : abrirSidebar();
+            btnHamburger.addEventListener('click', function () {
+                if (sidebarAberta()) fecharSidebar(); else abrirSidebar();
             });
         }
 
         if (overlay) {
-            on(overlay, 'click', () => {
+            overlay.addEventListener('click', function () {
                 fecharSidebar();
                 fecharFicha();
             });
         }
 
-        on(document, 'click', (e) => {
-            const alvo = e.target;
-            if (sidebarAberta() && !sidebar.contains(alvo)
-                && !btnHamburger?.contains(alvo)) {
+        /* clique fora fecha a gaveta e a ficha */
+        document.addEventListener('click', function (e) {
+            var alvo = e.target;
+
+            if (sidebarAberta() && !sidebar.contains(alvo) &&
+                !(btnHamburger && btnHamburger.contains(alvo))) {
                 fecharSidebar();
             }
-            if (mqCompacto.matches && fichaAberta() && !ficha.contains(alvo)
-                && !perfilBotao?.contains(alvo) && !campoEmFoco()) {
+
+            /* Só no modo compacto (a ficha cobre a tela) um clique fora fecha.
+               No desktop ela fica ao lado do conteúdo e da sidebar: passar o
+               mouse ou clicar na sidebar não pode fechá-la. Com um campo
+               focado (teclado aberto) também não fecha. */
+            if (mqCompacto.matches && fichaAberta() && !ficha.contains(alvo) &&
+                !(perfilBotao && perfilBotao.contains(alvo)) && !campoEmFoco()) {
                 fecharFicha();
             }
         });
 
+        /* tocar num item do menu fecha a gaveta no modo compacto */
         if (sidebar) {
-            on(sidebar, 'click', (e) => {
-                if (mqCompacto.matches && e.target.closest('.sidebar-link')) {
-                    fecharSidebar();
-                }
+            sidebar.addEventListener('click', function (e) {
+                if (mqCompacto.matches && e.target.closest('.sidebar-link')) fecharSidebar();
             });
         }
 
-        on(document, 'keydown', (e) => {
+        document.addEventListener('keydown', function (e) {
             if (e.key !== 'Escape') return;
             fecharSidebar();
             fecharFicha();
         });
 
-        const aoCruzarBreakpoint = () => {
+        /* ao cruzar o breakpoint desktop <-> compacto o layout muda por
+           completo: gaveta e ficha voltam ao estado fechado e a tela é relida */
+        function aoCruzarBreakpoint() {
             fecharSidebar();
             fecharFicha();
             if (campoEmFoco()) document.activeElement.blur();
@@ -851,142 +636,88 @@
             sincronizarTela(true);
             resetarScroll();
             ajustarLarguraFicha();
-        };
-
-        if (mqCompacto.addEventListener) {
-            on(mqCompacto, 'change', aoCruzarBreakpoint);
-        } else if (mqCompacto.addListener) {
-            mqCompacto.addListener(aoCruzarBreakpoint);
-            estado.listeners.push(() => mqCompacto.removeListener(aoCruzarBreakpoint));
         }
+
+        if (mqCompacto.addEventListener) mqCompacto.addEventListener('change', aoCruzarBreakpoint);
+        else if (mqCompacto.addListener) mqCompacto.addListener(aoCruzarBreakpoint);
     }
 
-    /* ============================================================
-       11. CALENDÁRIO
-       ============================================================ */
-    function setupCalendario() {
-        const { calendarioTitulo, calendarioSubtitulo, calendarioDias,
-                btnMesAnterior, btnProximoMes } = dom;
-        if (!calendarioTitulo || !calendarioDias) return;
+    /* ==============================================
+       8. CALENDÁRIO
+       ============================================== */
 
-        const agora = new Date();
-        estado.calendario.mes = agora.getMonth();
-        estado.calendario.ano = agora.getFullYear();
+    function setupCalendario() {
+        var titulo = $('calendario-titulo');
+        var subtitulo = $('calendario-subtitulo');
+        var diasContainer = $('calendario-dias');
+        if (!titulo || !diasContainer) return;
+
+        var agora = new Date();
+        var mes = agora.getMonth();
+        var ano = agora.getFullYear();
 
         function desenhar() {
-            const hoje = new Date();
-            const { mes, ano } = estado.calendario;
+            var hoje = new Date();
+            var primeiroDiaSemana = new Date(ano, mes, 1).getDay();
+            var diasNoMes = new Date(ano, mes + 1, 0).getDate();
+            var diasMesAnterior = new Date(ano, mes, 0).getDate();
+            var celulas = [];
+            var i;
 
-            const primeiroDiaSemana = new Date(ano, mes, 1).getDay();
-            const diasNoMes = new Date(ano, mes + 1, 0).getDate();
-            const diasMesAnterior = new Date(ano, mes, 0).getDate();
+            titulo.textContent = MESES[mes] + ' ' + ano;
+            if (subtitulo) subtitulo.textContent = DIAS_SEMANA[hoje.getDay()];
 
-            const celulas = [];
-
-            for (let i = primeiroDiaSemana - 1; i >= 0; i--) {
-                celulas.push(`<span class="dia-outro-mes">${diasMesAnterior - i}</span>`);
+            for (i = primeiroDiaSemana - 1; i >= 0; i--) {
+                celulas.push('<span class="dia-outro-mes">' + (diasMesAnterior - i) + '</span>');
             }
 
-            for (let i = 1; i <= diasNoMes; i++) {
-                const ehHoje = i === hoje.getDate()
-                    && mes === hoje.getMonth()
-                    && ano === hoje.getFullYear();
-                celulas.push(`<span${ehHoje ? ' class="dia-atual"' : ''}>${i}</span>`);
+            for (i = 1; i <= diasNoMes; i++) {
+                var ehHoje = i === hoje.getDate() && mes === hoje.getMonth() && ano === hoje.getFullYear();
+                celulas.push('<span' + (ehHoje ? ' class="dia-atual"' : '') + '>' + i + '</span>');
             }
 
-            const faltam = (7 - (celulas.length % 7)) % 7;
-            for (let i = 1; i <= faltam; i++) {
-                celulas.push(`<span class="dia-outro-mes">${i}</span>`);
+            var faltam = (7 - (celulas.length % 7)) % 7;
+            for (i = 1; i <= faltam; i++) {
+                celulas.push('<span class="dia-outro-mes">' + i + '</span>');
             }
 
-            calendarioTitulo.textContent = `${MESES[mes]} ${ano}`;
-            if (calendarioSubtitulo) {
-                calendarioSubtitulo.textContent = DIAS_SEMANA[hoje.getDay()];
-            }
-            calendarioDias.innerHTML = celulas.join('');
+            diasContainer.innerHTML = celulas.join('');
         }
 
         function mudarMes(delta) {
-            let { mes, ano } = estado.calendario;
             mes += delta;
             if (mes < 0) { mes = 11; ano--; }
             if (mes > 11) { mes = 0; ano++; }
-            estado.calendario.mes = mes;
-            estado.calendario.ano = ano;
             desenhar();
         }
 
-        if (btnMesAnterior) on(btnMesAnterior, 'click', () => mudarMes(-1));
-        if (btnProximoMes) on(btnProximoMes, 'click', () => mudarMes(1));
+        var btnAnterior = $('btn-mes-anterior');
+        var btnProximo = $('btn-proximo-mes');
+        if (btnAnterior) btnAnterior.addEventListener('click', function () { mudarMes(-1); });
+        if (btnProximo) btnProximo.addEventListener('click', function () { mudarMes(1); });
 
         desenhar();
     }
 
-    /* ============================================================
-       12. AUTH LISTENER
-       ============================================================ */
-    function setupAuthListener() {
-        const db = Auth.getSupabaseClient?.();
-        if (!db) return;
+    /* ==============================================
+       9. INICIALIZAÇÃO
+       ============================================== */
 
-        on(db.auth, 'onAuthStateChange', (evento, sessao) => {
-            if (
-                (evento === 'SIGNED_IN' || evento === 'INITIAL_SESSION') &&
-                sessao?.user
-            ) {
-                aplicarUsuario(sessao.user, { recarregar: true });
-            }
-        });
-    }
+    /* o <html> já recebe data-layout/--viewport-h por um script inline no <head>;
+       aqui só garantimos o valor (caso esse script seja removido) */
+    sincronizarTela();
 
-    async function aguardarOAuthEEntrar() {
-        for (let i = 0; i < CONFIG.TENTATIVAS_OAUTH; i++) {
-            const db = Auth.getSupabaseClient?.();
-
-            if (db) {
-                try {
-                    const { data } = await db.auth.getSession();
-                    if (data?.session?.user) {
-                        aplicarUsuario(data.session.user, { recarregar: true });
-                        return;
-                    }
-                } catch (erro) {
-                    console.error('[dashboard] getSession:', erro);
-                    irParaLogin();
-                    return;
-                }
-            }
-
-            await new Promise((r) => setTimeout(r, CONFIG.INTERVALO_OAUTH_MS));
-        }
-
-        console.warn('[dashboard] Nenhuma sessão após espera, indo para login.');
-        irParaLogin();
-    }
-
-    /* ============================================================
-       13. BOOTSTRAP
-       ============================================================ */
-    function bootstrap() {
-        montarDom();
-
-        if (!resolverAuth()) return;
-
-        sincronizarTela(true);
+    function iniciar() {
         setupTela();
         setupPerfil();
         setupLayout();
         setupCalendario();
-        setupAuthListener();
-        aguardarOAuthEEntrar();
-
-        on(window, 'pagehide', cleanup);
-        on(window, 'beforeunload', cleanup);
+        carregarPerfil();
     }
 
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', bootstrap, { once: true });
+        document.addEventListener('DOMContentLoaded', iniciar);
     } else {
-        bootstrap();
+        iniciar();
     }
 })();
