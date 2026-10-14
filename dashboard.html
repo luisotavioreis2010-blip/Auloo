@@ -15,21 +15,27 @@
 </head>
 <body>
 
-    <!-- ===== NAVBAR ===== -->
+    <!-- Sprite de ícones reutilizados (olho da senha) -->
+    <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+        <symbol id="icone-olho-aberto" viewBox="0 0 16 16"><path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/><path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/></symbol>
+        <symbol id="icone-olho-fechado" viewBox="0 0 16 16"><path d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7.028 7.028 0 0 0-2.79.588l.77.771A5.944 5.944 0 0 1 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.134 13.134 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755-.165.165-.337.328-.517.486l.708.709z"/><path d="M11.297 9.176a3.5 3.5 0 0 0-4.474-4.474l.823.823a2.5 2.5 0 0 1 2.829 2.829l.822.822zm-2.943 1.299.822.822a3.5 3.5 0 0 1-4.474-4.474l.823.823a2.5 2.5 0 0 0 2.829 2.829z"/><path d="M3.35 5.47c-.18.16-.353.322-.518.487A13.134 13.134 0 0 0 1.172 8l.195.288c.335.48.83 1.12 1.465 1.755C4.121 11.332 5.881 12.5 8 12.5c.716 0 1.39-.133 2.02-.36l.77.772A7.029 7.029 0 0 1 8 13.5C3 13.5 0 8 0 8s.939-1.721 2.641-3.238l.708.709zm10.296 8.884-12-12 .708-.708 12 12-.708.708z"/></symbol>
+    </svg>
+
     <header class="navbar">
         <div class="navbar-left">
-            <button class="btn-hamburger" id="btn-hamburger" type="button" aria-label="Abrir sumário">☰</button>
+            <button class="btn-hamburger" id="btn-hamburger" type="button" aria-label="Abrir sumário" aria-expanded="false" aria-controls="sidebar">&#9776;</button>
             <span class="logo" translate="no">Auloo<span class="logo-dot">.</span></span>
         </div>
         <div class="navbar-right">
             <button class="btn-sair" id="btn-sair" type="button" aria-label="Sair do sistema">Sair</button>
-            <button class="perfil-botao" id="perfil-botao" type="button" aria-label="Abrir ficha do leitor">
+            <button class="perfil-botao" id="perfil-botao" type="button" aria-label="Abrir ficha do leitor" aria-expanded="false" aria-controls="sidebar-perfil">
                 <span class="perfil-usuario" id="perfil-usuario"></span>
             </button>
         </div>
     </header>
 
-    <!-- ===== SIDEBAR ESQUERDA (SUMÁRIO) ===== -->
+    <div class="gaveta-overlay" id="gaveta-overlay" aria-hidden="true"></div>
+
     <aside class="sidebar" id="sidebar" aria-label="Sumário">
         <div class="sidebar-secao">
             <h2 class="sidebar-titulo">Sumário</h2>
@@ -79,9 +85,9 @@
         </div>
 
         <div class="sidebar-selo">
-            <span>✦</span>
+            <span>&#10022;</span>
             <span class="selo-texto">Auloo Library</span>
-            <span>✦</span>
+            <span>&#10022;</span>
         </div>
 
         <div class="sidebar-volume">
@@ -90,11 +96,10 @@
         </div>
     </aside>
 
-    <!-- ===== SIDEBAR DIREITA (FICHA DO LEITOR) ===== -->
     <aside class="sidebar-direita" id="sidebar-perfil" aria-label="Ficha do Leitor">
         <div class="ficha-header">
             <h2 class="ficha-titulo">Ficha do Leitor</h2>
-            <button class="ficha-fechar" id="ficha-fechar" type="button" aria-label="Fechar ficha">✕</button>
+            <button class="ficha-fechar" id="ficha-fechar" type="button" aria-label="Fechar ficha">&#10005;</button>
         </div>
 
         <div class="ficha-filete"></div>
@@ -103,7 +108,7 @@
             <div class="ficha-foto" id="sidebar-perfil-foto"></div>
             <div class="ficha-info">
                 <span class="ficha-nome" id="sidebar-perfil-nome">Usuário</span>
-                <span class="ficha-email" id="sidebar-perfil-email">email@exemplo.com</span>
+                <span class="ficha-email" id="sidebar-perfil-email">&nbsp;</span>
             </div>
         </div>
 
@@ -111,89 +116,120 @@
 
         <nav class="ficha-menu">
             <button class="ficha-item" id="btn-editar-foto" type="button">
-                <span class="ficha-romano">❖</span>
+                <span class="ficha-romano">&#10070;</span>
                 <span class="ficha-texto">Mudar Foto</span>
             </button>
 
-            <button class="ficha-item" id="btn-editar-nome" type="button">
-                <span class="ficha-romano">✎</span>
+            <button class="ficha-item" id="btn-editar-nome" type="button" aria-expanded="false" aria-controls="container-editar-nome">
+                <span class="ficha-romano">&#9998;</span>
                 <span class="ficha-texto">Editar Nome</span>
             </button>
 
-            <div id="container-editar-nome" class="container-senha-animado" style="display:none;">
+            <form id="container-editar-nome" class="container-expansivel" hidden novalidate>
                 <label for="input-novo-nome">Nome</label>
-                <input type="text" id="input-novo-nome" autocomplete="off" name="nome-usuario" placeholder="Digite seu novo nome" aria-label="Novo nome">
-                <button id="btn-salvar-nome" type="button">Salvar</button>
-            </div>
+                <input type="text" id="input-novo-nome" autocomplete="off" autocapitalize="words" maxlength="60" name="nome-usuario" placeholder="Digite seu novo nome" aria-label="Novo nome">
+                <button id="btn-salvar-nome" class="btn-container" type="submit">Salvar</button>
+            </form>
 
-            <button class="ficha-item" id="btn-editar-senha" type="button">
-                <span class="ficha-romano">✱</span>
-                <span class="ficha-texto">Editar Senha</span>
+            <button class="ficha-item" id="btn-editar-senha" type="button" aria-expanded="false" aria-controls="container-editar-senha container-criar-senha">
+                <span class="ficha-romano">&#10033;</span>
+                <span class="ficha-texto">Senha</span>
             </button>
 
-            <div id="container-editar-senha" class="container-senha-animado" style="display:none;">
+            <form id="container-editar-senha" class="container-expansivel" hidden novalidate>
                 <label for="input-senha-atual">Senha Atual</label>
                 <div class="wrapper-olho-senha">
-                    <input type="password" id="input-senha-atual" placeholder="Senha atual" aria-label="Senha atual">
-                    <button type="button" class="btn-olho-senha" data-target="input-senha-atual" aria-label="Mostrar senha atual">
-                        <svg class="icone-olho-aberto" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" style="display:none;" aria-hidden="true"><path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/><path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/></svg>
-                        <svg class="icone-olho-fechado" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" style="display:block;" aria-hidden="true"><path d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7.028 7.028 0 0 0-2.79.588l.77.771A5.944 5.944 0 0 1 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.134 13.134 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755-.165.165-.337.328-.517.486l.708.709z"/><path d="M11.297 9.176a3.5 3.5 0 0 0-4.474-4.474l.823.823a2.5 2.5 0 0 1 2.829 2.829l.822.822zm-2.943 1.299.822.822a3.5 3.5 0 0 1-4.474-4.474l.823.823a2.5 2.5 0 0 0 2.829 2.829z"/><path d="M3.35 5.47c-.18.16-.353.322-.518.487A13.134 13.134 0 0 0 1.172 8l.195.288c.335.48.83 1.12 1.465 1.755C4.121 11.332 5.881 12.5 8 12.5c.716 0 1.39-.133 2.02-.36l.77.772A7.029 7.029 0 0 1 8 13.5C3 13.5 0 8 0 8s.939-1.721 2.641-3.238l.708.709zm10.296 8.884-12-12 .708-.708 12 12-.708.708z"/></svg>
+                    <input type="password" id="input-senha-atual" placeholder="Senha atual" aria-label="Senha atual" autocomplete="current-password">
+                    <button type="button" class="btn-olho-senha" aria-pressed="false" data-target="input-senha-atual" aria-label="Mostrar senha atual">
+                        <svg class="icone-olho-aberto" aria-hidden="true"><use href="#icone-olho-aberto"/></svg>
+                        <svg class="icone-olho-fechado" aria-hidden="true"><use href="#icone-olho-fechado"/></svg>
                     </button>
                 </div>
 
                 <label for="input-senha-nova">Nova Senha</label>
                 <div class="wrapper-olho-senha">
-                    <input type="password" id="input-senha-nova" placeholder="Nova senha" aria-label="Nova senha">
-                    <button type="button" class="btn-olho-senha" data-target="input-senha-nova" aria-label="Mostrar nova senha">
-                        <svg class="icone-olho-aberto" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" style="display:none;" aria-hidden="true"><path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/><path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/></svg>
-                        <svg class="icone-olho-fechado" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" style="display:block;" aria-hidden="true"><path d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7.028 7.028 0 0 0-2.79.588l.77.771A5.944 5.944 0 0 1 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.134 13.134 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755-.165.165-.337.328-.517.486l.708.709z"/><path d="M11.297 9.176a3.5 3.5 0 0 0-4.474-4.474l.823.823a2.5 2.5 0 0 1 2.829 2.829l.822.822zm-2.943 1.299.822.822a3.5 3.5 0 0 1-4.474-4.474l.823.823a2.5 2.5 0 0 0 2.829 2.829z"/><path d="M3.35 5.47c-.18.16-.353.322-.518.487A13.134 13.134 0 0 0 1.172 8l.195.288c.335.48.83 1.12 1.465 1.755C4.121 11.332 5.881 12.5 8 12.5c.716 0 1.39-.133 2.02-.36l.77.772A7.029 7.029 0 0 1 8 13.5C3 13.5 0 8 0 8s.939-1.721 2.641-3.238l.708.709zm10.296 8.884-12-12 .708-.708 12 12-.708.708z"/></svg>
+                    <input type="password" id="input-senha-nova" placeholder="Nova senha" aria-label="Nova senha" autocomplete="new-password">
+                    <button type="button" class="btn-olho-senha" aria-pressed="false" data-target="input-senha-nova" aria-label="Mostrar nova senha">
+                        <svg class="icone-olho-aberto" aria-hidden="true"><use href="#icone-olho-aberto"/></svg>
+                        <svg class="icone-olho-fechado" aria-hidden="true"><use href="#icone-olho-fechado"/></svg>
                     </button>
                 </div>
 
-                <button id="btn-confirmar-senha" type="button">Atualizar Senha</button>
-            </div>
-        
-            <details class="ficha-saiba">
-                <summary class="ficha-item">
-                    <span class="ficha-romano">✦</span>
-                    <span class="ficha-texto">Saiba mais</span>
-                    <svg class="ficha-seta" viewBox="0 0 12 8" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M1 1.5l5 5 5-5"/></svg>
-                </summary>
-                <div class="ficha-saiba-lista">
-                    <a class="ficha-saiba-item" href="/?de=dashboard">
-                        <strong>Conheça o Auloo</strong><small>Portfólio e visão geral</small>
-                    </a>
-                    <a class="ficha-saiba-item" href="/termos.html?de=dashboard">
-                        <strong>Regras da Casa</strong><small>Termos de uso</small>
-                    </a>
-                    <a class="ficha-saiba-item" href="/privacidade.html?de=dashboard">
-                        <strong>Seus Dados</strong><small>Política de privacidade</small>
-                    </a>
+                <button id="btn-confirmar-senha" class="btn-container" type="submit">Atualizar Senha</button>
+            </form>
+
+            <form id="container-criar-senha" class="container-expansivel" hidden novalidate>
+                <label for="input-nova-senha-criar">Criar Senha</label>
+                <div class="wrapper-olho-senha">
+                    <input type="password" id="input-nova-senha-criar" placeholder="Nova senha" aria-label="Nova senha" autocomplete="new-password">
+                    <button type="button" class="btn-olho-senha" aria-pressed="false" data-target="input-nova-senha-criar" aria-label="Mostrar nova senha">
+                        <svg class="icone-olho-aberto" aria-hidden="true"><use href="#icone-olho-aberto"/></svg>
+                        <svg class="icone-olho-fechado" aria-hidden="true"><use href="#icone-olho-fechado"/></svg>
+                    </button>
                 </div>
-            </details>
+
+                <label for="input-confirmar-senha-criar">Confirmar Senha</label>
+                <div class="wrapper-olho-senha">
+                    <input type="password" id="input-confirmar-senha-criar" placeholder="Confirmar senha" aria-label="Confirmar senha" autocomplete="new-password">
+                    <button type="button" class="btn-olho-senha" aria-pressed="false" data-target="input-confirmar-senha-criar" aria-label="Mostrar confirmacao">
+                        <svg class="icone-olho-aberto" aria-hidden="true"><use href="#icone-olho-aberto"/></svg>
+                        <svg class="icone-olho-fechado" aria-hidden="true"><use href="#icone-olho-fechado"/></svg>
+                    </button>
+                </div>
+
+                <button id="btn-confirmar-criar-senha" class="btn-container" type="submit">Criar Senha</button>
+            </form>
+
+            <button class="ficha-item" id="btn-saiba-mais" type="button" aria-expanded="false" aria-controls="container-saiba-mais">
+                <span class="ficha-romano">&#10022;</span>
+                <span class="ficha-texto">Saiba mais</span>
+            </button>
+
+            <div id="container-saiba-mais" class="container-expansivel" hidden>
+                <a class="ficha-saiba-item" href="/?de=dashboard">
+                    <span class="ficha-saiba-num">I</span>
+                    <span class="ficha-saiba-corpo">
+                        <strong>Conheça o Auloo</strong>
+                        <small>Portfólio e visão geral</small>
+                    </span>
+                </a>
+                <a class="ficha-saiba-item" href="/termos.html?de=dashboard">
+                    <span class="ficha-saiba-num">II</span>
+                    <span class="ficha-saiba-corpo">
+                        <strong>Regras da Casa</strong>
+                        <small>Termos de uso</small>
+                    </span>
+                </a>
+                <a class="ficha-saiba-item" href="/privacidade.html?de=dashboard">
+                    <span class="ficha-saiba-num">III</span>
+                    <span class="ficha-saiba-corpo">
+                        <strong>Seus Dados</strong>
+                        <small>Política de privacidade</small>
+                    </span>
+                </a>
+            </div>
         </nav>
     </aside>
 
-    <input type="file" id="input-foto" accept="image/*" style="display:none;" aria-label="Upload de foto de perfil">
+    <input type="file" id="input-foto" accept="image/jpeg,image/png,image/gif,image/webp" hidden aria-label="Upload de foto de perfil">
 
-    <!-- ===== CONTEÚDO PRINCIPAL ===== -->
     <main class="dashboard-main">
         <div class="ilustracao-container">
             <picture>
                 <source srcset="assets/img/ilustracoes/education.webp" type="image/webp">
-                <img src="assets/img/ilustracoes/education.png" alt="Ilustração de estudo" class="ilustracao-central" loading="lazy" width="600" height="400" decoding="async">
+                <img src="assets/img/ilustracoes/education.png" alt="Ilustração de estudo" class="ilustracao-central" width="600" height="400" decoding="async" fetchpriority="high">
             </picture>
         </div>
 
         <div class="calendario-container">
             <div class="calendario">
                 <div class="calendario-cabecalho">
-                    <button class="calendario-btn" id="btn-mes-anterior" aria-label="Mês anterior">‹</button>
-                    <div class="calendario-titulo-container">
-                        <span class="calendario-titulo" id="calendario-titulo">Setembro 2026</span>
-                        <span class="calendario-subtitulo" id="calendario-subtitulo">Quinta-feira</span>
+                    <button class="calendario-btn" id="btn-mes-anterior" type="button" aria-label="Mês anterior">&#8249;</button>
+                    <div class="calendario-titulo-container" aria-live="polite">
+                        <span class="calendario-titulo" id="calendario-titulo">&nbsp;</span>
+                        <span class="calendario-subtitulo" id="calendario-subtitulo">&nbsp;</span>
                     </div>
-                    <button class="calendario-btn" id="btn-proximo-mes" aria-label="Próximo mês">›</button>
+                    <button class="calendario-btn" id="btn-proximo-mes" type="button" aria-label="Próximo mês">&#8250;</button>
                 </div>
                 <div class="calendario-dias-semana">
                     <span class="dia-semana">DOM</span>
@@ -209,9 +245,9 @@
         </div>
     </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
-    <script src="assets/js/config.js" defer></script>
-    <script src="assets/js/auth.js" defer></script>
-    <script src="assets/js/pages/dashboard.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script src="assets/js/pages/dashboard.js"></script>
 </body>
 </html>

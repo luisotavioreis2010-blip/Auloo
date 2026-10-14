@@ -1,98 +1,128 @@
 ﻿/* ============================================================
    LOGIN.JS
+   Login, cadastro (e-mail -> código -> senha), recuperação de senha,
+   login social e ajustes de layout/teclado para celular e tablet.
+   Sintaxe limitada a ES2017 (sem ?. nem ??) por causa de iPads antigos.
 
-   Seções:
-   1. Constantes e utilitários     7. Login
-   2. Viewport, altura e layout    8. Esqueci a senha
-   3. Offset do teclado            9. Cadastro (e-mail → código → senha)
-   4. Modo foco (row)             10. Nova senha
-   5. Mensagens                   11. Olho da senha e login social
-   6. Modos do card               12. Inicialização
-
-   Dependências globais (auth.js): validateEmail, loginUser,
-   checkEmailExists, validarSenhaForte, sendSignupCode,
-   verifySignupCode, recoverPassword.
+   Depende de funções globais de auth.js:
+   validateEmail, validarSenhaForte, loginUser, checkEmailExists,
+   recoverPassword, sendSignupCode, verifySignupCode.
    ============================================================ */
 (function () {
     'use strict';
 
     /* ============================================================
-       1. CONSTANTES E UTILITÁRIOS
+       1. CONSTANTES, ESTADO E UTILITÁRIOS
        ============================================================ */
-    var PAGINA_DASHBOARD   = 'dashboard.html';
-    var LOTTIE_PATH        = 'assets/img/animacoes/mail-animation.json';
-    var MENSAGEM_MIN_MS    = 1800;
-    var MENSAGEM_MS_CHAR   = 55;
-    var ALTURA_BAIXA_PX    = 640;
-    var LARGURA_MOBILE_PX  = 599;
-    var LIMITE_TECLADO_PX  = 100;
-    var MARGEM_TECLADO_PX  = 16;
-    var ROTATING_MS        = 500;
-    var ESTABILIDADE_MS    = 120;
-    var PROVEDORES_SOCIAIS = ['google', 'discord', 'github'];
+    const PAGINA_DASHBOARD = 'dashboard.html';
+    const URL_DASHBOARD_PRODUCAO = 'https://auloo.com.br/dashboard.html';
+    const LOTTIE_PATH = 'assets/img/animacoes/mail-animation.json';
 
-    var MQ_ROW = '(min-width: 568px) and (max-width: 950px) and (orientation: landscape) and (max-height: 500px)';
+    const REDIRECIONAR_MS = 500;
+    const MENSAGEM_MIN_MS = 1800;
+    const MENSAGEM_MS_CHAR = 55;
+    const ALTURA_BAIXA_PX = 640;
+    const LARGURA_MOBILE_PX = 599;
+    const LIMITE_TECLADO_PX = 100;
+    const MARGEM_TECLADO_PX = 16;
+    const ROTATING_MS = 500;
+    const ESTABILIDADE_MS = 120;
+    const WATCHDOG_MS = 1500;
+    const SUPABASE_TENTATIVAS = 30;
+    const SUPABASE_INTERVALO_MS = 200;
+    const DIGITOS_CODIGO = 6;
 
-    var ICONE_EMAIL =
-        '<svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">' +
-        '<path d="M13.106 7.222c0-2.967-2.249-5.032-5.482-5.032-3.35 0-5.646 2.318-5.646 5.702 0 3.493 2.235 5.708 5.762 5.708.862 0 1.689-.123 2.304-.335v-.862c-.43.199-1.354.328-2.29.328-2.926 0-4.813-1.88-4.813-4.798 0-2.844 1.921-4.881 4.594-4.881 2.735 0 4.608 1.688 4.608 4.156 0 1.682-.554 2.769-1.416 2.769-.492 0-.772-.28-.772-.76V5.206H8.923v.834h-.11c-.266-.595-.881-.964-1.6-.964-1.4 0-2.378 1.162-2.378 2.823 0 1.737.957 2.906 2.379 2.906.8 0 1.415-.39 1.709-1.087h.11c.081.67.703 1.148 1.503 1.148 1.572 0 2.57-1.415 2.57-3.643zm-7.177.704c0-1.197.54-1.907 1.456-1.907.93 0 1.524.738 1.524 1.907S8.308 9.84 7.371 9.84c-.895 0-1.442-.725-1.442-1.914z"/></svg>';
+    const MQ_ROW = '(min-width: 568px) and (max-width: 950px) and (orientation: landscape) and (max-height: 500px)';
 
-    var ICONE_CADEADO =
-        '<svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">' +
-        '<path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/></svg>';
+    const PROVEDORES_SOCIAIS = {
+        google:  { rotulo: 'Google',  params: { prompt: 'select_account', access_type: 'online' } },
+        discord: { rotulo: 'Discord', params: {} },
+        github:  { rotulo: 'GitHub',  params: {} }
+    };
 
-    function $(id) { return document.getElementById(id); }
+    const svgIcone = (caminho) =>
+        '<svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" ' +
+        'fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="' + caminho + '"/></svg>';
 
-    var raiz        = document.documentElement;
-    var form        = $('login-form');
-    var inputEmail  = $('email');
-    var inputSenha  = $('senha');
-    var botaoLogin  = $('btn-login');
-    var botaoSignUp = $('btn-signup');
-    var botaoForgot = $('btn-forgot');
+    const ICONE_EMAIL = svgIcone(
+        'M13.106 7.222c0-2.967-2.249-5.032-5.482-5.032-3.35 0-5.646 2.318-5.646 5.702 0 3.493 2.235 5.708 5.762 5.708.862 0 1.689-.123 2.304-.335v-.862c-.43.199-1.354.328-2.29.328-2.926 0-4.813-1.88-4.813-4.798 0-2.844 1.921-4.881 4.594-4.881 2.735 0 4.608 1.688 4.608 4.156 0 1.682-.554 2.769-1.416 2.769-.492 0-.772-.28-.772-.76V5.206H8.923v.834h-.11c-.266-.595-.881-.964-1.6-.964-1.4 0-2.378 1.162-2.378 2.823 0 1.737.957 2.906 2.379 2.906.8 0 1.415-.39 1.709-1.087h.11c.081.67.703 1.148 1.503 1.148 1.572 0 2.57-1.415 2.57-3.643zm-7.177.704c0-1.197.54-1.907 1.456-1.907.93 0 1.524.738 1.524 1.907S8.308 9.84 7.371 9.84c-.895 0-1.442-.725-1.442-1.914z');
 
-    var animacoesLottie = [];
+    const ICONE_CADEADO = svgIcone(
+        'M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z');
 
-    document.addEventListener('gesturestart', function (e) { e.preventDefault(); });
+    const $ = (id) => document.getElementById(id);
+    const raiz = document.documentElement;
+
+    /* Elementos (preenchidos em iniciar()) */
+    let form = null;
+    let inputEmail = null;
+    let inputSenha = null;
+    let botaoLogin = null;
+    let botaoSignUp = null;
+    let botaoForgot = null;
+    let rotuloLogin = 'Login';
+
+    /* Estado compartilhado entre as seções */
+    let animacoesLottie = [];
+    let offsetAtual = 0;             // deslocamento vertical aplicado por causa do teclado
+    let razaoTeclado = 0.5;          // proporção da tela ocupada pela área visível com teclado
+    let ativoAtual = null;           // input em foco no modo "row"
+    let temporizadorMensagem = null;
+    let timerAltura = null;
+    let ajusteRaf = false;
+    let vvHeightAnterior = 0;
+    let timerEstabilidade = null;
+
+    const esperar = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
     function getDb() {
         return window.supabaseClient ||
                (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
     }
 
-    function aguardarSupabase() {
-        return new Promise(function (resolve) {
-            (function tentar(restantes) {
-                var db = getDb();
-                if (db || restantes <= 0) { resolve(db); return; }
-                setTimeout(function () { tentar(restantes - 1); }, 200);
-            })(30);
-        });
+    async function aguardarSupabase() {
+        for (let i = 0; i < SUPABASE_TENTATIVAS; i++) {
+            const db = getDb();
+            if (db) return db;
+            await esperar(SUPABASE_INTERVALO_MS);
+        }
+        return null;
     }
 
-    function sanitizar(valor) {
-        return valor ? String(valor).replace(/[<>]/g, '') : '';
+    /* Remove < > e espaços das pontas; e-mail é sempre comparado em minúsculas */
+    function normalizarEmail(valor) {
+        return valor ? String(valor).replace(/[<>]/g, '').trim().toLowerCase() : '';
     }
 
+    function emailValido(email) {
+        if (typeof validateEmail === 'function') return validateEmail(email);
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+
+    /* Contexto lido por auth.js */
     function definirContexto(modoForgot, email, senha) {
         window.modoForgotPassword = modoForgot;
-        window.emailVerificacao   = email || null;
-        window.senhaVerificacao   = senha || null;
+        window.emailVerificacao = email || null;
+        window.senhaVerificacao = senha || null;
     }
 
     function estaVisivel(el) {
         if (!el || el.offsetParent === null) return false;
-        var r = el.getBoundingClientRect();
+        const r = el.getBoundingClientRect();
         return r.width > 0 && r.height > 0;
     }
 
     function aoPressionarEnter(input, acao) {
         if (!input) return;
-        input.addEventListener('keydown', function (e) {
+        input.addEventListener('keydown', (e) => {
             if (e.key !== 'Enter') return;
             e.preventDefault();
             acao();
         });
+    }
+
+    function irParaDashboard() {
+        setTimeout(() => { window.location.href = PAGINA_DASHBOARD; }, REDIRECIONAR_MS);
     }
 
     /* ============================================================
@@ -103,25 +133,25 @@
     }
 
     function getAppH() {
-        var valor = raiz.style.getPropertyValue('--app-h');
-        var n = /px\s*$/.test(valor) ? parseFloat(valor) : NaN;
+        const valor = raiz.style.getPropertyValue('--app-h');
+        const n = /px\s*$/.test(valor) ? parseFloat(valor) : NaN;
         return (isNaN(n) || n <= 0) ? window.innerHeight : n;
     }
 
     function getAlturaVisivel() {
-        var vv = window.visualViewport;
-        var h = window.innerHeight;
+        const vv = window.visualViewport;
+        const h = window.innerHeight;
         return (vv && vv.height > 0 && vv.height < h) ? vv.height : h;
     }
 
     function getTopoTeclado() {
-        var vv = window.visualViewport;
-        var topoVV = vv ? (vv.offsetTop + vv.height) : window.innerHeight;
+        const vv = window.visualViewport;
+        const topoVV = vv ? (vv.offsetTop + vv.height) : window.innerHeight;
         return Math.min(topoVV, window.innerHeight);
     }
 
     function campoEmFoco() {
-        var ativo = document.activeElement;
+        const ativo = document.activeElement;
         return !!ativo && (ativo.tagName === 'INPUT' || ativo.tagName === 'TEXTAREA');
     }
 
@@ -129,10 +159,11 @@
         return campoEmFoco() && (getAppH() - getAlturaVisivel()) > LIMITE_TECLADO_PX;
     }
 
+    /* Guarda a MAIOR altura vista, para o layout não encolher quando o teclado abre */
     function setupAlturaFixa() {
-        var maiorAltura = 0;
-        var larguraMedida = 0;
-        var timerAssentar = null;
+        let maiorAltura = 0;
+        let larguraMedida = 0;
+        let timerAssentar = null;
 
         function aplicar(h) {
             maiorAltura = h;
@@ -145,50 +176,48 @@
                 maiorAltura = 0;
             }
 
-            var h = window.innerHeight;
+            const h = window.innerHeight;
             if (h > maiorAltura) aplicar(h);
 
             clearTimeout(timerAssentar);
-            timerAssentar = setTimeout(function () {
+            timerAssentar = setTimeout(() => {
                 if (!campoEmFoco() && window.innerHeight !== maiorAltura) {
                     aplicar(window.innerHeight);
                 }
             }, 700);
         }
 
-        [0, 100, 300, 600, 1000, 1500].forEach(function (ms) {
-            setTimeout(medir, ms);
-        });
+        /* O iOS/Android só "assentam" as dimensões alguns instantes depois */
+        [0, 100, 300, 600, 1000, 1500].forEach((ms) => setTimeout(medir, ms));
 
         window.addEventListener('resize', medir);
 
-        window.addEventListener('orientationchange', function () {
+        window.addEventListener('orientationchange', () => {
             maiorAltura = 0;
-            [50, 300, 600, 1000].forEach(function (ms) { setTimeout(medir, ms); });
+            [50, 300, 600, 1000].forEach((ms) => setTimeout(medir, ms));
         });
 
         medir();
     }
 
+    /* Trava a altura mínima do card para ele não "pular" ao trocar mensagens */
     function aplicarAlturaLogin() {
-        if (!form) return;
         if (campoEmFoco() || tecladoAberto()) return;
         if (form.classList.contains('modo-forgot')) return;
 
-        var mensagens = Array.prototype.slice.call(form.querySelectorAll('.mensagem'));
-        mensagens.forEach(function (m) { m.hidden = true; });
+        const mensagens = Array.from(form.querySelectorAll('.mensagem'));
+        mensagens.forEach((m) => { m.hidden = true; });
 
-        var anterior = form.style.minHeight;
+        const anterior = form.style.minHeight;
         form.style.minHeight = '0px';
-        var h = form.offsetHeight;
+        const h = form.offsetHeight;
         form.style.minHeight = anterior;
 
-        mensagens.forEach(function (m) { m.hidden = false; });
+        mensagens.forEach((m) => { m.hidden = false; });
 
         if (h > 0) form.style.minHeight = h + 'px';
     }
 
-    var timerAltura = null;
     function agendarAltura() {
         clearTimeout(timerAltura);
         timerAltura = setTimeout(aplicarAlturaLogin, 150);
@@ -209,126 +238,8 @@
                 orientacaoAtual() === 'L') ? 'row' : 'stacked';
     }
 
-    function reiniciarEstadoTeclado() {
-        if (campoEmFoco()) document.activeElement.blur();
-        limparAtivos();
-        raiz.classList.remove('kb-focus');
-        resetarKbOffset();
-        raiz.style.removeProperty('--kb-visivel');
-        resetarScroll();
-    }
-
-    function sincronizarTela() {
-        if (campoEmFoco() || tecladoAberto()) return;
-
-        var layout = calcularLayout();
-        if (raiz.getAttribute('data-layout') !== layout) {
-            raiz.setAttribute('data-layout', layout);
-        }
-        var alturaAtual = raiz.getAttribute('data-altura');
-        var alturaNova  = window.innerHeight <= ALTURA_BAIXA_PX ? 'baixa' : 'normal';
-        if (alturaAtual !== alturaNova) {
-            raiz.setAttribute('data-altura', alturaNova);
-        }
-    }
-
-    function setupTela() {
-        var temporizador = null;
-        var orientacao = orientacaoAtual();
-        var largura = window.innerWidth;
-
-        function reavaliar() {
-            sincronizarTela();
-            agendarAltura();
-            resetarScroll();
-        }
-
-        function agendar() {
-            clearTimeout(temporizador);
-            temporizador = setTimeout(function () {
-                sincronizarTela();
-                agendarAltura();
-            }, 250);
-        }
-
-        function aoMudarGeometria() {
-            var novaOrientacao = orientacaoAtual();
-            var novaLargura = window.innerWidth;
-            if (novaOrientacao === orientacao && novaLargura === largura) return;
-            orientacao = novaOrientacao;
-            largura = novaLargura;
-
-            raiz.classList.add('rotating');
-            reiniciarEstadoTeclado();
-            form.style.minHeight = '';
-
-            reavaliar();
-            [60, 250, 600, 1100, 1800].forEach(function (ms) { setTimeout(reavaliar, ms); });
-            setTimeout(function () { raiz.classList.remove('rotating'); }, ROTATING_MS + 300);
-        }
-
-        function aoRedimensionar() { aoMudarGeometria(); agendar(); }
-
-        window.addEventListener('resize', aoRedimensionar);
-        window.addEventListener('orientationchange', aoRedimensionar);
-        if (window.screen && screen.orientation && screen.orientation.addEventListener) {
-            screen.orientation.addEventListener('change', aoRedimensionar);
-        }
-
-        document.addEventListener('focusout', function () {
-            setTimeout(function () {
-                if (!campoEmFoco() && !tecladoAberto()) sincronizarTela();
-            }, 400);
-        });
-
-        setInterval(function () {
-            if (document.hidden || campoEmFoco() || tecladoAberto()) return;
-            if (raiz.classList.contains('kb-focus') || offsetAtual !== 0 ||
-                raiz.style.getPropertyValue('--kb-visivel')) {
-                limparAtivos();
-                raiz.classList.remove('kb-focus');
-                resetarKbOffset();
-                raiz.style.removeProperty('--kb-visivel');
-                resetarScroll();
-            }
-            aoMudarGeometria();
-            sincronizarTela();
-        }, 1500);
-    }
-
-    /* ============================================================
-       3. OFFSET DO TECLADO
-       ============================================================ */
-    var offsetAtual = 0;
-
-    function escolherReferencia() {
-        var ativo = form.querySelector('[data-ativo="true"]');
-        if (ativo) return ativo;
-
-        if (form.classList.contains('modo-forgot')) {
-            var container = form.querySelector('#container-forgot');
-            if (!container) return null;
-
-            if (window.innerWidth <= LARGURA_MOBILE_PX) {
-                var primario = container.querySelector('.forgot-form > .button1');
-                if (primario) return primario;
-            }
-
-            var cands = container.querySelectorAll('button, .otp-caixas, .field');
-            return cands[cands.length - 1] || null;
-        }
-
-        if (ehLayoutRow()) {
-            var btnRow = form.querySelector('.form-coluna-login > .btn');
-            if (btnRow) return btnRow;
-        }
-
-        var fields = form.querySelectorAll('.form-coluna-login > .field');
-        return fields[fields.length - 1] || null;
-    }
-
     function resetarScroll() {
-        var container = $('login-container');
+        const container = $('login-container');
         if (container && container.scrollTop > 0) container.scrollTop = 0;
         if (window.scrollX !== 0 || window.scrollY !== 0) window.scrollTo(0, 0);
     }
@@ -339,11 +250,134 @@
         raiz.style.setProperty('--kb-offset', '0px');
     }
 
-    var razaoTeclado = 0.5;
+    function limparAtivos() {
+        form.querySelectorAll('[data-ativo="true"]').forEach((el) => el.removeAttribute('data-ativo'));
+    }
+
+    /* Desfaz tudo que o teclado virtual alterou (foco, offset, altura visível) */
+    function limparEstadoTeclado() {
+        limparAtivos();
+        raiz.classList.remove('kb-focus');
+        resetarKbOffset();
+        raiz.style.removeProperty('--kb-visivel');
+        resetarScroll();
+    }
+
+    function reiniciarEstadoTeclado() {
+        if (campoEmFoco()) document.activeElement.blur();
+        limparEstadoTeclado();
+    }
+
+    function sincronizarTela() {
+        if (campoEmFoco() || tecladoAberto()) return;
+
+        const layout = calcularLayout();
+        if (raiz.getAttribute('data-layout') !== layout) {
+            raiz.setAttribute('data-layout', layout);
+        }
+        const alturaNova = window.innerHeight <= ALTURA_BAIXA_PX ? 'baixa' : 'normal';
+        if (raiz.getAttribute('data-altura') !== alturaNova) {
+            raiz.setAttribute('data-altura', alturaNova);
+        }
+    }
+
+    function setupTela() {
+        let temporizador = null;
+        let orientacao = orientacaoAtual();
+        let largura = window.innerWidth;
+
+        function reavaliar() {
+            sincronizarTela();
+            agendarAltura();
+            resetarScroll();
+        }
+
+        function agendar() {
+            clearTimeout(temporizador);
+            temporizador = setTimeout(() => {
+                sincronizarTela();
+                agendarAltura();
+            }, 250);
+        }
+
+        function aoMudarGeometria() {
+            const novaOrientacao = orientacaoAtual();
+            const novaLargura = window.innerWidth;
+            if (novaOrientacao === orientacao && novaLargura === largura) return;
+            orientacao = novaOrientacao;
+            largura = novaLargura;
+
+            raiz.classList.add('rotating');
+            reiniciarEstadoTeclado();
+            form.style.minHeight = '';
+
+            reavaliar();
+            [60, 250, 600, 1100, 1800].forEach((ms) => setTimeout(reavaliar, ms));
+            setTimeout(() => raiz.classList.remove('rotating'), ROTATING_MS + 300);
+        }
+
+        function aoRedimensionar() {
+            aoMudarGeometria();
+            agendar();
+        }
+
+        window.addEventListener('resize', aoRedimensionar);
+        window.addEventListener('orientationchange', aoRedimensionar);
+        if (window.screen && screen.orientation && screen.orientation.addEventListener) {
+            screen.orientation.addEventListener('change', aoRedimensionar);
+        }
+
+        document.addEventListener('focusout', () => {
+            setTimeout(() => {
+                if (!campoEmFoco() && !tecladoAberto()) sincronizarTela();
+            }, 400);
+        });
+
+        /* Rede de segurança: alguns navegadores móveis perdem eventos de resize/foco */
+        setInterval(() => {
+            if (document.hidden || campoEmFoco() || tecladoAberto()) return;
+            if (raiz.classList.contains('kb-focus') || offsetAtual !== 0 ||
+                raiz.style.getPropertyValue('--kb-visivel')) {
+                limparEstadoTeclado();
+            }
+            aoMudarGeometria();
+            sincronizarTela();
+        }, WATCHDOG_MS);
+    }
+
+    /* ============================================================
+       3. OFFSET DO TECLADO
+       ============================================================ */
+    /* Elemento que precisa ficar visível acima do teclado */
+    function escolherReferencia() {
+        const ativo = form.querySelector('[data-ativo="true"]');
+        if (ativo) return ativo;
+
+        if (form.classList.contains('modo-forgot')) {
+            const container = form.querySelector('#container-forgot');
+            if (!container) return null;
+
+            if (window.innerWidth <= LARGURA_MOBILE_PX) {
+                const primario = container.querySelector('.forgot-form > .button1');
+                if (primario) return primario;
+            }
+
+            const candidatos = container.querySelectorAll('button, .otp-caixas, .field');
+            return candidatos[candidatos.length - 1] || null;
+        }
+
+        if (ehLayoutRow()) {
+            const btnRow = form.querySelector('.form-coluna-login > .btn');
+            if (btnRow) return btnRow;
+        }
+
+        const campos = form.querySelectorAll('.form-coluna-login > .field');
+        return campos[campos.length - 1] || null;
+    }
 
     function atualizarAlturaVisivel() {
         if (tecladoAberto()) {
-            var topo = Math.max(0, getTopoTeclado());
+            const topo = Math.max(0, getTopoTeclado());
             if (getAppH() > 0) razaoTeclado = topo / getAppH();
             raiz.style.setProperty('--kb-visivel', topo + 'px');
         } else if (!(ehLayoutRow() && raiz.classList.contains('kb-focus') && campoEmFoco())) {
@@ -360,12 +394,12 @@
             return;
         }
 
-        var ref = escolherReferencia();
+        const ref = escolherReferencia();
         if (!ref) return;
 
-        var bottomNatural = ref.getBoundingClientRect().bottom - offsetAtual;
-        var limite = getTopoTeclado() - MARGEM_TECLADO_PX;
-        var novoOffset = bottomNatural > limite ? limite - bottomNatural : 0;
+        const bottomNatural = ref.getBoundingClientRect().bottom - offsetAtual;
+        const limite = getTopoTeclado() - MARGEM_TECLADO_PX;
+        const novoOffset = bottomNatural > limite ? limite - bottomNatural : 0;
 
         if (Math.abs(novoOffset - offsetAtual) > 2) {
             offsetAtual = novoOffset;
@@ -373,23 +407,20 @@
         }
     }
 
-    var ajusteRaf = false;
     function executarAjuste() {
         if (ajusteRaf) return;
         ajusteRaf = true;
-        requestAnimationFrame(function () {
+        requestAnimationFrame(() => {
             ajusteRaf = false;
             calcularKbOffset();
         });
     }
 
-    var vvHeightAnterior = 0;
-    var timerEstabilidade = null;
-
+    /* Teclado abrindo (altura diminui): espera estabilizar. Fechando: ajusta na hora. */
     function agendarAposEstabilidade() {
-        var vv = window.visualViewport;
-        var h = vv ? vv.height : window.innerHeight;
-        var diff = h - vvHeightAnterior;
+        const vv = window.visualViewport;
+        const h = vv ? vv.height : window.innerHeight;
+        const diff = h - vvHeightAnterior;
         if (Math.abs(diff) <= 1) return;
 
         vvHeightAnterior = h;
@@ -411,48 +442,40 @@
         }
         window.addEventListener('resize', agendarAposEstabilidade);
 
-        document.addEventListener('focusin', function (e) {
-            if (!e.target || e.target.tagName !== 'INPUT') return;
-            agendarAposEstabilidade();
+        document.addEventListener('focusin', (e) => {
+            if (e.target && e.target.tagName === 'INPUT') agendarAposEstabilidade();
         });
 
-        document.addEventListener('focusout', function () {
-            setTimeout(function () {
+        document.addEventListener('focusout', () => {
+            setTimeout(() => {
                 if (campoEmFoco()) return;
                 clearTimeout(timerEstabilidade);
                 executarAjuste();
-                setTimeout(function () {
+                setTimeout(() => {
                     if (!campoEmFoco() && !tecladoAberto()) resetarScroll();
                 }, 300);
             }, 80);
         });
 
-        window.addEventListener('orientationchange', function () {
-            [50, 300, 600].forEach(function (ms) { setTimeout(agendarImediato, ms); });
+        window.addEventListener('orientationchange', () => {
+            [50, 300, 600].forEach((ms) => setTimeout(agendarImediato, ms));
         });
 
         executarAjuste();
     }
 
     /* ============================================================
-       4. MODO FOCO (row)
+       4. MODO FOCO (celular deitado)
        ============================================================ */
-    function limparAtivos() {
-        Array.prototype.forEach.call(
-            form.querySelectorAll('[data-ativo="true"]'),
-            function (el) { el.removeAttribute('data-ativo'); }
-        );
-    }
-
-    var ativoAtual = null;
-
     function setupModoFoco() {
         function marcarAtivo(input) {
+            raiz.classList.add('kb-focus');
+
             if (!ehLayoutRow()) return;
             if (input === ativoAtual) return;
             ativoAtual = input;
 
-            var container = input.closest('.field, .otp-caixas');
+            const container = input.closest('.field, .otp-caixas');
             if (!container || !form.contains(container)) return;
 
             limparAtivos();
@@ -460,7 +483,6 @@
             if (!tecladoAberto()) {
                 raiz.style.setProperty('--kb-visivel', Math.round(getAppH() * razaoTeclado) + 'px');
             }
-            raiz.classList.add('kb-focus');
             agendarAposEstabilidade();
         }
 
@@ -471,13 +493,13 @@
             agendarAposEstabilidade();
         }
 
-        form.addEventListener('focusin', function (e) {
+        form.addEventListener('focusin', (e) => {
             if (e.target && e.target.tagName === 'INPUT') marcarAtivo(e.target);
         });
 
-        form.addEventListener('focusout', function () {
-            setTimeout(function () {
-                var ativo = document.activeElement;
+        form.addEventListener('focusout', () => {
+            setTimeout(() => {
+                const ativo = document.activeElement;
                 if (ativo && ativo.tagName === 'INPUT' && form.contains(ativo)) {
                     marcarAtivo(ativo);
                 } else {
@@ -490,28 +512,27 @@
     }
 
     /* ============================================================
-       5. MENSAGENS
+       5. MENSAGENS E BOTÕES
        ============================================================ */
-    var temporizadorMensagem = null;
-
     function removerMensagem(msg) {
         if (!msg) return;
         msg.removeAttribute('id');
         msg.classList.remove('visivel');
-        setTimeout(function () {
+        setTimeout(() => {
             if (msg.parentNode) msg.parentNode.removeChild(msg);
         }, 300);
     }
 
     function primeiroVisivel(lista) {
-        for (var i = 0; i < lista.length; i++) {
+        for (let i = 0; i < lista.length; i++) {
             if (estaVisivel(lista[i])) return lista[i];
         }
         return lista[0] || null;
     }
 
+    /* Decide em qual contêiner e acima de qual campo a mensagem deve aparecer */
     function escolherPaiMensagem() {
-        var modoAtivo = form.querySelector('.forgot-form');
+        const modoAtivo = form.querySelector('.forgot-form');
         if (modoAtivo) {
             return {
                 parent: modoAtivo,
@@ -519,14 +540,14 @@
             };
         }
 
-        var colLog = form.querySelector('.form-coluna-login');
+        const colLog = form.querySelector('.form-coluna-login');
 
-        var ativo = form.querySelector('[data-ativo="true"]');
+        const ativo = form.querySelector('[data-ativo="true"]');
         if (ativo && colLog) return { parent: colLog, ref: ativo };
 
         if (ehLayoutRow()) {
-            var colSoc = form.querySelector('.form-coluna-sociais');
-            var divisor = colSoc && colSoc.querySelector('.divisor-login');
+            const colSoc = form.querySelector('.form-coluna-sociais');
+            const divisor = colSoc && colSoc.querySelector('.divisor-login');
             if (estaVisivel(colSoc) && estaVisivel(divisor)) {
                 return { parent: colSoc, ref: divisor };
             }
@@ -536,19 +557,20 @@
         return { parent: form, ref: null };
     }
 
+    /* Colunas com display:contents (tablet) não geram caixa: usa o form como referência */
     function paiPosicionavel(el) {
         return (el && getComputedStyle(el).display === 'contents') ? form : el;
     }
 
     function posicionarMensagem(msg) {
-        var escolha = escolherPaiMensagem();
-        var parent  = paiPosicionavel(escolha.parent);
+        const escolha = escolherPaiMensagem();
+        const parent = paiPosicionavel(escolha.parent);
         parent.appendChild(msg);
 
         if (!escolha.ref) { msg.style.bottom = '100%'; return; }
 
-        var parentRect = parent.getBoundingClientRect();
-        var refRect    = escolha.ref.getBoundingClientRect();
+        const parentRect = parent.getBoundingClientRect();
+        const refRect = escolha.ref.getBoundingClientRect();
         msg.style.bottom = (parentRect.bottom - refRect.top + 8) + 'px';
     }
 
@@ -558,20 +580,20 @@
         clearTimeout(temporizadorMensagem);
         removerMensagem($('mensagem-login'));
 
-        var msg = document.createElement('div');
+        const msg = document.createElement('div');
         msg.id = 'mensagem-login';
         msg.className = 'mensagem mensagem--' + tipo;
         msg.setAttribute('role', tipo === 'erro' ? 'alert' : 'status');
 
-        var p = document.createElement('p');
+        const p = document.createElement('p');
         p.textContent = texto;
         msg.appendChild(p);
 
         posicionarMensagem(msg);
-        void msg.offsetHeight;
+        void msg.offsetHeight; // força o reflow para a transição de entrada rodar
         msg.classList.add('visivel');
 
-        temporizadorMensagem = setTimeout(function () {
+        temporizadorMensagem = setTimeout(() => {
             removerMensagem(msg);
         }, Math.max(MENSAGEM_MIN_MS, String(texto).length * MENSAGEM_MS_CHAR));
     }
@@ -579,7 +601,7 @@
     function mostrarLoading(botao) {
         botao.disabled = true;
         botao.textContent = '';
-        var spinner = document.createElement('span');
+        const spinner = document.createElement('span');
         spinner.className = 'button-loading';
         botao.appendChild(spinner);
     }
@@ -590,46 +612,45 @@
         botao.textContent = textoOriginal;
     }
 
+    /* Roda `acao` com o botão em loading. Se ela devolver true, o botão fica em loading
+       (ex.: redirecionando); caso contrário volta ao texto original. */
     async function executarComBotao(botao, textoOriginal, acao) {
-        if (botao.disabled) return;
+        if (!botao || botao.disabled) return;
         mostrarLoading(botao);
-        var manter = false;
+        let manter = false;
         try {
             manter = await acao();
         } catch (erro) {
             console.error(erro);
             mostrarMensagem('Ocorreu um erro. Tente novamente.', 'erro');
         } finally {
-            if (!manter) {
-                restaurarBotao(botao,
-                    typeof textoOriginal === 'function' ? textoOriginal() : textoOriginal);
-            }
+            if (!manter) restaurarBotao(botao, textoOriginal);
         }
     }
 
     /* ============================================================
-       6. MODOS DO CARD
+       6. MODOS DO CARD (forgot / cadastro / nova senha)
        ============================================================ */
     function carregarLottie(idContainer) {
-        var container = $(idContainer);
+        const container = $(idContainer);
         if (!container || typeof lottie === 'undefined') return;
 
         animacoesLottie.push(lottie.loadAnimation({
             container: container,
-            renderer:  'svg',
-            loop:      true,
-            autoplay:  true,
-            path:      LOTTIE_PATH
+            renderer: 'svg',
+            loop: true,
+            autoplay: true,
+            path: LOTTIE_PATH
         }));
     }
 
     function removerContainersDeModo() {
-        animacoesLottie.forEach(function (animacao) { animacao.destroy(); });
+        animacoesLottie.forEach((animacao) => animacao.destroy());
         animacoesLottie = [];
 
         ativoAtual = null;
 
-        var anterior = $('container-forgot');
+        const anterior = $('container-forgot');
         if (anterior) anterior.remove();
     }
 
@@ -637,7 +658,7 @@
         removerContainersDeModo();
         limparAtivos();
         form.classList.add('modo-forgot');
-        form.insertAdjacentHTML('beforeend', html);
+        form.insertAdjacentHTML('beforeend', html); // `html` é sempre texto estático deste arquivo
         agendarImediato();
     }
 
@@ -650,7 +671,7 @@
         inputEmail.value = '';
         inputSenha.value = '';
 
-        restaurarBotao(botaoLogin,  'Login');
+        restaurarBotao(botaoLogin, rotuloLogin);
         agendarImediato();
         setTimeout(agendarAltura, 100);
     }
@@ -659,24 +680,22 @@
        7. LOGIN
        ============================================================ */
     function validarCredenciais(email, senha) {
-        if (!email || !senha)      return 'Digite e-mail e senha!';
-        if (!validateEmail(email)) return 'E-mail inválido!';
+        if (!email || !senha) return 'Digite e-mail e senha!';
+        if (!emailValido(email)) return 'E-mail inválido!';
         return '';
     }
 
     function fazerLogin() {
-        var email = sanitizar(inputEmail.value);
-        var senha = inputSenha.value;
+        const email = normalizarEmail(inputEmail.value);
+        const senha = inputSenha.value;
 
-        var erro = validarCredenciais(email, senha);
+        const erro = validarCredenciais(email, senha);
         if (erro) { mostrarMensagem(erro, 'erro'); return; }
 
-        executarComBotao(botaoLogin, 'Login', async function () {
-            var resultado = await loginUser(email, senha);
+        executarComBotao(botaoLogin, rotuloLogin, async () => {
+            const resultado = await loginUser(email, senha);
             if (resultado.success) {
-                setTimeout(function () {
-                    window.location.href = PAGINA_DASHBOARD;
-                }, 500);
+                irParaDashboard();
                 return true;
             }
             mostrarMensagem(resultado.message || 'E-mail ou senha incorretos!', 'erro');
@@ -697,32 +716,37 @@
                         'placeholder="E-mail" autocomplete="email" aria-label="E-mail">' +
                     '</div>' +
                     '<button type="button" id="btn-enviar-link" class="button1">ENVIAR LINK</button>' +
-                    '<button type="button" id="btn-voltar-forgot" class="button3">← Voltar para o login</button>' +
+                    '<button type="button" id="btn-voltar-forgot" class="button3">Voltar para o login</button>' +
                 '</div>' +
             '</div>'
         );
         carregarLottie('forgot-lottie');
 
-        var inputForgot = $('email-forgot');
-        var btnEnviar   = $('btn-enviar-link');
+        const inputForgot = $('email-forgot');
+        const btnEnviar = $('btn-enviar-link');
 
         function enviarLink() {
-            var email = sanitizar(inputForgot.value);
-            if (!email || !validateEmail(email)) {
+            const email = normalizarEmail(inputForgot.value);
+            if (!email || !emailValido(email)) {
                 mostrarMensagem('Digite um e-mail válido!', 'erro');
                 return;
             }
 
-            executarComBotao(btnEnviar, 'ENVIAR LINK', async function () {
-                var existente = await checkEmailExists(email);
+            executarComBotao(btnEnviar, 'ENVIAR LINK', async () => {
+                const existente = await checkEmailExists(email);
                 if (!existente.exists) {
                     mostrarMensagem('E-mail não cadastrado!', 'erro');
                     return false;
                 }
 
-                var resultado = await recoverPassword(email);
+                if (existente.provider === 'google' && !existente.hasPassword) {
+                    mostrarMensagem('Use o botão "Entrar com Google".', 'erro');
+                    return false;
+                }
+
+                const resultado = await recoverPassword(email);
                 if (resultado.success) {
-                    mostrarMensagem('Link enviado! Verifique seu e-mail.', 'sucesso');
+                    mostrarMensagem('Link enviado!', 'sucesso');
                 } else {
                     mostrarMensagem(resultado.message || 'Erro ao enviar link!', 'erro');
                 }
@@ -736,19 +760,28 @@
     }
 
     /* ============================================================
-       9. CADASTRO (e-mail → código → senha)
+       9. CADASTRO (e-mail -> código -> senha)
        ============================================================ */
+    function ligarOlho(botao, input) {
+        botao.addEventListener('click', () => {
+            const mostrar = input.type === 'password';
+            input.type = mostrar ? 'text' : 'password';
+            botao.classList.toggle('mostrando', mostrar);
+        });
+    }
+
     function ligarConfirmacao(senha, confirmar) {
-        confirmar.addEventListener('input', function () {
-            var diverge = confirmar.value.length > 0 && confirmar.value !== senha.value;
+        confirmar.addEventListener('input', () => {
+            const diverge = confirmar.value.length > 0 && confirmar.value !== senha.value;
             confirmar.closest('.field').style.borderColor = diverge ? 'var(--erro)' : '';
         });
     }
 
+    /* Clona o botão de olho do login (#btn-olho) para os campos criados dinamicamente */
     function adicionarOlho(input) {
-        var modelo = $('btn-olho');
+        const modelo = $('btn-olho');
         if (!modelo) return;
-        var olho = modelo.cloneNode(true);
+        const olho = modelo.cloneNode(true);
         olho.removeAttribute('id');
         olho.classList.remove('mostrando');
         input.closest('.field').appendChild(olho);
@@ -756,8 +789,8 @@
     }
 
     function caixasCodigoHtml() {
-        var html = '';
-        for (var i = 0; i < 6; i++) {
+        let html = '';
+        for (let i = 0; i < DIGITOS_CODIGO; i++) {
             html += '<input type="text" maxlength="1" class="codigo-input" ' +
                     'inputmode="numeric" autocomplete="one-time-code" ' +
                     'aria-label="Dígito ' + (i + 1) + '">';
@@ -765,43 +798,52 @@
         return html;
     }
 
-    function ligarCaixasCodigo(caixas, aoCompletar) {
-        function codigo() {
-            return caixas.map(function (c) { return c.value; }).join('');
+    function lerCodigo(caixas) {
+        return caixas.map((c) => c.value).join('');
+    }
+
+    /* Navegação entre as caixas: digitar avança, backspace volta, colar/autofill distribui */
+    function ligarCaixasCodigo(caixas) {
+        const ultima = caixas.length - 1;
+
+        function preencher(inicio, texto) {
+            const digitos = texto.replace(/\D/g, '').slice(0, caixas.length - inicio);
+            digitos.split('').forEach((d, i) => { caixas[inicio + i].value = d; });
+            caixas[Math.min(inicio + digitos.length, ultima)].focus();
         }
 
-        function verificar() {
-            if (codigo().length === caixas.length && aoCompletar) aoCompletar(codigo());
-        }
+        caixas.forEach((caixa, indice) => {
+            caixa.addEventListener('focus', () => caixa.select());
 
-        caixas.forEach(function (caixa, indice) {
-            caixa.addEventListener('input', function () {
-                caixa.value = caixa.value.replace(/\D/g, '');
-                if (caixa.value && indice < caixas.length - 1) caixas[indice + 1].focus();
-                verificar();
+            caixa.addEventListener('input', () => {
+                const digitos = caixa.value.replace(/\D/g, '');
+                /* Autofill de SMS pode entregar o código inteiro na primeira caixa */
+                if (digitos.length > 1) { preencher(indice, digitos); return; }
+
+                caixa.value = digitos;
+                if (digitos && indice < ultima) caixas[indice + 1].focus();
             });
 
-            caixa.addEventListener('keydown', function (e) {
+            caixa.addEventListener('keydown', (e) => {
                 if (e.key === 'Backspace' && !caixa.value && indice > 0) {
                     caixas[indice - 1].focus();
                 }
             });
 
-            caixa.addEventListener('paste', function (e) {
-                var dados = e.clipboardData || window.clipboardData;
-                var texto = dados ? dados.getData('text').replace(/\D/g, '') : '';
+            caixa.addEventListener('paste', (e) => {
+                const dados = e.clipboardData || window.clipboardData;
+                const texto = dados ? dados.getData('text').replace(/\D/g, '') : '';
                 if (!texto) return;
                 e.preventDefault();
-                caixas.forEach(function (c, i) { c.value = texto.charAt(i) || ''; });
-                caixas[Math.min(texto.length, caixas.length) - 1].focus();
-                verificar();
+                caixas.forEach((c) => { c.value = ''; });
+                preencher(0, texto);
             });
         });
     }
 
     function mostrarCadastro() {
-        var emailInicial = sanitizar(inputEmail.value);
-        var estado = { email: '', codigo: '' };
+        const emailInicial = normalizarEmail(inputEmail.value);
+        const estado = { email: '', codigo: '' };
 
         abrirModo(
             '<div id="container-forgot" class="modo-dois-campos">' +
@@ -811,21 +853,21 @@
         );
         carregarLottie('forgot-lottie');
 
-        var painel = $('cadastro-form');
+        const painel = $('cadastro-form');
 
         function trocarEtapa(html) {
             limparAtivos();
             ativoAtual = null;
             raiz.classList.remove('kb-focus');
-            painel.innerHTML = html;
+            painel.innerHTML = html; // `html` é sempre texto estático deste arquivo
             painel.classList.remove('aparece');
-            void painel.offsetWidth;
+            void painel.offsetWidth; // reinicia a animação de entrada
             painel.classList.add('aparece');
             agendarImediato();
         }
 
-        var BOTAO_VOLTAR =
-            '<button type="button" id="btn-voltar-cadastro" class="button3">← Voltar para o login</button>';
+        const BOTAO_VOLTAR =
+            '<button type="button" id="btn-voltar-cadastro" class="button3">Voltar para o login</button>';
 
         function etapaEmail() {
             trocarEtapa(
@@ -838,36 +880,40 @@
             );
             $('btn-voltar-cadastro').addEventListener('click', voltarParaLogin);
 
-            var emailCad = $('email-cadastro');
-            var btn      = $('btn-cadastro-acao');
+            const emailCad = $('email-cadastro');
+            const btn = $('btn-cadastro-acao');
             emailCad.value = estado.email || emailInicial;
 
             function enviarCodigo() {
-                var email = sanitizar(emailCad.value);
-                if (!email || !validateEmail(email)) {
+                const email = normalizarEmail(emailCad.value);
+                if (!email || !emailValido(email)) {
                     mostrarMensagem('Digite um e-mail válido!', 'erro');
                     return;
                 }
 
-                executarComBotao(btn, 'ENVIAR CÓDIGO', async function () {
+                executarComBotao(btn, 'ENVIAR CÓDIGO', async () => {
                     definirContexto(false, email, null);
 
-                    var envio = await sendSignupCode(email);
+                    const existente = await checkEmailExists(email);
+
+                    if (existente.exists) {
+                        if (existente.provider === 'google' && !existente.hasPassword) {
+                            mostrarMensagem('Use o botão "Entrar com Google".', 'erro');
+                            return false;
+                        }
+                        mostrarMensagem('Este e-mail já está cadastrado. Faça login!', 'erro');
+                        return false;
+                    }
+
+                    const envio = await sendSignupCode(email);
                     if (!envio.success) {
-                        var jaCadastrado = envio.message &&
-                            /already registered|j[áa]\s+(est[áa]\s+)?cadastrad/i.test(envio.message);
-                        mostrarMensagem(
-                            jaCadastrado
-                                ? 'Este e-mail já está cadastrado. Faça login!'
-                                : (envio.message || 'Erro ao enviar código!'),
-                            'erro'
-                        );
+                        mostrarMensagem(envio.message || 'Erro ao enviar código!', 'erro');
                         return false;
                     }
 
                     estado.email = email;
                     etapaCodigo();
-                    mostrarMensagem('Código enviado! Verifique seu e-mail.', 'sucesso');
+                    mostrarMensagem('Código enviado!', 'sucesso');
                     return false;
                 });
             }
@@ -880,20 +926,18 @@
             trocarEtapa(
                 '<div class="otp-caixas" id="caixas-cadastro">' + caixasCodigoHtml() + '</div>' +
                 '<button type="button" id="btn-cadastro-acao" class="button1">CONFIRMAR</button>' +
-                '<button type="button" id="btn-voltar-cadastro" class="button3">← Alterar e-mail</button>'
+                '<button type="button" id="btn-voltar-cadastro" class="button3">Alterar e-mail</button>'
             );
 
             $('btn-voltar-cadastro').addEventListener('click', etapaEmail);
 
-            var caixas = Array.prototype.slice.call($('caixas-cadastro').querySelectorAll('.codigo-input'));
-            var btn    = $('btn-cadastro-acao');
+            const caixas = Array.from($('caixas-cadastro').querySelectorAll('.codigo-input'));
+            const btn = $('btn-cadastro-acao');
 
-            /* O código é guardado em memória. A validação real acontece
-               no verifySignupCode, no final, junto com a criação da conta. */
             function avancar() {
-                var codigo = caixas.map(function (c) { return c.value; }).join('');
+                const codigo = lerCodigo(caixas);
                 if (codigo.length < caixas.length) {
-                    mostrarMensagem('Digite os 6 dígitos do código!', 'erro');
+                    mostrarMensagem('Digite os ' + caixas.length + ' dígitos!', 'erro');
                     return;
                 }
                 estado.codigo = codigo;
@@ -901,8 +945,8 @@
             }
 
             btn.addEventListener('click', avancar);
-            ligarCaixasCodigo(caixas, function () {});
-            caixas.forEach(function (caixa) { aoPressionarEnter(caixa, avancar); });
+            ligarCaixasCodigo(caixas);
+            caixas.forEach((caixa) => aoPressionarEnter(caixa, avancar));
             caixas[0].focus();
         }
 
@@ -921,16 +965,16 @@
             );
             $('btn-voltar-cadastro').addEventListener('click', voltarParaLogin);
 
-            var senha     = $('senha-cadastro');
-            var confirmar = $('confirmar-cadastro');
-            var btn       = $('btn-cadastro-acao');
+            const senha = $('senha-cadastro');
+            const confirmar = $('confirmar-cadastro');
+            const btn = $('btn-cadastro-acao');
 
             adicionarOlho(senha);
             adicionarOlho(confirmar);
             ligarConfirmacao(senha, confirmar);
 
             function concluir() {
-                var forca = validarSenhaForte(senha.value);
+                const forca = validarSenhaForte(senha.value);
                 if (!forca.valida) {
                     mostrarMensagem(forca.mensagem, 'erro');
                     return;
@@ -940,15 +984,15 @@
                     return;
                 }
 
-                executarComBotao(btn, 'CONFIRMAR', async function () {
+                executarComBotao(btn, 'CONFIRMAR', async () => {
                     definirContexto(false, estado.email, senha.value);
 
-                    var criacao = await verifySignupCode(
+                    const criacao = await verifySignupCode(
                         estado.email, estado.codigo, senha.value, estado.email.split('@')[0]
                     );
 
                     if (!criacao.success) {
-                        var msg = criacao.message || 'Não foi possível criar a conta.';
+                        const msg = criacao.message || 'Não foi possível criar a conta.';
                         if (/c[óo]digo|code|expir|inv[áa]lid/i.test(msg)) {
                             estado.codigo = '';
                             etapaCodigo();
@@ -957,12 +1001,10 @@
                         return false;
                     }
 
-                    var entrada = await loginUser(estado.email, senha.value);
+                    const entrada = await loginUser(estado.email, senha.value);
                     if (entrada.success) {
-                        mostrarMensagem('Conta criada! Entrando...', 'sucesso');
-                        setTimeout(function () {
-                            window.location.href = PAGINA_DASHBOARD;
-                        }, 500);
+                        mostrarMensagem('Conta criada!', 'sucesso');
+                        irParaDashboard();
                         return true;
                     }
 
@@ -973,7 +1015,7 @@
             }
 
             btn.addEventListener('click', concluir);
-            aoPressionarEnter(senha, function () { confirmar.focus(); });
+            aoPressionarEnter(senha, () => confirmar.focus());
             aoPressionarEnter(confirmar, concluir);
             senha.focus();
         }
@@ -993,49 +1035,49 @@
         mostrarMensagem(texto, 'erro');
     }
 
-    function detectarRecovery() {
-        var query = new URLSearchParams(window.location.search);
-        var hash  = new URLSearchParams(window.location.hash.substring(1));
-        var tipo  = query.get('type') || hash.get('type');
+    async function detectarRecovery() {
+        const query = new URLSearchParams(window.location.search);
+        const hash = new URLSearchParams(window.location.hash.substring(1));
+        const tipo = query.get('type') || hash.get('type');
         if (tipo !== 'recovery') return;
 
-        var tokenHash   = query.get('token_hash');
-        var accessToken = hash.get('access_token');
-        var code        = query.get('code');
+        const tokenHash = query.get('token_hash');
+        const accessToken = hash.get('access_token');
+        const code = query.get('code');
         if (!tokenHash && !accessToken && !code) return;
 
-        aguardarSupabase().then(function (db) {
+        try {
+            const db = await aguardarSupabase();
             if (!db) {
-                falhaRecovery('Não foi possível validar o link. Tente novamente.');
-                return null;
+                falhaRecovery('Não foi possível validar o link.');
+                return;
             }
 
+            let resultado;
             if (tokenHash) {
-                return db.auth.verifyOtp({ token_hash: tokenHash, type: 'recovery' });
-            }
-            if (accessToken) {
-                return db.auth.setSession({
-                    access_token:  accessToken,
+                resultado = await db.auth.verifyOtp({ token_hash: tokenHash, type: 'recovery' });
+            } else if (accessToken) {
+                resultado = await db.auth.setSession({
+                    access_token: accessToken,
                     refresh_token: hash.get('refresh_token') || ''
                 });
+            } else {
+                resultado = await db.auth.exchangeCodeForSession(code);
             }
-            return db.auth.exchangeCodeForSession(code);
-        }).then(function (resultado) {
-            if (!resultado) return;
 
-            var sessao = resultado.data && resultado.data.session;
-            if (resultado.error || !sessao) {
-                falhaRecovery('Link inválido ou expirado. Tente novamente.');
+            const sessao = resultado && resultado.data && resultado.data.session;
+            if (!resultado || resultado.error || !sessao) {
+                falhaRecovery('Link inválido ou expirado.');
                 return;
             }
 
             definirContexto(true, sessao.user.email, null);
             limparUrl();
             mostrarNovaSenha();
-        }).catch(function (erro) {
+        } catch (erro) {
             console.error(erro);
-            falhaRecovery('Link inválido ou expirado. Tente novamente.');
-        });
+            falhaRecovery('Link inválido ou expirado.');
+        }
     }
 
     function mostrarNovaSenha() {
@@ -1054,22 +1096,22 @@
                         'aria-label="Confirmar nova senha">' +
                     '</div>' +
                     '<button type="button" id="btn-salvar-senha" class="button1">CONFIRMAR</button>' +
-                    '<button type="button" id="btn-voltar-nova" class="button3">← Voltar para o login</button>' +
+                    '<button type="button" id="btn-voltar-nova" class="button3">Voltar para o login</button>' +
                 '</div>' +
             '</div>'
         );
         carregarLottie('forgot-lottie');
 
-        var novaSenha = $('nova-senha');
-        var confirmar = $('confirmar-senha');
-        var btnSalvar = $('btn-salvar-senha');
+        const novaSenha = $('nova-senha');
+        const confirmar = $('confirmar-senha');
+        const btnSalvar = $('btn-salvar-senha');
 
         adicionarOlho(novaSenha);
         adicionarOlho(confirmar);
         ligarConfirmacao(novaSenha, confirmar);
 
         function salvarSenha() {
-            var validacao = validarSenhaForte(novaSenha.value);
+            const validacao = validarSenhaForte(novaSenha.value);
             if (!validacao.valida) {
                 mostrarMensagem(validacao.mensagem, 'erro');
                 return;
@@ -1079,16 +1121,17 @@
                 return;
             }
 
-            executarComBotao(btnSalvar, 'CONFIRMAR', async function () {
-                var db = getDb();
+            executarComBotao(btnSalvar, 'CONFIRMAR', async () => {
+                const db = getDb();
                 if (!db) {
-                    mostrarMensagem('Erro de configuração. Recarregue a página.', 'erro');
+                    mostrarMensagem('Erro de configuração.', 'erro');
                     return false;
                 }
 
-                var resultado = await db.auth.updateUser({ password: novaSenha.value });
-                var igualASenhaAntiga = resultado.error &&
-                    resultado.error.message.indexOf('different from the old password') !== -1;
+                const resultado = await db.auth.updateUser({ password: novaSenha.value });
+                /* Reenviar a mesma senha não é falha para o usuário */
+                const igualASenhaAntiga = !!resultado.error &&
+                    String(resultado.error.message).indexOf('different from the old password') !== -1;
 
                 if (resultado.error && !igualASenhaAntiga) {
                     mostrarMensagem('Erro: ' + resultado.error.message, 'erro');
@@ -1096,103 +1139,110 @@
                 }
 
                 voltarParaLogin();
-                mostrarMensagem('Senha alterada com sucesso!', 'sucesso');
+                mostrarMensagem('Senha alterada!', 'sucesso');
                 return true;
             });
         }
 
         $('btn-voltar-nova').addEventListener('click', voltarParaLogin);
         btnSalvar.addEventListener('click', salvarSenha);
-        aoPressionarEnter(novaSenha, function () { confirmar.focus(); });
+        aoPressionarEnter(novaSenha, () => confirmar.focus());
         aoPressionarEnter(confirmar, salvarSenha);
     }
 
     /* ============================================================
-       11. OLHO DA SENHA E LOGIN SOCIAL
+       11. OLHO DA SENHA, LOGIN SOCIAL E MENU "SAIBA MAIS"
        ============================================================ */
-    function ligarOlho(botao, input) {
-        botao.addEventListener('click', function () {
-            var mostrar = input.type === 'password';
-            input.type = mostrar ? 'text' : 'password';
-            botao.classList.toggle('mostrando', mostrar);
-        });
-    }
-
     function setupOlhoSenha() {
-        var botao = $('btn-olho');
+        const botao = $('btn-olho');
         if (botao) ligarOlho(botao, inputSenha);
     }
 
-    function setupLoginSocial() {
-        PROVEDORES_SOCIAIS.forEach(function (provedor) {
-            var botao = $('btn-' + provedor);
-            if (!botao) return;
+    function urlDashboard() {
+        const host = window.location.hostname;
+        return (host === 'localhost' || host === '127.0.0.1')
+            ? window.location.origin + '/dashboard.html'
+            : URL_DASHBOARD_PRODUCAO;
+    }
 
-            botao.addEventListener('click', function () {
-                var db = getDb();
-                if (!db) {
-                    mostrarMensagem('Erro de configuração. Recarregue a página.', 'erro');
-                    return;
+    function definirCarregandoSocial(botao, carregando) {
+        botao.classList.toggle('carregando', carregando);
+        botao.setAttribute('aria-busy', String(carregando));
+    }
+
+    async function entrarComProvedor(provedor, botao) {
+        const db = getDb();
+        if (!db) {
+            mostrarMensagem('Erro de configuração.', 'erro');
+            return;
+        }
+        if (botao.classList.contains('carregando')) return;
+
+        definirCarregandoSocial(botao, true);
+
+        try {
+            const resultado = await db.auth.signInWithOAuth({
+                provider: provedor,
+                options: {
+                    redirectTo: urlDashboard(),
+                    queryParams: PROVEDORES_SOCIAIS[provedor].params
                 }
-
-                db.auth.signInWithOAuth({
-                    provider: provedor,
-                    options: {
-                        redirectTo: window.location.origin + '/' + PAGINA_DASHBOARD
-                    }
-                }).then(function (resultado) {
-                    if (resultado && resultado.error) {
-                        mostrarMensagem('Não foi possível entrar com ' + provedor + '.', 'erro');
-                    }
-                }).catch(function (erro) {
-                    console.error(erro);
-                    mostrarMensagem('Ocorreu um erro. Tente novamente.', 'erro');
-                });
             });
+            if (resultado && resultado.error) {
+                definirCarregandoSocial(botao, false);
+                mostrarMensagem('Não foi possível entrar com ' + PROVEDORES_SOCIAIS[provedor].rotulo + '.', 'erro');
+            }
+            /* Sem erro: o navegador está a caminho do provedor; o botão fica travado */
+        } catch (erro) {
+            console.error(erro);
+            definirCarregandoSocial(botao, false);
+            mostrarMensagem('Ocorreu um erro. Tente novamente.', 'erro');
+        }
+    }
+
+    function setupLoginSocial() {
+        const botoes = [];
+
+        Object.keys(PROVEDORES_SOCIAIS).forEach((provedor) => {
+            const botao = $('btn-' + provedor);
+            if (!botao) return;
+            botoes.push(botao);
+            botao.addEventListener('click', () => entrarComProvedor(provedor, botao));
+        });
+
+        /* Voltar pelo histórico (bfcache) restaura a página com os botões ainda travados */
+        window.addEventListener('pageshow', (e) => {
+            if (e.persisted) botoes.forEach((botao) => definirCarregandoSocial(botao, false));
         });
     }
 
-    /* ============================================================
-       12. INICIALIZAÇÃO
-       ============================================================ */
-    if (!form) return;
-
-    sincronizarTela();
-    setupAlturaFixa();
-    setupTela();
-    setupTeclado();
-    setupModoFoco();
-
-    /* Botao "Saiba mais": abre/fecha o painel, fecha ao clicar fora, Esc e mudar layout */
     function setupMenuSaiba() {
-        var botao = document.getElementById('navbar-saiba-btn');
-        var menu  = document.getElementById('navbar-saiba-menu');
+        const botao = $('navbar-saiba-btn');
+        const menu = $('navbar-saiba-menu');
         if (!botao || !menu) return;
 
-        /* Celular deitado: o menu fica centralizado na secao direita (sociais),
-           com no minimo 5px de folga da linha divisoria e da borda da tela. */
+        /* No celular deitado o menu se alinha à coluna dos botões sociais */
         function posicionar() {
-            var coluna = document.querySelector('.form-coluna-sociais');
-            var linha = document.documentElement.getAttribute('data-layout') === 'row';
+            const coluna = document.querySelector('.form-coluna-sociais');
 
             menu.style.left = menu.style.right = menu.style.width = '';
             menu.style.removeProperty('--seta-x');
-            if (!linha || !coluna) return;
+            if (!ehLayoutRow() || !coluna) return;
 
-            var folga = 5;
-            var wrap = menu.parentNode.getBoundingClientRect();
-            var sec = coluna.getBoundingClientRect();
-            var esq = sec.left + folga;
-            var dir = Math.min(sec.right, window.innerWidth) - folga;
-            var larg = Math.min(330, dir - esq);
-            var x = esq + (dir - esq - larg) / 2;        /* centralizado na secao */
+            const folga = 5;
+            const wrap = menu.parentNode.getBoundingClientRect();
+            const sec = coluna.getBoundingClientRect();
+            const esq = sec.left + folga;
+            const dir = Math.min(sec.right, window.innerWidth) - folga;
+            const larg = Math.min(330, dir - esq);
+            const x = esq + (dir - esq - larg) / 2;
 
             menu.style.right = 'auto';
             menu.style.left = (x - wrap.left) + 'px';
             menu.style.width = larg + 'px';
 
-            var b = botao.getBoundingClientRect();
-            var seta = b.left + b.width / 2 - x;
+            const b = botao.getBoundingClientRect();
+            const seta = b.left + b.width / 2 - x;
             menu.style.setProperty('--seta-x', Math.max(16, Math.min(larg - 28, seta - 6)) + 'px');
         }
 
@@ -1202,50 +1252,88 @@
             botao.setAttribute('aria-expanded', aberto ? 'true' : 'false');
         }
 
-        botao.addEventListener('click', function (e) {
+        botao.addEventListener('click', (e) => {
             e.stopPropagation();
             definir(menu.hidden);
         });
 
-        document.addEventListener('click', function (e) {
+        document.addEventListener('click', (e) => {
             if (!menu.hidden && !menu.contains(e.target)) definir(false);
         });
 
-        document.addEventListener('keydown', function (e) {
+        document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && !menu.hidden) { definir(false); botao.focus(); }
         });
 
-        window.addEventListener('resize', function () { definir(false); });
-        window.addEventListener('orientationchange', function () { definir(false); });
+        window.addEventListener('resize', () => definir(false));
+        window.addEventListener('orientationchange', () => definir(false));
     }
 
-    setupMenuSaiba();
-    setupOlhoSenha();
-    setupLoginSocial();
-
-    form.addEventListener('submit', function (e) { e.preventDefault(); });
-
-    botaoLogin.addEventListener('click',  fazerLogin);
-    botaoSignUp.addEventListener('click', mostrarCadastro);
-    botaoForgot.addEventListener('click', mostrarForgotPassword);
-
-    aoPressionarEnter(inputEmail, function () { inputSenha.focus(); });
-    aoPressionarEnter(inputSenha, fazerLogin);
-
-    detectarRecovery();
-
-    if (document.fonts && document.fonts.ready) {
-        document.fonts.ready.then(agendarAltura);
-    }
-
-    window.addEventListener('load', function () {
+    /* ============================================================
+       12. INICIALIZAÇÃO
+       ============================================================ */
+    function aoCarregar() {
         sincronizarTela();
         agendarImediato();
         agendarAltura();
-    });
+    }
 
-    window.addEventListener('pageshow', function () {
+    function iniciar() {
+        form = $('login-form');
+        if (!form) return; // outra página que reaproveita este script
+
+        inputEmail = $('email');
+        inputSenha = $('senha');
+        botaoLogin = $('btn-login');
+        botaoSignUp = $('btn-signup');
+        botaoForgot = $('btn-forgot');
+
+        if (!inputEmail || !inputSenha || !botaoLogin || !botaoSignUp || !botaoForgot) {
+            console.error('login.js: elementos obrigatórios do formulário não encontrados.');
+            return;
+        }
+
+        rotuloLogin = botaoLogin.textContent.trim() || 'Login';
+
+        /* Impede o zoom por pinça do iOS (o layout é todo calculado para escala 1) */
+        document.addEventListener('gesturestart', (e) => e.preventDefault());
+
         sincronizarTela();
-        agendarAltura();
-    });
+        setupAlturaFixa();
+        setupTela();
+        setupTeclado();
+        setupModoFoco();
+        setupMenuSaiba();
+        setupOlhoSenha();
+        setupLoginSocial();
+
+        form.addEventListener('submit', (e) => e.preventDefault());
+
+        botaoLogin.addEventListener('click', fazerLogin);
+        botaoSignUp.addEventListener('click', mostrarCadastro);
+        botaoForgot.addEventListener('click', mostrarForgotPassword);
+
+        aoPressionarEnter(inputEmail, () => inputSenha.focus());
+        aoPressionarEnter(inputSenha, fazerLogin);
+
+        detectarRecovery();
+
+        if (document.fonts && document.fonts.ready) {
+            document.fonts.ready.then(agendarAltura);
+        }
+
+        if (document.readyState === 'complete') aoCarregar();
+        else window.addEventListener('load', aoCarregar);
+
+        window.addEventListener('pageshow', () => {
+            sincronizarTela();
+            agendarAltura();
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', iniciar);
+    } else {
+        iniciar();
+    }
 })();
