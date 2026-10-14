@@ -1239,17 +1239,14 @@
                 const containerForgot = form.querySelector('#container-forgot');
                 if (!containerForgot) return;
 
+                const formRect = form.getBoundingClientRect();
                 const containerRect = containerForgot.getBoundingClientRect();
-                const estilos = getComputedStyle(containerForgot);
 
-                // O grid é: 0.8fr | column-gap | 1fr
-                // A linha divisória fica no CENTRO do gap
-                const gap = parseFloat(estilos.columnGap) || 0;
-                const larguraConteudo = containerRect.width - gap;
-                const larguraColuna1 = larguraConteudo * (0.8 / 1.8);
-                const posicaoLinha = containerRect.left + larguraColuna1 + gap / 2;
+                // A linha divisória fica em 0.8/1.8 da largura do container (grid 0.8fr 1fr)
+                const larguraContainer = containerRect.width;
+                const posicaoLinha = containerRect.left + (larguraContainer * 0.8 / 1.8);
 
-                esq = containerRect.left + folga;
+                esq = formRect.left + folga;
                 dir = posicaoLinha - folga;
             } else {
                 // Modo login normal: centraliza na coluna direita (botões sociais)
