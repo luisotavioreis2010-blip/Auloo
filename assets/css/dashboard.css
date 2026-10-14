@@ -1,6 +1,6 @@
 ﻿@charset "UTF-8";
 /* ==============================================
-   DASHBOARD.CSS — v19
+   DASHBOARD.CSS — v20
 
    Estrutura
    1. Variáveis
@@ -43,6 +43,7 @@
     --ease: cubic-bezier(0.4, 0, 0.2, 1);
     --transicao: 0.3s var(--ease);
 
+    /* Viewport: segunda declaração vence onde `dvh` é suportado */
     --viewport-h: 100vh;
     --viewport-h: 100dvh;
 
@@ -116,10 +117,19 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
-input, textarea, .ficha-email {
+input, textarea {
+    font: inherit;
     -webkit-user-select: text;
     user-select: text;
 }
+
+.ficha-email {
+    -webkit-user-select: text;
+    user-select: text;
+}
+
+/* Classe utilitária: elementos que começam ocultos no HTML */
+.oculto { display: none !important; }
 
 .navbar {
     position: sticky;
@@ -992,7 +1002,6 @@ input, textarea, .ficha-email {
     color: var(--tinta-suave);
     border: 1px solid transparent;
     border-radius: 2px;
-    cursor: pointer;
     transition: all var(--transicao);
 }
 

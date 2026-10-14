@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=overlays-content">
     <meta name="theme-color" content="#1A1614">
-    <meta name="description" content="Dashboard Auloo - Gerencie seu perfil, visualize seu calendario e acompanhe seu progresso de aprendizado.">
+    <meta name="description" content="Dashboard Auloo - Gerencie seu perfil, visualize seu calendário e acompanhe seu progresso de aprendizado.">
     <title translate="no">Dashboard | Auloo</title>
     <link rel="icon" type="image/png" href="assets/img/logo/auloo-logo.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,7 +17,7 @@
 
     <header class="navbar">
         <div class="navbar-left">
-            <button class="btn-hamburger" id="btn-hamburger" type="button" aria-label="Abrir sumario">&#9776;</button>
+            <button class="btn-hamburger" id="btn-hamburger" type="button" aria-label="Abrir sumário">&#9776;</button>
             <span class="logo" translate="no">Auloo<span class="logo-dot">.</span></span>
         </div>
         <div class="navbar-right">
@@ -28,18 +28,18 @@
         </div>
     </header>
 
-    <aside class="sidebar" id="sidebar" aria-label="Sumario">
+    <aside class="sidebar" id="sidebar" aria-label="Sumário">
         <div class="sidebar-secao">
-            <h2 class="sidebar-titulo">Sumario</h2>
+            <h2 class="sidebar-titulo">Sumário</h2>
             <div class="sidebar-filete"></div>
 
             <nav class="sidebar-menu">
-                <a href="#" class="sidebar-link" aria-label="Inicio">
+                <a href="#" class="sidebar-link" aria-label="Início">
                     <span class="sidebar-icone">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
                     </span>
                     <span class="sidebar-romano">I</span>
-                    <span class="sidebar-nome">Inicio</span>
+                    <span class="sidebar-nome">Início</span>
                 </a>
 
                 <a href="#" class="sidebar-link" aria-label="Financeiro">
@@ -66,12 +66,12 @@
                     <span class="sidebar-nome">Membros</span>
                 </a>
 
-                <a href="#" class="sidebar-link" aria-label="Configuracoes">
+                <a href="#" class="sidebar-link" aria-label="Configurações">
                     <span class="sidebar-icone">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
                     </span>
                     <span class="sidebar-romano">V</span>
-                    <span class="sidebar-nome">Configuracoes</span>
+                    <span class="sidebar-nome">Configurações</span>
                 </a>
             </nav>
         </div>
@@ -99,7 +99,7 @@
         <div class="ficha-perfil">
             <div class="ficha-foto" id="sidebar-perfil-foto"></div>
             <div class="ficha-info">
-                <span class="ficha-nome" id="sidebar-perfil-nome">Usuario</span>
+                <span class="ficha-nome" id="sidebar-perfil-nome">Usuário</span>
                 <span class="ficha-email" id="sidebar-perfil-email">email@exemplo.com</span>
             </div>
         </div>
@@ -117,7 +117,7 @@
                 <span class="ficha-texto">Editar Nome</span>
             </button>
 
-            <div id="container-editar-nome" class="container-expansivel" style="display:none;">
+            <div id="container-editar-nome" class="container-expansivel oculto">
                 <label for="input-novo-nome">Nome</label>
                 <input type="text" id="input-novo-nome" autocomplete="off" name="nome-usuario" placeholder="Digite seu novo nome" aria-label="Novo nome">
                 <button id="btn-salvar-nome" type="button">Salvar</button>
@@ -128,10 +128,10 @@
                 <span class="ficha-texto">Senha</span>
             </button>
 
-            <div id="container-editar-senha" class="container-expansivel" style="display:none;">
+            <div id="container-editar-senha" class="container-expansivel oculto">
                 <label for="input-senha-atual">Senha Atual</label>
                 <div class="wrapper-olho-senha">
-                    <input type="password" id="input-senha-atual" placeholder="Senha atual" aria-label="Senha atual">
+                    <input type="password" id="input-senha-atual" placeholder="Senha atual" aria-label="Senha atual" autocomplete="current-password">
                     <button type="button" class="btn-olho-senha" data-target="input-senha-atual" aria-label="Mostrar senha atual">
                         <svg class="icone-olho-aberto" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" style="display:none;" aria-hidden="true"><path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/><path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/></svg>
                         <svg class="icone-olho-fechado" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" style="display:block;" aria-hidden="true"><path d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7.028 7.028 0 0 0-2.79.588l.77.771A5.944 5.944 0 0 1 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.134 13.134 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755-.165.165-.337.328-.517.486l.708.709z"/><path d="M11.297 9.176a3.5 3.5 0 0 0-4.474-4.474l.823.823a2.5 2.5 0 0 1 2.829 2.829l.822.822zm-2.943 1.299.822.822a3.5 3.5 0 0 1-4.474-4.474l.823.823a2.5 2.5 0 0 0 2.829 2.829z"/><path d="M3.35 5.47c-.18.16-.353.322-.518.487A13.134 13.134 0 0 0 1.172 8l.195.288c.335.48.83 1.12 1.465 1.755C4.121 11.332 5.881 12.5 8 12.5c.716 0 1.39-.133 2.02-.36l.77.772A7.029 7.029 0 0 1 8 13.5C3 13.5 0 8 0 8s.939-1.721 2.641-3.238l.708.709zm10.296 8.884-12-12 .708-.708 12 12-.708.708z"/></svg>
@@ -140,7 +140,7 @@
 
                 <label for="input-senha-nova">Nova Senha</label>
                 <div class="wrapper-olho-senha">
-                    <input type="password" id="input-senha-nova" placeholder="Nova senha" aria-label="Nova senha">
+                    <input type="password" id="input-senha-nova" placeholder="Nova senha" aria-label="Nova senha" autocomplete="new-password">
                     <button type="button" class="btn-olho-senha" data-target="input-senha-nova" aria-label="Mostrar nova senha">
                         <svg class="icone-olho-aberto" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" style="display:none;" aria-hidden="true"><path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/><path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/></svg>
                         <svg class="icone-olho-fechado" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" style="display:block;" aria-hidden="true"><path d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7.028 7.028 0 0 0-2.79.588l.77.771A5.944 5.944 0 0 1 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.134 13.134 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755-.165.165-.337.328-.517.486l.708.709z"/><path d="M11.297 9.176a3.5 3.5 0 0 0-4.474-4.474l.823.823a2.5 2.5 0 0 1 2.829 2.829l.822.822zm-2.943 1.299.822.822a3.5 3.5 0 0 1-4.474-4.474l.823.823a2.5 2.5 0 0 0 2.829 2.829z"/><path d="M3.35 5.47c-.18.16-.353.322-.518.487A13.134 13.134 0 0 0 1.172 8l.195.288c.335.48.83 1.12 1.465 1.755C4.121 11.332 5.881 12.5 8 12.5c.716 0 1.39-.133 2.02-.36l.77.772A7.029 7.029 0 0 1 8 13.5C3 13.5 0 8 0 8s.939-1.721 2.641-3.238l.708.709zm10.296 8.884-12-12 .708-.708 12 12-.708.708z"/></svg>
@@ -150,7 +150,7 @@
                 <button id="btn-confirmar-senha" type="button">Atualizar Senha</button>
             </div>
 
-            <div id="container-criar-senha" class="container-expansivel" style="display:none;">
+            <div id="container-criar-senha" class="container-expansivel oculto">
                 <label for="input-nova-senha-criar">Criar Senha</label>
                 <div class="wrapper-olho-senha">
                     <input type="password" id="input-nova-senha-criar" placeholder="Nova senha" aria-label="Nova senha" autocomplete="new-password">
@@ -163,7 +163,7 @@
                 <label for="input-confirmar-senha-criar">Confirmar Senha</label>
                 <div class="wrapper-olho-senha">
                     <input type="password" id="input-confirmar-senha-criar" placeholder="Confirmar senha" aria-label="Confirmar senha" autocomplete="new-password">
-                    <button type="button" class="btn-olho-senha" data-target="input-confirmar-senha-criar" aria-label="Mostrar confirmacao">
+                    <button type="button" class="btn-olho-senha" data-target="input-confirmar-senha-criar" aria-label="Mostrar confirmação">
                         <svg class="icone-olho-aberto" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" style="display:none;" aria-hidden="true"><path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/><path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/></svg>
                         <svg class="icone-olho-fechado" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" style="display:block;" aria-hidden="true"><path d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7.028 7.028 0 0 0-2.79.588l.77.771A5.944 5.944 0 0 1 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.134 13.134 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755-.165.165-.337.328-.517.486l.708.709z"/><path d="M11.297 9.176a3.5 3.5 0 0 0-4.474-4.474l.823.823a2.5 2.5 0 0 1 2.829 2.829l.822.822zm-2.943 1.299.822.822a3.5 3.5 0 0 1-4.474-4.474l.823.823a2.5 2.5 0 0 0 2.829 2.829z"/><path d="M3.35 5.47c-.18.16-.353.322-.518.487A13.134 13.134 0 0 0 1.172 8l.195.288c.335.48.83 1.12 1.465 1.755C4.121 11.332 5.881 12.5 8 12.5c.716 0 1.39-.133 2.02-.36l.77.772A7.029 7.029 0 0 1 8 13.5C3 13.5 0 8 0 8s.939-1.721 2.641-3.238l.708.709zm10.296 8.884-12-12 .708-.708 12 12-.708.708z"/></svg>
                     </button>
@@ -177,12 +177,12 @@
                 <span class="ficha-texto">Saiba mais</span>
             </button>
 
-            <div id="container-saiba-mais" class="container-expansivel" style="display:none;">
+            <div id="container-saiba-mais" class="container-expansivel oculto">
                 <a class="ficha-saiba-item" href="/?de=dashboard">
                     <span class="ficha-saiba-num">I</span>
                     <span class="ficha-saiba-corpo">
-                        <strong>Conheca o Auloo</strong>
-                        <small>Portfolio e visao geral</small>
+                        <strong>Conheça o Auloo</strong>
+                        <small>Portfólio e visão geral</small>
                     </span>
                 </a>
                 <a class="ficha-saiba-item" href="/termos.html?de=dashboard">
@@ -196,32 +196,32 @@
                     <span class="ficha-saiba-num">III</span>
                     <span class="ficha-saiba-corpo">
                         <strong>Seus Dados</strong>
-                        <small>Politica de privacidade</small>
+                        <small>Política de privacidade</small>
                     </span>
                 </a>
             </div>
         </nav>
     </aside>
 
-    <input type="file" id="input-foto" accept="image/*" style="display:none;" aria-label="Upload de foto de perfil">
+    <input type="file" id="input-foto" class="oculto" accept="image/*" aria-label="Upload de foto de perfil">
 
     <main class="dashboard-main">
         <div class="ilustracao-container">
             <picture>
                 <source srcset="assets/img/ilustracoes/education.webp" type="image/webp">
-                <img src="assets/img/ilustracoes/education.png" alt="Ilustracao de estudo" class="ilustracao-central" loading="lazy" width="600" height="400" decoding="async">
+                <img src="assets/img/ilustracoes/education.png" alt="Ilustração de estudo" class="ilustracao-central" loading="lazy" width="600" height="400" decoding="async">
             </picture>
         </div>
 
         <div class="calendario-container">
             <div class="calendario">
                 <div class="calendario-cabecalho">
-                    <button class="calendario-btn" id="btn-mes-anterior" aria-label="Mes anterior">&#8249;</button>
+                    <button class="calendario-btn" id="btn-mes-anterior" aria-label="Mês anterior">&#8249;</button>
                     <div class="calendario-titulo-container">
                         <span class="calendario-titulo" id="calendario-titulo">Setembro 2026</span>
                         <span class="calendario-subtitulo" id="calendario-subtitulo">Quinta-feira</span>
                     </div>
-                    <button class="calendario-btn" id="btn-proximo-mes" aria-label="Proximo mes">&#8250;</button>
+                    <button class="calendario-btn" id="btn-proximo-mes" aria-label="Próximo mês">&#8250;</button>
                 </div>
                 <div class="calendario-dias-semana">
                     <span class="dia-semana">DOM</span>
@@ -230,7 +230,7 @@
                     <span class="dia-semana">QUA</span>
                     <span class="dia-semana">QUI</span>
                     <span class="dia-semana">SEX</span>
-                    <span class="dia-semana">SAB</span>
+                    <span class="dia-semana">SÁB</span>
                 </div>
                 <div class="calendario-dias" id="calendario-dias"></div>
             </div>
@@ -238,8 +238,8 @@
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-    <script src="assets/js/config.js"></script>
-    <script src="assets/js/auth.js"></script>
-    <script src="assets/js/pages/dashboard.js"></script>
+    <script defer src="assets/js/config.js"></script>
+    <script defer src="assets/js/auth.js"></script>
+    <script defer src="assets/js/pages/dashboard.js"></script>
 </body>
 </html>

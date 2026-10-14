@@ -3,18 +3,19 @@
    ------------------------------------------------------------
    Estrutura:
      1. Constantes
-     2. Utilitários puros
-     3. DOM (cache)
-     4. Estado da aplicação
-     5. Viewport & layout
-     6. Teclado virtual
-     7. Modo foco (layout row)
-     8. Mensagens & loading
-     9. Modos do card (forgot / signup / nova senha)
-    10. Ações (login / signup / recovery)
-    11. Login social
-    12. Menu "Saiba mais"
-    13. Bootstrap & cleanup
+     2. Dependências (Auth)
+     3. Utilitários puros
+     4. DOM (cache)
+     5. Estado da aplicação
+     6. Viewport & layout
+     7. Teclado virtual
+     8. Modo foco (layout row)
+     9. Mensagens & loading
+    10. Modos do card (forgot / signup / nova senha)
+    11. Ações (login / signup / recovery)
+    12. Login social
+    13. Menu "Saiba mais"
+    14. Bootstrap & cleanup
    ============================================================ */
 (function () {
     'use strict';
@@ -40,9 +41,6 @@
         ASSENTAR_ALTURA_MS: 700,
         FOCUSOUT_MS: 80,
 
-        SUPABASE_TENTATIVAS: 30,
-        SUPABASE_INTERVALO_MS: 200,
-
         MQ_ROW: '(min-width: 568px) and (max-width: 950px) and (orientation: landscape) and (max-height: 500px)',
 
         PROVEDORES_SOCIAIS: ['google', 'discord', 'github'],
@@ -57,21 +55,58 @@
         '<path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/></svg>';
 
     /* ============================================================
-       2. UTILITÁRIOS PUROS
+       2. DEPENDÊNCIAS (Auth)
+       ------------------------------------------------------------
+       `auth.js` é carregado antes via <script defer>. Exponibiliza:
+         - window.Auth.*          (API nova)
+         - window.validateEmail   (compatibilidade)
+         - etc.
+       Aqui resolvemos qual usar uma vez só, no bootstrap.
+       ============================================================ */
+    let Auth = null;
+
+    function resolverAuth() {
+        const A = window.Auth;
+
+        if (!A) {
+            console.error('[login] window.Auth não encontrado. auth.js foi carregado?');
+            return false;
+        }
+
+        const obrigatorias = [
+            'validateEmail',
+            'validarSenhaForte',
+            'checkEmailExists',
+            'sendSignupCode',
+            'verifySignupCode',
+            'loginUser',
+            'recoverPassword',
+        ];
+
+        const faltando = obrigatorias.filter((k) => typeof A[k] !== 'function');
+        if (faltando.length) {
+            console.error('[login] Auth está incompleto. Faltando:', faltando);
+            return false;
+        }
+
+        Auth = A;
+        return true;
+    }
+
+    /* ============================================================
+       3. UTILITÁRIOS PUROS
        ============================================================ */
     const $ = (id) => document.getElementById(id);
     const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
 
-    const sanitizar = (v) => (v ? String(v).replace(/[<>]/g, '') : '');
+    /** Apenas trim + normalização; sanitização forte é do Auth. */
+    const limparEntrada = (v) => (v ? String(v).trim() : '');
 
     const estaVisivel = (el) => {
         if (!el || el.offsetParent === null) return false;
         const r = el.getBoundingClientRect();
         return r.width > 0 && r.height > 0;
     };
-
-    const proximoFrame = () =>
-        new Promise((resolve) => requestAnimationFrame(() => resolve()));
 
     const debounce = (fn, ms) => {
         let t;
@@ -82,7 +117,7 @@
     };
 
     /* ============================================================
-       3. DOM (cache)
+       4. DOM (cache)
        ============================================================ */
     const raiz = document.documentElement;
 
@@ -104,10 +139,9 @@
     };
 
     /* ============================================================
-       4. ESTADO
+       5. ESTADO
        ============================================================ */
     const estado = {
-        // teclado / layout
         offsetKb: 0,
         razaoTeclado: 0.5,
         vvHeightAnterior: 0,
@@ -115,28 +149,20 @@
         maiorAltura: 0,
         layoutAnterior: null,
         alturaAnterior: null,
-        larguraAnterior: null,
 
-        // foco
         inputAtivo: null,
 
-        // timers
         timers: {
             mensagem: null,
             altura: null,
             estabilidade: null,
             assentar: null,
-            temporizadorTela: null,
         },
 
-        // animações lottie
         lottie: [],
-
-        // listeners registrados (para cleanup)
         listeners: [],
     };
 
-    /** Registra listener e guarda referência para cleanup futuro. */
     function on(target, evento, handler, opts) {
         if (!target) return () => {};
         target.addEventListener(evento, handler, opts);
@@ -147,7 +173,7 @@
 
     function limparTimers() {
         Object.values(estado.timers).forEach(clearTimeout);
-        Object.values(estado.timers).forEach((t) => { t = null; });
+        Object.keys(estado.timers).forEach((k) => { estado.timers[k] = null; });
     }
 
     function cleanup() {
@@ -159,7 +185,7 @@
     }
 
     /* ============================================================
-       5. VIEWPORT & LAYOUT
+       6. VIEWPORT & LAYOUT
        ============================================================ */
     const Viewport = {
         ehLayoutRow() {
@@ -217,7 +243,7 @@
         },
     };
 
-    /* ---------- 5.1 Altura fixa (--app-h) ---------- */
+    /* ---------- 6.1 Altura fixa (--app-h) ---------- */
     function setupAlturaFixa() {
         const aplicar = (h) => {
             estado.maiorAltura = h;
@@ -249,7 +275,7 @@
         medir();
     }
 
-    /* ---------- 5.2 Altura mínima do form ---------- */
+    /* ---------- 6.2 Altura mínima do form ---------- */
     function aplicarAlturaLogin() {
         if (!form) return;
         if (Viewport.campoEmFoco() || Viewport.tecladoAberto()) return;
@@ -270,7 +296,7 @@
 
     const agendarAltura = debounce(aplicarAlturaLogin, 150);
 
-    /* ---------- 5.3 Sincronizar atributos de layout ---------- */
+    /* ---------- 6.3 Sincronizar atributos de layout ---------- */
     function sincronizarTela() {
         if (Viewport.campoEmFoco() || Viewport.tecladoAberto()) return;
 
@@ -287,7 +313,7 @@
         }
     }
 
-    /* ---------- 5.4 Orquestração de mudança de tela ---------- */
+    /* ---------- 6.4 Orquestração de mudança de tela ---------- */
     function setupTela() {
         let orientacao = Viewport.orientacao();
         let largura = window.innerWidth;
@@ -315,10 +341,10 @@
             setTimeout(() => raiz.classList.remove('rotating'), CONFIG.ROTATING_MS + 300);
         };
 
-        const aoRedimensionar = () => {
+        const aoRedimensionar = debounce(() => {
             aoMudarGeometria();
-            debounce(reavaliar, 250)();
-        };
+            reavaliar();
+        }, 250);
 
         on(window, 'resize', aoRedimensionar);
         on(window, 'orientationchange', aoRedimensionar);
@@ -334,7 +360,6 @@
             }, 400);
         });
 
-        // Substitui o setInterval infinito por um único listener de visibilitychange
         on(document, 'visibilitychange', () => {
             if (document.hidden) return;
             if (Viewport.campoEmFoco() || Viewport.tecladoAberto()) return;
@@ -351,7 +376,7 @@
     }
 
     /* ============================================================
-       6. TECLADO VIRTUAL
+       7. TECLADO VIRTUAL
        ============================================================ */
     function escolherReferencia() {
         const ativo = form.querySelector('[data-ativo="true"]');
@@ -497,7 +522,7 @@
     }
 
     /* ============================================================
-       7. MODO FOCO (row)
+       8. MODO FOCO (row)
        ============================================================ */
     function limparAtivos() {
         $$('[data-ativo="true"]', form).forEach((el) => el.removeAttribute('data-ativo'));
@@ -551,7 +576,7 @@
     }
 
     /* ============================================================
-       8. MENSAGENS & LOADING
+       9. MENSAGENS & LOADING
        ============================================================ */
     function removerMensagem(msg) {
         if (!msg) return;
@@ -658,7 +683,7 @@
     }
 
     /* ============================================================
-       9. MODOS DO CARD
+       10. MODOS DO CARD
        ============================================================ */
     function carregarLottie(idContainer) {
         const container = $(idContainer);
@@ -705,7 +730,7 @@
     }
 
     /* ============================================================
-       10. AÇÕES
+       11. AÇÕES
        ============================================================ */
     function definirContexto(modoForgot, email, senha) {
         window.modoForgotPassword = modoForgot;
@@ -724,12 +749,12 @@
 
     function validarCredenciais(email, senha) {
         if (!email || !senha) return 'Digite e-mail e senha!';
-        if (!validateEmail(email)) return 'E-mail invalido!';
+        if (!Auth.validateEmail(email)) return 'E-mail inválido!';
         return '';
     }
 
     function fazerLogin() {
-        const email = sanitizar(inputEmail.value);
+        const email = limparEntrada(inputEmail.value);
         const senha = inputSenha.value;
 
         const erro = validarCredenciais(email, senha);
@@ -739,7 +764,7 @@
         }
 
         executarComBotao(botaoLogin, 'Login', async () => {
-            const r = await loginUser(email, senha);
+            const r = await Auth.loginUser(email, senha);
             if (r.success) {
                 setTimeout(() => { window.location.href = CONFIG.PAGINA_DASHBOARD; }, 500);
                 return true;
@@ -749,7 +774,7 @@
         });
     }
 
-    /* ---------- 10.1 Esqueci a senha ---------- */
+    /* ---------- 11.1 Esqueci a senha ---------- */
     function mostrarForgotPassword() {
         abrirModo(`
             <div id="container-forgot">
@@ -770,24 +795,24 @@
         const btnEnviar = $('btn-enviar-link');
 
         const enviarLink = () => {
-            const email = sanitizar(inputForgot.value);
-            if (!email || !validateEmail(email)) {
-                mostrarMensagem('Digite um e-mail valido!', 'erro');
+            const email = limparEntrada(inputForgot.value);
+            if (!email || !Auth.validateEmail(email)) {
+                mostrarMensagem('Digite um e-mail válido!', 'erro');
                 return;
             }
 
             executarComBotao(btnEnviar, 'ENVIAR LINK', async () => {
-                const existente = await checkEmailExists(email);
+                const existente = await Auth.checkEmailExists(email);
                 if (!existente.exists) {
-                    mostrarMensagem('E-mail nao cadastrado!', 'erro');
+                    mostrarMensagem('E-mail não cadastrado!', 'erro');
                     return false;
                 }
                 if (existente.provider === 'google' && !existente.hasPassword) {
-                    mostrarMensagem('Use o botao "Entrar com Google".', 'erro');
+                    mostrarMensagem('Use o botão "Entrar com Google".', 'erro');
                     return false;
                 }
 
-                const r = await recoverPassword(email);
+                const r = await Auth.recoverPassword(email);
                 mostrarMensagem(
                     r.success ? 'Link enviado!' : r.message || 'Erro ao enviar link!',
                     r.success ? 'sucesso' : 'erro'
@@ -801,7 +826,7 @@
         aoPressionarEnter(inputForgot, enviarLink);
     }
 
-    /* ---------- 10.2 Helpers de formulário ---------- */
+    /* ---------- 11.2 Helpers de formulário ---------- */
     function ligarConfirmacao(senha, confirmar) {
         on(confirmar, 'input', () => {
             const diverge = confirmar.value.length > 0 && confirmar.value !== senha.value;
@@ -823,7 +848,7 @@
         return Array.from({ length: 6 }, (_, i) =>
             `<input type="text" maxlength="1" class="codigo-input"
                     inputmode="numeric" autocomplete="one-time-code"
-                    aria-label="Digito ${i + 1}">`
+                    aria-label="Dígito ${i + 1}">`
         ).join('');
     }
 
@@ -858,9 +883,9 @@
         });
     }
 
-    /* ---------- 10.3 Cadastro ---------- */
+    /* ---------- 11.3 Cadastro ---------- */
     function mostrarCadastro() {
-        const emailInicial = sanitizar(inputEmail.value);
+        const emailInicial = limparEntrada(inputEmail.value);
         const ctx = { email: '', codigo: '' };
 
         abrirModo(`
@@ -893,7 +918,7 @@
                     <input type="email" id="email-cadastro" class="input-field"
                            placeholder="E-mail" autocomplete="email" aria-label="E-mail">
                 </div>
-                <button type="button" id="btn-cadastro-acao" class="button1">ENVIAR CODIGO</button>
+                <button type="button" id="btn-cadastro-acao" class="button1">ENVIAR CÓDIGO</button>
                 ${BOTAO_VOLTAR}
             `);
             $('btn-voltar-cadastro').addEventListener('click', voltarParaLogin);
@@ -903,34 +928,34 @@
             emailCad.value = ctx.email || emailInicial;
 
             const enviarCodigo = () => {
-                const email = sanitizar(emailCad.value);
-                if (!email || !validateEmail(email)) {
-                    mostrarMensagem('Digite um e-mail valido!', 'erro');
+                const email = limparEntrada(emailCad.value);
+                if (!email || !Auth.validateEmail(email)) {
+                    mostrarMensagem('Digite um e-mail válido!', 'erro');
                     return;
                 }
 
-                executarComBotao(btn, 'ENVIAR CODIGO', async () => {
+                executarComBotao(btn, 'ENVIAR CÓDIGO', async () => {
                     definirContexto(false, email, null);
 
-                    const existente = await checkEmailExists(email);
+                    const existente = await Auth.checkEmailExists(email);
                     if (existente.exists) {
                         if (existente.provider === 'google' && !existente.hasPassword) {
-                            mostrarMensagem('Use o botao "Entrar com Google".', 'erro');
+                            mostrarMensagem('Use o botão "Entrar com Google".', 'erro');
                             return false;
                         }
-                        mostrarMensagem('Este e-mail ja esta cadastrado. Faca login!', 'erro');
+                        mostrarMensagem('Este e-mail já está cadastrado. Faça login!', 'erro');
                         return false;
                     }
 
-                    const envio = await sendSignupCode(email);
+                    const envio = await Auth.sendSignupCode(email);
                     if (!envio.success) {
-                        mostrarMensagem(envio.message || 'Erro ao enviar codigo!', 'erro');
+                        mostrarMensagem(envio.message || 'Erro ao enviar código!', 'erro');
                         return false;
                     }
 
                     ctx.email = email;
                     etapaCodigo();
-                    mostrarMensagem('Codigo enviado!', 'sucesso');
+                    mostrarMensagem('Código enviado!', 'sucesso');
                     return false;
                 });
             };
@@ -953,7 +978,7 @@
             const avancar = () => {
                 const codigo = caixas.map((c) => c.value).join('');
                 if (codigo.length < caixas.length) {
-                    mostrarMensagem('Digite os 6 digitos!', 'erro');
+                    mostrarMensagem('Digite os 6 dígitos!', 'erro');
                     return;
                 }
                 ctx.codigo = codigo;
@@ -990,25 +1015,25 @@
             ligarConfirmacao(senha, confirmar);
 
             const concluir = () => {
-                const forca = validarSenhaForte(senha.value);
+                const forca = Auth.validarSenhaForte(senha.value);
                 if (!forca.valida) {
                     mostrarMensagem(forca.mensagem, 'erro');
                     return;
                 }
                 if (senha.value !== confirmar.value) {
-                    mostrarMensagem('As senhas nao coincidem!', 'erro');
+                    mostrarMensagem('As senhas não coincidem!', 'erro');
                     return;
                 }
 
                 executarComBotao(btn, 'CONFIRMAR', async () => {
                     definirContexto(false, ctx.email, senha.value);
 
-                    const criacao = await verifySignupCode(
+                    const criacao = await Auth.verifySignupCode(
                         ctx.email, ctx.codigo, senha.value, ctx.email.split('@')[0]
                     );
 
                     if (!criacao.success) {
-                        const msg = criacao.message || 'Nao foi possivel criar a conta.';
+                        const msg = criacao.message || 'Não foi possível criar a conta.';
                         if (/c[óo]digo|code|expir|inv[áa]lid/i.test(msg)) {
                             ctx.codigo = '';
                             etapaCodigo();
@@ -1017,7 +1042,7 @@
                         return false;
                     }
 
-                    const entrada = await loginUser(ctx.email, senha.value);
+                    const entrada = await Auth.loginUser(ctx.email, senha.value);
                     if (entrada.success) {
                         mostrarMensagem('Conta criada!', 'sucesso');
                         setTimeout(() => { window.location.href = CONFIG.PAGINA_DASHBOARD; }, 500);
@@ -1025,7 +1050,7 @@
                     }
 
                     voltarParaLogin();
-                    mostrarMensagem('Conta criada! Faca login.', 'sucesso');
+                    mostrarMensagem('Conta criada! Faça login.', 'sucesso');
                     return true;
                 });
             };
@@ -1039,7 +1064,7 @@
         etapaEmail();
     }
 
-    /* ---------- 10.4 Nova senha (recovery) ---------- */
+    /* ---------- 11.4 Nova senha (recovery) ---------- */
     const limparUrl = () => window.history.replaceState(null, '', window.location.pathname);
 
     const falhaRecovery = (texto) => {
@@ -1060,9 +1085,9 @@
 
         (async () => {
             try {
-                const db = await aguardarSupabase();
+                const db = Auth.getSupabaseClient?.();
                 if (!db) {
-                    falhaRecovery('Nao foi possivel validar o link.');
+                    falhaRecovery('Não foi possível validar o link.');
                     return;
                 }
 
@@ -1080,7 +1105,7 @@
 
                 const sessao = resultado?.data?.session;
                 if (resultado?.error || !sessao) {
-                    falhaRecovery('Link invalido ou expirado.');
+                    falhaRecovery('Link inválido ou expirado.');
                     return;
                 }
 
@@ -1089,7 +1114,7 @@
                 mostrarNovaSenha();
             } catch (erro) {
                 console.error(erro);
-                falhaRecovery('Link invalido ou expirado.');
+                falhaRecovery('Link inválido ou expirado.');
             }
         })();
     }
@@ -1123,20 +1148,20 @@
         ligarConfirmacao(novaSenha, confirmar);
 
         const salvarSenha = () => {
-            const validacao = validarSenhaForte(novaSenha.value);
+            const validacao = Auth.validarSenhaForte(novaSenha.value);
             if (!validacao.valida) {
                 mostrarMensagem(validacao.mensagem, 'erro');
                 return;
             }
             if (novaSenha.value !== confirmar.value) {
-                mostrarMensagem('As senhas nao coincidem!', 'erro');
+                mostrarMensagem('As senhas não coincidem!', 'erro');
                 return;
             }
 
             executarComBotao(btnSalvar, 'CONFIRMAR', async () => {
-                const db = getDb();
+                const db = Auth.getSupabaseClient?.();
                 if (!db) {
-                    mostrarMensagem('Erro de configuracao.', 'erro');
+                    mostrarMensagem('Erro de configuração.', 'erro');
                     return false;
                 }
 
@@ -1162,7 +1187,7 @@
     }
 
     /* ============================================================
-       11. OLHO DA SENHA & LOGIN SOCIAL
+       12. OLHO DA SENHA & LOGIN SOCIAL
        ============================================================ */
     function ligarOlho(botao, input) {
         on(botao, 'click', () => {
@@ -1183,9 +1208,9 @@
             if (!botao) return;
 
             on(botao, 'click', async () => {
-                const db = getDb();
+                const db = Auth.getSupabaseClient?.();
                 if (!db) {
-                    mostrarMensagem('Erro de configuracao.', 'erro');
+                    mostrarMensagem('Erro de configuração.', 'erro');
                     return;
                 }
                 if (botao.dataset.carregando === '1') return;
@@ -1219,7 +1244,7 @@
                     });
                     if (r?.error) {
                         restaurar();
-                        mostrarMensagem(`Nao foi possivel entrar com ${provedor}.`, 'erro');
+                        mostrarMensagem(`Não foi possível entrar com ${provedor}.`, 'erro');
                     }
                 } catch (erro) {
                     console.error(erro);
@@ -1231,7 +1256,7 @@
     }
 
     /* ============================================================
-       12. MENU "SAIBA MAIS"
+       13. MENU "SAIBA MAIS"
        ============================================================ */
     function setupMenuSaiba() {
         const botao = $('navbar-saiba-btn');
@@ -1290,24 +1315,8 @@
     }
 
     /* ============================================================
-       13. BOOTSTRAP
+       14. BOOTSTRAP
        ============================================================ */
-    async function aguardarSupabase() {
-        for (let i = 0; i < CONFIG.SUPABASE_TENTATIVAS; i++) {
-            const db = getDb();
-            if (db) return db;
-            await new Promise((r) => setTimeout(r, CONFIG.SUPABASE_INTERVALO_MS));
-        }
-        return null;
-    }
-
-    function getDb() {
-        return (
-            window.supabaseClient ||
-            (typeof supabaseClient !== 'undefined' ? supabaseClient : null)
-        );
-    }
-
     function setupEventos() {
         form.addEventListener('submit', (e) => e.preventDefault());
 
@@ -1322,12 +1331,17 @@
     }
 
     function bootstrap() {
+        // 1. DOM
         dom.montar();
         if (!dom.valido()) {
-            console.error('[login.js] Elementos essenciais não encontrados.');
+            console.error('[login] Elementos essenciais não encontrados.');
             return;
         }
 
+        // 2. Dependências
+        if (!resolverAuth()) return;
+
+        // 3. Setup
         sincronizarTela();
         setupAlturaFixa();
         setupTela();
@@ -1355,7 +1369,6 @@
             agendarAltura();
         });
 
-        // Cleanup ao sair (útil para navegação e bfcache)
         on(window, 'pagehide', cleanup);
         on(window, 'beforeunload', cleanup);
     }
