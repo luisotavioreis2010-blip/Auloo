@@ -1,11 +1,12 @@
 ﻿/* ============================================================
-   DASHBOARD.JS — v23
+   DASHBOARD.JS — v24
    ------------------------------------------------------------
    Suporte a:
      - Perfil (nome, foto, senha)
      - Criar senha para contas Google
      - Ficha do leitor responsiva (desktop / compacto / row)
      - Calendário mensal
+     - Reposicionamento de inputs para teclado virtual
 
    Estrutura:
      1. Constantes
@@ -14,13 +15,14 @@
      4. DOM (cache)
      5. Estado
      6. Tela / viewport
-     7. Mensagens & containers
-     8. Perfil (carregar / renderizar / logout)
-     9. Ações do perfil (nome, senha, foto)
-    10. Layout (sidebar / ficha / overlay)
-    11. Calendário
-    12. Auth listener
-    13. Bootstrap & cleanup
+     7. Teclado virtual (KB)
+     8. Mensagens & containers
+     9. Perfil (carregar / renderizar / logout)
+    10. Ações do perfil (nome, senha, foto)
+    11. Layout (sidebar / ficha / overlay)
+    12. Calendário
+    13. Auth listener
+    14. Bootstrap & cleanup
    ============================================================ */
 (function () {
     'use strict';
@@ -37,6 +39,12 @@
         INTERVALO_OAUTH_MS: 200,
         MSG_VISIVEL_MS: 3000,
         MSG_SAIDA_MS: 500,
+
+        // Teclado virtual
+        KB_LIMITE_PX: 100,       // diferença mínima para considerar teclado aberto
+        KB_MARGEM_PX: 16,        // folga entre input e topo do teclado
+        KB_ESTABILIDADE_MS: 120, // espera antes de reposicionar quando o teclado fecha
+        KB_PADDING_FICHA_VH: 60, // padding-bottom aplicado na ficha (em vh)
 
         CHAVES_LOGOUT: ['auloo_user', 'auloo_saved_email'],
     });
@@ -110,48 +118,47 @@
        4. DOM (cache)
        ============================================================ */
     const raiz = document.documentElement;
-
     const dom = {};
 
     function montarDom() {
         // Navbar
-        dom.btnSair = $('btn-sair');
-        dom.perfilBotao = $('perfil-botao');
-        dom.perfilUsuario = $('perfil-usuario');
-        dom.btnHamburger = $('btn-hamburger');
+        dom.btnSair        = $('btn-sair');
+        dom.perfilBotao    = $('perfil-botao');
+        dom.perfilUsuario  = $('perfil-usuario');
+        dom.btnHamburger   = $('btn-hamburger');
 
         // Sidebar / ficha
-        dom.sidebar = $('sidebar');
-        dom.ficha = $('sidebar-perfil');
-        dom.overlay = $('gaveta-overlay');
-        dom.fichaFechar = $('ficha-fechar');
+        dom.sidebar        = $('sidebar');
+        dom.ficha          = $('sidebar-perfil');
+        dom.overlay        = $('gaveta-overlay');
+        dom.fichaFechar    = $('ficha-fechar');
 
         // Ficha — perfil
-        dom.fichaFoto = $('sidebar-perfil-foto');
-        dom.fichaNome = $('sidebar-perfil-nome');
-        dom.fichaEmail = $('sidebar-perfil-email');
+        dom.fichaFoto      = $('sidebar-perfil-foto');
+        dom.fichaNome      = $('sidebar-perfil-nome');
+        dom.fichaEmail     = $('sidebar-perfil-email');
 
         // Ações
-        dom.btnEditarFoto = $('btn-editar-foto');
-        dom.inputFoto = $('input-foto');
-        dom.btnEditarNome = $('btn-editar-nome');
-        dom.btnSalvarNome = $('btn-salvar-nome');
-        dom.inputNovoNome = $('input-novo-nome');
-        dom.btnEditarSenha = $('btn-editar-senha');
-        dom.inputSenhaAtual = $('input-senha-atual');
-        dom.inputSenhaNova = $('input-senha-nova');
-        dom.btnConfirmarSenha = $('btn-confirmar-senha');
+        dom.btnEditarFoto       = $('btn-editar-foto');
+        dom.inputFoto           = $('input-foto');
+        dom.btnEditarNome       = $('btn-editar-nome');
+        dom.btnSalvarNome       = $('btn-salvar-nome');
+        dom.inputNovoNome       = $('input-novo-nome');
+        dom.btnEditarSenha      = $('btn-editar-senha');
+        dom.inputSenhaAtual     = $('input-senha-atual');
+        dom.inputSenhaNova      = $('input-senha-nova');
+        dom.btnConfirmarSenha   = $('btn-confirmar-senha');
         dom.inputNovaSenhaCriar = $('input-nova-senha-criar');
-        dom.inputConfirmarSenhaCriar = $('input-confirmar-senha-criar');
-        dom.btnConfirmarCriarSenha = $('btn-confirmar-criar-senha');
-        dom.btnSaibaMais = $('btn-saiba-mais');
+        dom.inputConfirmarCriar = $('input-confirmar-senha-criar');
+        dom.btnConfirmarCriar   = $('btn-confirmar-criar-senha');
+        dom.btnSaibaMais        = $('btn-saiba-mais');
 
         // Calendário
-        dom.calendarioTitulo = $('calendario-titulo');
+        dom.calendarioTitulo    = $('calendario-titulo');
         dom.calendarioSubtitulo = $('calendario-subtitulo');
-        dom.calendarioDias = $('calendario-dias');
-        dom.btnMesAnterior = $('btn-mes-anterior');
-        dom.btnProximoMes = $('btn-proximo-mes');
+        dom.calendarioDias      = $('calendario-dias');
+        dom.btnMesAnterior      = $('btn-mes-anterior');
+        dom.btnProximoMes       = $('btn-proximo-mes');
     }
 
     /* ============================================================
@@ -169,10 +176,17 @@
             mensagem: null,
             resize: null,
             redimensionando: null,
+            kbEstabilidade: null,
         },
         listeners: [],
         resizeObserver: null,
         calendario: { mes: 0, ano: 0 },
+        kb: {
+            offset: 0,
+            razao: 0.5,
+            vvHeightAnterior: 0,
+            rafPendente: false,
+        },
     };
 
     function on(target, evento, handler, opts) {
@@ -204,7 +218,7 @@
     /** Detecta se a mudança de viewport veio do teclado virtual. */
     function veioDoTeclado() {
         if (!window.visualViewport) return false;
-        return (window.innerHeight - window.visualViewport.height) > 100;
+        return (window.innerHeight - window.visualViewport.height) > CONFIG.KB_LIMITE_PX;
     }
 
     function sincronizarTela(forcar = false) {
@@ -219,7 +233,9 @@
     let calendarioContainer = null;
 
     function ajustarLarguraFicha() {
-        if (!calendarioContainer) calendarioContainer = document.querySelector('.calendario-container');
+        if (!calendarioContainer) {
+            calendarioContainer = document.querySelector('.calendario-container');
+        }
         if (!calendarioContainer) return;
         const esquerda = calendarioContainer.getBoundingClientRect().left;
         raiz.style.setProperty('--ficha-row-w', `${window.innerWidth - esquerda}px`);
@@ -305,7 +321,178 @@
     }
 
     /* ============================================================
-       7. MENSAGENS & CONTAINERS
+       7. TECLADO VIRTUAL (KB)
+       ------------------------------------------------------------
+       Mesma lógica do login.js: quando o usuário foca um input
+       perto do fundo, empurra o container pra cima via
+       `--kb-offset` para deixá-lo visível acima do teclado.
+       ============================================================ */
+    const KB = (() => {
+        function getAppH() {
+            const v = raiz.style.getPropertyValue('--viewport-h');
+            const n = parseFloat(v);
+            return Number.isFinite(n) && n > 0 ? n : window.innerHeight;
+        }
+
+        function getTopoTeclado() {
+            const vv = window.visualViewport;
+            const topo = vv ? vv.offsetTop + vv.height : window.innerHeight;
+            return Math.min(topo, window.innerHeight);
+        }
+
+        function tecladoAberto() {
+            if (!campoEmFoco() || !window.visualViewport) return false;
+            return (getAppH() - window.visualViewport.height) > CONFIG.KB_LIMITE_PX;
+        }
+
+        /**
+         * Escolhe qual elemento serve de referência para o reposicionamento.
+         * Retorna o wrapper mais externo que faz sentido empurrar.
+         */
+        function escolherReferencia() {
+            const ativo = document.activeElement;
+            if (!ativo || !(ativo.tagName === 'INPUT' || ativo.tagName === 'TEXTAREA')) {
+                return null;
+            }
+
+            // Input dentro de wrapper de olho de senha → sobe o wrapper
+            const wrapper = ativo.closest('.wrapper-olho-senha');
+            if (wrapper) return wrapper;
+
+            // Input dentro de container expansível → sobe o container
+            const container = ativo.closest('.container-expansivel');
+            if (container) return container;
+
+            // Input dentro da ficha (fallback) → usa o input direto
+            return ativo;
+        }
+
+        function calcular() {
+            // Atualiza `--kb-visivel` enquanto o teclado está aberto
+            if (tecladoAberto()) {
+                const topo = Math.max(0, getTopoTeclado());
+                const appH = getAppH();
+                if (appH > 0) estado.kb.razao = topo / appH;
+                raiz.style.setProperty('--kb-visivel', `${topo}px`);
+            } else if (!raiz.classList.contains('kb-aberto')) {
+                raiz.style.removeProperty('--kb-visivel');
+            }
+
+            if (!tecladoAberto()) {
+                if (estado.kb.offset !== 0) {
+                    estado.kb.offset = 0;
+                    raiz.style.setProperty('--kb-offset', '0px');
+                }
+                return;
+            }
+
+            const ref = escolherReferencia();
+            if (!ref) return;
+
+            const bottomNatural = ref.getBoundingClientRect().bottom - estado.kb.offset;
+            const limite = getTopoTeclado() - CONFIG.KB_MARGEM_PX;
+            const novo = bottomNatural > limite ? limite - bottomNatural : 0;
+
+            if (Math.abs(novo - estado.kb.offset) > 2) {
+                estado.kb.offset = novo;
+                raiz.style.setProperty('--kb-offset', `${novo}px`);
+            }
+        }
+
+        function executar() {
+            if (estado.kb.rafPendente) return;
+            estado.kb.rafPendente = true;
+            requestAnimationFrame(() => {
+                estado.kb.rafPendente = false;
+                calcular();
+            });
+        }
+
+        function agendar() {
+            const vv = window.visualViewport;
+            const h = vv ? vv.height : window.innerHeight;
+            const diff = h - estado.kb.vvHeightAnterior;
+            if (Math.abs(diff) <= 1) return;
+
+            estado.kb.vvHeightAnterior = h;
+            clearTimeout(estado.timers.kbEstabilidade);
+
+            if (diff > 0) {
+                // Teclado fechando/abrindo pra cima → executa logo
+                executar();
+            } else {
+                // Teclado abrindo → espera estabilizar
+                estado.timers.kbEstabilidade = setTimeout(
+                    executar,
+                    CONFIG.KB_ESTABILIDADE_MS
+                );
+            }
+        }
+
+        function limpar() {
+            estado.kb.offset = 0;
+            raiz.style.setProperty('--kb-offset', '0px');
+            raiz.classList.remove('kb-aberto');
+            raiz.style.removeProperty('--kb-visivel');
+
+            if (dom.ficha) dom.ficha.style.paddingBottom = '';
+        }
+
+        function setup() {
+            if (window.visualViewport) {
+                on(window.visualViewport, 'resize', agendar);
+                on(window.visualViewport, 'scroll', agendar);
+            }
+            on(window, 'resize', agendar);
+
+            on(document, 'focusin', (e) => {
+                if (!e.target?.matches?.('input, textarea')) return;
+
+                raiz.classList.add('kb-aberto');
+
+                // Aplica padding-bottom dinâmico na ficha quando o campo
+                // está dentro dela — permite rolar até o input no compacto
+                if (e.target.closest('.sidebar-direita')) {
+                    if (dom.ficha) {
+                        dom.ficha.style.paddingBottom =
+                            `${CONFIG.KB_PADDING_FICHA_VH}vh`;
+                    }
+                }
+
+                // Execuções escalonadas para pegar a abertura do teclado
+                setTimeout(agendar, 50);
+                setTimeout(agendar, 200);
+                setTimeout(executar, 350);
+            });
+
+            on(document, 'focusout', () => {
+                setTimeout(() => {
+                    if (campoEmFoco()) return;
+
+                    raiz.classList.remove('kb-aberto');
+                    if (dom.ficha) dom.ficha.style.paddingBottom = '';
+
+                    clearTimeout(estado.timers.kbEstabilidade);
+                    executar();
+
+                    // Segunda passada: garante que o offset zerou
+                    setTimeout(executar, 300);
+                }, 80);
+            });
+
+            on(window, 'orientationchange', () => {
+                [50, 300, 600].forEach((ms) => setTimeout(agendar, ms));
+            });
+
+            // Quando a ficha é fechada, zera qualquer offset pendente
+            on(window, 'pagehide', limpar);
+        }
+
+        return { setup, limpar, tecladoAberto, getTopoTeclado };
+    })();
+
+    /* ============================================================
+       8. MENSAGENS & CONTAINERS
        ============================================================ */
     function mostrarMensagem(texto, tipo = 'sucesso') {
         clearTimeout(estado.timers.mensagem);
@@ -348,7 +535,8 @@
         const alvo = $(id);
         if (!alvo) return;
 
-        const jaAberto = alvo.classList.contains('aberto') || alvo.style.display === 'block';
+        const jaAberto = alvo.classList.contains('aberto')
+            || alvo.style.display === 'block';
 
         fecharTodosContainers();
 
@@ -359,7 +547,7 @@
     }
 
     /* ============================================================
-       8. PERFIL
+       9. PERFIL
        ============================================================ */
     function criarIniciais(nome) {
         const partes = String(nome || 'Usuário').trim().split(/\s+/);
@@ -471,7 +659,7 @@
         }
 
         try {
-            CONFIG.CHAVES_LOGOUT.forEach((chave) => localStorage.removeItem(chave));
+            CONFIG.CHAVES_LOGOUT.forEach((c) => localStorage.removeItem(c));
             Object.keys(localStorage)
                 .filter((c) => c.startsWith('sb-') || c.startsWith('auloo-auth'))
                 .forEach((c) => localStorage.removeItem(c));
@@ -484,7 +672,7 @@
     }
 
     /* ============================================================
-       9. AÇÕES DO PERFIL
+       10. AÇÕES DO PERFIL
        ============================================================ */
     async function executarAcao(botao, acao) {
         if (botao.disabled) return;
@@ -493,10 +681,7 @@
             await acao();
         } catch (erro) {
             console.error('[dashboard]', erro);
-            mostrarMensagem(
-                `Erro: ${erro?.message || erro}`,
-                'erro'
-            );
+            mostrarMensagem(`Erro: ${erro?.message || erro}`, 'erro');
         } finally {
             botao.disabled = false;
         }
@@ -571,11 +756,6 @@
         mostrarMensagem('Senha atualizada!');
     }
 
-    /**
-     * Verifica se o usuário já tem identidade de e-mail (senha cadastrada).
-     * Se `identities` estiver indisponível, assume true para evitar
-     * oferecer "criar senha" a quem já tem senha.
-     */
     function usuarioTemSenha() {
         if (!perfil.usuario) return false;
         const identities = perfil.usuario.identities;
@@ -585,7 +765,7 @@
 
     async function criarSenha() {
         const senha = dom.inputNovaSenhaCriar?.value || '';
-        const confirmacao = dom.inputConfirmarSenhaCriar?.value || '';
+        const confirmacao = dom.inputConfirmarCriar?.value || '';
 
         if (!senha || !confirmacao) {
             mostrarMensagem('Preencha todos os campos!', 'erro');
@@ -616,7 +796,7 @@
         if (resultado.data?.user) perfil.usuario = resultado.data.user;
 
         if (dom.inputNovaSenhaCriar) dom.inputNovaSenhaCriar.value = '';
-        if (dom.inputConfirmarSenhaCriar) dom.inputConfirmarSenhaCriar.value = '';
+        if (dom.inputConfirmarCriar) dom.inputConfirmarCriar.value = '';
         fecharContainer('container-criar-senha');
         mostrarMensagem('Senha criada!');
     }
@@ -639,14 +819,16 @@
         }
 
         try {
-            const caminho = `${perfil.usuario.id}/avatar_${perfil.usuario.id}_${Date.now()}.${extensao}`;
+            const caminho =
+                `${perfil.usuario.id}/avatar_${perfil.usuario.id}_${Date.now()}.${extensao}`;
 
             verificar(await db.storage.from('avatars').upload(caminho, arquivo, {
                 cacheControl: '3600',
                 contentType: arquivo.type,
             }));
 
-            const urlPublica = db.storage.from('avatars').getPublicUrl(caminho).data.publicUrl;
+            const urlPublica =
+                db.storage.from('avatars').getPublicUrl(caminho).data.publicUrl;
 
             verificar(await db.auth.updateUser({ data: { avatar_url: urlPublica } }));
             verificar(await db.from('profiles').upsert({
@@ -713,7 +895,7 @@
                 } else {
                     alternarContainer('container-criar-senha');
                     if (dom.inputNovaSenhaCriar) dom.inputNovaSenhaCriar.value = '';
-                    if (dom.inputConfirmarSenhaCriar) dom.inputConfirmarSenhaCriar.value = '';
+                    if (dom.inputConfirmarCriar) dom.inputConfirmarCriar.value = '';
                 }
             });
         }
@@ -725,10 +907,10 @@
             });
         }
 
-        if (dom.btnConfirmarCriarSenha) {
-            on(dom.btnConfirmarCriarSenha, 'click', (e) => {
+        if (dom.btnConfirmarCriar) {
+            on(dom.btnConfirmarCriar, 'click', (e) => {
                 e.preventDefault();
-                executarAcao(dom.btnConfirmarCriarSenha, criarSenha);
+                executarAcao(dom.btnConfirmarCriar, criarSenha);
             });
         }
 
@@ -757,7 +939,7 @@
     }
 
     /* ============================================================
-       10. LAYOUT (sidebar / ficha / overlay)
+       11. LAYOUT (sidebar / ficha / overlay)
        ============================================================ */
     function setupLayout() {
         const { sidebar, ficha, overlay, perfilBotao, fichaFechar, btnHamburger } = dom;
@@ -793,6 +975,7 @@
             ficha.classList.remove('ativa');
             document.body.classList.remove('ficha-aberta');
             fecharTodosContainers();
+            KB.limpar();
             atualizarEstado();
         }
 
@@ -862,7 +1045,7 @@
     }
 
     /* ============================================================
-       11. CALENDÁRIO
+       12. CALENDÁRIO
        ============================================================ */
     function setupCalendario() {
         const { calendarioTitulo, calendarioSubtitulo, calendarioDias,
@@ -923,7 +1106,7 @@
     }
 
     /* ============================================================
-       12. AUTH LISTENER
+       13. AUTH LISTENER
        ============================================================ */
     function setupAuthListener() {
         const db = Auth.getSupabaseClient?.();
@@ -965,7 +1148,7 @@
     }
 
     /* ============================================================
-       13. BOOTSTRAP
+       14. BOOTSTRAP
        ============================================================ */
     function bootstrap() {
         montarDom();
@@ -974,6 +1157,7 @@
 
         sincronizarTela(true);
         setupTela();
+        KB.setup();
         setupPerfil();
         setupLayout();
         setupCalendario();
