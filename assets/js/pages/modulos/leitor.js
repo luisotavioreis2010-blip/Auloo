@@ -1,12 +1,6 @@
 /* ============================================================
-   LEITOR.JS — v14
-   Leitor com:
-   - EPUB via Edge Function
-   - Marcar texto FUNCIONAL (visual imediato + salva)
-   - 2 paginas lado a lado quando possivel
-   - Contador correto (1 ate o final)
-   - Histórico de leitura
-   - Ficha do leitor sem "Voltar ao catalogo"
+   LEITOR.JS — v15
+   Leitor com 2 paginas | Marcar texto | Historico
    ============================================================ */
 (function () {
     'use strict';
@@ -18,7 +12,6 @@
     const TAMANHO_FONTE_MIN = 14;
     const TAMANHO_FONTE_MAX = 28;
     const TAMANHO_FONTE_PADRAO = 19;
-
     const MIN_WIDTH_PARA_LIVRO = 1024;
 
     const $ = (id) => document.getElementById(id);
@@ -41,10 +34,8 @@
         capa: ''
     };
 
-    /* ============================================================
-       HELPERS
-       ============================================================ */
     function getDb() {
+        if (window.getSupabaseClient) return window.getSupabaseClient();
         return window.supabaseClient ||
                (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
     }
@@ -52,7 +43,7 @@
     async function aguardarDb() {
         for (let i = 0; i < SUPABASE_TENTATIVAS; i++) {
             const d = getDb();
-            if (d) return d;
+            if (d && d.auth && typeof d.auth.getSession === 'function') return d;
             await new Promise((r) => setTimeout(r, SUPABASE_INTERVALO_MS));
         }
         return null;
@@ -69,24 +60,18 @@
             if (!r.ok) throw new Error('Falha ao baixar EPUB: ' + r.status);
             return await r.arrayBuffer();
         }
-
         const base = config.url.replace(/\/$/, '');
         const proxyUrl = base + '/functions/v1/epub-proxy?url=' + encodeURIComponent(urlOriginal);
-
         const headers = {};
         if (config.anonKey) {
             headers['Authorization'] = 'Bearer ' + config.anonKey;
             headers['apikey'] = config.anonKey;
         }
-
-        const r = await fetch(proxyUrl, { headers: headers });
+        const r = await fetch(proxyUrl, { headers });
         if (!r.ok) throw new Error('Proxy retornou ' + r.status);
         return await r.arrayBuffer();
     }
 
-    /* ============================================================
-       PARAMETROS
-       ============================================================ */
     function lerParametros() {
         const params = new URLSearchParams(window.location.search);
         estado.url = params.get('url');
@@ -99,16 +84,12 @@
             mostrarErro('URL do livro nao foi fornecida.');
             return false;
         }
-
         document.title = estado.titulo + ' | Acervo';
         const el = $('leitor-titulo');
         if (el) el.textContent = estado.titulo;
         return true;
     }
 
-    /* ============================================================
-       AUTENTICACAO
-       ============================================================ */
     async function aguardarSessao(d) {
         for (let i = 0; i < SUPABASE_TENTATIVAS; i++) {
             const resultado = await d.auth.getSession();
@@ -122,11 +103,7 @@
 
     async function iniciarSessao() {
         db = await aguardarDb();
-        if (!db) {
-            console.error('Supabase nao inicializou');
-            irParaLogin();
-            return false;
-        }
+        if (!db) { irParaLogin(); return false; }
 
         db.auth.onAuthStateChange((evento) => {
             if (evento === 'SIGNED_OUT') irParaLogin();
@@ -134,10 +111,7 @@
 
         try {
             const sessao = await aguardarSessao(db);
-            if (!sessao) {
-                irParaLogin();
-                return false;
-            }
+            if (!sessao) { irParaLogin(); return false; }
 
             usuario = sessao.user;
             const meta = usuario.user_metadata || {};
@@ -151,7 +125,6 @@
             const elEmail = $('sidebar-perfil-email');
             if (elNome) elNome.textContent = nome.split('@')[0];
             if (elEmail) elEmail.textContent = usuario.email || '';
-
             return true;
         } catch (erro) {
             console.error('Erro getSession:', erro);
@@ -173,7 +146,6 @@
             container.appendChild(span);
             return;
         }
-
         const img = document.createElement('img');
         img.className = 'foto-perfil';
         img.alt = 'Foto de perfil';
@@ -189,9 +161,6 @@
         container.appendChild(img);
     }
 
-    /* ============================================================
-       HISTORICO
-       ============================================================ */
     async function registrarHistorico() {
         if (!db || !usuario || !estado.slug) return;
         try {
@@ -203,14 +172,9 @@
                 book_cover: estado.capa || null,
                 last_read_at: new Date().toISOString()
             }, { onConflict: 'user_id,book_slug' });
-        } catch (e) {
-            console.warn('Erro ao registrar historico:', e);
-        }
+        } catch (e) { console.warn('Erro historico:', e); }
     }
 
-    /* ============================================================
-       PROGRESSO
-       ============================================================ */
     async function carregarProgresso() {
         if (!db || !usuario || !estado.slug) return null;
         try {
@@ -220,10 +184,7 @@
                 .eq('book_slug', estado.slug)
                 .maybeSingle();
             return r.data || null;
-        } catch (e) {
-            console.warn('Erro ao carregar progresso:', e);
-            return null;
-        }
+        } catch (e) { return null; }
     }
 
     function salvarProgresso(position, percent) {
@@ -239,9 +200,7 @@
                     percent: percent,
                     updated_at: new Date().toISOString()
                 }, { onConflict: 'user_id,book_slug' });
-            } catch (e) {
-                console.warn('Erro ao salvar progresso:', e);
-            }
+            } catch (e) { console.warn('Erro progresso:', e); }
         }, 1200);
     }
 
@@ -254,9 +213,6 @@
         if (texto) texto.textContent = Math.round(percent) + '%';
     }
 
-    /* ============================================================
-       MARCACOES
-       ============================================================ */
     async function carregarMarcacoes() {
         if (!db || !usuario || !estado.slug) return [];
         try {
@@ -266,10 +222,7 @@
                 .eq('book_slug', estado.slug)
                 .order('created_at', { ascending: false });
             return r.data || [];
-        } catch (e) {
-            console.warn('Erro ao carregar marcacoes:', e);
-            return [];
-        }
+        } catch (e) { return []; }
     }
 
     async function salvarMarcacao(cfi, texto) {
@@ -283,16 +236,12 @@
                 text: texto
             }).select('id, cfi, text, created_at').single();
             return r.data;
-        } catch (e) {
-            console.warn('Erro ao salvar marcacao:', e);
-            return null;
-        }
+        } catch (e) { return null; }
     }
 
     function renderizarMarcacoes() {
         const lista = $('lista-marcacoes');
         if (!lista) return;
-
         lista.textContent = '';
 
         if (!estado.marcacoes || estado.marcacoes.length === 0) {
@@ -302,53 +251,41 @@
             lista.appendChild(li);
             return;
         }
-
         estado.marcacoes.forEach((m) => {
             const li = document.createElement('li');
             li.className = 'marcacao-item';
             li.textContent = m.text.length > 140 ? m.text.slice(0, 140) + '...' : m.text;
             li.title = 'Clique para ir ao trecho';
-            li.addEventListener('click', () => {
-                if (rendition && m.cfi) rendition.display(m.cfi);
-            });
+            li.addEventListener('click', () => { if (rendition && m.cfi) rendition.display(m.cfi); });
             lista.appendChild(li);
         });
     }
 
-    /* ============================================================
-       MODO MARCACAO — injeta listeners nos iframes
-       ============================================================ */
     function aplicarModoMarcacao() {
         document.body.classList.toggle('modo-marcacao', modoMarcacao);
-
         const btn = $('btn-marcar-modo');
         if (btn) {
             btn.setAttribute('aria-pressed', String(modoMarcacao));
             const span = btn.querySelector('span');
             if (span) span.textContent = modoMarcacao ? 'Marcando' : 'Marcar';
         }
-
         injetarListenersEmTodos();
     }
 
     function injetarListenersEmTodos() {
         if (!rendition) return;
-        const contents = rendition.getContents();
-        contents.forEach((c) => injetarListeners(c));
+        rendition.getContents().forEach((c) => injetarListeners(c));
     }
 
     function injetarListeners(contents) {
         if (!contents || !contents.document) return;
         if (contents._acervoListeners) return;
         contents._acervoListeners = true;
-
         const doc = contents.document;
-
         doc.addEventListener('mouseup', () => {
             if (!modoMarcacao) return;
             setTimeout(() => processarSelecao(contents), 50);
         });
-
         doc.addEventListener('touchend', () => {
             if (!modoMarcacao) return;
             setTimeout(() => processarSelecao(contents), 50);
@@ -359,50 +296,32 @@
         try {
             const sel = contents.window.getSelection();
             if (!sel || sel.rangeCount === 0) return;
-
             const texto = sel.toString().trim();
             if (!texto || texto.length < 3) return;
 
             const range = sel.getRangeAt(0);
             const cfi = contents.cfiFromRange(range);
-            if (!cfi) return;
-
-            if (cfi === cfiSelecaoAtual) return;
+            if (!cfi || cfi === cfiSelecaoAtual) return;
             cfiSelecaoAtual = cfi;
 
-            // Aplica o highlight IMEDIATAMENTE (visual)
-            try {
-                contents.addClass('acervo-highlight', cfi);
-            } catch (e) {
-                console.warn('addClass falhou:', e);
-            }
-
+            try { contents.addClass('acervo-highlight', cfi); } catch (e) {}
             sel.removeAllRanges();
 
-            // Salva no banco em background
             const marcacao = await salvarMarcacao(cfi, texto);
             if (marcacao) {
                 estado.marcacoes.unshift(marcacao);
                 renderizarMarcacoes();
             }
-
-        } catch (e) {
-            console.warn('Erro ao processar selecao:', e);
-        }
+        } catch (e) { console.warn('Erro selecao:', e); }
     }
 
     function aplicarHighlightsSalvos() {
         if (!rendition || !estado.marcacoes) return;
         estado.marcacoes.forEach((m) => {
-            try {
-                rendition.annotations.highlight(m.cfi, {}, () => {}, 'acervo-highlight');
-            } catch (e) {}
+            try { rendition.annotations.highlight(m.cfi, {}, () => {}, 'acervo-highlight'); } catch (e) {}
         });
     }
 
-    /* ============================================================
-       EPUB
-       ============================================================ */
     async function abrirLivro() {
         const loading = $('leitor-loading');
         const livro = $('leitor-livro');
@@ -420,7 +339,6 @@
             if (loading) loading.hidden = true;
 
             const podeLivro = window.innerWidth >= MIN_WIDTH_PARA_LIVRO;
-
             if (podeLivro) {
                 if (livro) livro.hidden = false;
                 await renderizarLivroAberto();
@@ -428,12 +346,9 @@
                 if (areaUnica) areaUnica.hidden = false;
                 await renderizarPaginaUnica();
             }
-
-            // Registra no historico
             registrarHistorico();
-
         } catch (erro) {
-            console.error('Erro ao abrir EPUB:', erro);
+            console.error('Erro EPUB:', erro);
             mostrarErro('Nao foi possivel carregar este livro. ' + (erro.message || ''));
         }
     }
@@ -441,62 +356,42 @@
     async function renderizarLivroAberto() {
         const elEsq = $('area-esq');
         if (!elEsq) return;
-
         rendition = book.renderTo('area-esq', {
-            width: '100%',
-            height: '100%',
-            flow: 'paginated',
-            spread: 'auto',
-            minSpreadWidth: 600
+            width: '100%', height: '100%',
+            flow: 'paginated', spread: 'auto', minSpreadWidth: 600
         });
-
-        aplicarFonte();
-        aplicarTema();
+        aplicarFonte(); aplicarTema();
 
         const progresso = await carregarProgresso();
-        if (progresso && progresso.position) {
-            await rendition.display(progresso.position);
-        } else {
-            await rendition.display();
-        }
+        if (progresso && progresso.position) await rendition.display(progresso.position);
+        else await rendition.display();
 
         await book.locations.generate(600);
         paginasTotais = book.locations.length();
-
         configurarEventosRendition();
     }
 
     async function renderizarPaginaUnica() {
         const area = $('area');
         if (!area) return;
-
         rendition = book.renderTo('area', {
-            width: '100%',
-            height: '100%',
-            flow: 'paginated',
-            spread: 'none'
+            width: '100%', height: '100%',
+            flow: 'paginated', spread: 'none'
         });
-
-        aplicarFonte();
-        aplicarTema();
+        aplicarFonte(); aplicarTema();
 
         const progresso = await carregarProgresso();
-        if (progresso && progresso.position) {
-            await rendition.display(progresso.position);
-        } else {
-            await rendition.display();
-        }
+        if (progresso && progresso.position) await rendition.display(progresso.position);
+        else await rendition.display();
 
         await book.locations.generate(600);
         paginasTotais = book.locations.length();
-
         configurarEventosRendition();
     }
 
     function configurarEventosRendition() {
         if (!rendition) return;
 
-        // Carrega marcacoes e aplica
         (async () => {
             estado.marcacoes = await carregarMarcacoes();
             renderizarMarcacoes();
@@ -515,12 +410,9 @@
 
             atualizarProgresso(percent);
             salvarProgresso(cfi, percent);
-
-            // Re-injeta listeners no novo iframe
             setTimeout(injetarListenersEmTodos, 300);
         });
 
-        // Quando cada secao for renderizada, injeta listeners
         rendition.on('rendered', (section, view) => {
             if (view && view.contents) injetarListeners(view.contents);
         });
@@ -538,9 +430,6 @@
         });
     }
 
-    /* ============================================================
-       CONTROLES
-       ============================================================ */
     function aplicarFonte() {
         if (!rendition) return;
         rendition.themes.fontSize(tamanhoFonte + 'px');
@@ -553,18 +442,14 @@
                 'font-family': "'Cormorant Garamond', Georgia, serif",
                 'font-size': tamanhoFonte + 'px',
                 'line-height': '1.75',
-                'color': '#1A1614',
-                'background': '#F8F2E4',
-                'padding': '2rem 3rem',
-                'overflow': 'hidden',
-                '-webkit-user-select': 'text',
-                'user-select': 'text'
+                'color': '#1A1614', 'background': '#F8F2E4',
+                'padding': '2rem 3rem', 'overflow': 'hidden',
+                '-webkit-user-select': 'text', 'user-select': 'text'
             },
             'p': { 'margin': '0 0 1em 0', 'text-align': 'justify' },
             'h1, h2, h3': {
                 'font-family': "'Playfair Display', Georgia, serif",
-                'font-style': 'italic',
-                'color': '#5C1A1A'
+                'font-style': 'italic', 'color': '#5C1A1A'
             },
             'a': { 'color': '#5C1A1A' },
             '.acervo-highlight': {
@@ -580,31 +465,20 @@
         const btnMenos = $('btn-font-menos');
         const btnMarcar = $('btn-marcar-modo');
 
-        if (btnMais) {
-            btnMais.addEventListener('click', () => {
-                tamanhoFonte = Math.min(TAMANHO_FONTE_MAX, tamanhoFonte + 2);
-                aplicarFonte();
-            });
-        }
-
-        if (btnMenos) {
-            btnMenos.addEventListener('click', () => {
-                tamanhoFonte = Math.max(TAMANHO_FONTE_MIN, tamanhoFonte - 2);
-                aplicarFonte();
-            });
-        }
-
-        if (btnMarcar) {
-            btnMarcar.addEventListener('click', () => {
-                modoMarcacao = !modoMarcacao;
-                aplicarModoMarcacao();
-            });
-        }
+        if (btnMais) btnMais.addEventListener('click', () => {
+            tamanhoFonte = Math.min(TAMANHO_FONTE_MAX, tamanhoFonte + 2);
+            aplicarFonte();
+        });
+        if (btnMenos) btnMenos.addEventListener('click', () => {
+            tamanhoFonte = Math.max(TAMANHO_FONTE_MIN, tamanhoFonte - 2);
+            aplicarFonte();
+        });
+        if (btnMarcar) btnMarcar.addEventListener('click', () => {
+            modoMarcacao = !modoMarcacao;
+            aplicarModoMarcacao();
+        });
     }
 
-    /* ============================================================
-       LAYOUT
-       ============================================================ */
     function configurarLayout() {
         const ficha = $('sidebar-perfil');
         const overlay = $('gaveta-overlay');
@@ -625,7 +499,6 @@
                 atualizarOverlay();
             });
         }
-
         if (btnFecharFicha && ficha) {
             btnFecharFicha.addEventListener('click', () => {
                 ficha.classList.remove('ativa');
@@ -633,7 +506,6 @@
                 atualizarOverlay();
             });
         }
-
         if (overlay) {
             overlay.addEventListener('click', () => {
                 if (ficha) ficha.classList.remove('ativa');
@@ -643,31 +515,21 @@
         }
     }
 
-    /* ============================================================
-       ERRO
-       ============================================================ */
     function mostrarErro(mensagem) {
         const loading = $('leitor-loading');
         const erro = $('leitor-erro');
         const msg = $('erro-mensagem');
-
         if (loading) loading.hidden = true;
         if (msg) msg.textContent = mensagem;
         if (erro) erro.hidden = false;
     }
 
-    /* ============================================================
-       INICIALIZACAO
-       ============================================================ */
     async function iniciar() {
         if (!lerParametros()) return;
-
         const ok = await iniciarSessao();
         if (!ok) return;
-
         configurarLayout();
         configurarControles();
-
         await abrirLivro();
     }
 
