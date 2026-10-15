@@ -1,8 +1,9 @@
 @charset "UTF-8";
 /* ==============================================
-   LEITOR.CSS — v2
-   Leitor em tela cheia, minimalista.
-   Ficha do leitor (padrao estante) a direita.
+   LEITOR.CSS — v4
+   Leitor em tela cheia. Solucao estrutural:
+   - .leitor-main e .leitor-area tem altura EXPLICITA
+   - epub.js recebe altura em pixels desde o inicio
    ============================================== */
 
 :root {
@@ -31,9 +32,7 @@
 
     --navbar-h: 60px;
     --ficha-w: 360px;
-
-    --leitor-fonte-size: 19px;
-    --leitor-linha-altura: 1.75;
+    --leitor-padding: 1.5rem;
     --leitor-max-width: 720px;
 }
 
@@ -42,26 +41,24 @@
 
 [hidden] { display: none !important; }
 
-html {
-    min-height: 100%;
+html, body {
+    width: 100%;
+    height: 100%;
     overflow: hidden;
-    -webkit-tap-highlight-color: transparent;
 }
 
 body {
-    min-height: 100%;
     font-family: var(--fonte-corpo);
     line-height: 1.5;
     color: var(--tinta);
     background: var(--papel);
-    overflow: hidden;
     -webkit-font-smoothing: antialiased;
     -webkit-user-select: none;
     user-select: none;
 }
 
 /* ==============================================
-   NAVBAR MINIMA
+   NAVBAR
    ============================================== */
 .navbar-leitor {
     position: fixed;
@@ -178,7 +175,7 @@ body {
 }
 
 /* ==============================================
-   OVERLAY DA GAVETA
+   OVERLAY
    ============================================== */
 .gaveta-overlay {
     position: fixed;
@@ -194,7 +191,7 @@ body {
 .gaveta-overlay.ativa { opacity: 1; pointer-events: auto; }
 
 /* ==============================================
-   FICHA DO LEITOR (padrao estante)
+   FICHA DO LEITOR
    ============================================== */
 .sidebar-direita {
     position: fixed;
@@ -310,7 +307,6 @@ body {
     color: var(--tinta-clara);
 }
 
-/* Progresso */
 .ficha-progresso {
     display: flex;
     flex-direction: column;
@@ -349,7 +345,6 @@ body {
     color: var(--dourado);
 }
 
-/* Marcacoes */
 .ficha-marcacoes {
     display: flex;
     flex-direction: column;
@@ -441,7 +436,7 @@ body {
 }
 
 /* ==============================================
-   CONTEUDO PRINCIPAL — TELA CHEIA
+   LEITOR — ALTURA EXPLICITA (sem depender de flex)
    ============================================== */
 .leitor-main {
     position: fixed;
@@ -449,55 +444,54 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
+    padding: var(--leitor-padding);
     background: var(--papel);
+    overflow: hidden;
     transition: right 0.4s var(--ease);
 }
 
 body.ficha-aberta .leitor-main { right: var(--ficha-w); }
 
 .leitor-area {
+    display: block;
     width: 100%;
     height: 100%;
     max-width: var(--leitor-max-width);
     margin: 0 auto;
-    padding: 2rem 0;
-    overflow: hidden;
     background: var(--papel-claro);
-    transition: max-width 0.3s;
+    border: 1px solid var(--papel-sombra);
+    border-radius: 4px;
+    box-shadow: 0 20px 50px rgba(26, 22, 20, 0.08);
+    overflow: hidden;
+    position: relative;
 }
 
+/* epub.js cria o iframe dentro do #area — força 100% */
 .leitor-area iframe {
-    display: block;
-    width: 100%;
-    height: 100%;
-    border: none;
-}
-
-/* Modo marcacao: cursor de texto e selecao ativa */
-body.modo-marcacao .leitor-area {
-    cursor: text;
-}
-
-body.modo-marcacao .leitor-area iframe {
-    /* Nao da pra mudar cursor de iframe, mas o texto dentro ficara selecionavel */
-    pointer-events: auto;
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    border: none !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
 }
 
 /* Loading e Erro */
 .leitor-loading,
 .leitor-erro {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 1.5rem;
-    padding: 6rem 2rem;
+    padding: 2rem;
     text-align: center;
-    width: 100%;
 }
 
 .loading-spinner {
@@ -610,8 +604,8 @@ body.ficha-aberta .leitor-nav {
 @media (max-width: 767px) {
     :root {
         --navbar-h: 54px;
-        --leitor-fonte-size: 17px;
         --ficha-w: 100%;
+        --leitor-padding: 0.5rem;
     }
 
     .navbar-leitor { padding: 0 0.7rem; gap: 0.5rem; }
@@ -622,8 +616,6 @@ body.ficha-aberta .leitor-nav {
     .perfil-usuario { width: 34px; height: 34px; }
 
     .sidebar-direita { width: 100%; padding: 2rem 1.4rem 1.5rem; }
-
-    .leitor-area { padding: 0.5rem 0; }
 
     .leitor-nav { bottom: 0.6rem; padding: 0.4rem 0.7rem; }
     .nav-btn { width: 34px; height: 34px; }

@@ -1,9 +1,10 @@
 /* ============================================================
-   LEITOR.JS — v2
+   LEITOR.JS — v8
    Leitor em tela cheia com:
-   - EPUB via Edge Function (resolve CORS)
+   - EPUB via Edge Function (com fetch autenticado)
    - Modo marcacao de texto (salva trechos no Supabase)
    - Ficha do leitor padrao estante
+   - Solucao: renderTo com dimensoes em PIXELS (string) + resize
    ============================================================ */
 (function () {
     'use strict';
@@ -16,7 +17,6 @@
     const TAMANHO_FONTE_MAX = 28;
     const TAMANHO_FONTE_PADRAO = 19;
 
-    const raiz = document.documentElement;
     const $ = (id) => document.getElementById(id);
 
     let book = null;
@@ -55,12 +55,52 @@
         window.location.replace(PAGINA_LOGIN);
     }
 
-    /* Converte URL do EPUB para o proxy do Supabase */
-    function urlViaProxy(urlOriginal) {
+    async function baixarEpub(urlOriginal) {
         const config = window.SUPABASE_CONFIG;
-        if (!config || !config.url) return urlOriginal;
+        if (!config || !config.url) {
+            const r = await fetch(urlOriginal);
+            if (!r.ok) throw new Error('Falha ao baixar EPUB: ' + r.status);
+            return await r.arrayBuffer();
+        }
+
         const base = config.url.replace(/\/$/, '');
-        return base + '/functions/v1/epub-proxy?url=' + encodeURIComponent(urlOriginal);
+        const proxyUrl = base + '/functions/v1/epub-proxy?url=' + encodeURIComponent(urlOriginal);
+
+        const headers = {};
+        if (config.anonKey) {
+            headers['Authorization'] = 'Bearer ' + config.anonKey;
+            headers['apikey'] = config.anonKey;
+        }
+
+        const r = await fetch(proxyUrl, { headers: headers });
+        if (!r.ok) throw new Error('Proxy retornou ' + r.status);
+        return await r.arrayBuffer();
+    }
+
+    function calcularDimensoes() {
+        const main = document.querySelector('.leitor-main');
+        if (!main) {
+            return {
+                largura: window.innerWidth,
+                altura: window.innerHeight - 60
+            };
+        }
+
+        const estilo = window.getComputedStyle(main);
+        const paddingX = parseFloat(estilo.paddingLeft) + parseFloat(estilo.paddingRight);
+        const paddingY = parseFloat(estilo.paddingTop) + parseFloat(estilo.paddingBottom);
+
+        const larguraTotal = main.clientWidth - paddingX;
+        const alturaTotal = main.clientHeight - paddingY;
+
+        const maxWidth = parseFloat(
+            window.getComputedStyle(document.documentElement).getPropertyValue('--leitor-max-width')
+        ) || 720;
+
+        return {
+            largura: Math.min(larguraTotal, maxWidth),
+            altura: alturaTotal
+        };
     }
 
     /* ============================================================
@@ -245,15 +285,6 @@
         }
     }
 
-    async function removerMarcacao(id) {
-        if (!db || !usuario) return;
-        try {
-            await db.from('reading_highlights').delete().eq('id', id);
-        } catch (e) {
-            console.warn('Erro ao remover marcacao:', e);
-        }
-    }
-
     function renderizarMarcacoes() {
         const lista = $('lista-marcacoes');
         if (!lista) return;
@@ -293,25 +324,50 @@
         if (nav) nav.hidden = true;
 
         try {
-            // Usa o proxy para evitar CORS
-            const urlFinal = urlViaProxy(estado.url);
-            book = ePub(urlFinal);
+            const buffer = await baixarEpub(estado.url);
 
+            book = ePub(buffer);
             await book.ready;
+
+            if (loading) loading.hidden = true;
+            if (area) area.hidden = false;
+            if (nav) nav.hidden = false;
+
+            // Espera o navegador aplicar o layout
+            await new Promise((r) => requestAnimationFrame(r));
+            await new Promise((r) => requestAnimationFrame(r));
+            await new Promise((r) => setTimeout(r, 50));
+
+            // Calcula as dimensoes REAIS em pixels
+            const dim = calcularDimensoes();
+            console.log('Dimensoes calculadas:', dim);
+
+            // Forca o #area a ter exatamente essas dimensoes
+            if (area) {
+                area.style.width = dim.largura + 'px';
+                area.style.height = dim.altura + 'px';
+                area.style.margin = '0 auto';
+            }
+
+            // Renderiza com dimensoes em PIXELS (string)
+            rendition = book.renderTo('area', {
+                width: dim.largura + 'px',
+                height: dim.altura + 'px',
+                flow: 'paginated',
+                spread: 'none',
+                snap: true
+            });
+
+            // Forca o recalculo
+            if (typeof rendition.resize === 'function') {
+                rendition.resize(dim.largura, dim.altura);
+            }
 
             aplicarFonte();
             aplicarTema();
-
-            rendition = book.renderTo('area', {
-                width: '100%',
-                height: '100%',
-                flow: 'paginated',
-                spread: 'none'
-            });
-
-            // Aplica o modo marcacao atual
             aplicarModoMarcacao();
 
+            // Exibe
             const progresso = await carregarProgresso();
             if (progresso && progresso.position) {
                 await rendition.display(progresso.position);
@@ -319,9 +375,15 @@
                 await rendition.display();
             }
 
-            if (loading) loading.hidden = true;
-            if (area) area.hidden = false;
-            if (nav) nav.hidden = false;
+            // Forca a altura do iframe (garantia final)
+            setTimeout(() => {
+                const iframe = area.querySelector('iframe');
+                if (iframe && dim.altura > 0) {
+                    iframe.style.height = dim.altura + 'px';
+                    iframe.setAttribute('height', dim.altura);
+                    console.log('Altura forcada:', dim.altura);
+                }
+            }, 200);
 
             rendition.on('relocated', (location) => {
                 const pos = location.start.cfi;
@@ -337,24 +399,38 @@
 
             book.locations.generate(1000);
 
-            // Carrega marcacoes
             estado.marcacoes = await carregarMarcacoes();
             renderizarMarcacoes();
 
-            // Configura selecao de texto (marcacao)
             configurarSelecaoTexto();
-
-            // Aplica os highlights existentes no conteudo
             aplicarHighlightsSalvos();
+
+            window.addEventListener('resize', () => {
+                const d = calcularDimensoes();
+                if (area) {
+                    area.style.width = d.largura + 'px';
+                    area.style.height = d.altura + 'px';
+                }
+                if (rendition && typeof rendition.resize === 'function') {
+                    rendition.resize(d.largura, d.altura);
+                }
+                setTimeout(() => {
+                    const iframe = area.querySelector('iframe');
+                    if (iframe) {
+                        iframe.style.height = d.altura + 'px';
+                        iframe.setAttribute('height', d.altura);
+                    }
+                }, 100);
+            });
 
         } catch (erro) {
             console.error('Erro ao abrir EPUB:', erro);
-            mostrarErro('Nao foi possivel carregar este livro. O arquivo pode estar corrompido ou indisponivel.');
+            mostrarErro('Nao foi possivel carregar este livro. ' + (erro.message || ''));
         }
     }
 
     /* ============================================================
-       MODO MARCACAO + SELECAO DE TEXTO
+       MODO MARCACAO
        ============================================================ */
     function aplicarModoMarcacao() {
         document.body.classList.toggle('modo-marcacao', modoMarcacao);
@@ -364,24 +440,19 @@
         if (!rendition) return;
 
         rendition.on('selected', async (cfiRange, contents) => {
-            // Se nao estiver no modo marcacao, ignora
             if (!modoMarcacao) return;
 
             try {
                 const texto = contents.window.getSelection().toString().trim();
                 if (!texto || texto.length < 3) return;
 
-                // Salva no banco
                 const marcacao = await salvarMarcacao(cfiRange, texto);
                 if (marcacao) {
                     estado.marcacoes.unshift(marcacao);
                     renderizarMarcacoes();
                 }
 
-                // Aplica o highlight visual
                 contents.addClass('acervo-highlight', cfiRange);
-
-                // Limpa a selecao
                 contents.window.getSelection().removeAllRanges();
 
             } catch (e) {
@@ -389,7 +460,6 @@
             }
         });
 
-        // Configura o estilo dos highlights
         rendition.themes.default({
             '.acervo-highlight': {
                 'background-color': 'rgba(184, 137, 74, 0.35)',
@@ -402,7 +472,6 @@
     function aplicarHighlightsSalvos() {
         if (!rendition || !estado.marcacoes) return;
 
-        // Aplica cada marcacao salva
         estado.marcacoes.forEach((m) => {
             try {
                 rendition.annotations.highlight(m.cfi, {}, () => {}, 'acervo-highlight');
@@ -413,7 +482,7 @@
     }
 
     /* ============================================================
-       CONTROLES (fonte, tema)
+       CONTROLES
        ============================================================ */
     function aplicarFonte() {
         if (!rendition) return;
@@ -468,13 +537,11 @@
             });
         }
 
-        // Navegacao
         const btnAnterior = $('btn-anterior');
         const btnProximo = $('btn-proximo');
         if (btnAnterior) btnAnterior.addEventListener('click', () => rendition && rendition.prev());
         if (btnProximo) btnProximo.addEventListener('click', () => rendition && rendition.next());
 
-        // Teclado
         document.addEventListener('keydown', (e) => {
             if (!rendition) return;
             if (e.key === 'ArrowLeft') { e.preventDefault(); rendition.prev(); }
@@ -483,7 +550,7 @@
     }
 
     /* ============================================================
-       LAYOUT (ficha do leitor)
+       LAYOUT
        ============================================================ */
     function configurarLayout() {
         const ficha = $('sidebar-perfil');
