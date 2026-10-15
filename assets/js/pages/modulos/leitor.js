@@ -1,9 +1,8 @@
 /* ============================================================
-   LEITOR.JS — v16
-   Correcoes:
-   - Numeracao aparece na primeira pagina
-   - Texto nao some mais a partir da pagina 3
-   - Resize feito DEPOIS do display
+   LEITOR.JS — v15 (VERSAO QUE FUNCIONAVA)
+   - Texto aparece em todas as paginas
+   - Navegacao com botoes
+   - Marcar texto funcionando
    ============================================================ */
 (function () {
     'use strict';
@@ -28,7 +27,6 @@
     let paginasTotais = 0;
     let modoMarcacao = false;
     let cfiSelecaoAtual = null;
-    let jaAtualizouNumeracao = false;
 
     const estado = {
         url: null,
@@ -326,53 +324,6 @@
         });
     }
 
-    /* ============================================================
-       NUMERACAO DE PAGINA
-       ============================================================ */
-    function atualizarNumeracao(location) {
-        if (!location || !location.start) return;
-
-        const el = $('nav-pagina');
-        if (!el) return;
-
-        // Tenta primeiro book.locations (mais preciso)
-        let paginaAtual = -1;
-        try {
-            if (book.locations && book.locations.length() > 0) {
-                paginaAtual = book.locations.locationFromCfi(location.start.cfi);
-            }
-        } catch (e) { /* ignora */ }
-
-        if (paginaAtual >= 0 && paginasTotais > 0) {
-            el.textContent = (paginaAtual + 1) + ' / ' + paginasTotais;
-            return;
-        }
-
-        // Fallback: usa location.start.displayed
-        if (location.start.displayed) {
-            const d = location.start.displayed;
-            if (d.page && d.total) {
-                el.textContent = d.page + ' / ' + d.total;
-                return;
-            }
-        }
-
-        // Ultimo fallback: mostra algo
-        if (el.textContent === '— / —') {
-            el.textContent = '1 / ...';
-        }
-    }
-
-    function atualizarProgressoNumeracao(cfi) {
-        try {
-            const percent = book.locations.percentageFromCfi(cfi) * 100;
-            atualizarProgresso(percent);
-            salvarProgresso(cfi, percent);
-        } catch (e) {
-            // Se book.locations ainda nao gerou, tenta percentual simples
-        }
-    }
-
     async function abrirLivro() {
         const loading = $('leitor-loading');
         const livro = $('leitor-livro');
@@ -408,7 +359,7 @@
         const elEsq = $('area-esq');
         if (!elEsq) return;
 
-        // Espera o container ter dimensoes reais
+        // Espera o layout
         await new Promise((r) => requestAnimationFrame(r));
         await new Promise((r) => setTimeout(r, 100));
 
@@ -423,62 +374,25 @@
         aplicarFonte();
         aplicarTema();
 
-        // Carrega progresso e exibe
+        // Carrega progresso
         const progresso = await carregarProgresso();
 
-        // Eventos ANTES do display (pra pegar a primeira pagina)
+        // Configura eventos ANTES do display
         configurarEventosRendition();
 
+        // Exibe
         if (progresso && progresso.position) {
             await rendition.display(progresso.position);
         } else {
             await rendition.display();
         }
 
-        // Forca atualizacao da numeracao na primeira pagina
-        setTimeout(() => {
-            if (rendition && rendition.currentLocation) {
-                try {
-                    const loc = rendition.currentLocation();
-                    if (loc) atualizarNumeracao(loc);
-                } catch (e) { /* ignora */ }
-            }
-            // Fallback: pega do book.locations
-            if (book.locations && book.locations.length() > 0 && !jaAtualizouNumeracao) {
-                jaAtualizouNumeracao = true;
-                const el = $('nav-pagina');
-                if (el && el.textContent === '— / —') {
-                    el.textContent = '1 / ' + paginasTotais;
-                }
-            }
-        }, 500);
-
-        // Gera locations (para numeracao funcionar)
-        await book.locations.generate(1000);
+        // Gera locations para numeracao
+        await book.locations.generate(600);
         paginasTotais = book.locations.length();
 
-        // Atualiza o contador agora que temos paginasTotais
-        try {
-            const loc = rendition.currentLocation();
-            if (loc) atualizarNumeracao(loc);
-        } catch (e) { /* ignora */ }
-
-        // Resize DEPOIS do display e do locations (corrige texto sumindo)
-        setTimeout(() => {
-            try {
-                if (rendition && rendition.manager) {
-                    rendition.resize();
-                }
-            } catch (e) { /* ignora */ }
-        }, 100);
-
-        setTimeout(() => {
-            try {
-                if (rendition && rendition.manager) {
-                    rendition.resize();
-                }
-            } catch (e) { /* ignora */ }
-        }, 500);
+        // Atualiza numeracao
+        setTimeout(atualizarNumeracaoAtual, 500);
     }
 
     async function renderizarPaginaUnica() {
@@ -507,28 +421,45 @@
             await rendition.display();
         }
 
-        setTimeout(() => {
-            if (rendition && rendition.currentLocation) {
-                try {
-                    const loc = rendition.currentLocation();
-                    if (loc) atualizarNumeracao(loc);
-                } catch (e) { /* ignora */ }
-            }
-        }, 500);
-
-        await book.locations.generate(1000);
+        await book.locations.generate(600);
         paginasTotais = book.locations.length();
+
+        setTimeout(atualizarNumeracaoAtual, 500);
+    }
+
+    function atualizarNumeracaoAtual() {
+        const el = $('nav-pagina');
+        if (!el || !rendition) return;
 
         try {
             const loc = rendition.currentLocation();
-            if (loc) atualizarNumeracao(loc);
-        } catch (e) { /* ignora */ }
+            if (!loc) return;
 
-        setTimeout(() => {
+            const cfi = loc.start.cfi;
+
+            // Tenta pela localizacao
+            let pagina = -1;
             try {
-                if (rendition && rendition.manager) rendition.resize();
+                pagina = book.locations.locationFromCfi(cfi);
             } catch (e) { /* ignora */ }
-        }, 500);
+
+            if (pagina >= 0 && paginasTotais > 0) {
+                el.textContent = (pagina + 1) + ' / ' + paginasTotais;
+                return;
+            }
+
+            // Fallback
+            if (loc.start.displayed && loc.start.displayed.page) {
+                el.textContent = loc.start.displayed.page + ' / ' + loc.start.displayed.total;
+                return;
+            }
+
+            if (el.textContent === '— / —') {
+                el.textContent = '1 / ' + (paginasTotais || '...');
+            }
+        } catch (e) {
+            console.warn('Erro numeracao:', e);
+        }
     }
 
     function configurarEventosRendition() {
@@ -543,28 +474,28 @@
         rendition.on('relocated', (location) => {
             const cfi = location.start.cfi;
 
-            // Atualiza numeracao
-            atualizarNumeracao(location);
+            // Numeracao
+            const el = $('nav-pagina');
+            if (el) {
+                const paginaAtual = book.locations.locationFromCfi(cfi);
+                if (paginaAtual >= 0 && paginasTotais > 0) {
+                    el.textContent = (paginaAtual + 1) + ' / ' + paginasTotais;
+                } else if (location.start.displayed) {
+                    el.textContent = location.start.displayed.page + ' / ' + location.start.displayed.total;
+                }
+            }
 
-            // Atualiza progresso
-            atualizarProgressoNumeracao(cfi);
+            // Progresso
+            const percent = book.locations.percentageFromCfi(cfi) * 100;
+            atualizarProgresso(percent);
+            salvarProgresso(cfi, percent);
 
             // Re-injeta listeners
             setTimeout(injetarListenersEmTodos, 300);
         });
 
-        // Quando cada secao for renderizada, injeta listeners
         rendition.on('rendered', (section, view) => {
             if (view && view.contents) injetarListeners(view.contents);
-            // Forca atualizacao apos render
-            setTimeout(() => {
-                if (rendition) {
-                    try {
-                        const loc = rendition.currentLocation();
-                        if (loc) atualizarNumeracao(loc);
-                    } catch (e) { /* ignora */ }
-                }
-            }, 200);
         });
 
         const btnAnterior = $('btn-anterior');
@@ -588,7 +519,6 @@
     function aplicarTema() {
         if (!rendition) return;
         rendition.themes.default({
-            'html': { 'overflow': 'hidden', 'height': '100%' },
             'body': {
                 'font-family': "'Cormorant Garamond', Georgia, serif",
                 'font-size': tamanhoFonte + 'px',
@@ -620,21 +550,10 @@
         if (btnMais) btnMais.addEventListener('click', () => {
             tamanhoFonte = Math.min(TAMANHO_FONTE_MAX, tamanhoFonte + 2);
             aplicarFonte();
-            // Reforca resize depois de mudar fonte
-            setTimeout(() => {
-                try {
-                    if (rendition && rendition.manager) rendition.resize();
-                } catch (e) { /* ignora */ }
-            }, 100);
         });
         if (btnMenos) btnMenos.addEventListener('click', () => {
             tamanhoFonte = Math.max(TAMANHO_FONTE_MIN, tamanhoFonte - 2);
             aplicarFonte();
-            setTimeout(() => {
-                try {
-                    if (rendition && rendition.manager) rendition.resize();
-                } catch (e) { /* ignora */ }
-            }, 100);
         });
         if (btnMarcar) btnMarcar.addEventListener('click', () => {
             modoMarcacao = !modoMarcacao;
@@ -660,12 +579,6 @@
                 ficha.classList.toggle('ativa');
                 document.body.classList.toggle('ficha-aberta', ficha.classList.contains('ativa'));
                 atualizarOverlay();
-                // Resize quando a ficha abre/fecha
-                setTimeout(() => {
-                    try {
-                        if (rendition && rendition.manager) rendition.resize();
-                    } catch (e) { /* ignora */ }
-                }, 500);
             });
         }
         if (btnFecharFicha && ficha) {
@@ -673,11 +586,6 @@
                 ficha.classList.remove('ativa');
                 document.body.classList.remove('ficha-aberta');
                 atualizarOverlay();
-                setTimeout(() => {
-                    try {
-                        if (rendition && rendition.manager) rendition.resize();
-                    } catch (e) { /* ignora */ }
-                }, 500);
             });
         }
         if (overlay) {
