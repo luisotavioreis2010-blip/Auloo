@@ -1,10 +1,10 @@
 /* ============================================================
-   LEITOR.JS — v12
-   Leitor em tela cheia com:
-   - EPUB via Edge Function (com fetch autenticado)
-   - Modo livro aberto (2 paginas) SEMPRE por padrao
-   - Marcar texto funcional (injeta listeners no iframe)
-   - Ficha do leitor padrao estante
+   LEITOR.JS — v13
+   Leitor com 2 paginas lado a lado (livro aberto)
+   - Sem marcar texto
+   - Contador de paginas correto (1 ate o final, sem ciclo)
+   - Navegacao lateral (setas nas laterais)
+   - Progresso na navbar
    ============================================================ */
 (function () {
     'use strict';
@@ -17,7 +17,7 @@
     const TAMANHO_FONTE_MAX = 28;
     const TAMANHO_FONTE_PADRAO = 19;
 
-    const MIN_WIDTH_PARA_SPREAD = 1024;
+    const MIN_WIDTH_PARA_LIVRO = 1024;
 
     const $ = (id) => document.getElementById(id);
 
@@ -26,10 +26,8 @@
     let usuario = null;
     let db = null;
     let tamanhoFonte = TAMANHO_FONTE_PADRAO;
-    let modoMarcacao = false;
     let timerSalvar = null;
-    let intervalInjetar = null;
-    let cfiSelecaoAtual = null;
+    let paginasTotais = 0;
 
     const estado = {
         url: null,
@@ -221,171 +219,26 @@
         }, 1200);
     }
 
-    function atualizarBarraProgresso(percent) {
-        const fill = $('progresso-fill');
+    function atualizarProgresso(percent) {
+        const fillTop = $('progresso-fill');
+        const fillSide = $('progresso-fill-sidebar');
         const texto = $('progresso-texto');
-        if (fill) fill.style.width = percent + '%';
+        if (fillTop) fillTop.style.width = percent + '%';
+        if (fillSide) fillSide.style.width = percent + '%';
         if (texto) texto.textContent = Math.round(percent) + '%';
     }
 
     /* ============================================================
-       MARCACOES
-       ============================================================ */
-    async function carregarMarcacoes() {
-        if (!db || !usuario || !estado.slug) return [];
-        try {
-            const r = await db.from('reading_highlights')
-                .select('id, cfi, text, created_at')
-                .eq('user_id', usuario.id)
-                .eq('book_slug', estado.slug)
-                .order('created_at', { ascending: false });
-            return r.data || [];
-        } catch (e) {
-            console.warn('Erro ao carregar marcacoes:', e);
-            return [];
-        }
-    }
-
-    async function salvarMarcacao(cfi, texto) {
-        if (!db || !usuario || !estado.slug) return null;
-        try {
-            const r = await db.from('reading_highlights').insert({
-                user_id: usuario.id,
-                book_slug: estado.slug,
-                book_title: estado.titulo,
-                cfi: cfi,
-                text: texto
-            }).select('id, cfi, text, created_at').single();
-            return r.data;
-        } catch (e) {
-            console.warn('Erro ao salvar marcacao:', e);
-            return null;
-        }
-    }
-
-    function renderizarMarcacoes() {
-        const lista = $('lista-marcacoes');
-        if (!lista) return;
-
-        lista.textContent = '';
-
-        if (!estado.marcacoes || estado.marcacoes.length === 0) {
-            const li = document.createElement('li');
-            li.className = 'marcacao-vazia';
-            li.textContent = 'Nenhuma marcacao ainda';
-            lista.appendChild(li);
-            return;
-        }
-
-        estado.marcacoes.forEach((m) => {
-            const li = document.createElement('li');
-            li.className = 'marcacao-item';
-            li.textContent = m.text.length > 140 ? m.text.slice(0, 140) + '...' : m.text;
-            li.title = 'Clique para ir ao trecho';
-            li.addEventListener('click', () => {
-                if (rendition && m.cfi) rendition.display(m.cfi);
-            });
-            lista.appendChild(li);
-        });
-    }
-
-    /* ============================================================
-       MODO MARCACAO — injeta listeners diretamente nos iframes
-       ============================================================ */
-    function aplicarModoMarcacao() {
-        document.body.classList.toggle('modo-marcacao', modoMarcacao);
-
-        const btn = $('btn-marcar-modo');
-        if (btn) btn.setAttribute('aria-pressed', String(modoMarcacao));
-
-        // Injeta listeners em todos os iframes atuais
-        injetarListenersEmTodos();
-    }
-
-    function injetarListenersEmTodos() {
-        if (!rendition) return;
-
-        const contents = rendition.getContents();
-        contents.forEach((c) => {
-            injetarListeners(c);
-        });
-    }
-
-    function injetarListeners(contents) {
-        if (!contents || !contents.document) return;
-        if (contents._acervoMarcacaoAtiva) return;
-        contents._acervoMarcacaoAtiva = true;
-
-        const doc = contents.document;
-
-        doc.addEventListener('mouseup', () => {
-            if (!modoMarcacao) return;
-            setTimeout(() => processarSelecao(contents), 50);
-        });
-
-        doc.addEventListener('touchend', () => {
-            if (!modoMarcacao) return;
-            setTimeout(() => processarSelecao(contents), 50);
-        });
-    }
-
-    async function processarSelecao(contents) {
-        try {
-            const sel = contents.window.getSelection();
-            if (!sel || sel.rangeCount === 0) return;
-
-            const texto = sel.toString().trim();
-            if (!texto || texto.length < 3) return;
-
-            const range = sel.getRangeAt(0);
-            const cfi = contents.cfiFromRange(range);
-            if (!cfi) return;
-
-            if (cfi === cfiSelecaoAtual) return;
-            cfiSelecaoAtual = cfi;
-
-            const marcacao = await salvarMarcacao(cfi, texto);
-            if (marcacao) {
-                estado.marcacoes.unshift(marcacao);
-                renderizarMarcacoes();
-            }
-
-            try {
-                contents.addClass('acervo-highlight', cfi);
-            } catch (e) {
-                console.warn('addClass falhou:', e);
-            }
-
-            sel.removeAllRanges();
-
-        } catch (e) {
-            console.warn('Erro ao processar selecao:', e);
-        }
-    }
-
-    function aplicarHighlightsSalvos() {
-        if (!rendition || !estado.marcacoes) return;
-
-        estado.marcacoes.forEach((m) => {
-            try {
-                rendition.annotations.highlight(m.cfi, {}, () => {}, 'acervo-highlight');
-            } catch (e) {
-                // Ignora CFIs invalidos
-            }
-        });
-    }
-
-    /* ============================================================
-       EPUB — 2 paginas por padrao
+       EPUB — 2 paginas lado a lado
        ============================================================ */
     async function abrirLivro() {
-        const area = $('area');
         const loading = $('leitor-loading');
-        const nav = $('leitor-nav');
+        const livro = $('leitor-livro');
+        const areaUnica = $('area');
 
         if (loading) loading.hidden = false;
-        if (area) area.hidden = true;
-        if (nav) nav.hidden = true;
+        if (livro) livro.hidden = true;
+        if (areaUnica) areaUnica.hidden = true;
 
         try {
             const buffer = await baixarEpub(estado.url);
@@ -394,86 +247,145 @@
             await book.ready;
 
             if (loading) loading.hidden = true;
-            if (area) area.hidden = false;
-            if (nav) nav.hidden = false;
 
-            await new Promise((r) => requestAnimationFrame(r));
-            await new Promise((r) => requestAnimationFrame(r));
-            await new Promise((r) => setTimeout(r, 100));
+            // Verifica se a tela cabe 2 paginas
+            const podeLivro = window.innerWidth >= MIN_WIDTH_PARA_LIVRO;
 
-            // SEMPRE 2 paginas por padrao (se a tela permitir)
-            const podeSpread = window.innerWidth >= MIN_WIDTH_PARA_SPREAD;
-
-            rendition = book.renderTo('area', {
-                width: '100%',
-                height: '100%',
-                flow: 'paginated',
-                spread: podeSpread ? 'auto' : 'none',
-                minSpreadWidth: MIN_WIDTH_PARA_SPREAD
-            });
-
-            aplicarFonte();
-            aplicarTema();
-            aplicarModoMarcacao();
-
-            const progresso = await carregarProgresso();
-            if (progresso && progresso.position) {
-                await rendition.display(progresso.position);
+            if (podeLivro) {
+                if (livro) livro.hidden = false;
+                await renderizarLivroAberto();
             } else {
-                await rendition.display();
+                if (areaUnica) areaUnica.hidden = false;
+                await renderizarPaginaUnica();
             }
-
-            rendition.on('relocated', (location) => {
-                const pos = location.start.cfi;
-                const percent = book.locations.percentageFromCfi(pos) * 100;
-                salvarProgresso(pos, percent);
-                atualizarBarraProgresso(percent);
-
-                const navPagina = $('nav-pagina');
-                if (navPagina && location.start.displayed) {
-                    navPagina.textContent = location.start.displayed.page + ' / ' + location.start.displayed.total;
-                }
-            });
-
-            // Quando cada nova secao for renderizada, injeta os listeners
-            rendition.on('rendered', (section, view) => {
-                if (view && view.contents) {
-                    injetarListeners(view.contents);
-                }
-            });
-
-            book.locations.generate(1000);
-
-            estado.marcacoes = await carregarMarcacoes();
-            renderizarMarcacoes();
-
-            aplicarHighlightsSalvos();
-
-            // Injeta listeners no iframe atual (depois de um tempo pro epub.js renderizar)
-            setTimeout(injetarListenersEmTodos, 500);
-            setTimeout(injetarListenersEmTodos, 1500);
-            setTimeout(injetarListenersEmTodos, 3000);
-
-            // E continua tentando de tempo em tempo (caso abra novos iframes)
-            clearInterval(intervalInjetar);
-            intervalInjetar = setInterval(injetarListenersEmTodos, 2000);
-
-            // Ajusta spread ao redimensionar
-            window.addEventListener('resize', () => {
-                const p = window.innerWidth >= MIN_WIDTH_PARA_SPREAD;
-                try {
-                    if (rendition && rendition.spread) {
-                        rendition.spread(p ? 'auto' : 'none', MIN_WIDTH_PARA_SPREAD);
-                    }
-                } catch (e) {
-                    console.warn('Erro ao ajustar spread:', e);
-                }
-            });
 
         } catch (erro) {
             console.error('Erro ao abrir EPUB:', erro);
             mostrarErro('Nao foi possivel carregar este livro. ' + (erro.message || ''));
         }
+    }
+
+    /* Renderiza 2 paginas lado a lado */
+    async function renderizarLivroAberto() {
+        const elEsq = $('area-esq');
+        const elDir = $('area-dir');
+
+        if (!elEsq || !elDir) return;
+
+        // O epub.js cria um iframe em cada container
+        // Nao da pra renderizar 2 renditions, entao usamos a propria paginacao
+        // do epub.js em modo spread, mas com 2 containers visiveis
+
+        // Estrategia: um unico rendition no container esquerdo que
+        // automaticamente ocupa 2 colunas (spread auto)
+
+        rendition = book.renderTo('area-esq', {
+            width: '100%',
+            height: '100%',
+            flow: 'paginated',
+            spread: 'auto',
+            minSpreadWidth: 600
+        });
+
+        // Esconde o container direito (nao precisamos dele)
+        // O epub.js ja renderiza 2 colunas no container esquerdo
+        elDir.style.display = 'none';
+        elEsq.style.width = '100%';
+
+        aplicarFonte();
+        aplicarTema();
+
+        const progresso = await carregarProgresso();
+        if (progresso && progresso.position) {
+            await rendition.display(progresso.position);
+        } else {
+            await rendition.display();
+        }
+
+        // Gera locations (calcula numero total de paginas reais)
+        await book.locations.generate(600);
+        paginasTotais = book.locations.length();
+
+        configurarEventosRendition();
+    }
+
+    /* Renderiza pagina unica (mobile) */
+    async function renderizarPaginaUnica() {
+        const area = $('area');
+        if (!area) return;
+
+        rendition = book.renderTo('area', {
+            width: '100%',
+            height: '100%',
+            flow: 'paginated',
+            spread: 'none'
+        });
+
+        aplicarFonte();
+        aplicarTema();
+
+        const progresso = await carregarProgresso();
+        if (progresso && progresso.position) {
+            await rendition.display(progresso.position);
+        } else {
+            await rendition.display();
+        }
+
+        await book.locations.generate(600);
+        paginasTotais = book.locations.length();
+
+        configurarEventosRendition();
+    }
+
+    function configurarEventosRendition() {
+        if (!rendition) return;
+
+        rendition.on('relocated', (location) => {
+            const cfi = location.start.cfi;
+            const percent = book.locations.percentageFromCfi(cfi) * 100;
+            const paginaAtual = book.locations.locationFromCfi(cfi);
+
+            // Atualiza contador: pagina atual / total
+            const el = $('nav-pagina');
+            if (el) {
+                if (paginasTotais > 0 && paginaAtual >= 0) {
+                    el.textContent = (paginaAtual + 1) + ' / ' + paginasTotais;
+                } else {
+                    // Fallback: usa displayed do epub.js
+                    if (location.start.displayed) {
+                        const d = location.start.displayed;
+                        el.textContent = d.page + ' / ' + d.total;
+                    }
+                }
+            }
+
+            atualizarProgresso(percent);
+            salvarProgresso(cfi, percent);
+        });
+
+        // Botao esquerdo
+        const btnAnterior = $('btn-anterior');
+        if (btnAnterior) {
+            btnAnterior.addEventListener('click', () => {
+                if (rendition) rendition.prev();
+            });
+        }
+
+        // Botao direito
+        const btnProximo = $('btn-proximo');
+        if (btnProximo) {
+            btnProximo.addEventListener('click', () => {
+                if (rendition) rendition.next();
+            });
+        }
+
+        // Teclado
+        document.addEventListener('keydown', (e) => {
+            if (!rendition) return;
+            if (e.key === 'ArrowLeft') { e.preventDefault(); rendition.prev(); }
+            if (e.key === 'ArrowRight') { e.preventDefault(); rendition.next(); }
+            if (e.key === ' ') { e.preventDefault(); rendition.next(); }
+        });
     }
 
     /* ============================================================
@@ -487,7 +399,6 @@
     function aplicarTema() {
         if (!rendition) return;
 
-        // Estilos do conteudo do livro
         rendition.themes.default({
             'body': {
                 'font-family': "'Cormorant Garamond', Georgia, serif",
@@ -496,9 +407,7 @@
                 'color': '#1A1614',
                 'background': '#F8F2E4',
                 'padding': '2rem 3rem',
-                'overflow': 'hidden',
-                '-webkit-user-select': 'text',
-                'user-select': 'text'
+                'overflow': 'hidden'
             },
             'p': { 'margin': '0 0 1em 0', 'text-align': 'justify' },
             'h1, h2, h3': {
@@ -506,19 +415,13 @@
                 'font-style': 'italic',
                 'color': '#5C1A1A'
             },
-            'a': { 'color': '#5C1A1A' },
-            '.acervo-highlight': {
-                'background-color': 'rgba(184, 137, 74, 0.35)',
-                'border-bottom': '1px solid #B8894A',
-                'cursor': 'pointer'
-            }
+            'a': { 'color': '#5C1A1A' }
         });
     }
 
     function configurarControles() {
         const btnMais = $('btn-font-mais');
         const btnMenos = $('btn-font-menos');
-        const btnMarcar = $('btn-marcar-modo');
 
         if (btnMais) {
             btnMais.addEventListener('click', () => {
@@ -533,33 +436,6 @@
                 aplicarFonte();
             });
         }
-
-        if (btnMarcar) {
-            btnMarcar.addEventListener('click', () => {
-                modoMarcacao = !modoMarcacao;
-                aplicarModoMarcacao();
-
-                // Feedback visual
-                if (modoMarcacao) {
-                    btnMarcar.querySelector('span').textContent = 'Marcando';
-                } else {
-                    btnMarcar.querySelector('span').textContent = 'Marcar';
-                }
-            });
-        }
-
-        const btnAnterior = $('btn-anterior');
-        const btnProximo = $('btn-proximo');
-        if (btnAnterior) btnAnterior.addEventListener('click', () => rendition && rendition.prev());
-        if (btnProximo) btnProximo.addEventListener('click', () => rendition && rendition.next());
-
-        // Teclado
-        document.addEventListener('keydown', (e) => {
-            if (!rendition) return;
-            if (e.key === 'ArrowLeft') { e.preventDefault(); rendition.prev(); }
-            if (e.key === 'ArrowRight') { e.preventDefault(); rendition.next(); }
-            if (e.key === ' ') { e.preventDefault(); rendition.next(); }
-        });
     }
 
     /* ============================================================
