@@ -1,5 +1,6 @@
 ﻿// ==============================================
 // CONFIG.JS — Supabase com retry e sessao persistente
+// CHAVE: auloo-auth (unificada com a estante)
 // ==============================================
 
 var SUPABASE_CONFIG = {
@@ -27,13 +28,13 @@ function inicializarSupabase() {
                     detectSessionInUrl: true,
                     flowType: 'pkce',
                     storage: window.localStorage,
-                    storageKey: 'acervo-auth'
+                    storageKey: 'auloo-auth'      // ← MESMA CHAVE DA ESTANTE
                 }
             }
         );
 
         window.supabaseClient = supabaseClient;
-        console.log('Supabase inicializado');
+        console.log('Supabase inicializado (chave: auloo-auth)');
         return true;
     } catch (error) {
         console.error('Erro ao inicializar Supabase:', error);
@@ -45,7 +46,6 @@ inicializarSupabase();
 document.addEventListener('DOMContentLoaded', inicializarSupabase);
 window.addEventListener('load', inicializarSupabase);
 
-// Helper que qualquer script pode chamar
 window.getSupabaseClient = function () {
     if (supabaseClient) return supabaseClient;
     if (inicializarSupabase()) return supabaseClient;
