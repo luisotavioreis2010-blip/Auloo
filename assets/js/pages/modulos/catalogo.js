@@ -1,687 +1,330 @@
 ﻿/* ============================================================
-   CATALOGO.JS — v14 (CORRIGIDO)
-   Standard Ebooks + Gutenberg
-   Sessao esperada corretamente | Estatisticas na ficha
-   Anti-flash de layout
+   CATALOGO.JS — v15
+   - Sessão resiliente (não expulsa em caso de lentidão)
+   - Carregamento progressivo de fontes
+   - Código enxuto
    ============================================================ */
 (function () {
     'use strict';
 
     document.documentElement.classList.add('carregando-catalogo');
 
-    const PAGINA_LOGIN = '/login.html';
-    const LIMITE_RESULTADOS = 1500;
-    const LIMITE_STANDARD_EBOOKS = 1500;
-    const SUPABASE_TENTATIVAS = 40;
-    const SUPABASE_INTERVALO_MS = 200;
-    const LIMITE_TECLADO_PX = 100;
-    const MARGEM_TECLADO_PX = 16;
-    const ESTABILIDADE_MS = 120;
-    const WATCHDOG_MS = 1500;
-    const REDIMENSIONANDO_MS = 400;
-    const ALTURA_BAIXA_PX = 640;
-    const MENSAGEM_MS = 2600;
+    /* ---------- Configurações ---------- */
+    var PAGINA_LOGIN = '/login.html';
+    var LIMITE_TOTAL = 1500;
+    var MENSAGEM_MS = 2600;
 
-    const MQ_ROW = '(min-width: 568px) and (max-width: 950px) and (orientation: landscape) and (max-height: 500px)';
+    var MQ_ROW = '(min-width:568px) and (max-width:950px) and (orientation:landscape) and (max-height:500px)';
 
-    const estado = {
+    /* ---------- Estado ---------- */
+    var estado = {
         usuario: null,
         resultados: [],
-        resultadosFiltrados: [],
         buscaAtual: '',
-        carregando: false,
-        livroSelecionado: null,
         modo: 'populares',
-        capasCache: new Map()
+        livroSelecionado: null
     };
 
-    let offsetAtual = 0;
-    let razaoTeclado = 0.5;
-    let ativoAtual = null;
-    let timerEstabilidade = null;
-    let vvHeightAnterior = 0;
-    let ajusteRaf = false;
-
-    const raiz = document.documentElement;
-    const $ = (id) => document.getElementById(id);
-    const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
+    /* ---------- Helpers ---------- */
+    var $ = function (id) { return document.getElementById(id); };
+    var esperar = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
 
     function getDb() {
-        if (window.getSupabaseClient) return window.getSupabaseClient();
-        return window.supabaseClient ||
-               (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
-    }
-
-    async function aguardarDb() {
-        for (let i = 0; i < SUPABASE_TENTATIVAS; i++) {
-            const d = getDb();
-            if (d && d.auth && typeof d.auth.getSession === 'function') return d;
-            await esperar(SUPABASE_INTERVALO_MS);
-        }
-        return null;
-    }
-
-    function irParaLogin() {
-        console.error('[CATALOGO] irParaLogin chamado');
-        window.location.replace(PAGINA_LOGIN);
-    }
-
-    function limpar(el) {
-        if (!el) return;
-        while (el.firstChild) el.removeChild(el.firstChild);
-    }
-
-    function ehLayoutRow() {
-        return raiz.getAttribute('data-layout') === 'row';
-    }
-
-    function campoEmFoco() {
-        const ativo = document.activeElement;
-        return !!ativo && (ativo.tagName === 'INPUT' || ativo.tagName === 'TEXTAREA');
-    }
-
-    function getAppH() {
-        const valor = raiz.style.getPropertyValue('--app-h');
-        const n = /px\s*$/.test(valor) ? parseFloat(valor) : NaN;
-        return (isNaN(n) || n <= 0) ? window.innerHeight : n;
-    }
-
-    function getAlturaVisivel() {
-        const vv = window.visualViewport;
-        const h = window.innerHeight;
-        return (vv && vv.height > 0 && vv.height < h) ? vv.height : h;
-    }
-
-    function getTopoTeclado() {
-        const vv = window.visualViewport;
-        const topoVV = vv ? (vv.offsetTop + vv.height) : window.innerHeight;
-        return Math.min(topoVV, window.innerHeight);
-    }
-
-    function tecladoAberto() {
-        return campoEmFoco() && (getAppH() - getAlturaVisivel()) > LIMITE_TECLADO_PX;
+        return window.getSupabaseClientSeguro ? window.getSupabaseClientSeguro()
+                                              : window.getSupabaseClient();
     }
 
     /* ============================================================
-       AUTENTICACAO
+       SESSÃO RESILIENTE
+       - Aguarda até 30s
+       - Escuta onAuthStateChange
+       - Só redireciona se ficar claro que NÃO há sessão
        ============================================================ */
     async function iniciarSessao() {
-        console.log('[CATALOGO] iniciarSessao: comecando');
-
-        const db = await aguardarDb();
+        var db = await (window.aguardarSupabase ? window.aguardarSupabase(40, 250)
+                                                : Promise.resolve(getDb()));
         if (!db) {
-            console.error('[CATALOGO] Supabase nao inicializou');
-            irParaLogin();
-            return;
+            console.warn('[catalogo] Supabase indisponível');
+            window.location.replace(PAGINA_LOGIN);
+            return false;
         }
 
-        console.log('[CATALOGO] Supabase OK');
-
-        db.auth.onAuthStateChange((evento) => {
-            console.log('[CATALOGO] Auth state change:', evento);
-            if (evento === 'SIGNED_OUT') irParaLogin();
+        /* Se o usuário deslogar em outra aba, redireciona */
+        db.auth.onAuthStateChange(function (evento) {
+            if (evento === 'SIGNED_OUT') window.location.replace(PAGINA_LOGIN);
         });
 
-        try {
-            let sessao = null;
-            for (let i = 0; i < 80; i++) {
-                const resultado = await db.auth.getSession();
-                if (resultado.error) console.warn('[CATALOGO] getSession erro:', resultado.error);
-                sessao = resultado.data && resultado.data.session;
-                if (sessao && sessao.user) {
-                    console.log('[CATALOGO] Sessao encontrada na tentativa', i + 1, ':', sessao.user.email);
-                    break;
-                }
-                if (i % 10 === 0 && i > 0) console.log('[CATALOGO] Tentativa', i + 1, '- sem sessao ainda...');
-                await esperar(SUPABASE_INTERVALO_MS);
-            }
-
-            if (!sessao || !sessao.user) {
-                console.warn('[CATALOGO] Sem sessao depois de 16s');
-                irParaLogin();
-                return;
-            }
-
-            estado.usuario = sessao.user;
-
-            const meta = sessao.user.user_metadata || {};
-            const nome = meta.full_name || meta.name || sessao.user.email || 'Usuario';
-            const avatar = meta.avatar_url || meta.picture || null;
-
-            renderizarAvatar($('perfil-usuario'), avatar, nome);
-            renderizarAvatar($('sidebar-perfil-foto'), avatar, nome);
-
-            const elNome = $('sidebar-perfil-nome');
-            const elEmail = $('sidebar-perfil-email');
-            if (elNome) elNome.textContent = nome.split('@')[0];
-            if (elEmail) elEmail.textContent = sessao.user.email || '';
-
-            console.log('[CATALOGO] Usuario:', sessao.user.email);
-
+        /* Tenta 60 vezes (30s) — bem mais tolerante que antes */
+        for (var i = 0; i < 60; i++) {
             try {
-                await carregarEstatisticas();
-                console.log('[CATALOGO] Estatisticas OK');
+                var r = await db.auth.getSession();
+                var sessao = r && r.data && r.data.session;
+                if (sessao && sessao.user) {
+                    aplicarUsuario(sessao.user);
+                    return true;
+                }
             } catch (e) {
-                console.warn('[CATALOGO] Estatisticas falharam:', e);
+                console.warn('[catalogo] getSession erro:', e);
             }
-
-            console.log('[CATALOGO] iniciarSessao: OK');
-        } catch (erro) {
-            console.error('[CATALOGO] Erro getSession:', erro);
-            irParaLogin();
+            await esperar(500);
         }
+
+        /* Última tentativa: verifica se o usuário está logado no localStorage */
+        try {
+            var chave = 'auloo-auth';
+            if (localStorage.getItem(chave)) {
+                // Tem token salvo, mas o Supabase não conseguiu restaurar.
+                // Espera mais um pouco antes de desistir.
+                await esperar(2000);
+                var r2 = await db.auth.getSession();
+                if (r2 && r2.data && r2.data.session && r2.data.session.user) {
+                    aplicarUsuario(r2.data.session.user);
+                    return true;
+                }
+            }
+        } catch (e) { /* ignora */ }
+
+        console.warn('[catalogo] Sem sessão após 30s — indo para login');
+        window.location.replace(PAGINA_LOGIN);
+        return false;
+    }
+
+    function aplicarUsuario(user) {
+        estado.usuario = user;
+        var meta = user.user_metadata || {};
+        var nome = meta.full_name || meta.name || user.email || 'Usuário';
+        var avatar = meta.avatar_url || meta.picture || null;
+
+        window.utils.renderizarAvatar($('perfil-usuario'), avatar, nome);
+        window.utils.renderizarAvatar($('sidebar-perfil-foto'), avatar, nome);
+
+        var elNome = $('sidebar-perfil-nome');
+        var elEmail = $('sidebar-perfil-email');
+        if (elNome) elNome.textContent = nome.split('@')[0];
+        if (elEmail) elEmail.textContent = user.email || '';
+
+        carregarEstatisticas();
     }
 
     /* ============================================================
-       ESTATISTICAS
+       ESTATÍSTICAS
        ============================================================ */
     async function carregarEstatisticas() {
-        const db = getDb();
+        var db = getDb();
         if (!db || !estado.usuario) return;
 
         try {
-            const { data: progresso, error: errProg } = await db
-                .from('reading_progress')
-                .select('book_slug')
+            var prog = await db.from('reading_progress')
+                .select('book_slug', { count: 'exact', head: true })
                 .eq('user_id', estado.usuario.id)
                 .gt('percent', 0);
 
-            if (errProg) throw errProg;
-            const totalLidos = progresso ? progresso.length : 0;
-
-            const { data: historico, error: errHist } = await db
-                .from('reading_history')
+            var hist = await db.from('reading_history')
                 .select('book_slug, book_title, book_author, book_cover, last_read_at')
                 .eq('user_id', estado.usuario.id)
                 .order('last_read_at', { ascending: false })
                 .limit(3);
 
-            if (errHist) throw errHist;
-
-            renderizarEstatisticas(totalLidos, historico || []);
+            renderizarEstatisticas(prog.count || 0, hist.data || []);
         } catch (e) {
-            console.warn('Erro ao carregar estatisticas:', e);
+            console.warn('[catalogo] estatísticas:', e);
         }
     }
 
-    function renderizarEstatisticas(totalLidos, ultimos) {
-        const contador = $('ficha-total-lidos');
-        if (contador) contador.textContent = totalLidos;
+    function renderizarEstatisticas(total, ultimos) {
+        var contador = $('ficha-total-lidos');
+        if (contador) contador.textContent = total;
 
-        const container = $('ficha-ultimos-lidos');
+        var container = $('ficha-ultimos-lidos');
         if (!container) return;
+        window.utils.limpar(container);
 
-        container.textContent = '';
-
-        if (!ultimos || ultimos.length === 0) {
-            const vazio = document.createElement('p');
+        if (!ultimos.length) {
+            var vazio = document.createElement('p');
             vazio.className = 'ficha-vazio';
             vazio.textContent = 'Nenhum livro lido ainda';
             container.appendChild(vazio);
             return;
         }
 
-        ultimos.forEach((livro) => {
-            const item = document.createElement('a');
-            item.className = 'ficha-livro-recente';
-            item.href = 'leitor.html?url=' + encodeURIComponent(livro.book_slug) +
-                        '&titulo=' + encodeURIComponent(livro.book_title || '') +
-                        '&slug=' + encodeURIComponent(livro.book_slug) +
-                        '&autor=' + encodeURIComponent(livro.book_author || '') +
-                        '&capa=' + encodeURIComponent(livro.book_cover || '');
-            item.title = livro.book_title;
+        ultimos.forEach(function (livro) {
+            var a = document.createElement('a');
+            a.className = 'ficha-livro-recente';
+            a.href = 'leitor.html?url=' + encodeURIComponent(livro.book_slug) +
+                     '&titulo=' + encodeURIComponent(livro.book_title || '') +
+                     '&slug=' + encodeURIComponent(livro.book_slug) +
+                     '&autor=' + encodeURIComponent(livro.book_author || '') +
+                     '&capa=' + encodeURIComponent(livro.book_cover || '');
 
-            const capa = document.createElement('div');
+            var capa = document.createElement('div');
             capa.className = 'ficha-livro-capa';
             if (livro.book_cover) {
-                const img = document.createElement('img');
+                var img = document.createElement('img');
                 img.src = livro.book_cover;
-                img.alt = livro.book_title;
+                img.alt = livro.book_title || '';
                 img.loading = 'lazy';
                 img.referrerPolicy = 'no-referrer';
-                img.onerror = () => { capa.textContent = '📖'; };
+                img.onerror = function () { capa.textContent = '📖'; };
                 capa.appendChild(img);
-            } else {
-                capa.textContent = '📖';
-            }
+            } else capa.textContent = '📖';
 
-            const info = document.createElement('div');
+            var info = document.createElement('div');
             info.className = 'ficha-livro-info';
-            const titulo = document.createElement('span');
-            titulo.className = 'ficha-livro-titulo';
-            titulo.textContent = livro.book_title || 'Sem titulo';
-            info.appendChild(titulo);
+            var t = document.createElement('span');
+            t.className = 'ficha-livro-titulo';
+            t.textContent = livro.book_title || 'Sem título';
+            info.appendChild(t);
 
             if (livro.book_author) {
-                const autor = document.createElement('span');
-                autor.className = 'ficha-livro-autor';
-                autor.textContent = livro.book_author;
-                info.appendChild(autor);
+                var au = document.createElement('span');
+                au.className = 'ficha-livro-autor';
+                au.textContent = livro.book_author;
+                info.appendChild(au);
             }
 
-            item.appendChild(capa);
-            item.appendChild(info);
-            container.appendChild(item);
+            a.appendChild(capa);
+            a.appendChild(info);
+            container.appendChild(a);
         });
     }
 
     /* ============================================================
-       AVATAR
-       ============================================================ */
-    function renderizarAvatar(container, avatarUrl, nome) {
-        if (!container) return;
-        container.textContent = '';
-
-        if (!avatarUrl || avatarUrl === 'null') {
-            const span = document.createElement('span');
-            span.className = 'avatar-iniciais';
-            const partes = (nome || 'U').trim().split(/\s+/);
-            span.textContent = (partes[0][0] || 'U').toUpperCase() +
-                              (partes.length > 1 ? (partes[partes.length - 1][0] || '').toUpperCase() : '');
-            container.appendChild(span);
-            return;
-        }
-
-        const img = document.createElement('img');
-        img.className = 'foto-perfil';
-        img.alt = 'Foto de perfil';
-        img.referrerPolicy = 'no-referrer';
-        img.src = avatarUrl;
-        img.onerror = () => {
-            img.remove();
-            const span = document.createElement('span');
-            span.className = 'avatar-iniciais';
-            span.textContent = (nome || 'U').charAt(0).toUpperCase();
-            container.appendChild(span);
-        };
-        container.appendChild(img);
-    }
-
-    /* ============================================================
-       SISTEMA DE FOCO
-       ============================================================ */
-    function setupAlturaFixa() {
-        let maiorAltura = 0;
-        let larguraMedida = 0;
-        let timerAssentar = null;
-
-        function aplicar(h) {
-            maiorAltura = h;
-            raiz.style.setProperty('--app-h', h + 'px');
-        }
-
-        function medir() {
-            if (window.innerWidth !== larguraMedida) {
-                larguraMedida = window.innerWidth;
-                maiorAltura = 0;
-            }
-            const h = window.innerHeight;
-            if (h > maiorAltura) aplicar(h);
-
-            clearTimeout(timerAssentar);
-            timerAssentar = setTimeout(() => {
-                if (!campoEmFoco() && window.innerHeight !== maiorAltura) aplicar(window.innerHeight);
-            }, 700);
-        }
-
-        [0, 100, 300, 600, 1000, 1500].forEach((ms) => setTimeout(medir, ms));
-        window.addEventListener('resize', medir);
-        window.addEventListener('orientationchange', () => {
-            maiorAltura = 0;
-            [50, 300, 600, 1000].forEach((ms) => setTimeout(medir, ms));
-        });
-        medir();
-    }
-
-    function resetarScroll() {
-        if (window.scrollX !== 0 || window.scrollY !== 0) window.scrollTo(0, 0);
-    }
-
-    function resetarKbOffset() {
-        if (offsetAtual === 0) return;
-        offsetAtual = 0;
-        raiz.style.setProperty('--kb-offset', '0px');
-    }
-
-    function limparAtivos() {
-        document.querySelectorAll('[data-ativo="true"]').forEach((el) => el.removeAttribute('data-ativo'));
-    }
-
-    function limparEstadoTeclado() {
-        limparAtivos();
-        raiz.classList.remove('kb-focus');
-        resetarKbOffset();
-        raiz.style.removeProperty('--kb-visivel');
-        resetarScroll();
-    }
-
-    function sincronizarTela() {
-        if (campoEmFoco() || tecladoAberto()) return;
-        const layout = (window.matchMedia && window.matchMedia(MQ_ROW).matches &&
-                        window.innerWidth > window.innerHeight) ? 'row' : 'stacked';
-        if (raiz.getAttribute('data-layout') !== layout) raiz.setAttribute('data-layout', layout);
-
-        const alturaNova = window.innerHeight <= ALTURA_BAIXA_PX ? 'baixa' : 'normal';
-        if (raiz.getAttribute('data-altura') !== alturaNova) raiz.setAttribute('data-altura', alturaNova);
-    }
-
-    function escolherReferencia() {
-        return document.querySelector('[data-ativo="true"]');
-    }
-
-    function atualizarAlturaVisivel() {
-        if (tecladoAberto()) {
-            const topo = Math.max(0, getTopoTeclado());
-            if (getAppH() > 0) razaoTeclado = topo / getAppH();
-            raiz.style.setProperty('--kb-visivel', topo + 'px');
-        } else if (!(ehLayoutRow() && raiz.classList.contains('kb-focus') && campoEmFoco())) {
-            raiz.style.removeProperty('--kb-visivel');
-        }
-    }
-
-    function calcularKbOffset() {
-        atualizarAlturaVisivel();
-        if (!tecladoAberto()) { resetarKbOffset(); return; }
-        if (ehLayoutRow() && raiz.classList.contains('kb-focus')) { resetarKbOffset(); return; }
-
-        const ref = escolherReferencia();
-        if (!ref) return;
-
-        const bottomNatural = ref.getBoundingClientRect().bottom - offsetAtual;
-        const limite = getTopoTeclado() - MARGEM_TECLADO_PX;
-        const novoOffset = bottomNatural > limite ? limite - bottomNatural : 0;
-
-        if (Math.abs(novoOffset - offsetAtual) > 2) {
-            offsetAtual = novoOffset;
-            raiz.style.setProperty('--kb-offset', novoOffset + 'px');
-        }
-    }
-
-    function executarAjuste() {
-        if (ajusteRaf) return;
-        ajusteRaf = true;
-        requestAnimationFrame(() => {
-            ajusteRaf = false;
-            calcularKbOffset();
-        });
-    }
-
-    function agendarAposEstabilidade() {
-        const vv = window.visualViewport;
-        const h = vv ? vv.height : window.innerHeight;
-        const diff = h - vvHeightAnterior;
-        if (Math.abs(diff) <= 1) return;
-
-        vvHeightAnterior = h;
-        clearTimeout(timerEstabilidade);
-        if (diff > 0) executarAjuste();
-        else timerEstabilidade = setTimeout(executarAjuste, ESTABILIDADE_MS);
-    }
-
-    function agendarImediato() {
-        clearTimeout(timerEstabilidade);
-        executarAjuste();
-    }
-
-    function setupTeclado() {
-        if (window.visualViewport) {
-            window.visualViewport.addEventListener('resize', agendarAposEstabilidade);
-            window.visualViewport.addEventListener('scroll', agendarAposEstabilidade);
-        }
-        window.addEventListener('resize', agendarAposEstabilidade);
-
-        document.addEventListener('focusin', (e) => {
-            if (e.target && e.target.tagName === 'INPUT') agendarAposEstabilidade();
-        });
-
-        document.addEventListener('focusout', () => {
-            setTimeout(() => {
-                if (campoEmFoco()) return;
-                clearTimeout(timerEstabilidade);
-                executarAjuste();
-            }, 80);
-        });
-
-        window.addEventListener('orientationchange', () => {
-            [50, 300, 600].forEach((ms) => setTimeout(agendarImediato, ms));
-        });
-
-        executarAjuste();
-    }
-
-    function setupModoFoco() {
-        function marcarAtivo(input) {
-            raiz.classList.add('kb-focus');
-            if (!ehLayoutRow()) return;
-            if (input === ativoAtual) return;
-            ativoAtual = input;
-
-            const container = input.closest('.busca-wrapper, .field, .filtro-grupo');
-            if (!container) return;
-
-            limparAtivos();
-            container.setAttribute('data-ativo', 'true');
-
-            if (!tecladoAberto()) {
-                raiz.style.setProperty('--kb-visivel', Math.round(getAppH() * razaoTeclado) + 'px');
-            }
-            agendarAposEstabilidade();
-        }
-
-        function limparModo() {
-            ativoAtual = null;
-            limparAtivos();
-            raiz.classList.remove('kb-focus');
-            agendarAposEstabilidade();
-        }
-
-        document.addEventListener('focusin', (e) => {
-            if (e.target && e.target.tagName === 'INPUT') marcarAtivo(e.target);
-        });
-
-        document.addEventListener('focusout', () => {
-            setTimeout(() => {
-                const ativo = document.activeElement;
-                if (ativo && ativo.tagName === 'INPUT') marcarAtivo(ativo);
-                else limparModo();
-            }, 80);
-        });
-
-        window.addEventListener('pageshow', limparModo);
-    }
-
-    function setupTela() {
-        let temporizador = null;
-        let temporizadorTransicao = null;
-        let ultimaLargura = window.innerWidth;
-        let ultimaAltura = window.innerHeight;
-
-        const bloqueado = () => campoEmFoco() || tecladoAberto();
-
-        function sincronizarSeNecessario() {
-            if (bloqueado()) return;
-            const larguraAtual = window.innerWidth;
-            const alturaAtual = window.innerHeight;
-            const larguraMudou = larguraAtual !== ultimaLargura;
-            const orientacaoMudou = (larguraAtual > alturaAtual) !== (ultimaLargura > ultimaAltura);
-
-            ultimaLargura = larguraAtual;
-            ultimaAltura = alturaAtual;
-            if (!larguraMudou && !orientacaoMudou) return;
-
-            raiz.classList.add('redimensionando');
-            sincronizarTela();
-            resetarScroll();
-
-            clearTimeout(temporizadorTransicao);
-            temporizadorTransicao = setTimeout(() => {
-                raiz.classList.remove('redimensionando');
-            }, REDIMENSIONANDO_MS);
-        }
-
-        window.addEventListener('resize', () => {
-            if (bloqueado()) return;
-            clearTimeout(temporizador);
-            temporizador = setTimeout(sincronizarSeNecessario, 250);
-        });
-
-        window.addEventListener('orientationchange', () => {
-            [100, 400, 900].forEach((ms) => setTimeout(sincronizarSeNecessario, ms));
-        });
-
-        setInterval(() => {
-            if (document.hidden || campoEmFoco() || tecladoAberto()) return;
-            if (raiz.classList.contains('kb-focus') || offsetAtual !== 0 ||
-                raiz.style.getPropertyValue('--kb-visivel')) {
-                limparEstadoTeclado();
-            }
-        }, WATCHDOG_MS);
-
-        sincronizarTela();
-    }
-
-    /* ============================================================
-       RENDERIZACAO
+       RENDERIZAÇÃO
        ============================================================ */
     function esconderTudo() {
-        ['catalogo-loading', 'catalogo-erro', 'resultados-info', 'catalogo-fim'].forEach((id) => {
-            const el = $(id);
+        ['catalogo-loading', 'catalogo-erro', 'resultados-info', 'catalogo-fim'].forEach(function (id) {
+            var el = $(id);
             if (el) el.hidden = true;
         });
-        const grid = $('resultados-grid');
-        if (grid) limpar(grid);
+        var grid = $('resultados-grid');
+        if (grid) window.utils.limpar(grid);
     }
 
-    function mostrarLoading(mensagem) {
+    function mostrarLoading(msg) {
         esconderTudo();
-        const loading = $('catalogo-loading');
-        const texto = $('loading-texto');
-        if (texto && mensagem) texto.textContent = mensagem;
+        var loading = $('catalogo-loading');
+        var texto = $('loading-texto');
+        if (texto && msg) texto.textContent = msg;
         if (loading) loading.hidden = false;
     }
 
-    function atualizarLoading(mensagem) {
-        const texto = $('loading-texto');
-        if (texto) texto.textContent = mensagem;
+    function atualizarLoading(msg) {
+        var texto = $('loading-texto');
+        if (texto && msg) texto.textContent = msg;
     }
 
-    function mostrarErro(mensagem) {
+    function mostrarErro(msg) {
         esconderTudo();
-        const erro = $('catalogo-erro');
-        const msg = $('erro-mensagem');
-        if (msg) msg.textContent = mensagem || 'Nao foi possivel buscar os livros.';
+        var erro = $('catalogo-erro');
+        var m = $('erro-mensagem');
+        if (m) m.textContent = msg || 'Não foi possível buscar os livros.';
         if (erro) erro.hidden = false;
     }
 
     function mostrarResultados(livros) {
         esconderTudo();
-        if (!livros || livros.length === 0) return;
+        if (!livros || !livros.length) return;
 
-        const grid = $('resultados-grid');
-        const info = $('resultados-info');
-        const contagem = $('resultados-contagem');
-        const btnVoltar = $('btn-voltar-populares');
+        var grid = $('resultados-grid');
+        var info = $('resultados-info');
+        var contagem = $('resultados-contagem');
+        var btnVoltar = $('btn-voltar-populares');
 
-        if (contagem) {
-            contagem.textContent = livros.length === 1 ? '1 livro' : livros.length + ' livros';
-        }
+        if (contagem) contagem.textContent = livros.length === 1 ? '1 livro' : livros.length + ' livros';
         if (info) info.hidden = false;
         if (btnVoltar) btnVoltar.hidden = estado.modo !== 'busca';
 
-        const fragmento = document.createDocumentFragment();
-        livros.forEach((livro) => fragmento.appendChild(criarCardLivro(livro)));
-        grid.appendChild(fragmento);
+        var frag = document.createDocumentFragment();
+        livros.forEach(function (l) { frag.appendChild(criarCard(l)); });
+        grid.appendChild(frag);
     }
 
-    function criarCardLivro(livro) {
-        const card = document.createElement('button');
+    function criarCard(livro) {
+        var card = document.createElement('button');
         card.type = 'button';
         card.className = 'livro-card';
-        card.setAttribute('aria-label', 'Ver detalhes de ' + livro.title);
+        card.setAttribute('aria-label', 'Ver detalhes de ' + (livro.title || ''));
 
-        const capa = document.createElement('div');
+        var capa = document.createElement('div');
         capa.className = 'livro-capa';
 
-        const img = document.createElement('img');
-        img.alt = livro.title || '';
-        img.loading = 'lazy';
-        img.referrerPolicy = 'no-referrer';
-        img.style.opacity = '0';
-        img.style.transition = 'opacity 0.3s';
-
-        function mostrarPlaceholder() {
-            img.remove();
-            if (!capa.querySelector('.livro-capa-sem')) {
-                const sem = document.createElement('div');
-                sem.className = 'livro-capa-sem';
-                sem.textContent = livro.title;
-                capa.appendChild(sem);
-            }
+        if (livro.cover_url) {
+            var img = document.createElement('img');
+            img.alt = livro.title || '';
+            img.loading = 'lazy';
+            img.referrerPolicy = 'no-referrer';
+            img.style.opacity = '0';
+            img.style.transition = 'opacity 0.3s';
+            img.onload = function () { img.style.opacity = '1'; };
+            img.onerror = function () {
+                img.remove();
+                if (!capa.querySelector('.livro-capa-sem')) {
+                    var sem = document.createElement('div');
+                    sem.className = 'livro-capa-sem';
+                    sem.textContent = livro.title || '';
+                    capa.appendChild(sem);
+                }
+            };
+            img.src = livro.cover_url;
+            capa.appendChild(img);
+        } else {
+            var sem = document.createElement('div');
+            sem.className = 'livro-capa-sem';
+            sem.textContent = livro.title || '';
+            capa.appendChild(sem);
         }
 
-        function mostrarCapa(url) {
-            img.onload = () => { img.style.opacity = '1'; };
-            img.onerror = () => mostrarPlaceholder();
-            img.src = url;
-            if (!img.parentNode) capa.appendChild(img);
-        }
-
-        if (livro.cover_url) mostrarCapa(livro.cover_url);
-        else mostrarPlaceholder();
-
-        const info = document.createElement('div');
+        var info = document.createElement('div');
         info.className = 'livro-info';
-
-        const titulo = document.createElement('div');
-        titulo.className = 'livro-titulo';
-        titulo.textContent = livro.title || 'Sem titulo';
-        info.appendChild(titulo);
+        var t = document.createElement('div');
+        t.className = 'livro-titulo';
+        t.textContent = livro.title || 'Sem título';
+        info.appendChild(t);
 
         if (livro.author) {
-            const autor = document.createElement('div');
-            autor.className = 'livro-autor';
-            autor.textContent = livro.author;
-            info.appendChild(autor);
+            var a = document.createElement('div');
+            a.className = 'livro-autor';
+            a.textContent = livro.author;
+            info.appendChild(a);
         }
 
-        const metaTexto = [];
-        if (livro.year) metaTexto.push(livro.year);
-        if (livro.pages) metaTexto.push(livro.pages + ' pag.');
-        if (metaTexto.length > 0) {
-            const meta = document.createElement('div');
-            meta.className = 'livro-meta';
-            meta.textContent = metaTexto.join(' . ');
-            info.appendChild(meta);
+        var meta = [];
+        if (livro.year) meta.push(livro.year);
+        if (livro.pages) meta.push(livro.pages + ' pág.');
+        if (meta.length) {
+            var m = document.createElement('div');
+            m.className = 'livro-meta';
+            m.textContent = meta.join(' · ');
+            info.appendChild(m);
         }
 
         card.appendChild(capa);
         card.appendChild(info);
-        card.addEventListener('click', () => abrirModalLivro(livro));
+        card.addEventListener('click', function () { abrirModalLivro(livro); });
         return card;
     }
 
     /* ============================================================
-       CARREGAR CATALOGO
+       CARREGAR CATÁLOGO
        ============================================================ */
     async function carregarCatalogo() {
         estado.modo = 'populares';
         estado.buscaAtual = '';
-        mostrarLoading('Carregando catalogo...');
+        mostrarLoading('Carregando catálogo...');
 
         try {
-            const todos = [];
-            const vistos = new Set();
+            var todos = [];
+            var vistos = new Set();
 
             function adicionar(lista, fonte) {
                 if (!lista) return;
-                lista.forEach((livro) => {
-                    if (!livro || !livro.title) return;
-                    const chave = (livro.title || '').toLowerCase().trim() + '|' +
-                                  (livro.author || '').toLowerCase().trim();
+                lista.forEach(function (l) {
+                    if (!l || !l.title) return;
+                    var chave = (l.title || '').toLowerCase().trim() + '|' + (l.author || '').toLowerCase().trim();
                     if (vistos.has(chave)) return;
                     vistos.add(chave);
-                    if (fonte) livro.source = fonte;
-                    todos.push(livro);
+                    if (fonte) l.source = fonte;
+                    todos.push(l);
                 });
             }
 
@@ -690,55 +333,51 @@
                 mostrarResultados(todos);
             }
 
+            /* Standard Ebooks primeiro (mais confiável) */
             atualizarLoading('Buscando no Standard Ebooks...');
             try {
-                const se = await window.apiStandardEbooks.buscarPopulares();
-                if (se && se.length > 0) {
-                    adicionar(se.slice(0, LIMITE_STANDARD_EBOOKS), 'standardebooks');
+                var se = await window.apiStandardEbooks.buscarPopulares();
+                if (se && se.length) {
+                    adicionar(se.slice(0, LIMITE_TOTAL), 'standardebooks');
                     atualizar();
                     atualizarLoading('Carregando ' + todos.length + ' livros...');
                 }
-            } catch (e) { console.warn('Standard Ebooks falhou:', e); }
+            } catch (e) { console.warn('[catalogo] SE falhou:', e); }
 
+            /* Gutenberg paginado */
             atualizarLoading('Buscando no Gutenberg...');
-            for (let p = 1; p <= 10; p++) {
-                if (todos.length >= LIMITE_RESULTADOS) break;
+            for (var p = 1; p <= 10; p++) {
+                if (todos.length >= LIMITE_TOTAL) break;
                 try {
-                    const pagina = await window.apiGutenberg.buscarPopularesPaginado('', p);
-                    if (!pagina || pagina.length === 0) break;
+                    var pagina = await window.apiGutenberg.buscarPopularesPaginado('', p);
+                    if (!pagina || !pagina.length) break;
                     adicionar(pagina, 'gutenberg');
                     atualizar();
-                    atualizarLoading('Carregando ' + todos.length + ' de ' + LIMITE_RESULTADOS + ' livros...');
+                    atualizarLoading('Carregando ' + todos.length + ' de ' + LIMITE_TOTAL + '...');
                 } catch (e) {
-                    console.warn('Gutenberg pagina ' + p + ' falhou');
+                    console.warn('[catalogo] Gutenberg p' + p + ' falhou');
                     break;
                 }
             }
 
-            function pesoFonte(livro) {
-                const fonte = livro.source || '';
-                const idioma = (livro.language || '').toLowerCase();
-                if (fonte === 'standardebooks') return 1;
-                if (idioma.startsWith('pt')) return 2;
+            function peso(l) {
+                if (l.source === 'standardebooks') return 1;
+                if ((l.language || '').toLowerCase().indexOf('pt') === 0) return 2;
                 return 3;
             }
 
-            todos.sort((a, b) => {
-                const pa = pesoFonte(a);
-                const pb = pesoFonte(b);
+            todos.sort(function (a, b) {
+                var pa = peso(a), pb = peso(b);
                 if (pa !== pb) return pa - pb;
-                const da = a.download_count || 0;
-                const db = b.download_count || 0;
-                return db - da;
+                return (b.download_count || 0) - (a.download_count || 0);
             });
 
             estado.resultados = todos;
             mostrarResultados(todos);
-
-            if (todos.length === 0) mostrarErro('Nenhum livro carregado. Tente buscar por titulo.');
-        } catch (erro) {
-            console.error('Erro ao carregar catalogo:', erro);
-            mostrarErro('Nao foi possivel carregar o catalogo.');
+            if (!todos.length) mostrarErro('Nenhum livro carregado. Tente buscar.');
+        } catch (e) {
+            console.error('[catalogo]', e);
+            mostrarErro('Não foi possível carregar o catálogo.');
         }
     }
 
@@ -747,99 +386,59 @@
        ============================================================ */
     async function buscarLivros(termo) {
         termo = String(termo || '').trim();
-        if (!termo) { await carregarCatalogo(); return; }
+        if (!termo) { carregarCatalogo(); return; }
 
         estado.modo = 'busca';
         estado.buscaAtual = termo;
-        estado.carregando = true;
         mostrarLoading('Buscando livros...');
 
         try {
-            let livros = [];
-            try {
-                const gutenberg = await window.apiGutenberg.buscar(termo);
-                livros = mesclarLivros(livros, gutenberg);
-            } catch (e) { console.warn('Gutenberg falhou:', e); }
+            var livros = [];
+            var vistos = new Set();
 
-            try {
-                const standardEbooks = await window.apiStandardEbooks.buscar(termo);
-                livros = mesclarLivros(livros, standardEbooks);
-            } catch (e) { console.warn('Standard Ebooks falhou:', e); }
+            function merge(lista) {
+                (lista || []).forEach(function (l) {
+                    if (!l || !l.title) return;
+                    var k = (l.title || '').toLowerCase() + '|' + (l.author || '').toLowerCase();
+                    if (vistos.has(k)) return;
+                    vistos.add(k);
+                    livros.push(l);
+                });
+            }
+
+            try { merge(await window.apiGutenberg.buscar(termo)); }
+            catch (e) { console.warn('[catalogo] Gutenberg:', e); }
+
+            try { merge(await window.apiStandardEbooks.buscar(termo)); }
+            catch (e) { console.warn('[catalogo] SE:', e); }
 
             estado.resultados = livros;
             aplicarFiltrosEOrdenacao();
-        } catch (erro) {
-            console.error(erro);
-            mostrarErro('Nao foi possivel buscar os livros.');
-        } finally {
-            estado.carregando = false;
+        } catch (e) {
+            console.error(e);
+            mostrarErro('Não foi possível buscar.');
         }
-    }
-
-    function mesclarLivros(lista1, lista2) {
-        const vistos = new Set();
-        const resultado = [];
-        function adicionar(livro) {
-            const chave = (livro.title || '').toLowerCase() + '|' + (livro.author || '').toLowerCase();
-            if (vistos.has(chave)) return;
-            vistos.add(chave);
-            resultado.push(livro);
-        }
-        lista1.forEach(adicionar);
-        lista2.forEach(adicionar);
-        return resultado;
     }
 
     function aplicarFiltrosEOrdenacao() {
-        let livros = estado.resultados.slice();
-        const idioma = $('filtro-idioma') ? $('filtro-idioma').value : '';
-        if (idioma) livros = livros.filter((l) => (l.language || '').toLowerCase().indexOf(idioma) === 0);
+        var livros = estado.resultados.slice();
+        var idioma = $('filtro-idioma') ? $('filtro-idioma').value : '';
+        if (idioma) livros = livros.filter(function (l) {
+            return (l.language || '').toLowerCase().indexOf(idioma) === 0;
+        });
 
-        const fonte = $('filtro-fonte') ? $('filtro-fonte').value : '';
-        if (fonte) {
-            if (fonte === 'gutenberg') livros = livros.filter((l) => l.has_ebook);
-            else livros = livros.filter((l) => l.source === fonte);
-        }
+        var fonte = $('filtro-fonte') ? $('filtro-fonte').value : '';
+        if (fonte === 'gutenberg') livros = livros.filter(function (l) { return l.has_ebook; });
+        else if (fonte) livros = livros.filter(function (l) { return l.source === fonte; });
 
-        const ordem = $('filtro-ordem') ? $('filtro-ordem').value : 'relevancia';
-        if (ordem === 'ano-desc') livros.sort((a, b) => (b.year || 0) - (a.year || 0));
-        else if (ordem === 'ano-asc') livros.sort((a, b) => (a.year || 9999) - (b.year || 9999));
-        else if (ordem === 'titulo') livros.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+        var ordem = $('filtro-ordem') ? $('filtro-ordem').value : 'relevancia';
+        if (ordem === 'ano-desc') livros.sort(function (a, b) { return (b.year || 0) - (a.year || 0); });
+        else if (ordem === 'ano-asc') livros.sort(function (a, b) { return (a.year || 9999) - (b.year || 9999); });
+        else if (ordem === 'titulo') livros.sort(function (a, b) {
+            return (a.title || '').localeCompare(b.title || '');
+        });
 
-        estado.resultadosFiltrados = livros;
         mostrarResultados(livros);
-    }
-
-    /* ============================================================
-       FILTROS
-       ============================================================ */
-    function setupPopoverFiltros() {
-        const btn = $('busca-filtro-btn');
-        const popover = $('filtros-popover');
-        if (!btn || !popover) return;
-
-        function abrir() { popover.hidden = false; btn.setAttribute('aria-expanded', 'true'); }
-        function fechar() { popover.hidden = true; btn.setAttribute('aria-expanded', 'false'); }
-
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (popover.hidden) abrir(); else fechar();
-        });
-
-        document.addEventListener('click', (e) => {
-            if (popover.hidden) return;
-            if (popover.contains(e.target) || btn.contains(e.target)) return;
-            fechar();
-        });
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && !popover.hidden) { fechar(); btn.focus(); }
-        });
-
-        ['filtro-idioma', 'filtro-fonte', 'filtro-ordem'].forEach((id) => {
-            const el = $(id);
-            if (el) el.addEventListener('change', aplicarFiltrosEOrdenacao);
-        });
     }
 
     /* ============================================================
@@ -847,35 +446,32 @@
        ============================================================ */
     function abrirModalLivro(livro) {
         estado.livroSelecionado = livro;
-        const modal = $('modal-livro');
+        var modal = $('modal-livro');
         if (!modal) return;
 
-        const img = $('modal-capa-img');
-        const titulo = $('modal-titulo');
-        const autor = $('modal-autor');
-        const meta = $('modal-meta');
-        const descricao = $('modal-descricao');
-        const btnLer = $('btn-ler');
+        var img = $('modal-capa-img');
+        var titulo = $('modal-titulo');
+        var autor = $('modal-autor');
+        var meta = $('modal-meta');
+        var desc = $('modal-descricao');
+        var btnLer = $('btn-ler');
 
         if (img) {
             img.src = livro.cover_url || '';
             img.alt = livro.title || '';
-            img.onerror = () => { img.style.visibility = 'hidden'; };
             img.style.visibility = 'visible';
+            img.onerror = function () { img.style.visibility = 'hidden'; };
         }
-
-        if (titulo) titulo.textContent = livro.title || 'Sem titulo';
+        if (titulo) titulo.textContent = livro.title || 'Sem título';
         if (autor) autor.textContent = livro.author || 'Autor desconhecido';
-
         if (meta) {
-            const partes = [];
+            var partes = [];
             if (livro.year) partes.push(livro.year);
-            if (livro.pages) partes.push(livro.pages + ' paginas');
+            if (livro.pages) partes.push(livro.pages + ' páginas');
             if (livro.publisher) partes.push(livro.publisher);
-            meta.textContent = partes.join(' . ');
+            meta.textContent = partes.join(' · ');
         }
-
-        if (descricao) descricao.textContent = livro.description || 'Sem descricao disponivel.';
+        if (desc) desc.textContent = livro.description || 'Sem descrição disponível.';
 
         if (btnLer) {
             if (livro.ebook_url && livro.source === 'standardebooks') {
@@ -890,9 +486,7 @@
                 btnLer.href = livro.ebook_url;
                 btnLer.textContent = 'Ler agora';
                 btnLer.hidden = false;
-            } else {
-                btnLer.hidden = true;
-            }
+            } else btnLer.hidden = true;
         }
 
         modal.hidden = false;
@@ -900,22 +494,22 @@
     }
 
     function fecharModalLivro() {
-        const modal = $('modal-livro');
-        if (modal) modal.hidden = true;
+        var m = $('modal-livro');
+        if (m) m.hidden = true;
         document.body.style.overflow = '';
     }
 
     function abrirModalEstante(livro) {
         estado.livroSelecionado = livro;
-        const modal = $('modal-estante');
-        const texto = $('modal-estante-livro');
-        if (texto) texto.textContent = livro.title;
-        if (modal) { modal.hidden = false; document.body.style.overflow = 'hidden'; }
+        var m = $('modal-estante');
+        var t = $('modal-estante-livro');
+        if (t) t.textContent = livro.title;
+        if (m) { m.hidden = false; document.body.style.overflow = 'hidden'; }
     }
 
     function fecharModalEstante() {
-        const modal = $('modal-estante');
-        if (modal) modal.hidden = true;
+        var m = $('modal-estante');
+        if (m) m.hidden = true;
         document.body.style.overflow = '';
     }
 
@@ -924,15 +518,15 @@
        ============================================================ */
     async function adicionarAEstante(status) {
         if (!estado.livroSelecionado || !estado.usuario) return;
-        const db = getDb();
+        var db = getDb();
         if (!db) return;
 
-        const livro = estado.livroSelecionado;
-        const botoes = document.querySelectorAll('.opcao-estante');
-        botoes.forEach((b) => { b.disabled = true; });
+        var livro = estado.livroSelecionado;
+        var botoes = document.querySelectorAll('.opcao-estante');
+        botoes.forEach(function (b) { b.disabled = true; });
 
         try {
-            const livroParaSalvar = {
+            var livroSalvar = {
                 title: livro.title,
                 author: livro.author || null,
                 cover_url: livro.cover_url || null,
@@ -949,232 +543,198 @@
                 ebook_url: livro.ebook_url || null
             };
 
-            let bookId = null;
+            var bookId = null;
             if (livro.external_id && livro.source) {
-                const existente = await db.from('books').select('id')
+                var exist = await db.from('books').select('id')
                     .eq('external_id', livro.external_id)
-                    .eq('source', livro.source)
-                    .maybeSingle();
-                if (existente.data) bookId = existente.data.id;
+                    .eq('source', livro.source).maybeSingle();
+                if (exist.data) bookId = exist.data.id;
             }
 
             if (!bookId) {
-                const inserido = await db.from('books').insert(livroParaSalvar).select('id').single();
-                if (inserido.error) throw inserido.error;
-                bookId = inserido.data.id;
+                var ins = await db.from('books').insert(livroSalvar).select('id').single();
+                if (ins.error) throw ins.error;
+                bookId = ins.data.id;
             }
 
-            const jaTem = await db.from('user_books').select('id')
+            var jaTem = await db.from('user_books').select('id')
                 .eq('user_id', estado.usuario.id)
-                .eq('book_id', bookId)
-                .maybeSingle();
+                .eq('book_id', bookId).maybeSingle();
 
             if (jaTem.data) {
-                const atualizar = await db.from('user_books')
-                    .update({ status: status }).eq('id', jaTem.data.id);
-                if (atualizar.error) throw atualizar.error;
+                await db.from('user_books').update({ status: status }).eq('id', jaTem.data.id);
             } else {
-                const inserir = await db.from('user_books').insert({
+                await db.from('user_books').insert({
                     user_id: estado.usuario.id,
                     book_id: bookId,
                     status: status
                 });
-                if (inserir.error) throw inserir.error;
             }
 
             fecharModalEstante();
             fecharModalLivro();
-            mostrarToast('Adicionado a estante!');
-        } catch (erro) {
-            console.error('Erro ao adicionar:', erro);
-            mostrarToast('Nao foi possivel adicionar.', true);
+            window.utils.toast('Adicionado à estante!');
+        } catch (e) {
+            console.error(e);
+            window.utils.toast('Não foi possível adicionar.', true);
         } finally {
-            botoes.forEach((b) => { b.disabled = false; });
+            botoes.forEach(function (b) { b.disabled = false; });
         }
-    }
-
-    function mostrarToast(mensagem, ehErro) {
-        const toast = document.createElement('div');
-        toast.style.cssText = [
-            'position: fixed', 'bottom: 2rem', 'left: 50%',
-            'transform: translateX(-50%)', 'padding: 0.9rem 1.5rem',
-            'background: ' + (ehErro ? '#B23A2E' : '#2E7D4F'),
-            'color: #fff', 'font-family: Poppins, sans-serif', 'font-size: 0.85rem',
-            'border-radius: 4px', 'box-shadow: 0 12px 32px rgba(0,0,0,0.25)',
-            'z-index: 9999', 'opacity: 0', 'transition: opacity 0.3s'
-        ].join(';');
-        toast.textContent = mensagem;
-        document.body.appendChild(toast);
-
-        requestAnimationFrame(() => { toast.style.opacity = '1'; });
-        setTimeout(() => {
-            toast.style.opacity = '0';
-            setTimeout(() => toast.remove(), 300);
-        }, MENSAGEM_MS);
     }
 
     /* ============================================================
        EVENTOS
        ============================================================ */
-    function setupEventos() {
-        const form = $('busca-form');
-        if (form) {
-            form.addEventListener('submit', (e) => {
-                e.preventDefault();
-                const input = $('busca-input');
-                if (input) buscarLivros(input.value);
-            });
-        }
+    function setupPopoverFiltros() {
+        var btn = $('busca-filtro-btn');
+        var pop = $('filtros-popover');
+        if (!btn || !pop) return;
 
-        document.querySelectorAll('[data-fechar-modal]').forEach((el) => {
-            el.addEventListener('click', fecharModalLivro);
-        });
-        document.querySelectorAll('[data-fechar-modal-estante]').forEach((el) => {
-            el.addEventListener('click', fecharModalEstante);
+        function abrir() { pop.hidden = false; btn.setAttribute('aria-expanded', 'true'); }
+        function fechar() { pop.hidden = true; btn.setAttribute('aria-expanded', 'false'); }
+
+        btn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            if (pop.hidden) abrir(); else fechar();
         });
 
-        const btnAdd = $('btn-adicionar-estante');
-        if (btnAdd) {
-            btnAdd.addEventListener('click', () => {
-                if (estado.livroSelecionado) abrirModalEstante(estado.livroSelecionado);
-            });
-        }
-
-        document.querySelectorAll('.opcao-estante').forEach((btn) => {
-            btn.addEventListener('click', () => adicionarAEstante(btn.getAttribute('data-status')));
+        document.addEventListener('click', function (e) {
+            if (pop.hidden) return;
+            if (pop.contains(e.target) || btn.contains(e.target)) return;
+            fechar();
         });
 
-        const btnTentar = $('btn-tentar');
-        if (btnTentar) {
-            btnTentar.addEventListener('click', () => {
-                if (estado.modo === 'busca' && estado.buscaAtual) buscarLivros(estado.buscaAtual);
-                else carregarCatalogo();
-            });
-        }
-
-        const btnVoltar = $('btn-voltar-populares');
-        if (btnVoltar) {
-            btnVoltar.addEventListener('click', () => {
-                const input = $('busca-input');
-                if (input) input.value = '';
-                carregarCatalogo();
-            });
-        }
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') { fecharModalLivro(); fecharModalEstante(); }
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && !pop.hidden) { fechar(); btn.focus(); }
         });
 
-        setupLayout();
-
-        const btnSair = $('btn-sair');
-        if (btnSair) {
-            btnSair.addEventListener('click', async () => {
-                const dbLocal = getDb();
-                if (dbLocal) await dbLocal.auth.signOut();
-                irParaLogin();
-            });
-        }
+        ['filtro-idioma', 'filtro-fonte', 'filtro-ordem'].forEach(function (id) {
+            var el = $(id);
+            if (el) el.addEventListener('change', aplicarFiltrosEOrdenacao);
+        });
     }
 
     function setupLayout() {
-        const sidebar = $('sidebar');
-        const ficha = $('sidebar-perfil');
-        const overlay = $('gaveta-overlay');
-        const btnHamburger = $('btn-hamburger');
-        const btnPerfil = $('perfil-botao');
-        const btnFecharFicha = $('ficha-fechar');
-        const compacto = window.matchMedia('(max-width: 1366px)');
+        var sidebar = $('sidebar');
+        var ficha = $('sidebar-perfil');
+        var overlay = $('gaveta-overlay');
+        var btnHamburger = $('btn-hamburger');
+        var btnPerfil = $('perfil-botao');
+        var btnFechar = $('ficha-fechar');
+        var compacto = window.matchMedia('(max-width: 1366px)');
 
         function atualizarOverlay() {
             if (!overlay) return;
-            const sidebarAberta = sidebar && sidebar.classList.contains('aberta');
-            const fichaAberta = ficha && ficha.classList.contains('ativa');
-            overlay.classList.toggle('ativa', sidebarAberta || (compacto.matches && fichaAberta));
+            var sa = sidebar && sidebar.classList.contains('aberta');
+            var fa = ficha && ficha.classList.contains('ativa');
+            overlay.classList.toggle('ativa', sa || (compacto.matches && fa));
         }
 
         if (btnHamburger && sidebar) {
-            btnHamburger.addEventListener('click', () => {
+            btnHamburger.addEventListener('click', function () {
                 sidebar.classList.toggle('aberta');
                 atualizarOverlay();
             });
         }
-
         if (btnPerfil && ficha) {
-            btnPerfil.addEventListener('click', () => {
+            btnPerfil.addEventListener('click', function () {
                 ficha.classList.toggle('ativa');
                 document.body.classList.toggle('ficha-aberta', ficha.classList.contains('ativa'));
                 atualizarOverlay();
             });
         }
-
-        if (btnFecharFicha && ficha) {
-            btnFecharFicha.addEventListener('click', () => {
+        if (btnFechar && ficha) {
+            btnFechar.addEventListener('click', function () {
                 ficha.classList.remove('ativa');
                 document.body.classList.remove('ficha-aberta');
                 atualizarOverlay();
             });
         }
-
         if (overlay) {
-            overlay.addEventListener('click', () => {
+            overlay.addEventListener('click', function () {
                 if (sidebar) sidebar.classList.remove('aberta');
                 if (ficha) ficha.classList.remove('ativa');
                 document.body.classList.remove('ficha-aberta');
                 atualizarOverlay();
             });
         }
+    }
 
-        document.addEventListener('click', (e) => {
-            const alvo = e.target;
-            if (sidebar && sidebar.classList.contains('aberta') &&
-                !sidebar.contains(alvo) && !(btnHamburger && btnHamburger.contains(alvo))) {
-                sidebar.classList.remove('aberta');
-                atualizarOverlay();
-            }
-            if (ficha && ficha.classList.contains('ativa') && compacto.matches &&
-                !ficha.contains(alvo) && !(btnPerfil && btnPerfil.contains(alvo))) {
-                ficha.classList.remove('ativa');
-                document.body.classList.remove('ficha-aberta');
-                atualizarOverlay();
-            }
-        });
-
-        if (sidebar) {
-            sidebar.addEventListener('click', (e) => {
-                if (compacto.matches && e.target.closest('.sidebar-link')) {
-                    sidebar.classList.remove('aberta');
-                    atualizarOverlay();
-                }
+    function setupEventos() {
+        var form = $('busca-form');
+        if (form) {
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                var input = $('busca-input');
+                if (input) buscarLivros(input.value);
             });
         }
+
+        document.querySelectorAll('[data-fechar-modal]').forEach(function (el) {
+            el.addEventListener('click', fecharModalLivro);
+        });
+        document.querySelectorAll('[data-fechar-modal-estante]').forEach(function (el) {
+            el.addEventListener('click', fecharModalEstante);
+        });
+
+        var btnAdd = $('btn-adicionar-estante');
+        if (btnAdd) {
+            btnAdd.addEventListener('click', function () {
+                if (estado.livroSelecionado) abrirModalEstante(estado.livroSelecionado);
+            });
+        }
+
+        document.querySelectorAll('.opcao-estante').forEach(function (b) {
+            b.addEventListener('click', function () {
+                adicionarAEstante(b.getAttribute('data-status'));
+            });
+        });
+
+        var btnTentar = $('btn-tentar');
+        if (btnTentar) {
+            btnTentar.addEventListener('click', function () {
+                if (estado.modo === 'busca' && estado.buscaAtual) buscarLivros(estado.buscaAtual);
+                else carregarCatalogo();
+            });
+        }
+
+        var btnVoltar = $('btn-voltar-populares');
+        if (btnVoltar) {
+            btnVoltar.addEventListener('click', function () {
+                var i = $('busca-input');
+                if (i) i.value = '';
+                carregarCatalogo();
+            });
+        }
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') { fecharModalLivro(); fecharModalEstante(); }
+        });
+
+        var btnSair = $('btn-sair');
+        if (btnSair) {
+            btnSair.addEventListener('click', async function () {
+                var db = getDb();
+                if (db) { try { await db.auth.signOut(); } catch (e) { /* ignora */ } }
+                window.location.replace(PAGINA_LOGIN);
+            });
+        }
+
+        setupLayout();
+        setupPopoverFiltros();
     }
 
     /* ============================================================
-       INICIALIZACAO
+       INICIALIZAÇÃO
        ============================================================ */
     async function iniciar() {
-        console.log('[CATALOGO] iniciar: comecando');
+        try { setupEventos(); } catch (e) { console.error('[catalogo] setupEventos:', e); }
 
-        sincronizarTela();
-        setupAlturaFixa();
-        setupTela();
-        setupTeclado();
-        setupModoFoco();
-        setupPopoverFiltros();
+        var ok = await iniciarSessao();
+        if (!ok) return;
 
-        try {
-            setupEventos();
-            console.log('[CATALOGO] setupEventos OK');
-        } catch (e) {
-            console.error('[CATALOGO] setupEventos FALHOU:', e);
-        }
-
-        await iniciarSessao();
         await carregarCatalogo();
-
         document.documentElement.classList.remove('carregando-catalogo');
-        console.log('[CATALOGO] iniciar: FIM');
     }
 
     if (document.readyState === 'loading') {

@@ -1,49 +1,34 @@
 ﻿/* ============================================================
-   UTILS.JS
-   Helpers compartilhados por todas as páginas
+   UTILS.JS — v2
+   Helpers compartilhados por todas as páginas.
    ============================================================ */
 (function () {
     'use strict';
 
     /* ---------- DOM ---------- */
+    function $(id) { return document.getElementById(id); }
+    function $$(sel) { return document.querySelectorAll(sel); }
 
-    function $(id) {
-        return document.getElementById(id);
-    }
-
-    function $$(seletor) {
-        return document.querySelectorAll(seletor);
-    }
-
-    function criar(tag, atributos, filhos) {
+    function criar(tag, attrs, filhos) {
         var el = document.createElement(tag);
-
-        if (atributos) {
-            Object.keys(atributos).forEach(function (chave) {
-                if (chave === 'className') {
-                    el.className = atributos[chave];
-                } else if (chave === 'textContent') {
-                    el.textContent = atributos[chave];
-                } else if (chave === 'innerHTML') {
-                    el.innerHTML = atributos[chave];
-                } else if (chave.indexOf('on') === 0 && typeof atributos[chave] === 'function') {
-                    el.addEventListener(chave.substring(2).toLowerCase(), atributos[chave]);
+        if (attrs) {
+            Object.keys(attrs).forEach(function (k) {
+                if (k === 'className') el.className = attrs[k];
+                else if (k === 'textContent') el.textContent = attrs[k];
+                else if (k === 'innerHTML') el.innerHTML = attrs[k];
+                else if (k.indexOf('on') === 0 && typeof attrs[k] === 'function') {
+                    el.addEventListener(k.substring(2).toLowerCase(), attrs[k]);
                 } else {
-                    el.setAttribute(chave, atributos[chave]);
+                    el.setAttribute(k, attrs[k]);
                 }
             });
         }
-
         if (filhos) {
-            (Array.isArray(filhos) ? filhos : [filhos]).forEach(function (filho) {
-                if (typeof filho === 'string') {
-                    el.appendChild(document.createTextNode(filho));
-                } else if (filho) {
-                    el.appendChild(filho);
-                }
+            (Array.isArray(filhos) ? filhos : [filhos]).forEach(function (f) {
+                if (typeof f === 'string') el.appendChild(document.createTextNode(f));
+                else if (f) el.appendChild(f);
             });
         }
-
         return el;
     }
 
@@ -53,131 +38,89 @@
     }
 
     /* ---------- Texto ---------- */
-
-    function truncar(texto, limite) {
+    function truncar(t, limite) {
         limite = limite || 100;
-        if (!texto) return '';
-        if (texto.length <= limite) return texto;
-        return texto.substring(0, limite).trim() + '...';
+        if (!t) return '';
+        return t.length <= limite ? t : t.substring(0, limite).trim() + '...';
     }
 
-    function escapar(texto) {
-        if (!texto) return '';
-        var div = document.createElement('div');
-        div.textContent = texto;
-        return div.innerHTML;
+    function escapar(t) {
+        if (!t) return '';
+        var d = document.createElement('div');
+        d.textContent = t;
+        return d.innerHTML;
     }
 
-    function slug(texto) {
-        if (!texto) return '';
-        return texto
-            .toLowerCase()
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
+    function slug(t) {
+        if (!t) return '';
+        return t.toLowerCase()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
             .replace(/[^a-z0-9]+/g, '-')
             .replace(/^-+|-+$/g, '');
     }
 
     /* ---------- Datas ---------- */
-
     function formatarData(data) {
         if (!data) return '';
         var d;
         if (typeof data === 'string') {
-            var match = data.match(/^(\d{4})-(\d{2})-(\d{2})/);
-            if (match) {
-                d = new Date(parseInt(match[1], 10), parseInt(match[2], 10) - 1, parseInt(match[3], 10));
-            } else {
-                d = new Date(data);
-            }
-        } else {
-            d = data;
-        }
-        var dia = String(d.getDate()).padStart(2, '0');
-        var mes = String(d.getMonth() + 1).padStart(2, '0');
-        var ano = d.getFullYear();
-        return dia + '/' + mes + '/' + ano;
+            var m = data.match(/^(\d{4})-(\d{2})-(\d{2})/);
+            d = m ? new Date(+m[1], +m[2] - 1, +m[3]) : new Date(data);
+        } else d = data;
+        return String(d.getDate()).padStart(2, '0') + '/' +
+               String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
     }
 
     function tempoRelativo(data) {
         if (!data) return '';
-        var d;
-        if (typeof data === 'string') {
-            var match = data.match(/^(\d{4})-(\d{2})-(\d{2})/);
-            if (match) {
-                d = new Date(parseInt(match[1], 10), parseInt(match[2], 10) - 1, parseInt(match[3], 10));
-            } else {
-                d = new Date(data);
-            }
-        } else {
-            d = data;
-        }
-        var diff = Math.floor((Date.now() - d.getTime()) / 1000);
-        if (diff < 60) return 'agora';
-        if (diff < 3600) return Math.floor(diff / 60) + 'min';
-        if (diff < 86400) return Math.floor(diff / 3600) + 'h';
-        if (diff < 604800) return Math.floor(diff / 86400) + 'd';
+        var d = new Date(data);
+        var s = Math.floor((Date.now() - d.getTime()) / 1000);
+        if (s < 60) return 'agora';
+        if (s < 3600) return Math.floor(s / 60) + 'min';
+        if (s < 86400) return Math.floor(s / 3600) + 'h';
+        if (s < 604800) return Math.floor(s / 86400) + 'd';
         return formatarData(d);
     }
 
-    /* ---------- Storage ---------- */
-
+    /* ---------- Storage (com namespace) ---------- */
+    var NS = 'auloo:';
     function salvarLocal(chave, valor) {
-        try {
-            localStorage.setItem(chave, JSON.stringify(valor));
-            return true;
-        } catch (e) {
-            console.warn('Erro ao salvar:', e);
-            return false;
-        }
+        try { localStorage.setItem(NS + chave, JSON.stringify(valor)); return true; }
+        catch (e) { return false; }
     }
-
     function lerLocal(chave, padrao) {
         try {
-            var valor = localStorage.getItem(chave);
-            return valor ? JSON.parse(valor) : padrao;
-        } catch (e) {
-            return padrao;
-        }
+            var v = localStorage.getItem(NS + chave);
+            return v ? JSON.parse(v) : padrao;
+        } catch (e) { return padrao; }
     }
-
     function removerLocal(chave) {
-        try {
-            localStorage.removeItem(chave);
-        } catch (e) {}
+        try { localStorage.removeItem(NS + chave); } catch (e) { /* ignora */ }
     }
 
     /* ---------- URL ---------- */
-
     function getParametro(nome) {
-        var params = new URLSearchParams(window.location.search);
-        return params.get(nome);
+        return new URLSearchParams(window.location.search).get(nome);
     }
 
-    /* ---------- Debounce ---------- */
-
-    function debounce(funcao, espera) {
-        var timer = null;
+    /* ---------- Performance ---------- */
+    function debounce(fn, espera) {
+        var t = null;
         espera = espera || 300;
         return function () {
-            var args = arguments;
-            var contexto = this;
-            clearTimeout(timer);
-            timer = setTimeout(function () {
-                funcao.apply(contexto, args);
-            }, espera);
+            var args = arguments, ctx = this;
+            clearTimeout(t);
+            t = setTimeout(function () { fn.apply(ctx, args); }, espera);
         };
     }
 
-    /* ---------- Loading ---------- */
-
+    /* ---------- UI ---------- */
     function mostrarLoading(botao) {
         if (!botao) return;
         botao.disabled = true;
         botao.dataset.textoOriginal = botao.textContent;
         botao.textContent = '';
-        var spinner = criar('span', { className: 'button-loading' });
-        botao.appendChild(spinner);
+        botao.appendChild(criar('span', { className: 'button-loading' }));
     }
 
     function restaurarBotao(botao) {
@@ -189,26 +132,71 @@
         }
     }
 
-    /* ---------- API pública ---------- */
+    /* ---------- Avatar (usado em várias páginas) ---------- */
+    function iniciais(nome) {
+        var p = String(nome || 'U').trim().split(/\s+/);
+        var primeira = (p[0] || 'U').charAt(0).toUpperCase();
+        var ultima = p.length > 1 ? (p[p.length - 1] || '').charAt(0).toUpperCase() : '';
+        return primeira + ultima;
+    }
 
+    function renderizarAvatar(container, avatarUrl, nome) {
+        if (!container) return;
+        container.textContent = '';
+
+        if (!avatarUrl || avatarUrl === 'null') {
+            var span = document.createElement('span');
+            span.className = 'avatar-iniciais';
+            span.textContent = iniciais(nome);
+            container.appendChild(span);
+            return;
+        }
+
+        var img = document.createElement('img');
+        img.className = 'foto-perfil';
+        img.alt = 'Foto de perfil';
+        img.referrerPolicy = 'no-referrer';
+        img.src = avatarUrl;
+        img.onerror = function () {
+            img.remove();
+            var s = document.createElement('span');
+            s.className = 'avatar-iniciais';
+            s.textContent = iniciais(nome);
+            container.appendChild(s);
+        };
+        container.appendChild(img);
+    }
+
+    /* ---------- Toast (usado no catálogo) ---------- */
+    function toast(mensagem, ehErro) {
+        var el = document.createElement('div');
+        el.style.cssText = [
+            'position:fixed', 'bottom:2rem', 'left:50%',
+            'transform:translateX(-50%)', 'padding:0.9rem 1.5rem',
+            'background:' + (ehErro ? '#B23A2E' : '#2E7D4F'),
+            'color:#fff', 'font-family:Poppins,sans-serif', 'font-size:0.85rem',
+            'border-radius:4px', 'box-shadow:0 12px 32px rgba(0,0,0,0.25)',
+            'z-index:9999', 'opacity:0', 'transition:opacity 0.3s'
+        ].join(';');
+        el.textContent = mensagem;
+        document.body.appendChild(el);
+        requestAnimationFrame(function () { el.style.opacity = '1'; });
+        setTimeout(function () {
+            el.style.opacity = '0';
+            setTimeout(function () { el.remove(); }, 300);
+        }, 2600);
+    }
+
+    /* ---------- API pública ---------- */
     window.utils = {
-        $: $,
-        $$: $$,
-        criar: criar,
-        limpar: limpar,
-        truncar: truncar,
-        escapar: escapar,
-        slug: slug,
-        formatarData: formatarData,
-        tempoRelativo: tempoRelativo,
-        salvarLocal: salvarLocal,
-        lerLocal: lerLocal,
-        removerLocal: removerLocal,
-        getParametro: getParametro,
-        debounce: debounce,
-        mostrarLoading: mostrarLoading,
-        restaurarBotao: restaurarBotao
+        $: $, $$: $$, criar: criar, limpar: limpar,
+        truncar: truncar, escapar: escapar, slug: slug,
+        formatarData: formatarData, tempoRelativo: tempoRelativo,
+        salvarLocal: salvarLocal, lerLocal: lerLocal, removerLocal: removerLocal,
+        getParametro: getParametro, debounce: debounce,
+        mostrarLoading: mostrarLoading, restaurarBotao: restaurarBotao,
+        iniciais: iniciais, renderizarAvatar: renderizarAvatar, toast: toast
     };
 
-    console.log('utils.js carregado');
+    console.log('[utils] pronto');
 })();

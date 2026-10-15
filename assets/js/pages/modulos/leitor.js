@@ -1,166 +1,123 @@
 /* ============================================================
-   LEITOR.JS — v15
-   Leitor com 2 paginas | Marcar texto | Historico
+   LEITOR.JS — v16
+   Leitor EPUB com marcação e histórico.
+   Depende de: epub.min.js, jszip.min.js, utils.js, auth.js
    ============================================================ */
 (function () {
     'use strict';
 
-    const PAGINA_LOGIN = '/login.html';
-    const SUPABASE_TENTATIVAS = 40;
-    const SUPABASE_INTERVALO_MS = 200;
+    var PAGINA_LOGIN = '/login.html';
+    var TENTATIVAS_DB = 40;
+    var INTERVALO_DB = 200;
+    var FONTE_MIN = 14;
+    var FONTE_MAX = 28;
+    var FONTE_PADRAO = 19;
+    var MIN_WIDTH_LIVRO = 1024;
+    var HIGHLIGHT_CLASS = 'acervo-highlight';
 
-    const TAMANHO_FONTE_MIN = 14;
-    const TAMANHO_FONTE_MAX = 28;
-    const TAMANHO_FONTE_PADRAO = 19;
-    const MIN_WIDTH_PARA_LIVRO = 1024;
+    var $ = function (id) { return document.getElementById(id); };
+    var esperar = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
 
-    const $ = (id) => document.getElementById(id);
+    var book = null;
+    var rendition = null;
+    var usuario = null;
+    var db = null;
+    var tamanhoFonte = FONTE_PADRAO;
+    var timerSalvar = null;
+    var paginasTotais = 0;
+    var modoMarcacao = false;
+    var cfiSelecaoAtual = null;
+    var marcacoes = [];
 
-    let book = null;
-    let rendition = null;
-    let usuario = null;
-    let db = null;
-    let tamanhoFonte = TAMANHO_FONTE_PADRAO;
-    let timerSalvar = null;
-    let paginasTotais = 0;
-    let modoMarcacao = false;
-    let cfiSelecaoAtual = null;
-
-    const estado = {
-        url: null,
-        titulo: '',
-        slug: '',
-        autor: '',
-        capa: ''
-    };
+    var estado = { url: null, titulo: '', slug: '', autor: '', capa: '' };
 
     function getDb() {
-        if (window.getSupabaseClient) return window.getSupabaseClient();
-        return window.supabaseClient ||
-               (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
+        return window.getSupabaseClientSeguro ? window.getSupabaseClientSeguro()
+                                              : window.getSupabaseClient();
     }
 
     async function aguardarDb() {
-        for (let i = 0; i < SUPABASE_TENTATIVAS; i++) {
-            const d = getDb();
+        for (var i = 0; i < TENTATIVAS_DB; i++) {
+            var d = getDb();
             if (d && d.auth && typeof d.auth.getSession === 'function') return d;
-            await new Promise((r) => setTimeout(r, SUPABASE_INTERVALO_MS));
+            await esperar(INTERVALO_DB);
         }
         return null;
     }
 
-    function irParaLogin() {
-        window.location.replace(PAGINA_LOGIN);
-    }
-
-    async function baixarEpub(urlOriginal) {
-        const config = window.SUPABASE_CONFIG;
-        if (!config || !config.url) {
-            const r = await fetch(urlOriginal);
-            if (!r.ok) throw new Error('Falha ao baixar EPUB: ' + r.status);
-            return await r.arrayBuffer();
-        }
-        const base = config.url.replace(/\/$/, '');
-        const proxyUrl = base + '/functions/v1/epub-proxy?url=' + encodeURIComponent(urlOriginal);
-        const headers = {};
-        if (config.anonKey) {
-            headers['Authorization'] = 'Bearer ' + config.anonKey;
-            headers['apikey'] = config.anonKey;
-        }
-        const r = await fetch(proxyUrl, { headers });
-        if (!r.ok) throw new Error('Proxy retornou ' + r.status);
-        return await r.arrayBuffer();
-    }
-
+    /* ---------- Parâmetros ---------- */
     function lerParametros() {
-        const params = new URLSearchParams(window.location.search);
-        estado.url = params.get('url');
-        estado.titulo = params.get('titulo') || 'Livro';
-        estado.slug = params.get('slug') || '';
-        estado.autor = params.get('autor') || '';
-        estado.capa = params.get('capa') || '';
+        var p = new URLSearchParams(window.location.search);
+        estado.url = p.get('url');
+        estado.titulo = p.get('titulo') || 'Livro';
+        estado.slug = p.get('slug') || '';
+        estado.autor = p.get('autor') || '';
+        estado.capa = p.get('capa') || '';
 
-        if (!estado.url) {
-            mostrarErro('URL do livro nao foi fornecida.');
-            return false;
-        }
+        if (!estado.url) { mostrarErro('URL do livro não foi fornecida.'); return false; }
         document.title = estado.titulo + ' | Acervo';
-        const el = $('leitor-titulo');
+        var el = $('leitor-titulo');
         if (el) el.textContent = estado.titulo;
         return true;
     }
 
-    async function aguardarSessao(d) {
-        for (let i = 0; i < SUPABASE_TENTATIVAS; i++) {
-            const resultado = await d.auth.getSession();
-            if (resultado.error) throw resultado.error;
-            const sessao = resultado.data && resultado.data.session;
-            if (sessao && sessao.user) return sessao;
-            await new Promise((r) => setTimeout(r, SUPABASE_INTERVALO_MS));
-        }
-        return null;
-    }
-
+    /* ---------- Sessão ---------- */
     async function iniciarSessao() {
         db = await aguardarDb();
-        if (!db) { irParaLogin(); return false; }
+        if (!db) { window.location.replace(PAGINA_LOGIN); return false; }
 
-        db.auth.onAuthStateChange((evento) => {
-            if (evento === 'SIGNED_OUT') irParaLogin();
+        db.auth.onAuthStateChange(function (evento) {
+            if (evento === 'SIGNED_OUT') window.location.replace(PAGINA_LOGIN);
         });
 
         try {
-            const sessao = await aguardarSessao(db);
-            if (!sessao) { irParaLogin(); return false; }
-
-            usuario = sessao.user;
-            const meta = usuario.user_metadata || {};
-            const nome = meta.full_name || meta.name || usuario.email || 'Usuario';
-            const avatar = meta.avatar_url || meta.picture || null;
-
-            renderizarAvatar($('perfil-usuario'), avatar, nome);
-            renderizarAvatar($('sidebar-perfil-foto'), avatar, nome);
-
-            const elNome = $('sidebar-perfil-nome');
-            const elEmail = $('sidebar-perfil-email');
-            if (elNome) elNome.textContent = nome.split('@')[0];
-            if (elEmail) elEmail.textContent = usuario.email || '';
-            return true;
-        } catch (erro) {
-            console.error('Erro getSession:', erro);
-            irParaLogin();
+            for (var i = 0; i < TENTATIVAS_DB; i++) {
+                var r = await db.auth.getSession();
+                var sessao = r && r.data && r.data.session;
+                if (sessao && sessao.user) {
+                    usuario = sessao.user;
+                    var meta = usuario.user_metadata || {};
+                    var nome = meta.full_name || meta.name || usuario.email || 'Usuário';
+                    var avatar = meta.avatar_url || meta.picture || null;
+                    window.utils.renderizarAvatar($('perfil-usuario'), avatar, nome);
+                    window.utils.renderizarAvatar($('sidebar-perfil-foto'), avatar, nome);
+                    var n = $('sidebar-perfil-nome'), e = $('sidebar-perfil-email');
+                    if (n) n.textContent = nome.split('@')[0];
+                    if (e) e.textContent = usuario.email || '';
+                    return true;
+                }
+                await esperar(INTERVALO_DB);
+            }
+            window.location.replace(PAGINA_LOGIN);
+            return false;
+        } catch (err) {
+            console.error(err);
+            window.location.replace(PAGINA_LOGIN);
             return false;
         }
     }
 
-    function renderizarAvatar(container, avatarUrl, nome) {
-        if (!container) return;
-        container.textContent = '';
-
-        if (!avatarUrl || avatarUrl === 'null') {
-            const span = document.createElement('span');
-            span.className = 'avatar-iniciais';
-            const partes = (nome || 'U').trim().split(/\s+/);
-            span.textContent = (partes[0][0] || 'U').toUpperCase() +
-                              (partes.length > 1 ? (partes[partes.length - 1][0] || '').toUpperCase() : '');
-            container.appendChild(span);
-            return;
+    /* ---------- Download EPUB via proxy ---------- */
+    async function baixarEpub(urlOriginal) {
+        var config = window.SUPABASE_CONFIG;
+        if (!config || !config.url) {
+            var r = await fetch(urlOriginal);
+            if (!r.ok) throw new Error('Falha ao baixar EPUB: ' + r.status);
+            return await r.arrayBuffer();
         }
-        const img = document.createElement('img');
-        img.className = 'foto-perfil';
-        img.alt = 'Foto de perfil';
-        img.referrerPolicy = 'no-referrer';
-        img.src = avatarUrl;
-        img.onerror = () => {
-            img.remove();
-            const span = document.createElement('span');
-            span.className = 'avatar-iniciais';
-            span.textContent = (nome || 'U').charAt(0).toUpperCase();
-            container.appendChild(span);
-        };
-        container.appendChild(img);
+        var base = config.url.replace(/\/$/, '');
+        var proxy = base + '/functions/v1/epub-proxy?url=' + encodeURIComponent(urlOriginal);
+        var headers = {};
+        if (config.anonKey) {
+            headers['Authorization'] = 'Bearer ' + config.anonKey;
+            headers['apikey'] = config.anonKey;
+        }
+        var resp = await fetch(proxy, { headers: headers });
+        if (!resp.ok) throw new Error('Proxy retornou ' + resp.status);
+        return await resp.arrayBuffer();
     }
 
+    /* ---------- Progresso / Histórico ---------- */
     async function registrarHistorico() {
         if (!db || !usuario || !estado.slug) return;
         try {
@@ -172,17 +129,16 @@
                 book_cover: estado.capa || null,
                 last_read_at: new Date().toISOString()
             }, { onConflict: 'user_id,book_slug' });
-        } catch (e) { console.warn('Erro historico:', e); }
+        } catch (e) { console.warn(e); }
     }
 
     async function carregarProgresso() {
         if (!db || !usuario || !estado.slug) return null;
         try {
-            const r = await db.from('reading_progress')
+            var r = await db.from('reading_progress')
                 .select('position, percent')
                 .eq('user_id', usuario.id)
-                .eq('book_slug', estado.slug)
-                .maybeSingle();
+                .eq('book_slug', estado.slug).maybeSingle();
             return r.data || null;
         } catch (e) { return null; }
     }
@@ -190,7 +146,7 @@
     function salvarProgresso(position, percent) {
         if (!db || !usuario || !estado.slug) return;
         clearTimeout(timerSalvar);
-        timerSalvar = setTimeout(async () => {
+        timerSalvar = setTimeout(async function () {
             try {
                 await db.from('reading_progress').upsert({
                     user_id: usuario.id,
@@ -200,23 +156,22 @@
                     percent: percent,
                     updated_at: new Date().toISOString()
                 }, { onConflict: 'user_id,book_slug' });
-            } catch (e) { console.warn('Erro progresso:', e); }
+            } catch (e) { /* ignora */ }
         }, 1200);
     }
 
     function atualizarProgresso(percent) {
-        const fillTop = $('progresso-fill');
-        const fillSide = $('progresso-fill-sidebar');
-        const texto = $('progresso-texto');
-        if (fillTop) fillTop.style.width = percent + '%';
-        if (fillSide) fillSide.style.width = percent + '%';
-        if (texto) texto.textContent = Math.round(percent) + '%';
+        var a = $('progresso-fill'), b = $('progresso-fill-sidebar'), t = $('progresso-texto');
+        if (a) a.style.width = percent + '%';
+        if (b) b.style.width = percent + '%';
+        if (t) t.textContent = Math.round(percent) + '%';
     }
 
+    /* ---------- Marcações ---------- */
     async function carregarMarcacoes() {
         if (!db || !usuario || !estado.slug) return [];
         try {
-            const r = await db.from('reading_highlights')
+            var r = await db.from('reading_highlights')
                 .select('id, cfi, text, created_at')
                 .eq('user_id', usuario.id)
                 .eq('book_slug', estado.slug)
@@ -228,7 +183,7 @@
     async function salvarMarcacao(cfi, texto) {
         if (!db || !usuario || !estado.slug) return null;
         try {
-            const r = await db.from('reading_highlights').insert({
+            var r = await db.from('reading_highlights').insert({
                 user_id: usuario.id,
                 book_slug: estado.slug,
                 book_title: estado.titulo,
@@ -240,150 +195,144 @@
     }
 
     function renderizarMarcacoes() {
-        const lista = $('lista-marcacoes');
+        var lista = $('lista-marcacoes');
         if (!lista) return;
-        lista.textContent = '';
+        window.utils.limpar(lista);
 
-        if (!estado.marcacoes || estado.marcacoes.length === 0) {
-            const li = document.createElement('li');
+        if (!marcacoes.length) {
+            var li = document.createElement('li');
             li.className = 'marcacao-vazia';
-            li.textContent = 'Nenhuma marcacao ainda';
+            li.textContent = 'Nenhuma marcação ainda';
             lista.appendChild(li);
             return;
         }
-        estado.marcacoes.forEach((m) => {
-            const li = document.createElement('li');
+        marcacoes.forEach(function (m) {
+            var li = document.createElement('li');
             li.className = 'marcacao-item';
             li.textContent = m.text.length > 140 ? m.text.slice(0, 140) + '...' : m.text;
             li.title = 'Clique para ir ao trecho';
-            li.addEventListener('click', () => { if (rendition && m.cfi) rendition.display(m.cfi); });
+            li.addEventListener('click', function () {
+                if (rendition && m.cfi) rendition.display(m.cfi);
+            });
             lista.appendChild(li);
         });
     }
 
+    /* ---------- Marcação de texto ---------- */
     function aplicarModoMarcacao() {
         document.body.classList.toggle('modo-marcacao', modoMarcacao);
-        const btn = $('btn-marcar-modo');
+        var btn = $('btn-marcar-modo');
         if (btn) {
             btn.setAttribute('aria-pressed', String(modoMarcacao));
-            const span = btn.querySelector('span');
-            if (span) span.textContent = modoMarcacao ? 'Marcando' : 'Marcar';
+            var s = btn.querySelector('span');
+            if (s) s.textContent = modoMarcacao ? 'Marcando' : 'Marcar';
         }
         injetarListenersEmTodos();
     }
 
     function injetarListenersEmTodos() {
         if (!rendition) return;
-        rendition.getContents().forEach((c) => injetarListeners(c));
+        rendition.getContents().forEach(injetarListeners);
     }
 
     function injetarListeners(contents) {
-        if (!contents || !contents.document) return;
-        if (contents._acervoListeners) return;
-        contents._acervoListeners = true;
-        const doc = contents.document;
-        doc.addEventListener('mouseup', () => {
+        if (!contents || !contents.document || contents._aulooListeners) return;
+        contents._aulooListeners = true;
+
+        var handler = function () {
             if (!modoMarcacao) return;
-            setTimeout(() => processarSelecao(contents), 50);
-        });
-        doc.addEventListener('touchend', () => {
-            if (!modoMarcacao) return;
-            setTimeout(() => processarSelecao(contents), 50);
-        });
+            setTimeout(function () { processarSelecao(contents); }, 50);
+        };
+        contents.document.addEventListener('mouseup', handler);
+        contents.document.addEventListener('touchend', handler);
     }
 
     async function processarSelecao(contents) {
         try {
-            const sel = contents.window.getSelection();
-            if (!sel || sel.rangeCount === 0) return;
-            const texto = sel.toString().trim();
+            var sel = contents.window.getSelection();
+            if (!sel || !sel.rangeCount) return;
+            var texto = sel.toString().trim();
             if (!texto || texto.length < 3) return;
 
-            const range = sel.getRangeAt(0);
-            const cfi = contents.cfiFromRange(range);
+            var range = sel.getRangeAt(0);
+            var cfi = contents.cfiFromRange(range);
             if (!cfi || cfi === cfiSelecaoAtual) return;
             cfiSelecaoAtual = cfi;
 
-            try { contents.addClass('acervo-highlight', cfi); } catch (e) {}
+            try { contents.addClass(HIGHLIGHT_CLASS, cfi); } catch (e) { /* ignora */ }
             sel.removeAllRanges();
 
-            const marcacao = await salvarMarcacao(cfi, texto);
-            if (marcacao) {
-                estado.marcacoes.unshift(marcacao);
-                renderizarMarcacoes();
-            }
-        } catch (e) { console.warn('Erro selecao:', e); }
+            var m = await salvarMarcacao(cfi, texto);
+            if (m) { marcacoes.unshift(m); renderizarMarcacoes(); }
+        } catch (e) { console.warn(e); }
     }
 
     function aplicarHighlightsSalvos() {
-        if (!rendition || !estado.marcacoes) return;
-        estado.marcacoes.forEach((m) => {
-            try { rendition.annotations.highlight(m.cfi, {}, () => {}, 'acervo-highlight'); } catch (e) {}
+        if (!rendition || !marcacoes.length) return;
+        marcacoes.forEach(function (m) {
+            try { rendition.annotations.highlight(m.cfi, {}, function () {}, HIGHLIGHT_CLASS); }
+            catch (e) { /* ignora */ }
         });
     }
 
+    /* ---------- Renderização do livro ---------- */
     async function abrirLivro() {
-        const loading = $('leitor-loading');
-        const livro = $('leitor-livro');
-        const areaUnica = $('area');
+        var loading = $('leitor-loading');
+        var livro = $('leitor-livro');
+        var area = $('area');
 
         if (loading) loading.hidden = false;
         if (livro) livro.hidden = true;
-        if (areaUnica) areaUnica.hidden = true;
+        if (area) area.hidden = true;
 
         try {
-            const buffer = await baixarEpub(estado.url);
+            var buffer = await baixarEpub(estado.url);
             book = ePub(buffer);
             await book.ready;
 
             if (loading) loading.hidden = true;
 
-            const podeLivro = window.innerWidth >= MIN_WIDTH_PARA_LIVRO;
-            if (podeLivro) {
+            if (window.innerWidth >= MIN_WIDTH_LIVRO) {
                 if (livro) livro.hidden = false;
                 await renderizarLivroAberto();
             } else {
-                if (areaUnica) areaUnica.hidden = false;
+                if (area) area.hidden = false;
                 await renderizarPaginaUnica();
             }
             registrarHistorico();
-        } catch (erro) {
-            console.error('Erro EPUB:', erro);
-            mostrarErro('Nao foi possivel carregar este livro. ' + (erro.message || ''));
+        } catch (e) {
+            console.error(e);
+            mostrarErro('Não foi possível carregar este livro. ' + (e.message || ''));
         }
     }
 
     async function renderizarLivroAberto() {
-        const elEsq = $('area-esq');
-        if (!elEsq) return;
+        var el = $('area-esq');
+        if (!el) return;
         rendition = book.renderTo('area-esq', {
             width: '100%', height: '100%',
             flow: 'paginated', spread: 'auto', minSpreadWidth: 600
         });
-        aplicarFonte(); aplicarTema();
-
-        const progresso = await carregarProgresso();
-        if (progresso && progresso.position) await rendition.display(progresso.position);
-        else await rendition.display();
-
+        aplicarFonte();
+        aplicarTema();
+        var prog = await carregarProgresso();
+        await (prog && prog.position ? rendition.display(prog.position) : rendition.display());
         await book.locations.generate(600);
         paginasTotais = book.locations.length();
         configurarEventosRendition();
     }
 
     async function renderizarPaginaUnica() {
-        const area = $('area');
-        if (!area) return;
+        var el = $('area');
+        if (!el) return;
         rendition = book.renderTo('area', {
             width: '100%', height: '100%',
             flow: 'paginated', spread: 'none'
         });
-        aplicarFonte(); aplicarTema();
-
-        const progresso = await carregarProgresso();
-        if (progresso && progresso.position) await rendition.display(progresso.position);
-        else await rendition.display();
-
+        aplicarFonte();
+        aplicarTema();
+        var prog = await carregarProgresso();
+        await (prog && prog.position ? rendition.display(prog.position) : rendition.display());
         await book.locations.generate(600);
         paginasTotais = book.locations.length();
         configurarEventosRendition();
@@ -392,47 +341,44 @@
     function configurarEventosRendition() {
         if (!rendition) return;
 
-        (async () => {
-            estado.marcacoes = await carregarMarcacoes();
+        (async function () {
+            marcacoes = await carregarMarcacoes();
             renderizarMarcacoes();
             aplicarHighlightsSalvos();
         })();
 
-        rendition.on('relocated', (location) => {
-            const cfi = location.start.cfi;
-            const percent = book.locations.percentageFromCfi(cfi) * 100;
-            const paginaAtual = book.locations.locationFromCfi(cfi);
-
-            const el = $('nav-pagina');
-            if (el && paginasTotais > 0 && paginaAtual >= 0) {
-                el.textContent = (paginaAtual + 1) + ' / ' + paginasTotais;
+        rendition.on('relocated', function (loc) {
+            var cfi = loc.start.cfi;
+            var percent = book.locations.percentageFromCfi(cfi) * 100;
+            var pag = book.locations.locationFromCfi(cfi);
+            var el = $('nav-pagina');
+            if (el && paginasTotais > 0 && pag >= 0) {
+                el.textContent = (pag + 1) + ' / ' + paginasTotais;
             }
-
             atualizarProgresso(percent);
             salvarProgresso(cfi, percent);
             setTimeout(injetarListenersEmTodos, 300);
         });
 
-        rendition.on('rendered', (section, view) => {
+        rendition.on('rendered', function (section, view) {
             if (view && view.contents) injetarListeners(view.contents);
         });
 
-        const btnAnterior = $('btn-anterior');
-        const btnProximo = $('btn-proximo');
-        if (btnAnterior) btnAnterior.addEventListener('click', () => rendition && rendition.prev());
-        if (btnProximo) btnProximo.addEventListener('click', () => rendition && rendition.next());
+        var ant = $('btn-anterior');
+        var prox = $('btn-proximo');
+        if (ant) ant.addEventListener('click', function () { rendition && rendition.prev(); });
+        if (prox) prox.addEventListener('click', function () { rendition && rendition.next(); });
 
-        document.addEventListener('keydown', (e) => {
+        document.addEventListener('keydown', function (e) {
             if (!rendition) return;
-            if (e.key === 'ArrowLeft') { e.preventDefault(); rendition.prev(); }
+            if (e.key === 'ArrowLeft')  { e.preventDefault(); rendition.prev(); }
             if (e.key === 'ArrowRight') { e.preventDefault(); rendition.next(); }
-            if (e.key === ' ') { e.preventDefault(); rendition.next(); }
+            if (e.key === ' ')          { e.preventDefault(); rendition.next(); }
         });
     }
 
     function aplicarFonte() {
-        if (!rendition) return;
-        rendition.themes.fontSize(tamanhoFonte + 'px');
+        if (rendition) rendition.themes.fontSize(tamanhoFonte + 'px');
     }
 
     function aplicarTema() {
@@ -442,18 +388,22 @@
                 'font-family': "'Cormorant Garamond', Georgia, serif",
                 'font-size': tamanhoFonte + 'px',
                 'line-height': '1.75',
-                'color': '#1A1614', 'background': '#F8F2E4',
-                'padding': '2rem 3rem', 'overflow': 'hidden',
-                '-webkit-user-select': 'text', 'user-select': 'text'
+                'color': '#1A1614',
+                'background': '#F8F2E4',
+                'padding': '2rem 3rem',
+                'overflow': 'hidden',
+                '-webkit-user-select': 'text',
+                'user-select': 'text'
             },
             'p': { 'margin': '0 0 1em 0', 'text-align': 'justify' },
-            'h1, h2, h3': {
+            'h1,h2,h3': {
                 'font-family': "'Playfair Display', Georgia, serif",
-                'font-style': 'italic', 'color': '#5C1A1A'
+                'font-style': 'italic',
+                'color': '#5C1A1A'
             },
             'a': { 'color': '#5C1A1A' },
             '.acervo-highlight': {
-                'background-color': 'rgba(184, 137, 74, 0.45)',
+                'background-color': 'rgba(184,137,74,0.45)',
                 'border-bottom': '2px solid #B8894A',
                 'cursor': 'pointer'
             }
@@ -461,53 +411,53 @@
     }
 
     function configurarControles() {
-        const btnMais = $('btn-font-mais');
-        const btnMenos = $('btn-font-menos');
-        const btnMarcar = $('btn-marcar-modo');
+        var mais = $('btn-font-mais');
+        var menos = $('btn-font-menos');
+        var marcar = $('btn-marcar-modo');
 
-        if (btnMais) btnMais.addEventListener('click', () => {
-            tamanhoFonte = Math.min(TAMANHO_FONTE_MAX, tamanhoFonte + 2);
+        if (mais) mais.addEventListener('click', function () {
+            tamanhoFonte = Math.min(FONTE_MAX, tamanhoFonte + 2);
             aplicarFonte();
         });
-        if (btnMenos) btnMenos.addEventListener('click', () => {
-            tamanhoFonte = Math.max(TAMANHO_FONTE_MIN, tamanhoFonte - 2);
+        if (menos) menos.addEventListener('click', function () {
+            tamanhoFonte = Math.max(FONTE_MIN, tamanhoFonte - 2);
             aplicarFonte();
         });
-        if (btnMarcar) btnMarcar.addEventListener('click', () => {
+        if (marcar) marcar.addEventListener('click', function () {
             modoMarcacao = !modoMarcacao;
             aplicarModoMarcacao();
         });
     }
 
     function configurarLayout() {
-        const ficha = $('sidebar-perfil');
-        const overlay = $('gaveta-overlay');
-        const btnPerfil = $('perfil-botao');
-        const btnFecharFicha = $('ficha-fechar');
-        const compacto = window.matchMedia('(max-width: 1366px)');
+        var ficha = $('sidebar-perfil');
+        var overlay = $('gaveta-overlay');
+        var btnPerfil = $('perfil-botao');
+        var btnFechar = $('ficha-fechar');
+        var compacto = window.matchMedia('(max-width: 1366px)');
 
         function atualizarOverlay() {
             if (!overlay) return;
-            const aberta = ficha && ficha.classList.contains('ativa');
+            var aberta = ficha && ficha.classList.contains('ativa');
             overlay.classList.toggle('ativa', aberta && compacto.matches);
         }
 
         if (btnPerfil && ficha) {
-            btnPerfil.addEventListener('click', () => {
+            btnPerfil.addEventListener('click', function () {
                 ficha.classList.toggle('ativa');
                 document.body.classList.toggle('ficha-aberta', ficha.classList.contains('ativa'));
                 atualizarOverlay();
             });
         }
-        if (btnFecharFicha && ficha) {
-            btnFecharFicha.addEventListener('click', () => {
+        if (btnFechar && ficha) {
+            btnFechar.addEventListener('click', function () {
                 ficha.classList.remove('ativa');
                 document.body.classList.remove('ficha-aberta');
                 atualizarOverlay();
             });
         }
         if (overlay) {
-            overlay.addEventListener('click', () => {
+            overlay.addEventListener('click', function () {
                 if (ficha) ficha.classList.remove('ativa');
                 document.body.classList.remove('ficha-aberta');
                 atualizarOverlay();
@@ -515,18 +465,18 @@
         }
     }
 
-    function mostrarErro(mensagem) {
-        const loading = $('leitor-loading');
-        const erro = $('leitor-erro');
-        const msg = $('erro-mensagem');
+    function mostrarErro(msg) {
+        var loading = $('leitor-loading');
+        var erro = $('leitor-erro');
+        var m = $('erro-mensagem');
         if (loading) loading.hidden = true;
-        if (msg) msg.textContent = mensagem;
+        if (m) m.textContent = msg;
         if (erro) erro.hidden = false;
     }
 
     async function iniciar() {
         if (!lerParametros()) return;
-        const ok = await iniciarSessao();
+        var ok = await iniciarSessao();
         if (!ok) return;
         configurarLayout();
         configurarControles();
