@@ -1,14 +1,13 @@
 ﻿/* ============================================================
-   CATALOGO.JS — v12
+   CATALOGO.JS — v13 (CORRIGIDO)
    - Standard Ebooks + Gutenberg
    - Estatisticas na ficha (livros lidos + ultimos 3)
-   - Botao "Ler no Acervo" passa autor e capa
+   - Sessao esperada corretamente (nao redireciona por engano)
    - Anti-flash de layout
    ============================================================ */
 (function () {
     'use strict';
 
-    // Anti-flash de layout
     document.documentElement.classList.add('carregando-catalogo');
 
     const PAGINA_LOGIN = '/login.html';
@@ -43,14 +42,18 @@
     let timerEstabilidade = null;
     let vvHeightAnterior = 0;
     let ajusteRaf = false;
-    let db = null;
 
     const raiz = document.documentElement;
-
     const $ = (id) => document.getElementById(id);
     const esperar = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+    /* ============================================================
+       DB — pega o cliente do window a qualquer momento
+       ============================================================ */
     function getDb() {
+        if (window.getSupabaseClient) {
+            return window.getSupabaseClient();
+        }
         return window.supabaseClient ||
                (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
     }
@@ -58,13 +61,14 @@
     async function aguardarDb() {
         for (let i = 0; i < SUPABASE_TENTATIVAS; i++) {
             const d = getDb();
-            if (d) return d;
+            if (d && d.auth && typeof d.auth.getSession === 'function') return d;
             await esperar(SUPABASE_INTERVALO_MS);
         }
         return null;
     }
 
     function irParaLogin() {
+        console.error('[CATALOGO] irParaLogin CHAMADO! Stack:', new Error().stack);
         window.location.replace(PAGINA_LOGIN);
     }
 
@@ -105,34 +109,45 @@
     }
 
     /* ============================================================
-       AUTENTICACAO
+       AUTENTICACAO — CORRIGIDA
        ============================================================ */
-    async function aguardarSessao(d) {
-        for (let i = 0; i < SUPABASE_TENTATIVAS; i++) {
-            const resultado = await d.auth.getSession();
-            if (resultado.error) throw resultado.error;
-            const sessao = resultado.data && resultado.data.session;
-            if (sessao && sessao.user) return sessao;
-            await esperar(SUPABASE_INTERVALO_MS);
-        }
-        return null;
-    }
-
     async function iniciarSessao() {
-        db = await aguardarDb();
+        console.log('[CATALOGO] iniciarSessao: comecando');
+
+        const db = await aguardarDb();
         if (!db) {
-            console.error('Supabase nao inicializou');
+            console.error('[CATALOGO] Supabase nao inicializou');
             irParaLogin();
             return;
         }
 
+        console.log('[CATALOGO] Supabase OK');
+
         db.auth.onAuthStateChange((evento) => {
+            console.log('[CATALOGO] Auth state change:', evento);
             if (evento === 'SIGNED_OUT') irParaLogin();
         });
 
         try {
-            const sessao = await aguardarSessao(db);
-            if (!sessao) {
+            let sessao = null;
+            for (let i = 0; i < 80; i++) {
+                const resultado = await db.auth.getSession();
+                if (resultado.error) {
+                    console.warn('[CATALOGO] getSession erro:', resultado.error);
+                }
+                sessao = resultado.data && resultado.data.session;
+                if (sessao && sessao.user) {
+                    console.log('[CATALOGO] Sessao encontrada na tentativa', i + 1, ':', sessao.user.email);
+                    break;
+                }
+                if (i % 10 === 0 && i > 0) {
+                    console.log('[CATALOGO] Tentativa', i + 1, '- sem sessao ainda...');
+                }
+                await esperar(SUPABASE_INTERVALO_MS);
+            }
+
+            if (!sessao || !sessao.user) {
+                console.warn('[CATALOGO] Sem sessao depois de 16s');
                 irParaLogin();
                 return;
             }
@@ -151,11 +166,19 @@
             if (elNome) elNome.textContent = nome.split('@')[0];
             if (elEmail) elEmail.textContent = sessao.user.email || '';
 
-            // Carrega estatisticas
-            carregarEstatisticas();
+            console.log('[CATALOGO] Usuario:', sessao.user.email);
+
+            try {
+                await carregarEstatisticas();
+                console.log('[CATALOGO] Estatisticas OK');
+            } catch (e) {
+                console.warn('[CATALOGO] Estatisticas falharam (ignorando):', e);
+            }
+
+            console.log('[CATALOGO] iniciarSessao: OK');
 
         } catch (erro) {
-            console.error('Erro getSession:', erro);
+            console.error('[CATALOGO] Erro getSession:', erro);
             irParaLogin();
         }
     }
@@ -164,6 +187,7 @@
        ESTATISTICAS
        ============================================================ */
     async function carregarEstatisticas() {
+        const db = getDb();
         if (!db || !estado.usuario) return;
 
         try {
@@ -252,6 +276,38 @@
             item.appendChild(info);
             container.appendChild(item);
         });
+    }
+
+    /* ============================================================
+       AVATAR
+       ============================================================ */
+    function renderizarAvatar(container, avatarUrl, nome) {
+        if (!container) return;
+        container.textContent = '';
+
+        if (!avatarUrl || avatarUrl === 'null') {
+            const span = document.createElement('span');
+            span.className = 'avatar-iniciais';
+            const partes = (nome || 'U').trim().split(/\s+/);
+            span.textContent = (partes[0][0] || 'U').toUpperCase() +
+                              (partes.length > 1 ? (partes[partes.length - 1][0] || '').toUpperCase() : '');
+            container.appendChild(span);
+            return;
+        }
+
+        const img = document.createElement('img');
+        img.className = 'foto-perfil';
+        img.alt = 'Foto de perfil';
+        img.referrerPolicy = 'no-referrer';
+        img.src = avatarUrl;
+        img.onerror = () => {
+            img.remove();
+            const span = document.createElement('span');
+            span.className = 'avatar-iniciais';
+            span.textContent = (nome || 'U').charAt(0).toUpperCase();
+            container.appendChild(span);
+        };
+        container.appendChild(img);
     }
 
     /* ============================================================
@@ -691,7 +747,6 @@
                 mostrarResultados(todos);
             }
 
-            // 1. STANDARD EBOOKS
             atualizarLoading('Buscando no Standard Ebooks...');
 
             try {
@@ -705,7 +760,6 @@
                 console.warn('Standard Ebooks falhou:', e);
             }
 
-            // 2. GUTENBERG
             atualizarLoading('Buscando no Gutenberg...');
 
             for (let p = 1; p <= 10; p++) {
@@ -722,7 +776,6 @@
                 }
             }
 
-            // 3. ORDENAR
             function pesoFonte(livro) {
                 const fonte = livro.source || '';
                 const idioma = (livro.language || '').toLowerCase();
@@ -924,7 +977,6 @@
             descricao.textContent = livro.description || 'Sem descricao disponivel.';
         }
 
-        // Botao Ler — passa autor e capa
         if (btnLer) {
             if (livro.ebook_url && livro.source === 'standardebooks') {
                 btnLer.href = 'leitor.html?url=' + encodeURIComponent(livro.ebook_url) +
@@ -1245,20 +1297,29 @@
        INICIALIZACAO
        ============================================================ */
     async function iniciar() {
+        console.log('[CATALOGO] iniciar: comecando');
+
         sincronizarTela();
         setupAlturaFixa();
         setupTela();
         setupTeclado();
         setupModoFoco();
         setupPopoverFiltros();
-        setupEventos();
+
+        try {
+            setupEventos();
+            console.log('[CATALOGO] setupEventos OK');
+        } catch (e) {
+            console.error('[CATALOGO] setupEventos FALHOU:', e);
+        }
 
         await iniciarSessao();
 
         await carregarCatalogo();
 
-        // Remove o anti-flash
         document.documentElement.classList.remove('carregando-catalogo');
+
+        console.log('[CATALOGO] iniciar: FIM');
     }
 
     if (document.readyState === 'loading') {

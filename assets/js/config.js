@@ -1,5 +1,6 @@
 ﻿// ==============================================
-// CONFIG.JS - Supabase com retry e deteccao OAuth
+// CONFIG.JS — Supabase com retry, deteccao OAuth
+// e sessao persistente entre paginas
 // ==============================================
 
 var SUPABASE_CONFIG = {
@@ -12,8 +13,6 @@ var supabaseClient = null;
 function inicializarSupabase() {
     try {
         if (typeof window.supabase === 'undefined' || !window.supabase.createClient) {
-            console.warn('Supabase ainda nao carregou, tentando novamente...');
-            setTimeout(inicializarSupabase, 200);
             return false;
         }
 
@@ -43,9 +42,17 @@ function inicializarSupabase() {
     }
 }
 
+// Tenta inicializar imediatamente e apos o DOM estar pronto
 inicializarSupabase();
 document.addEventListener('DOMContentLoaded', inicializarSupabase);
 window.addEventListener('load', inicializarSupabase);
+
+// Garante que existe em qualquer momento (para o catalogo que roda rapido)
+window.getSupabaseClient = function() {
+    if (supabaseClient) return supabaseClient;
+    if (inicializarSupabase()) return supabaseClient;
+    return null;
+};
 
 window.SUPABASE_CONFIG = SUPABASE_CONFIG;
 console.log('Config.js carregado!');
