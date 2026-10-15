@@ -1,5 +1,10 @@
 ﻿/* ============================================================
-   CATALOGO.JS — v15 (FINAL)
+   CATALOGO.JS — v16 (OTIMIZADO)
+   - Standard Ebooks + Gutenberg
+   - Gutenberg reduzido para 3 paginas (era 10)
+   - Mostra livros conforme carregam
+   - Sessao esperada corretamente
+   - Estatisticas na ficha
    ============================================================ */
 (function () {
     'use strict';
@@ -7,8 +12,9 @@
     document.documentElement.classList.add('carregando-catalogo');
 
     const PAGINA_LOGIN = '/login.html';
-    const LIMITE_RESULTADOS = 1500;
-    const LIMITE_STANDARD_EBOOKS = 1500;
+    const LIMITE_RESULTADOS = 500;
+    const LIMITE_STANDARD_EBOOKS = 400;
+    const LIMITE_GUTENBERG_PAGINAS = 3;
     const SUPABASE_TENTATIVAS = 40;
     const SUPABASE_INTERVALO_MS = 200;
     const LIMITE_TECLADO_PX = 100;
@@ -609,9 +615,10 @@
     }
 
     /* ============================================================
-       CARREGAR CATALOGO
+       CARREGAR CATALOGO — OTIMIZADO
        ============================================================ */
     async function carregarCatalogo() {
+        console.log('[CATALOGO] carregarCatalogo: comecando');
         estado.modo = 'populares';
         estado.buscaAtual = '';
         mostrarLoading('Carregando catalogo...');
@@ -619,6 +626,8 @@
         try {
             const todos = [];
             const vistos = new Set();
+            let jaMostrou = false;
+
             function adicionar(lista, fonte) {
                 if (!lista) return;
                 lista.forEach((livro) => {
@@ -630,33 +639,52 @@
                     todos.push(livro);
                 });
             }
+
+            // Mostra os livros conforme vao chegando (nao espera tudo)
             function atualizar() {
                 estado.resultados = todos.slice();
-                mostrarResultados(todos);
+                if (todos.length > 0) {
+                    mostrarResultados(todos);
+                    jaMostrou = true;
+                }
             }
 
+            // 1. STANDARD EBOOKS
+            console.log('[CATALOGO] Buscando Standard Ebooks...');
+            const t1 = Date.now();
             atualizarLoading('Buscando no Standard Ebooks...');
             try {
                 const se = await window.apiStandardEbooks.buscarPopulares();
+                console.log('[CATALOGO] Standard Ebooks:', se ? se.length : 0, 'em', Date.now() - t1, 'ms');
                 if (se && se.length > 0) {
                     adicionar(se.slice(0, LIMITE_STANDARD_EBOOKS), 'standardebooks');
                     atualizar();
                     atualizarLoading('Carregando ' + todos.length + ' livros...');
                 }
-            } catch (e) { console.warn('Standard Ebooks falhou:', e); }
+            } catch (e) { console.warn('[CATALOGO] Standard Ebooks falhou:', e); }
 
+            // 2. GUTENBERG (3 paginas apenas)
+            console.log('[CATALOGO] Buscando Gutenberg...');
+            const t2 = Date.now();
             atualizarLoading('Buscando no Gutenberg...');
-            for (let p = 1; p <= 10; p++) {
+            for (let p = 1; p <= LIMITE_GUTENBERG_PAGINAS; p++) {
                 if (todos.length >= LIMITE_RESULTADOS) break;
                 try {
+                    const tp = Date.now();
                     const pagina = await window.apiGutenberg.buscarPopularesPaginado('', p);
+                    console.log('[CATALOGO] Gutenberg p' + p + ':', pagina ? pagina.length : 0, 'em', Date.now() - tp, 'ms');
                     if (!pagina || pagina.length === 0) break;
                     adicionar(pagina, 'gutenberg');
                     atualizar();
                     atualizarLoading('Carregando ' + todos.length + ' de ' + LIMITE_RESULTADOS + ' livros...');
-                } catch (e) { break; }
+                } catch (e) {
+                    console.warn('[CATALOGO] Gutenberg p' + p + ' falhou');
+                    break;
+                }
             }
+            console.log('[CATALOGO] Gutenberg total:', Date.now() - t2, 'ms');
 
+            // 3. ORDENAR
             function pesoFonte(livro) {
                 const fonte = livro.source || '';
                 const idioma = (livro.language || '').toLowerCase();
@@ -676,9 +704,10 @@
 
             estado.resultados = todos;
             mostrarResultados(todos);
+            console.log('[CATALOGO] Total final:', todos.length, 'livros');
             if (todos.length === 0) mostrarErro('Nenhum livro carregado.');
         } catch (erro) {
-            console.error('Erro ao carregar catalogo:', erro);
+            console.error('[CATALOGO] Erro ao carregar catalogo:', erro);
             mostrarErro('Nao foi possivel carregar o catalogo.');
         }
     }
