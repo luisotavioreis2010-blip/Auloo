@@ -1,10 +1,9 @@
 /* ============================================================
-   LEITOR.JS — v1
-   Leitor interno de EPUB usando epub.js
-   - Abre o EPUB a partir da URL (?url=...)
-   - Renderiza com epub.js
-   - Salva progresso no Supabase
-   - Controles de fonte e tema
+   LEITOR.JS — v2
+   Leitor em tela cheia com:
+   - EPUB via Edge Function (resolve CORS)
+   - Modo marcacao de texto (salva trechos no Supabase)
+   - Ficha do leitor padrao estante
    ============================================================ */
 (function () {
     'use strict';
@@ -13,9 +12,9 @@
     const SUPABASE_TENTATIVAS = 40;
     const SUPABASE_INTERVALO_MS = 200;
 
-    const TAMANHO_FONTE_MIN = 12;
+    const TAMANHO_FONTE_MIN = 14;
     const TAMANHO_FONTE_MAX = 28;
-    const TAMANHO_FONTE_PADRAO = 18;
+    const TAMANHO_FONTE_PADRAO = 19;
 
     const raiz = document.documentElement;
     const $ = (id) => document.getElementById(id);
@@ -24,16 +23,20 @@
     let rendition = null;
     let usuario = null;
     let db = null;
-    let progressoAtual = 0;
     let tamanhoFonte = TAMANHO_FONTE_PADRAO;
+    let modoMarcacao = false;
     let timerSalvar = null;
 
     const estado = {
         url: null,
         titulo: '',
-        slug: ''
+        slug: '',
+        marcacoes: []
     };
 
+    /* ============================================================
+       HELPERS
+       ============================================================ */
     function getDb() {
         return window.supabaseClient ||
                (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
@@ -52,8 +55,16 @@
         window.location.replace(PAGINA_LOGIN);
     }
 
+    /* Converte URL do EPUB para o proxy do Supabase */
+    function urlViaProxy(urlOriginal) {
+        const config = window.SUPABASE_CONFIG;
+        if (!config || !config.url) return urlOriginal;
+        const base = config.url.replace(/\/$/, '');
+        return base + '/functions/v1/epub-proxy?url=' + encodeURIComponent(urlOriginal);
+    }
+
     /* ============================================================
-       PARAMETROS DA URL
+       PARAMETROS
        ============================================================ */
     function lerParametros() {
         const params = new URLSearchParams(window.location.search);
@@ -62,11 +73,13 @@
         estado.slug = params.get('slug') || '';
 
         if (!estado.url) {
-            mostrarErro('URL do livro não foi fornecida.');
+            mostrarErro('URL do livro nao foi fornecida.');
             return false;
         }
 
         document.title = estado.titulo + ' | Acervo';
+        const el = $('leitor-titulo');
+        if (el) el.textContent = estado.titulo;
         return true;
     }
 
@@ -154,29 +167,25 @@
     }
 
     /* ============================================================
-       PROGRESSO NO SUPABASE
+       PROGRESSO
        ============================================================ */
     async function carregarProgresso() {
         if (!db || !usuario || !estado.slug) return null;
-
         try {
-            const resultado = await db
-                .from('reading_progress')
+            const r = await db.from('reading_progress')
                 .select('position, percent')
                 .eq('user_id', usuario.id)
                 .eq('book_slug', estado.slug)
                 .maybeSingle();
-
-            if (resultado.data) return resultado.data;
+            return r.data || null;
         } catch (e) {
             console.warn('Erro ao carregar progresso:', e);
+            return null;
         }
-        return null;
     }
 
-    async function salvarProgresso(position, percent) {
+    function salvarProgresso(position, percent) {
         if (!db || !usuario || !estado.slug) return;
-
         clearTimeout(timerSalvar);
         timerSalvar = setTimeout(async () => {
             try {
@@ -191,11 +200,10 @@
             } catch (e) {
                 console.warn('Erro ao salvar progresso:', e);
             }
-        }, 1000);
+        }, 1200);
     }
 
     function atualizarBarraProgresso(percent) {
-        progressoAtual = percent;
         const fill = $('progresso-fill');
         const texto = $('progresso-texto');
         if (fill) fill.style.width = percent + '%';
@@ -203,7 +211,77 @@
     }
 
     /* ============================================================
-       EPUB.JS
+       MARCACOES
+       ============================================================ */
+    async function carregarMarcacoes() {
+        if (!db || !usuario || !estado.slug) return [];
+        try {
+            const r = await db.from('reading_highlights')
+                .select('id, cfi, text, created_at')
+                .eq('user_id', usuario.id)
+                .eq('book_slug', estado.slug)
+                .order('created_at', { ascending: false });
+            return r.data || [];
+        } catch (e) {
+            console.warn('Erro ao carregar marcacoes:', e);
+            return [];
+        }
+    }
+
+    async function salvarMarcacao(cfi, texto) {
+        if (!db || !usuario || !estado.slug) return null;
+        try {
+            const r = await db.from('reading_highlights').insert({
+                user_id: usuario.id,
+                book_slug: estado.slug,
+                book_title: estado.titulo,
+                cfi: cfi,
+                text: texto
+            }).select('id, cfi, text, created_at').single();
+            return r.data;
+        } catch (e) {
+            console.warn('Erro ao salvar marcacao:', e);
+            return null;
+        }
+    }
+
+    async function removerMarcacao(id) {
+        if (!db || !usuario) return;
+        try {
+            await db.from('reading_highlights').delete().eq('id', id);
+        } catch (e) {
+            console.warn('Erro ao remover marcacao:', e);
+        }
+    }
+
+    function renderizarMarcacoes() {
+        const lista = $('lista-marcacoes');
+        if (!lista) return;
+
+        lista.textContent = '';
+
+        if (!estado.marcacoes || estado.marcacoes.length === 0) {
+            const li = document.createElement('li');
+            li.className = 'marcacao-vazia';
+            li.textContent = 'Nenhuma marcacao ainda';
+            lista.appendChild(li);
+            return;
+        }
+
+        estado.marcacoes.forEach((m) => {
+            const li = document.createElement('li');
+            li.className = 'marcacao-item';
+            li.textContent = m.text.length > 140 ? m.text.slice(0, 140) + '...' : m.text;
+            li.title = 'Clique para ir ao trecho';
+            li.addEventListener('click', () => {
+                if (rendition && m.cfi) rendition.display(m.cfi);
+            });
+            lista.appendChild(li);
+        });
+    }
+
+    /* ============================================================
+       EPUB
        ============================================================ */
     async function abrirLivro() {
         const area = $('area');
@@ -215,17 +293,15 @@
         if (nav) nav.hidden = true;
 
         try {
-            // Cria o livro
-            book = ePub(estado.url);
+            // Usa o proxy para evitar CORS
+            const urlFinal = urlViaProxy(estado.url);
+            book = ePub(urlFinal);
 
-            // Espera os metadados carregarem
             await book.ready;
 
-            // Aplica tema e fonte iniciais
-            aplicarTema();
             aplicarFonte();
+            aplicarTema();
 
-            // Renderiza
             rendition = book.renderTo('area', {
                 width: '100%',
                 height: '100%',
@@ -233,125 +309,111 @@
                 spread: 'none'
             });
 
-            // Carrega progresso salvo
-            const progresso = await carregarProgresso();
+            // Aplica o modo marcacao atual
+            aplicarModoMarcacao();
 
-            // Exibe
+            const progresso = await carregarProgresso();
             if (progresso && progresso.position) {
                 await rendition.display(progresso.position);
             } else {
                 await rendition.display();
             }
 
-            // Esconde loading, mostra area e navegacao
             if (loading) loading.hidden = true;
             if (area) area.hidden = false;
             if (nav) nav.hidden = false;
 
-            // Salva a localizacao inicial
             rendition.on('relocated', (location) => {
                 const pos = location.start.cfi;
                 const percent = book.locations.percentageFromCfi(pos) * 100;
                 salvarProgresso(pos, percent);
                 atualizarBarraProgresso(percent);
+
+                const navPagina = $('nav-pagina');
+                if (navPagina && location.start.displayed) {
+                    navPagina.textContent = location.start.displayed.page + ' / ' + location.start.displayed.total;
+                }
             });
 
-            // Gera locations para o progresso funcionar
-            book.locations.generate(1000).then(() => {
-                // Agora podemos calcular porcentagem
-            });
+            book.locations.generate(1000);
 
-            // Constroi o sumário na sidebar
-            construirSumario();
+            // Carrega marcacoes
+            estado.marcacoes = await carregarMarcacoes();
+            renderizarMarcacoes();
 
-            // Configura navegacao
-            configurarNavegacao();
+            // Configura selecao de texto (marcacao)
+            configurarSelecaoTexto();
+
+            // Aplica os highlights existentes no conteudo
+            aplicarHighlightsSalvos();
 
         } catch (erro) {
             console.error('Erro ao abrir EPUB:', erro);
-            mostrarErro('Não foi possível carregar este livro. O arquivo pode estar corrompido ou indisponível.');
+            mostrarErro('Nao foi possivel carregar este livro. O arquivo pode estar corrompido ou indisponivel.');
         }
     }
 
-    function construirSumario() {
-        if (!book || !book.navigation) return;
+    /* ============================================================
+       MODO MARCACAO + SELECAO DE TEXTO
+       ============================================================ */
+    function aplicarModoMarcacao() {
+        document.body.classList.toggle('modo-marcacao', modoMarcacao);
+    }
 
-        const lista = $('lista-capitulos');
-        if (!lista) return;
+    function configurarSelecaoTexto() {
+        if (!rendition) return;
 
-        lista.textContent = '';
+        rendition.on('selected', async (cfiRange, contents) => {
+            // Se nao estiver no modo marcacao, ignora
+            if (!modoMarcacao) return;
 
-        const toc = book.navigation.toc;
-        if (!toc || toc.length === 0) return;
+            try {
+                const texto = contents.window.getSelection().toString().trim();
+                if (!texto || texto.length < 3) return;
 
-        toc.forEach((capitulo, i) => {
-            const link = document.createElement('button');
-            link.type = 'button';
-            link.className = 'sidebar-link';
-            link.setAttribute('aria-label', 'Ir para ' + capitulo.label);
-
-            const romano = document.createElement('span');
-            romano.className = 'sidebar-romano';
-            romano.textContent = (i + 1).toString();
-
-            const nome = document.createElement('span');
-            nome.className = 'sidebar-nome';
-            nome.textContent = capitulo.label || 'Capítulo ' + (i + 1);
-            nome.style.textTransform = 'none';
-            nome.style.fontFamily = 'var(--fonte-display)';
-
-            link.appendChild(romano);
-            link.appendChild(nome);
-
-            link.addEventListener('click', () => {
-                if (rendition && capitulo.href) {
-                    rendition.display(capitulo.href);
+                // Salva no banco
+                const marcacao = await salvarMarcacao(cfiRange, texto);
+                if (marcacao) {
+                    estado.marcacoes.unshift(marcacao);
+                    renderizarMarcacoes();
                 }
-            });
 
-            lista.appendChild(link);
+                // Aplica o highlight visual
+                contents.addClass('acervo-highlight', cfiRange);
+
+                // Limpa a selecao
+                contents.window.getSelection().removeAllRanges();
+
+            } catch (e) {
+                console.warn('Erro ao processar selecao:', e);
+            }
+        });
+
+        // Configura o estilo dos highlights
+        rendition.themes.default({
+            '.acervo-highlight': {
+                'background-color': 'rgba(184, 137, 74, 0.35)',
+                'border-bottom': '1px solid #B8894A',
+                'cursor': 'pointer'
+            }
         });
     }
 
-    function configurarNavegacao() {
-        const btnAnterior = $('btn-anterior');
-        const btnProximo = $('btn-proximo');
-        const navPagina = $('nav-pagina');
+    function aplicarHighlightsSalvos() {
+        if (!rendition || !estado.marcacoes) return;
 
-        if (btnAnterior) {
-            btnAnterior.addEventListener('click', () => {
-                if (rendition) rendition.prev();
-            });
-        }
-
-        if (btnProximo) {
-            btnProximo.addEventListener('click', () => {
-                if (rendition) rendition.next();
-            });
-        }
-
-        // Atualiza o numero da pagina
-        if (rendition) {
-            rendition.on('relocated', (location) => {
-                if (navPagina && location.start) {
-                    navPagina.textContent = (location.start.displayed ? location.start.displayed.page : '?') +
-                                           ' / ' +
-                                           (location.start.displayed ? location.start.displayed.total : '?');
-                }
-            });
-        }
-
-        // Teclado: setas e espaço
-        document.addEventListener('keydown', (e) => {
-            if (!rendition) return;
-            if (e.key === 'ArrowLeft') { e.preventDefault(); rendition.prev(); }
-            if (e.key === 'ArrowRight') { e.preventDefault(); rendition.next(); }
-            if (e.key === ' ') { e.preventDefault(); rendition.next(); }
+        // Aplica cada marcacao salva
+        estado.marcacoes.forEach((m) => {
+            try {
+                rendition.annotations.highlight(m.cfi, {}, () => {}, 'acervo-highlight');
+            } catch (e) {
+                // Ignora CFIs invalidos
+            }
         });
     }
 
     /* ============================================================
-       CONTROLES (fonte, tema, marcar)
+       CONTROLES (fonte, tema)
        ============================================================ */
     function aplicarFonte() {
         if (!rendition) return;
@@ -359,28 +421,30 @@
     }
 
     function aplicarTema() {
-        const escuro = document.body.classList.contains('leitor-tema-escuro');
         if (!rendition) return;
-
-        if (escuro) {
-            rendition.themes.register('dark', {
-                body: { background: '#1A1614', color: '#F0E8D8' },
-                a: { color: '#D9B878' }
-            });
-            rendition.themes.select('dark');
-        } else {
-            rendition.themes.register('light', {
-                body: { background: '#F8F2E4', color: '#1A1614' },
-                a: { color: '#5C1A1A' }
-            });
-            rendition.themes.select('light');
-        }
+        rendition.themes.default({
+            'body': {
+                'font-family': "'Cormorant Garamond', Georgia, serif",
+                'font-size': tamanhoFonte + 'px',
+                'line-height': '1.75',
+                'color': '#1A1614',
+                'background': '#F8F2E4',
+                'padding': '2rem 3rem'
+            },
+            'p': { 'margin': '0 0 1em 0', 'text-align': 'justify' },
+            'h1, h2, h3': {
+                'font-family': "'Playfair Display', Georgia, serif",
+                'font-style': 'italic',
+                'color': '#5C1A1A'
+            },
+            'a': { 'color': '#5C1A1A' }
+        });
     }
 
     function configurarControles() {
-        const btnMais = $('btn-fonte-mais');
-        const btnMenos = $('btn-fonte-menos');
-        const btnTema = $('btn-tema');
+        const btnMais = $('btn-font-mais');
+        const btnMenos = $('btn-font-menos');
+        const btnMarcar = $('btn-marcar-modo');
 
         if (btnMais) {
             btnMais.addEventListener('click', () => {
@@ -396,41 +460,43 @@
             });
         }
 
-        if (btnTema) {
-            btnTema.addEventListener('click', () => {
-                document.body.classList.toggle('leitor-tema-escuro');
-                const escuro = document.body.classList.contains('leitor-tema-escuro');
-                btnTema.textContent = escuro ? '🌙' : '☀';
-                aplicarTema();
+        if (btnMarcar) {
+            btnMarcar.addEventListener('click', () => {
+                modoMarcacao = !modoMarcacao;
+                btnMarcar.setAttribute('aria-pressed', String(modoMarcacao));
+                aplicarModoMarcacao();
             });
         }
+
+        // Navegacao
+        const btnAnterior = $('btn-anterior');
+        const btnProximo = $('btn-proximo');
+        if (btnAnterior) btnAnterior.addEventListener('click', () => rendition && rendition.prev());
+        if (btnProximo) btnProximo.addEventListener('click', () => rendition && rendition.next());
+
+        // Teclado
+        document.addEventListener('keydown', (e) => {
+            if (!rendition) return;
+            if (e.key === 'ArrowLeft') { e.preventDefault(); rendition.prev(); }
+            if (e.key === 'ArrowRight') { e.preventDefault(); rendition.next(); }
+        });
     }
 
     /* ============================================================
-       LAYOUT (sidebar, ficha)
+       LAYOUT (ficha do leitor)
        ============================================================ */
     function configurarLayout() {
-        const sidebar = $('sidebar');
         const ficha = $('sidebar-perfil');
         const overlay = $('gaveta-overlay');
-        const btnHamburger = $('btn-hamburger');
         const btnPerfil = $('perfil-botao');
         const btnFecharFicha = $('ficha-fechar');
-
+        const btnFecharLeitor = $('btn-fechar-leitor');
         const compacto = window.matchMedia('(max-width: 1366px)');
 
         function atualizarOverlay() {
             if (!overlay) return;
-            const sidebarAberta = sidebar && sidebar.classList.contains('aberta');
-            const fichaAberta = ficha && ficha.classList.contains('ativa');
-            overlay.classList.toggle('ativa', sidebarAberta || (compacto.matches && fichaAberta));
-        }
-
-        if (btnHamburger && sidebar) {
-            btnHamburger.addEventListener('click', () => {
-                sidebar.classList.toggle('aberta');
-                atualizarOverlay();
-            });
+            const aberta = ficha && ficha.classList.contains('ativa');
+            overlay.classList.toggle('ativa', aberta && compacto.matches);
         }
 
         if (btnPerfil && ficha) {
@@ -449,9 +515,14 @@
             });
         }
 
+        if (btnFecharLeitor) {
+            btnFecharLeitor.addEventListener('click', () => {
+                window.location.href = 'catalogo.html';
+            });
+        }
+
         if (overlay) {
             overlay.addEventListener('click', () => {
-                if (sidebar) sidebar.classList.remove('aberta');
                 if (ficha) ficha.classList.remove('ativa');
                 document.body.classList.remove('ficha-aberta');
                 atualizarOverlay();
