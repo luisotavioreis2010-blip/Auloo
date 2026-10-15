@@ -1,14 +1,11 @@
 ﻿/* ============================================================
-   AUTH.JS — v2
-   Helpers de autenticação. Sem duplicação, sem `?.`.
-   Depende de: config.js (getSupabaseClientSeguro / aguardarSupabase)
+   AUTH.JS — v3
+   Helpers de autenticação (sem duplicação)
    ============================================================ */
 (function () {
     'use strict';
 
     var MIN_SENHA = 8;
-
-    /* ---------- Validações ---------- */
 
     function validateEmail(email) {
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || '').trim());
@@ -16,23 +13,20 @@
 
     function validarSenhaForte(senha) {
         senha = String(senha || '');
-        if (senha.length < MIN_SENHA)        return { valida: false, mensagem: 'Pelo menos ' + MIN_SENHA + ' caracteres!' };
-        if (!/[A-Z]/.test(senha))            return { valida: false, mensagem: 'Falta letra maiúscula!' };
-        if (!/[a-z]/.test(senha))            return { valida: false, mensagem: 'Falta letra minúscula!' };
-        if (!/[0-9]/.test(senha))            return { valida: false, mensagem: 'Falta um número!' };
-        if (!/[!@#$%^&*(),.?":{}|<>]/.test(senha))
-                                             return { valida: false, mensagem: 'Falta um símbolo!' };
+        if (senha.length < MIN_SENHA)              return { valida: false, mensagem: 'Pelo menos ' + MIN_SENHA + ' caracteres!' };
+        if (!/[A-Z]/.test(senha))                  return { valida: false, mensagem: 'Falta letra maiúscula!' };
+        if (!/[a-z]/.test(senha))                  return { valida: false, mensagem: 'Falta letra minúscula!' };
+        if (!/[0-9]/.test(senha))                  return { valida: false, mensagem: 'Falta um número!' };
+        if (!/[!@#$%^&*(),.?":{}|<>]/.test(senha)) return { valida: false, mensagem: 'Falta um símbolo!' };
         return { valida: true, mensagem: 'Senha forte!' };
     }
 
     function sanitizar(texto) {
         if (!texto) return '';
-        var div = document.createElement('div');
-        div.textContent = texto;
-        return div.innerHTML;
+        var d = document.createElement('div');
+        d.textContent = texto;
+        return d.innerHTML;
     }
-
-    /* ---------- Erros de Edge Function ---------- */
 
     async function extrairMensagemErro(error, fallback) {
         try {
@@ -48,19 +42,16 @@
         return fallback || 'Erro inesperado.';
     }
 
-    /* ---------- Chamadas ao Supabase ---------- */
-
-    function clientOuNull() {
+    function getDb() {
         return window.getSupabaseClientSeguro ? window.getSupabaseClientSeguro()
                                               : window.getSupabaseClient();
     }
 
     async function checkEmailExists(email) {
-        var client = clientOuNull();
-        if (!client) return { exists: false, provider: null, hasPassword: false };
-
+        var c = getDb();
+        if (!c) return { exists: false, provider: null, hasPassword: false };
         try {
-            var r = await client.functions.invoke('check-email', {
+            var r = await c.functions.invoke('check-email', {
                 body: { email: String(email).trim().toLowerCase() }
             });
             if (r.error) return { exists: false, provider: null, hasPassword: false };
@@ -70,35 +61,27 @@
                 providers: r.data.providers || [],
                 hasPassword: !!r.data.hasPassword
             };
-        } catch (e) {
-            return { exists: false, provider: null, hasPassword: false };
-        }
+        } catch (e) { return { exists: false, provider: null, hasPassword: false }; }
     }
 
     async function sendSignupCode(email) {
-        var client = clientOuNull();
-        if (!client) return { success: false, message: 'Erro de configuração.' };
-
+        var c = getDb();
+        if (!c) return { success: false, message: 'Erro de configuração.' };
         try {
-            var r = await client.functions.invoke('send-signup-otp', {
+            var r = await c.functions.invoke('send-signup-otp', {
                 body: { email: String(email).trim().toLowerCase() }
             });
-            if (r.error) {
-                return { success: false, message: await extrairMensagemErro(r.error, 'Erro ao enviar código.') };
-            }
+            if (r.error) return { success: false, message: await extrairMensagemErro(r.error, 'Erro ao enviar código.') };
             if (r.data && r.data.error) return { success: false, message: r.data.error };
             return { success: true };
-        } catch (e) {
-            return { success: false, message: 'Erro inesperado.' };
-        }
+        } catch (e) { return { success: false, message: 'Erro inesperado.' }; }
     }
 
     async function verifySignupCode(email, code, password, fullName) {
-        var client = clientOuNull();
-        if (!client) return { success: false, message: 'Erro de configuração.' };
-
+        var c = getDb();
+        if (!c) return { success: false, message: 'Erro de configuração.' };
         try {
-            var r = await client.functions.invoke('verify-signup-otp', {
+            var r = await c.functions.invoke('verify-signup-otp', {
                 body: {
                     email: String(email).trim().toLowerCase(),
                     code: String(code),
@@ -106,22 +89,17 @@
                     full_name: fullName || email.split('@')[0]
                 }
             });
-            if (r.error) {
-                return { success: false, message: await extrairMensagemErro(r.error, 'Código inválido.') };
-            }
+            if (r.error) return { success: false, message: await extrairMensagemErro(r.error, 'Código inválido.') };
             if (r.data && r.data.error) return { success: false, message: r.data.error };
             return { success: true, user_id: r.data.user_id };
-        } catch (e) {
-            return { success: false, message: 'Erro inesperado.' };
-        }
+        } catch (e) { return { success: false, message: 'Erro inesperado.' }; }
     }
 
     async function loginUser(email, password) {
-        var client = clientOuNull();
-        if (!client) return { success: false, message: 'Erro de configuração.' };
-
+        var c = getDb();
+        if (!c) return { success: false, message: 'Erro de configuração.' };
         try {
-            var r = await client.auth.signInWithPassword({ email: email, password: password });
+            var r = await c.auth.signInWithPassword({ email: email, password: password });
             if (r.error) {
                 if (String(r.error.message).indexOf('Invalid login credentials') !== -1) {
                     var check = await checkEmailExists(email);
@@ -133,109 +111,70 @@
                 return { success: false, message: r.error.message };
             }
             if (r.data && r.data.user) {
-                await saveUserToDatabase(r.data.user);
+                saveUserToDatabase(r.data.user);
                 return { success: true, user: r.data.user };
             }
             return { success: false, message: 'Erro ao fazer login.' };
-        } catch (e) {
-            return { success: false, message: 'Erro inesperado.' };
-        }
+        } catch (e) { return { success: false, message: 'Erro inesperado.' }; }
     }
 
-    async function saveUserToDatabase(user) {
-        var client = clientOuNull();
-        if (!client || !user || !user.id) return;
-        try {
-            var meta = user.user_metadata || {};
-            var nome = meta.full_name || meta.name || (user.email || '').split('@')[0] || 'Usuário';
-            await client.from('profiles').upsert({
-                id: user.id,
-                email: user.email,
-                full_name: nome,
-                avatar_url: meta.avatar_url || meta.picture || null,
-                updated_at: new Date().toISOString()
-            }, { onConflict: 'id' });
-        } catch (e) {
-            console.warn('saveUserToDatabase:', e);
-        }
+    function saveUserToDatabase(user) {
+        var c = getDb();
+        if (!c || !user || !user.id) return;
+        var meta = user.user_metadata || {};
+        var nome = meta.full_name || meta.name || (user.email || '').split('@')[0] || 'Usuário';
+        /* Não bloqueia o fluxo — só dispara e esquece */
+        c.from('profiles').upsert({
+            id: user.id,
+            email: user.email,
+            full_name: nome,
+            avatar_url: meta.avatar_url || meta.picture || null,
+            updated_at: new Date().toISOString()
+        }, { onConflict: 'id' }).catch(function () { /* ignora */ });
     }
 
     async function recoverPassword(email) {
-        var client = clientOuNull();
-        if (!client) return { success: false, message: 'Erro de configuração.' };
+        var c = getDb();
+        if (!c) return { success: false, message: 'Erro de configuração.' };
         try {
-            var r = await client.auth.resetPasswordForEmail(email, {
+            var r = await c.auth.resetPasswordForEmail(email, {
                 redirectTo: window.location.origin + '/login.html'
             });
             if (r.error) throw r.error;
             return { success: true };
-        } catch (e) {
-            return { success: false, message: 'Erro ao enviar link.' };
-        }
+        } catch (e) { return { success: false, message: 'Erro ao enviar link.' }; }
     }
 
-    async function updatePassword(novaSenha) {
-        var client = clientOuNull();
-        if (!client) return { success: false, message: 'Erro de configuração.' };
+    async function updatePassword(nova) {
+        var c = getDb();
+        if (!c) return { success: false, message: 'Erro de configuração.' };
         try {
-            var r = await client.auth.updateUser({ password: novaSenha });
-            if (r.error) return { success: false, message: r.error.message };
-            return { success: true };
-        } catch (e) {
-            return { success: false, message: 'Erro ao atualizar senha.' };
-        }
+            var r = await c.auth.updateUser({ password: nova });
+            return r.error ? { success: false, message: r.error.message } : { success: true };
+        } catch (e) { return { success: false, message: 'Erro ao atualizar senha.' }; }
     }
 
     async function verifyCurrentPassword(email, senha) {
-        var client = clientOuNull();
-        if (!client) return { success: false, message: 'Erro de configuração.' };
+        var c = getDb();
+        if (!c) return { success: false, message: 'Erro de configuração.' };
         try {
-            var r = await client.auth.signInWithPassword({ email: email, password: senha });
+            var r = await c.auth.signInWithPassword({ email: email, password: senha });
             return r.error ? { success: false, message: 'Senha atual incorreta!' } : { success: true };
-        } catch (e) {
-            return { success: false, message: 'Erro ao verificar senha.' };
-        }
+        } catch (e) { return { success: false, message: 'Erro ao verificar senha.' }; }
     }
 
     async function logoutUser() {
-        var client = clientOuNull();
-        try { if (client) await client.auth.signOut(); } catch (e) { /* ignora */ }
-        try {
-            localStorage.removeItem('acervo_user');
-            localStorage.removeItem('acervo_saved_email');
-        } catch (e) { /* ignora */ }
+        var c = getDb();
+        try { if (c) await c.auth.signOut(); } catch (e) { /* ignora */ }
+        try { localStorage.clear(); } catch (e) { /* ignora */ }
         window.location.replace('/login.html');
     }
 
-    /* ---------- Helpers de UI ---------- */
-
-    function mostrarLoading(botao) {
-        if (!botao) return;
-        botao.disabled = true;
-        botao.dataset.textoOriginal = botao.textContent;
-        botao.textContent = '';
-        var span = document.createElement('span');
-        span.className = 'button-loading';
-        botao.appendChild(span);
-    }
-
-    function restaurarBotao(botao) {
-        if (!botao) return;
-        botao.disabled = false;
-        if (botao.dataset.textoOriginal) {
-            botao.textContent = botao.dataset.textoOriginal;
-            delete botao.dataset.textoOriginal;
-        }
-    }
-
-    /* ---------- API pública ---------- */
-
+    /* Exporta */
     window.auth = {
         validateEmail: validateEmail,
         validarSenhaForte: validarSenhaForte,
         sanitizar: sanitizar,
-        mostrarLoading: mostrarLoading,
-        restaurarBotao: restaurarBotao,
         checkEmailExists: checkEmailExists,
         sendSignupCode: sendSignupCode,
         verifySignupCode: verifySignupCode,
@@ -247,7 +186,7 @@
         logoutUser: logoutUser
     };
 
-    /* Aliases globais (compatibilidade com código antigo) */
+    /* Aliases globais (compatibilidade) */
     window.validateEmail         = validateEmail;
     window.validarSenhaForte     = validarSenhaForte;
     window.checkEmailExists      = checkEmailExists;
@@ -258,6 +197,4 @@
     window.updatePassword        = updatePassword;
     window.verifyCurrentPassword = verifyCurrentPassword;
     window.logoutUser            = logoutUser;
-
-    console.log('[auth] pronto');
 })();

@@ -6,9 +6,13 @@
     <meta name="theme-color" content="#1A1614">
     <title translate="no">Leitor | Acervo</title>
     <link rel="icon" type="image/png" href="assets/img/logo/auloo-logo.png">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://qswvoxkhicficbdkcpzn.supabase.co" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="assets/css/global.css">
     <link rel="stylesheet" href="assets/css/modulos/leitor.css">
 </head>
@@ -63,7 +67,7 @@
         <div class="ficha-perfil">
             <div class="ficha-foto" id="sidebar-perfil-foto"></div>
             <div class="ficha-info">
-                <span class="ficha-nome" id="sidebar-perfil-nome">Usuario</span>
+                <span class="ficha-nome" id="sidebar-perfil-nome">Usuário</span>
                 <span class="ficha-email" id="sidebar-perfil-email">&nbsp;</span>
             </div>
         </div>
@@ -96,13 +100,13 @@
 
         <div class="leitor-erro" id="leitor-erro" hidden>
             <div class="erro-icone">&#9888;</div>
-            <h2>Nao foi possivel abrir o livro</h2>
+            <h2>Não foi possível abrir o livro</h2>
             <p id="erro-mensagem"></p>
-            <a href="catalogo.html" class="btn-tentar">Voltar ao catalogo</a>
+            <a href="catalogo.html" class="btn-tentar">Voltar ao catálogo</a>
         </div>
 
         <div class="leitor-livro" id="leitor-livro" hidden>
-            <button type="button" class="leitor-seta leitor-seta-esq" id="btn-anterior" aria-label="Pagina anterior">
+            <button type="button" class="leitor-seta leitor-seta-esq" id="btn-anterior" aria-label="Página anterior">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <polyline points="15 18 9 12 15 6"/>
                 </svg>
@@ -113,7 +117,7 @@
                 <div class="leitor-pagina-dir" id="area-dir"></div>
             </div>
 
-            <button type="button" class="leitor-seta leitor-seta-dir" id="btn-proximo" aria-label="Proxima pagina">
+            <button type="button" class="leitor-seta leitor-seta-dir" id="btn-proximo" aria-label="Próxima página">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <polyline points="9 18 15 12 9 6"/>
                 </svg>
@@ -123,12 +127,12 @@
         <div class="leitor-area" id="area" hidden></div>
     </main>
 
-    <script src="assets/js/lib/jszip.min.js"></script>
-    <script src="assets/js/lib/epub.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-    <script src="assets/js/config.js"></script>
-    <script src="assets/js/auth.js"></script>
-    <script src="assets/js/lib/utils.js"></script>
-    <script src="assets/js/pages/modulos/leitor.js"></script>
+    <script src="assets/js/lib/jszip.min.js" defer></script>
+    <script src="assets/js/lib/epub.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+    <script src="assets/js/config.js" defer></script>
+    <script src="assets/js/auth.js" defer></script>
+    <script src="assets/js/lib/utils.js" defer></script>
+    <script src="assets/js/pages/modulos/leitor.js" defer></script>
 </body>
 </html>

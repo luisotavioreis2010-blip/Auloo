@@ -1,6 +1,6 @@
 ﻿/* ============================================================
-   UTILS.JS — v2
-   Helpers compartilhados por todas as páginas.
+   UTILS.JS — v3
+   Helpers compartilhados (DOM, texto, storage, UI, cache HTTP)
    ============================================================ */
 (function () {
     'use strict';
@@ -18,9 +18,7 @@
                 else if (k === 'innerHTML') el.innerHTML = attrs[k];
                 else if (k.indexOf('on') === 0 && typeof attrs[k] === 'function') {
                     el.addEventListener(k.substring(2).toLowerCase(), attrs[k]);
-                } else {
-                    el.setAttribute(k, attrs[k]);
-                }
+                } else el.setAttribute(k, attrs[k]);
             });
         }
         if (filhos) {
@@ -32,10 +30,7 @@
         return el;
     }
 
-    function limpar(el) {
-        if (!el) return;
-        while (el.firstChild) el.removeChild(el.firstChild);
-    }
+    function limpar(el) { if (el) while (el.firstChild) el.removeChild(el.firstChild); }
 
     /* ---------- Texto ---------- */
     function truncar(t, limite) {
@@ -55,8 +50,7 @@
         if (!t) return '';
         return t.toLowerCase()
             .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-            .replace(/[^a-z0-9]+/g, '-')
-            .replace(/^-+|-+$/g, '');
+            .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
     }
 
     /* ---------- Datas ---------- */
@@ -82,7 +76,7 @@
         return formatarData(d);
     }
 
-    /* ---------- Storage (com namespace) ---------- */
+    /* ---------- Storage (namespace) ---------- */
     var NS = 'auloo:';
     function salvarLocal(chave, valor) {
         try { localStorage.setItem(NS + chave, JSON.stringify(valor)); return true; }
@@ -96,6 +90,38 @@
     }
     function removerLocal(chave) {
         try { localStorage.removeItem(NS + chave); } catch (e) { /* ignora */ }
+    }
+
+    /* ---------- Cache HTTP com TTL ---------- */
+    var CACHE_PREFIXO = 'auloo:cache:';
+    var cacheMemoria = {};
+
+    function cacheGet(chave, ttlMs) {
+        var agora = Date.now();
+        /* Memória primeiro */
+        var emMem = cacheMemoria[chave];
+        if (emMem && agora - emMem.ts < ttlMs) return emMem.valor;
+
+        /* localStorage depois */
+        try {
+            var bruto = localStorage.getItem(CACHE_PREFIXO + chave);
+            if (bruto) {
+                var obj = JSON.parse(bruto);
+                if (agora - obj.ts < ttlMs) {
+                    cacheMemoria[chave] = obj;
+                    return obj.valor;
+                }
+                localStorage.removeItem(CACHE_PREFIXO + chave);
+            }
+        } catch (e) { /* ignora */ }
+        return null;
+    }
+
+    function cacheSet(chave, valor) {
+        var obj = { ts: Date.now(), valor: valor };
+        cacheMemoria[chave] = obj;
+        try { localStorage.setItem(CACHE_PREFIXO + chave, JSON.stringify(obj)); }
+        catch (e) { /* quota cheia: ignora */ }
     }
 
     /* ---------- URL ---------- */
@@ -132,12 +158,11 @@
         }
     }
 
-    /* ---------- Avatar (usado em várias páginas) ---------- */
     function iniciais(nome) {
         var p = String(nome || 'U').trim().split(/\s+/);
-        var primeira = (p[0] || 'U').charAt(0).toUpperCase();
-        var ultima = p.length > 1 ? (p[p.length - 1] || '').charAt(0).toUpperCase() : '';
-        return primeira + ultima;
+        var a = (p[0] || 'U').charAt(0).toUpperCase();
+        var b = p.length > 1 ? (p[p.length - 1] || '').charAt(0).toUpperCase() : '';
+        return a + b;
     }
 
     function renderizarAvatar(container, avatarUrl, nome) {
@@ -156,6 +181,7 @@
         img.className = 'foto-perfil';
         img.alt = 'Foto de perfil';
         img.referrerPolicy = 'no-referrer';
+        img.loading = 'lazy';
         img.src = avatarUrl;
         img.onerror = function () {
             img.remove();
@@ -167,7 +193,6 @@
         container.appendChild(img);
     }
 
-    /* ---------- Toast (usado no catálogo) ---------- */
     function toast(mensagem, ehErro) {
         var el = document.createElement('div');
         el.style.cssText = [
@@ -187,16 +212,35 @@
         }, 2600);
     }
 
-    /* ---------- API pública ---------- */
+    /* ---------- Fetch com timeout e cache opcional ---------- */
+    function fetchComTimeout(url, opcoes, timeoutMs) {
+        opcoes = opcoes || {};
+        timeoutMs = timeoutMs || 12000;
+        return new Promise(function (resolve, reject) {
+            var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+            var timer = setTimeout(function () {
+                if (ctrl) ctrl.abort();
+                reject(new Error('Timeout'));
+            }, timeoutMs);
+
+            var cfg = Object.assign({}, opcoes);
+            if (ctrl) cfg.signal = ctrl.signal;
+
+            fetch(url, cfg)
+                .then(function (r) { clearTimeout(timer); resolve(r); })
+                .catch(function (e) { clearTimeout(timer); reject(e); });
+        });
+    }
+
     window.utils = {
         $: $, $$: $$, criar: criar, limpar: limpar,
         truncar: truncar, escapar: escapar, slug: slug,
         formatarData: formatarData, tempoRelativo: tempoRelativo,
         salvarLocal: salvarLocal, lerLocal: lerLocal, removerLocal: removerLocal,
+        cacheGet: cacheGet, cacheSet: cacheSet,
         getParametro: getParametro, debounce: debounce,
         mostrarLoading: mostrarLoading, restaurarBotao: restaurarBotao,
-        iniciais: iniciais, renderizarAvatar: renderizarAvatar, toast: toast
+        iniciais: iniciais, renderizarAvatar: renderizarAvatar, toast: toast,
+        fetchComTimeout: fetchComTimeout
     };
-
-    console.log('[utils] pronto');
 })();

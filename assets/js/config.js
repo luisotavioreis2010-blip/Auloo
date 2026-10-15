@@ -1,8 +1,5 @@
 ﻿/* ============================================================
-   CONFIG.JS — v3 (corrigido)
-   - flowType 'implicit' (PKCE causa bugs em apps multipágina)
-   - migração agressiva de chaves antigas
-   - client único compartilhado entre todas as páginas
+   CONFIG.JS — v4 (rápido, robusto, sem PKCE)
    ============================================================ */
 (function () {
     'use strict';
@@ -12,52 +9,32 @@
         anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFzd3ZveGtoaWNmaWNiZGtjcHpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNjAyNzMsImV4cCI6MjEwMzkzNjI3M30.KmzjytD0K7AxpY0n3teAUftWXzqitRLMyefsPq5F0KA'
     };
 
-    /* Chave única e definitiva */
     var STORAGE_KEY = 'auloo-auth';
+    var PADROES_LEGADOS = ['acervo-auth', 'sb-', 'supabase-auth'];
 
-    /* Padrões que identificam chaves legadas/duplicadas */
-    var PADROES_LEGADOS = [
-        'acervo-auth',
-        'sb-',
-        'supabase-auth'
-    ];
-
-    /* ---------- Migração: remove chaves antigas que confundem o cliente ---------- */
-    function migrarChavesAntigas() {
+    function migrar() {
         try {
-            var aRemover = [];
-            Object.keys(localStorage).forEach(function (chave) {
-                if (chave === STORAGE_KEY) return;
-                var deveRemover = PADROES_LEGADOS.some(function (p) {
-                    return chave.indexOf(p) === 0;
-                });
-                if (chave.indexOf(STORAGE_KEY) === 0) deveRemover = true;
-
-                if (deveRemover) aRemover.push(chave);
-            });
-
-            aRemover.forEach(function (chave) {
-                localStorage.removeItem(chave);
-            });
-
-            if (aRemover.length) {
-                console.log('[config] removidas chaves antigas:', aRemover);
+            var remover = [];
+            for (var i = 0; i < localStorage.length; i++) {
+                var k = localStorage.key(i);
+                if (k === STORAGE_KEY) continue;
+                if (k.indexOf(STORAGE_KEY) === 0) { remover.push(k); continue; }
+                for (var j = 0; j < PADROES_LEGADOS.length; j++) {
+                    if (k.indexOf(PADROES_LEGADOS[j]) === 0) { remover.push(k); break; }
+                }
             }
-        } catch (e) {
-            console.warn('[config] migração falhou:', e);
-        }
+            remover.forEach(function (k) { localStorage.removeItem(k); });
+            if (remover.length) console.log('[config] migrados:', remover.length);
+        } catch (e) { /* privado */ }
     }
 
-    /* ---------- Inicialização ---------- */
     var cliente = null;
 
     function inicializar() {
         if (cliente) return cliente;
-        if (typeof window.supabase === 'undefined' || !window.supabase.createClient) {
-            return null;
-        }
+        if (typeof window.supabase === 'undefined' || !window.supabase.createClient) return null;
 
-        migrarChavesAntigas();
+        migrar();
 
         try {
             cliente = window.supabase.createClient(CONFIG.url, CONFIG.anonKey, {
@@ -65,32 +42,29 @@
                     persistSession: true,
                     autoRefreshToken: true,
                     detectSessionInUrl: true,
-                    /* ✔ IMPLICIT: ideal para login por senha + OAuth.
-                       PKCE causa bugs de sessão em apps multipágina. */
                     flowType: 'implicit',
                     storage: window.localStorage,
                     storageKey: STORAGE_KEY
                 }
             });
             window.supabaseClient = cliente;
-            console.log('[config] Supabase pronto (storageKey: ' + STORAGE_KEY + ')');
+            console.log('[config] pronto');
             return cliente;
-        } catch (erro) {
-            console.error('[config] Falha ao criar client:', erro);
+        } catch (e) {
+            console.error('[config]', e);
             return null;
         }
     }
 
-    /* ---------- API pública ---------- */
+    /* API pública */
     window.SUPABASE_CONFIG = CONFIG;
     window.getSupabaseClient = inicializar;
-    window.getSupabaseClientSeguro = function () {
-        return cliente || inicializar();
-    };
+    window.getSupabaseClientSeguro = function () { return cliente || inicializar(); };
 
+    /* Espera o client (não bloqueia o main thread) */
     window.aguardarSupabase = function (tentativas, intervaloMs) {
-        tentativas = tentativas || 40;
-        intervaloMs = intervaloMs || 200;
+        tentativas = tentativas || 20;
+        intervaloMs = intervaloMs || 100;
         return new Promise(function (resolve) {
             var i = 0;
             (function loop() {
@@ -100,6 +74,24 @@
                 setTimeout(loop, intervaloMs);
             })();
         });
+    };
+
+    /* Obtém sessão com timeout curto e fallback rápido */
+    window.obterSessao = async function (timeoutMs) {
+        timeoutMs = timeoutMs || 5000;
+        var db = await window.aguardarSupabase();
+        if (!db) return null;
+
+        var inicio = Date.now();
+        while (Date.now() - inicio < timeoutMs) {
+            try {
+                var r = await db.auth.getSession();
+                var s = r && r.data && r.data.session;
+                if (s && s.user) return s;
+            } catch (e) { /* ignora */ }
+            await new Promise(function (res) { setTimeout(res, 200); });
+        }
+        return null;
     };
 
     inicializar();

@@ -1,22 +1,17 @@
 ﻿/* ============================================================
-   CATALOGO.JS — v15
-   - Sessão resiliente (não expulsa em caso de lentidão)
-   - Carregamento progressivo de fontes
-   - Código enxuto
+   CATALOGO.JS — v16
+   - Sessão instantânea (usa obterSessao do config.js)
+   - Carregamento PARALELO de Standard Ebooks + Gutenberg
+   - Resultados aparecem conforme chegam
    ============================================================ */
 (function () {
     'use strict';
 
     document.documentElement.classList.add('carregando-catalogo');
 
-    /* ---------- Configurações ---------- */
     var PAGINA_LOGIN = '/login.html';
     var LIMITE_TOTAL = 1500;
-    var MENSAGEM_MS = 2600;
 
-    var MQ_ROW = '(min-width:568px) and (max-width:950px) and (orientation:landscape) and (max-height:500px)';
-
-    /* ---------- Estado ---------- */
     var estado = {
         usuario: null,
         resultados: [],
@@ -25,7 +20,6 @@
         livroSelecionado: null
     };
 
-    /* ---------- Helpers ---------- */
     var $ = function (id) { return document.getElementById(id); };
     var esperar = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
 
@@ -35,56 +29,32 @@
     }
 
     /* ============================================================
-       SESSÃO RESILIENTE
-       - Aguarda até 30s
-       - Escuta onAuthStateChange
-       - Só redireciona se ficar claro que NÃO há sessão
+       SESSÃO — usa obterSessao() do config.js (rápido)
        ============================================================ */
     async function iniciarSessao() {
-        var db = await (window.aguardarSupabase ? window.aguardarSupabase(40, 250)
-                                                : Promise.resolve(getDb()));
+        var db = await window.aguardarSupabase();
         if (!db) {
-            console.warn('[catalogo] Supabase indisponível');
             window.location.replace(PAGINA_LOGIN);
             return false;
         }
 
-        /* Se o usuário deslogar em outra aba, redireciona */
+        var confirmada = false;
         db.auth.onAuthStateChange(function (evento) {
-            if (evento === 'SIGNED_OUT') window.location.replace(PAGINA_LOGIN);
+            if (evento === 'SIGNED_OUT' && confirmada) {
+                setTimeout(function () {
+                    if (!confirmada) return;
+                    window.location.replace(PAGINA_LOGIN);
+                }, 2000);
+            }
         });
 
-        /* Tenta 60 vezes (30s) — bem mais tolerante que antes */
-        for (var i = 0; i < 60; i++) {
-            try {
-                var r = await db.auth.getSession();
-                var sessao = r && r.data && r.data.session;
-                if (sessao && sessao.user) {
-                    aplicarUsuario(sessao.user);
-                    return true;
-                }
-            } catch (e) {
-                console.warn('[catalogo] getSession erro:', e);
-            }
-            await esperar(500);
+        var sessao = await window.obterSessao(8000);
+        if (sessao && sessao.user) {
+            confirmada = true;
+            aplicarUsuario(sessao.user);
+            return true;
         }
 
-        /* Última tentativa: verifica se o usuário está logado no localStorage */
-        try {
-            var chave = 'auloo-auth';
-            if (localStorage.getItem(chave)) {
-                // Tem token salvo, mas o Supabase não conseguiu restaurar.
-                // Espera mais um pouco antes de desistir.
-                await esperar(2000);
-                var r2 = await db.auth.getSession();
-                if (r2 && r2.data && r2.data.session && r2.data.session.user) {
-                    aplicarUsuario(r2.data.session.user);
-                    return true;
-                }
-            }
-        } catch (e) { /* ignora */ }
-
-        console.warn('[catalogo] Sem sessão após 30s — indo para login');
         window.location.replace(PAGINA_LOGIN);
         return false;
     }
@@ -98,10 +68,9 @@
         window.utils.renderizarAvatar($('perfil-usuario'), avatar, nome);
         window.utils.renderizarAvatar($('sidebar-perfil-foto'), avatar, nome);
 
-        var elNome = $('sidebar-perfil-nome');
-        var elEmail = $('sidebar-perfil-email');
-        if (elNome) elNome.textContent = nome.split('@')[0];
-        if (elEmail) elEmail.textContent = user.email || '';
+        var n = $('sidebar-perfil-nome'), e = $('sidebar-perfil-email');
+        if (n) n.textContent = nome.split('@')[0];
+        if (e) e.textContent = user.email || '';
 
         carregarEstatisticas();
     }
@@ -112,7 +81,6 @@
     async function carregarEstatisticas() {
         var db = getDb();
         if (!db || !estado.usuario) return;
-
         try {
             var prog = await db.from('reading_progress')
                 .select('book_slug', { count: 'exact', head: true })
@@ -126,42 +94,40 @@
                 .limit(3);
 
             renderizarEstatisticas(prog.count || 0, hist.data || []);
-        } catch (e) {
-            console.warn('[catalogo] estatísticas:', e);
-        }
+        } catch (e) { /* ignora */ }
     }
 
     function renderizarEstatisticas(total, ultimos) {
-        var contador = $('ficha-total-lidos');
-        if (contador) contador.textContent = total;
+        var c = $('ficha-total-lidos');
+        if (c) c.textContent = total;
 
-        var container = $('ficha-ultimos-lidos');
-        if (!container) return;
-        window.utils.limpar(container);
+        var cont = $('ficha-ultimos-lidos');
+        if (!cont) return;
+        window.utils.limpar(cont);
 
         if (!ultimos.length) {
-            var vazio = document.createElement('p');
-            vazio.className = 'ficha-vazio';
-            vazio.textContent = 'Nenhum livro lido ainda';
-            container.appendChild(vazio);
+            var v = document.createElement('p');
+            v.className = 'ficha-vazio';
+            v.textContent = 'Nenhum livro lido ainda';
+            cont.appendChild(v);
             return;
         }
 
-        ultimos.forEach(function (livro) {
+        ultimos.forEach(function (l) {
             var a = document.createElement('a');
             a.className = 'ficha-livro-recente';
-            a.href = 'leitor.html?url=' + encodeURIComponent(livro.book_slug) +
-                     '&titulo=' + encodeURIComponent(livro.book_title || '') +
-                     '&slug=' + encodeURIComponent(livro.book_slug) +
-                     '&autor=' + encodeURIComponent(livro.book_author || '') +
-                     '&capa=' + encodeURIComponent(livro.book_cover || '');
+            a.href = 'leitor.html?url=' + encodeURIComponent(l.book_slug) +
+                     '&titulo=' + encodeURIComponent(l.book_title || '') +
+                     '&slug=' + encodeURIComponent(l.book_slug) +
+                     '&autor=' + encodeURIComponent(l.book_author || '') +
+                     '&capa=' + encodeURIComponent(l.book_cover || '');
 
             var capa = document.createElement('div');
             capa.className = 'ficha-livro-capa';
-            if (livro.book_cover) {
+            if (l.book_cover) {
                 var img = document.createElement('img');
-                img.src = livro.book_cover;
-                img.alt = livro.book_title || '';
+                img.src = l.book_cover;
+                img.alt = l.book_title || '';
                 img.loading = 'lazy';
                 img.referrerPolicy = 'no-referrer';
                 img.onerror = function () { capa.textContent = '📖'; };
@@ -172,19 +138,19 @@
             info.className = 'ficha-livro-info';
             var t = document.createElement('span');
             t.className = 'ficha-livro-titulo';
-            t.textContent = livro.book_title || 'Sem título';
+            t.textContent = l.book_title || 'Sem título';
             info.appendChild(t);
 
-            if (livro.book_author) {
+            if (l.book_author) {
                 var au = document.createElement('span');
                 au.className = 'ficha-livro-autor';
-                au.textContent = livro.book_author;
+                au.textContent = l.book_author;
                 info.appendChild(au);
             }
 
             a.appendChild(capa);
             a.appendChild(info);
-            container.appendChild(a);
+            cont.appendChild(a);
         });
     }
 
@@ -196,47 +162,54 @@
             var el = $(id);
             if (el) el.hidden = true;
         });
-        var grid = $('resultados-grid');
-        if (grid) window.utils.limpar(grid);
+        var g = $('resultados-grid');
+        if (g) window.utils.limpar(g);
     }
 
     function mostrarLoading(msg) {
         esconderTudo();
-        var loading = $('catalogo-loading');
-        var texto = $('loading-texto');
-        if (texto && msg) texto.textContent = msg;
-        if (loading) loading.hidden = false;
+        var l = $('catalogo-loading');
+        var t = $('loading-texto');
+        if (t && msg) t.textContent = msg;
+        if (l) l.hidden = false;
     }
 
     function atualizarLoading(msg) {
-        var texto = $('loading-texto');
-        if (texto && msg) texto.textContent = msg;
+        var t = $('loading-texto');
+        if (t && msg) t.textContent = msg;
     }
 
     function mostrarErro(msg) {
         esconderTudo();
-        var erro = $('catalogo-erro');
+        var e = $('catalogo-erro');
         var m = $('erro-mensagem');
         if (m) m.textContent = msg || 'Não foi possível buscar os livros.';
-        if (erro) erro.hidden = false;
+        if (e) e.hidden = false;
     }
 
-    function mostrarResultados(livros) {
-        esconderTudo();
-        if (!livros || !livros.length) return;
-
+    /* Renderiza sem limpar o grid (para append incremental) */
+    function anexarLivros(livros) {
         var grid = $('resultados-grid');
+        if (!grid) return;
+
         var info = $('resultados-info');
-        var contagem = $('resultados-contagem');
+        var c = $('resultados-contagem');
         var btnVoltar = $('btn-voltar-populares');
 
-        if (contagem) contagem.textContent = livros.length === 1 ? '1 livro' : livros.length + ' livros';
+        var total = grid.children.length + livros.length;
+        if (c) c.textContent = total === 1 ? '1 livro' : total + ' livros';
         if (info) info.hidden = false;
         if (btnVoltar) btnVoltar.hidden = estado.modo !== 'busca';
 
         var frag = document.createDocumentFragment();
         livros.forEach(function (l) { frag.appendChild(criarCard(l)); });
         grid.appendChild(frag);
+    }
+
+    function mostrarResultados(livros) {
+        esconderTudo();
+        if (!livros || !livros.length) return;
+        anexarLivros(livros);
     }
 
     function criarCard(livro) {
@@ -252,6 +225,7 @@
             var img = document.createElement('img');
             img.alt = livro.title || '';
             img.loading = 'lazy';
+            img.decoding = 'async';
             img.referrerPolicy = 'no-referrer';
             img.style.opacity = '0';
             img.style.transition = 'opacity 0.3s';
@@ -259,19 +233,19 @@
             img.onerror = function () {
                 img.remove();
                 if (!capa.querySelector('.livro-capa-sem')) {
-                    var sem = document.createElement('div');
-                    sem.className = 'livro-capa-sem';
-                    sem.textContent = livro.title || '';
-                    capa.appendChild(sem);
+                    var s = document.createElement('div');
+                    s.className = 'livro-capa-sem';
+                    s.textContent = livro.title || '';
+                    capa.appendChild(s);
                 }
             };
             img.src = livro.cover_url;
             capa.appendChild(img);
         } else {
-            var sem = document.createElement('div');
-            sem.className = 'livro-capa-sem';
-            sem.textContent = livro.title || '';
-            capa.appendChild(sem);
+            var s2 = document.createElement('div');
+            s2.className = 'livro-capa-sem';
+            s2.textContent = livro.title || '';
+            capa.appendChild(s2);
         }
 
         var info = document.createElement('div');
@@ -300,84 +274,94 @@
 
         card.appendChild(capa);
         card.appendChild(info);
-        card.addEventListener('click', function () { abrirModalLivro(livro); });
+        card.addEventListener('click', function () { abrirModalLivro(livro); }, { passive: true });
         return card;
     }
 
     /* ============================================================
-       CARREGAR CATÁLOGO
+       CARREGAR CATÁLOGO — PARALELO E PROGRESSIVO
        ============================================================ */
     async function carregarCatalogo() {
         estado.modo = 'populares';
         estado.buscaAtual = '';
         mostrarLoading('Carregando catálogo...');
 
-        try {
-            var todos = [];
-            var vistos = new Set();
+        var todos = [];
+        var vistos = new Set();
+        var jaRenderizou = false;
 
-            function adicionar(lista, fonte) {
-                if (!lista) return;
-                lista.forEach(function (l) {
-                    if (!l || !l.title) return;
-                    var chave = (l.title || '').toLowerCase().trim() + '|' + (l.author || '').toLowerCase().trim();
-                    if (vistos.has(chave)) return;
-                    vistos.add(chave);
-                    if (fonte) l.source = fonte;
-                    todos.push(l);
-                });
-            }
+        function adicionar(lista, fonte) {
+            if (!lista) return 0;
+            var novos = [];
+            lista.forEach(function (l) {
+                if (!l || !l.title) return;
+                var k = (l.title || '').toLowerCase().trim() + '|' + (l.author || '').toLowerCase().trim();
+                if (vistos.has(k)) return;
+                vistos.add(k);
+                if (fonte) l.source = fonte;
+                todos.push(l);
+                novos.push(l);
+            });
+            return novos.length;
+        }
 
-            function atualizar() {
-                estado.resultados = todos.slice();
-                mostrarResultados(todos);
-            }
+        function pesoSorte(l) {
+            if (l.source === 'standardebooks') return 1;
+            if ((l.language || '').toLowerCase().indexOf('pt') === 0) return 2;
+            return 3;
+        }
 
-            /* Standard Ebooks primeiro (mais confiável) */
-            atualizarLoading('Buscando no Standard Ebooks...');
-            try {
-                var se = await window.apiStandardEbooks.buscarPopulares();
-                if (se && se.length) {
-                    adicionar(se.slice(0, LIMITE_TOTAL), 'standardebooks');
-                    atualizar();
-                    atualizarLoading('Carregando ' + todos.length + ' livros...');
-                }
-            } catch (e) { console.warn('[catalogo] SE falhou:', e); }
+        function exibirProgressivo(novos) {
+            if (!novos.length) return;
+            /* Ordena o acumulado por peso para que SE/pt venham primeiro */
+            var ordenado = todos.slice().sort(function (a, b) {
+                var pa = pesoSorte(a), pb = pesoSorte(b);
+                if (pa !== pb) return pa - pb;
+                return (b.download_count || 0) - (a.download_count || 0);
+            });
+            esconderTudo();
+            anexarLivros(ordenado);
+            jaRenderizou = true;
+            atualizarLoading('Carregando... ' + todos.length + ' livros');
+        }
 
-            /* Gutenberg paginado */
-            atualizarLoading('Buscando no Gutenberg...');
+        /* Standard Ebooks */
+        var pSE = window.apiStandardEbooks.buscarPopulares().then(function (lista) {
+            var novos = adicionar(lista && lista.slice(0, LIMITE_TOTAL), 'standardebooks');
+            exibirProgressivo(lista ? lista.slice(0, LIMITE_TOTAL) : []);
+            return novos;
+        }).catch(function () { return 0; });
+
+        /* Gutenberg paginado em série, mas em paralelo com SE */
+        var pGut = (async function () {
             for (var p = 1; p <= 10; p++) {
                 if (todos.length >= LIMITE_TOTAL) break;
                 try {
                     var pagina = await window.apiGutenberg.buscarPopularesPaginado('', p);
                     if (!pagina || !pagina.length) break;
-                    adicionar(pagina, 'gutenberg');
-                    atualizar();
-                    atualizarLoading('Carregando ' + todos.length + ' de ' + LIMITE_TOTAL + '...');
-                } catch (e) {
-                    console.warn('[catalogo] Gutenberg p' + p + ' falhou');
-                    break;
-                }
+                    var novos = adicionar(pagina, 'gutenberg');
+                    if (novos > 0) exibirProgressivo(pagina);
+                } catch (e) { break; }
             }
+            return todos.length;
+        })();
 
-            function peso(l) {
-                if (l.source === 'standardebooks') return 1;
-                if ((l.language || '').toLowerCase().indexOf('pt') === 0) return 2;
-                return 3;
-            }
+        /* Espera ambos terminarem (para logs e fim) */
+        await Promise.all([pSE, pGut]);
 
-            todos.sort(function (a, b) {
-                var pa = peso(a), pb = peso(b);
-                if (pa !== pb) return pa - pb;
-                return (b.download_count || 0) - (a.download_count || 0);
-            });
+        /* Ordena final e re-renderiza */
+        todos.sort(function (a, b) {
+            var pa = pesoSorte(a), pb = pesoSorte(b);
+            if (pa !== pb) return pa - pb;
+            return (b.download_count || 0) - (a.download_count || 0);
+        });
+        estado.resultados = todos;
 
-            estado.resultados = todos;
-            mostrarResultados(todos);
-            if (!todos.length) mostrarErro('Nenhum livro carregado. Tente buscar.');
-        } catch (e) {
-            console.error('[catalogo]', e);
-            mostrarErro('Não foi possível carregar o catálogo.');
+        if (todos.length) {
+            esconderTudo();
+            anexarLivros(todos);
+        } else if (!jaRenderizou) {
+            mostrarErro('Nenhum livro carregado. Tente buscar.');
         }
     }
 
@@ -393,29 +377,25 @@
         mostrarLoading('Buscando livros...');
 
         try {
-            var livros = [];
+            /* Paralelo: Gutenberg + Standard Ebooks ao mesmo tempo */
+            var [gut, se] = await Promise.all([
+                window.apiGutenberg.buscar(termo).catch(function () { return []; }),
+                window.apiStandardEbooks.buscar(termo).catch(function () { return []; })
+            ]);
+
             var vistos = new Set();
-
-            function merge(lista) {
-                (lista || []).forEach(function (l) {
-                    if (!l || !l.title) return;
-                    var k = (l.title || '').toLowerCase() + '|' + (l.author || '').toLowerCase();
-                    if (vistos.has(k)) return;
-                    vistos.add(k);
-                    livros.push(l);
-                });
-            }
-
-            try { merge(await window.apiGutenberg.buscar(termo)); }
-            catch (e) { console.warn('[catalogo] Gutenberg:', e); }
-
-            try { merge(await window.apiStandardEbooks.buscar(termo)); }
-            catch (e) { console.warn('[catalogo] SE:', e); }
+            var livros = [];
+            gut.concat(se).forEach(function (l) {
+                if (!l || !l.title) return;
+                var k = (l.title || '').toLowerCase() + '|' + (l.author || '').toLowerCase();
+                if (vistos.has(k)) return;
+                vistos.add(k);
+                livros.push(l);
+            });
 
             estado.resultados = livros;
             aplicarFiltrosEOrdenacao();
         } catch (e) {
-            console.error(e);
             mostrarErro('Não foi possível buscar.');
         }
     }
@@ -434,9 +414,7 @@
         var ordem = $('filtro-ordem') ? $('filtro-ordem').value : 'relevancia';
         if (ordem === 'ano-desc') livros.sort(function (a, b) { return (b.year || 0) - (a.year || 0); });
         else if (ordem === 'ano-asc') livros.sort(function (a, b) { return (a.year || 9999) - (b.year || 9999); });
-        else if (ordem === 'titulo') livros.sort(function (a, b) {
-            return (a.title || '').localeCompare(b.title || '');
-        });
+        else if (ordem === 'titulo') livros.sort(function (a, b) { return (a.title || '').localeCompare(b.title || ''); });
 
         mostrarResultados(livros);
     }
@@ -446,8 +424,8 @@
        ============================================================ */
     function abrirModalLivro(livro) {
         estado.livroSelecionado = livro;
-        var modal = $('modal-livro');
-        if (!modal) return;
+        var m = $('modal-livro');
+        if (!m) return;
 
         var img = $('modal-capa-img');
         var titulo = $('modal-titulo');
@@ -489,7 +467,7 @@
             } else btnLer.hidden = true;
         }
 
-        modal.hidden = false;
+        m.hidden = false;
         document.body.style.overflow = 'hidden';
     }
 
@@ -514,7 +492,7 @@
     }
 
     /* ============================================================
-       ADICIONAR A ESTANTE
+       ADICIONAR À ESTANTE
        ============================================================ */
     async function adicionarAEstante(status) {
         if (!estado.livroSelecionado || !estado.usuario) return;
@@ -526,7 +504,7 @@
         botoes.forEach(function (b) { b.disabled = true; });
 
         try {
-            var livroSalvar = {
+            var dados = {
                 title: livro.title,
                 author: livro.author || null,
                 cover_url: livro.cover_url || null,
@@ -545,29 +523,24 @@
 
             var bookId = null;
             if (livro.external_id && livro.source) {
-                var exist = await db.from('books').select('id')
-                    .eq('external_id', livro.external_id)
-                    .eq('source', livro.source).maybeSingle();
-                if (exist.data) bookId = exist.data.id;
+                var ex = await db.from('books').select('id')
+                    .eq('external_id', livro.external_id).eq('source', livro.source).maybeSingle();
+                if (ex.data) bookId = ex.data.id;
             }
-
             if (!bookId) {
-                var ins = await db.from('books').insert(livroSalvar).select('id').single();
+                var ins = await db.from('books').insert(dados).select('id').single();
                 if (ins.error) throw ins.error;
                 bookId = ins.data.id;
             }
 
-            var jaTem = await db.from('user_books').select('id')
-                .eq('user_id', estado.usuario.id)
-                .eq('book_id', bookId).maybeSingle();
+            var ja = await db.from('user_books').select('id')
+                .eq('user_id', estado.usuario.id).eq('book_id', bookId).maybeSingle();
 
-            if (jaTem.data) {
-                await db.from('user_books').update({ status: status }).eq('id', jaTem.data.id);
+            if (ja.data) {
+                await db.from('user_books').update({ status: status }).eq('id', ja.data.id);
             } else {
                 await db.from('user_books').insert({
-                    user_id: estado.usuario.id,
-                    book_id: bookId,
-                    status: status
+                    user_id: estado.usuario.id, book_id: bookId, status: status
                 });
             }
 
@@ -583,7 +556,7 @@
     }
 
     /* ============================================================
-       EVENTOS
+       POPOVER DE FILTROS E LAYOUT
        ============================================================ */
     function setupPopoverFiltros() {
         var btn = $('busca-filtro-btn');
@@ -595,15 +568,13 @@
 
         btn.addEventListener('click', function (e) {
             e.stopPropagation();
-            if (pop.hidden) abrir(); else fechar();
+            pop.hidden ? abrir() : fechar();
         });
-
         document.addEventListener('click', function (e) {
             if (pop.hidden) return;
             if (pop.contains(e.target) || btn.contains(e.target)) return;
             fechar();
         });
-
         document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape' && !pop.hidden) { fechar(); btn.focus(); }
         });
@@ -665,8 +636,8 @@
         if (form) {
             form.addEventListener('submit', function (e) {
                 e.preventDefault();
-                var input = $('busca-input');
-                if (input) buscarLivros(input.value);
+                var i = $('busca-input');
+                if (i) buscarLivros(i.value);
             });
         }
 
@@ -715,7 +686,7 @@
         if (btnSair) {
             btnSair.addEventListener('click', async function () {
                 var db = getDb();
-                if (db) { try { await db.auth.signOut(); } catch (e) { /* ignora */ } }
+                try { if (db) await db.auth.signOut(); } catch (e) { /* ignora */ }
                 window.location.replace(PAGINA_LOGIN);
             });
         }
@@ -728,7 +699,7 @@
        INICIALIZAÇÃO
        ============================================================ */
     async function iniciar() {
-        try { setupEventos(); } catch (e) { console.error('[catalogo] setupEventos:', e); }
+        setupEventos();
 
         var ok = await iniciarSessao();
         if (!ok) return;

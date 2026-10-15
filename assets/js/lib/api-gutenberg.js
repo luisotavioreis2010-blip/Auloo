@@ -1,53 +1,35 @@
 ﻿/* ============================================================
-   API-GUTENBERG.JS — v2
-   Aproveita summaries[], subjects[], bookshelves[], anos do autor
+   API-GUTENBERG.JS — v3
+   Cache localStorage de 1h + fetch com timeout
    ============================================================ */
 (function () {
     'use strict';
 
-    var BASE_URL = 'https://gutendex.com/books';
-    var TIMEOUT_MS = 12000;
-    var CACHE_TTL_MS = 1000 * 60 * 60;
-    var cache = new Map();
+    var BASE = 'https://gutendex.com/books';
+    var TTL = 1000 * 60 * 60; /* 1h */
+    var memo = new Map();
 
-    function fetchComTimeout(url) {
-        return new Promise(function (resolve, reject) {
-            var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
-            var timer = setTimeout(function () {
-                if (controller) controller.abort();
-                reject(new Error('Timeout'));
-            }, TIMEOUT_MS);
-
-            var opcoes = {
-                headers: { 'User-Agent': 'Auloo/1.0 (contato@auloo.com.br)' }
-            };
-            if (controller) opcoes.signal = controller.signal;
-
-            fetch(url, opcoes)
-                .then(function (r) { clearTimeout(timer); resolve(r); })
-                .catch(function (e) { clearTimeout(timer); reject(e); });
-        });
+    function cacheGet(k) {
+        var m = memo.get(k);
+        if (m && Date.now() - m.ts < TTL) return m.v;
+        var local = window.utils.cacheGet('gut:' + k, TTL);
+        if (local) memo.set(k, { ts: Date.now(), v: local });
+        return local;
+    }
+    function cacheSet(k, v) {
+        memo.set(k, { ts: Date.now(), v: v });
+        window.utils.cacheSet('gut:' + k, v);
     }
 
-    function cacheGet(chave) {
-        var item = cache.get(chave);
-        if (!item) return null;
-        if (Date.now() - item.tempo > CACHE_TTL_MS) { cache.delete(chave); return null; }
-        return item.valor;
-    }
-    function cacheSet(chave, valor) { cache.set(chave, { valor: valor, tempo: Date.now() }); }
-
-    function normalizarLivro(item) {
-        var formatos = item.formats || {};
-        var capa  = formatos['image/jpeg'] || null;
-        var epub  = formatos['application/epub+zip'] || null;
-        var pdf   = formatos['application/pdf'] || null;
-        var html  = formatos['text/html'] || null;
-        var texto = formatos['text/plain; charset=utf-8'] || formatos['text/plain'] || null;
-
-        var urlLeitura = epub || html || texto || pdf || null;
-        var tipo = epub ? 'epub' : (pdf ? 'pdf' : (html ? 'html' : 'txt'));
-
+    function normalizar(item) {
+        var f = item.formats || {};
+        var capa  = f['image/jpeg'] || null;
+        var epub  = f['application/epub+zip'] || null;
+        var pdf   = f['application/pdf'] || null;
+        var html  = f['text/html'] || null;
+        var texto = f['text/plain; charset=utf-8'] || f['text/plain'] || null;
+        var url   = epub || html || texto || pdf || null;
+        var tipo  = epub ? 'epub' : (pdf ? 'pdf' : (html ? 'html' : 'txt'));
         var autor = item.authors && item.authors[0] ? item.authors[0] : null;
 
         var sinopse = null;
@@ -58,9 +40,8 @@
         }
 
         var genero = null;
-        if (item.subjects && item.subjects.length) {
-            genero = item.subjects[0];
-        } else if (item.bookshelves && item.bookshelves.length) {
+        if (item.subjects && item.subjects.length) genero = item.subjects[0];
+        else if (item.bookshelves && item.bookshelves.length) {
             genero = item.bookshelves[0].replace(/^Category:\s*/, '');
         }
 
@@ -82,99 +63,79 @@
             bookshelves: item.bookshelves || [],
             description: sinopse,
             external_url: 'https://www.gutenberg.org/ebooks/' + item.id,
-            has_ebook: !!urlLeitura,
-            ebook_url: urlLeitura,
+            has_ebook: !!url,
+            ebook_url: url,
             ebook_format: tipo,
-            formats: formatos,
+            formats: f,
             copyright: item.copyright === true,
             download_count: item.download_count || 0
         };
     }
 
-    function buscar(query, opcoes) {
-        opcoes = opcoes || {};
-        var chaveCache = 'gutenberg:busca:' + query + ':' + (opcoes.idioma || 'all');
-        var emCache = cacheGet(chaveCache);
-        if (emCache) return Promise.resolve(emCache);
+    async function req(url) {
+        var r = await window.utils.fetchComTimeout(url, {
+            headers: { 'User-Agent': 'Auloo/1.0' }
+        }, 12000);
+        return r.json();
+    }
 
-        var url = BASE_URL + '?search=' + encodeURIComponent(query);
+    async function buscar(query, opcoes) {
+        opcoes = opcoes || {};
+        var chave = 'busca:' + query + ':' + (opcoes.idioma || 'all');
+        var em = cacheGet(chave);
+        if (em) return em;
+
+        var url = BASE + '?search=' + encodeURIComponent(query);
         if (opcoes.idioma) url += '&languages=' + opcoes.idioma;
 
-        return fetchComTimeout(url)
-            .then(function (r) { return r.json(); })
-            .then(function (dados) {
-                if (!dados || !dados.results) return [];
-                var resultado = dados.results.map(normalizarLivro);
-                cacheSet(chaveCache, resultado);
-                return resultado;
-            })
-            .catch(function (erro) {
-                console.warn('Gutenberg busca falhou:', erro);
-                return [];
-            });
+        try {
+            var dados = await req(url);
+            if (!dados || !dados.results) return [];
+            var out = dados.results.map(normalizar);
+            cacheSet(chave, out);
+            return out;
+        } catch (e) {
+            console.warn('Gutenberg busca:', e);
+            return [];
+        }
     }
 
-    function buscarPopulares(idioma) {
-        idioma = idioma || 'pt';
-        var chaveCache = 'gutenberg:populares:' + idioma;
-        var emCache = cacheGet(chaveCache);
-        if (emCache) return Promise.resolve(emCache);
-
-        var url = BASE_URL + '?languages=' + idioma + '&sort=popular';
-        return fetchComTimeout(url)
-            .then(function (r) { return r.json(); })
-            .then(function (dados) {
-                if (!dados || !dados.results) return [];
-                var resultado = dados.results.map(normalizarLivro);
-                cacheSet(chaveCache, resultado);
-                return resultado;
-            })
-            .catch(function () { return []; });
-    }
-
-    function buscarPopularesPaginado(idioma, pagina) {
+    async function buscarPopularesPaginado(idioma, pagina) {
         idioma = idioma || 'pt';
         pagina = pagina || 1;
-        var chaveCache = 'gutenberg:populares:' + idioma + ':p' + pagina;
-        var emCache = cacheGet(chaveCache);
-        if (emCache) return Promise.resolve(emCache);
+        var chave = 'pop:' + idioma + ':p' + pagina;
+        var em = cacheGet(chave);
+        if (em) return em;
 
-        var url = BASE_URL + '?languages=' + idioma + '&sort=popular&page=' + pagina;
-        return fetchComTimeout(url)
-            .then(function (r) { return r.json(); })
-            .then(function (dados) {
-                if (!dados || !dados.results) return [];
-                var resultado = dados.results.map(normalizarLivro);
-                cacheSet(chaveCache, resultado);
-                return resultado;
-            })
-            .catch(function () { return []; });
+        var url = BASE + '?languages=' + idioma + '&sort=popular&page=' + pagina;
+        try {
+            var dados = await req(url);
+            if (!dados || !dados.results) return [];
+            var out = dados.results.map(normalizar);
+            cacheSet(chave, out);
+            return out;
+        } catch (e) { return []; }
     }
 
-    function buscarPorId(id) {
-        var chaveCache = 'gutenberg:id:' + id;
-        var emCache = cacheGet(chaveCache);
-        if (emCache) return Promise.resolve(emCache);
+    function buscarPopulares(idioma) { return buscarPopularesPaginado(idioma, 1); }
 
-        var url = BASE_URL + '/' + id;
-        return fetchComTimeout(url)
-            .then(function (r) { return r.json(); })
-            .then(function (dados) {
-                if (!dados) return null;
-                var livro = normalizarLivro(dados);
-                cacheSet(chaveCache, livro);
-                return livro;
-            })
-            .catch(function () { return null; });
+    async function buscarPorId(id) {
+        var chave = 'id:' + id;
+        var em = cacheGet(chave);
+        if (em) return em;
+        try {
+            var dados = await req(BASE + '/' + id);
+            if (!dados) return null;
+            var livro = normalizar(dados);
+            cacheSet(chave, livro);
+            return livro;
+        } catch (e) { return null; }
     }
 
     window.apiGutenberg = {
         buscar: buscar,
         buscarPopulares: buscarPopulares,
         buscarPopularesPaginado: buscarPopularesPaginado,
-        buscarPorId: buscarPorId,
-        limparCache: function () { cache.clear(); }
+        buscarPorId: buscarPorId
     };
-
-    console.log('api-gutenberg.js v2 carregado');
 })();
