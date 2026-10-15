@@ -1,10 +1,10 @@
 /* ============================================================
-   LEITOR.JS — v8
+   LEITOR.JS — v9 (corrigido)
    Leitor em tela cheia com:
    - EPUB via Edge Function (com fetch autenticado)
    - Modo marcacao de texto (salva trechos no Supabase)
    - Ficha do leitor padrao estante
-   - Solucao: renderTo com dimensoes em PIXELS (string) + resize
+   - CORRECAO: resize() so depois do display() e com try/catch
    ============================================================ */
 (function () {
     'use strict';
@@ -333,23 +333,19 @@
             if (area) area.hidden = false;
             if (nav) nav.hidden = false;
 
-            // Espera o navegador aplicar o layout
             await new Promise((r) => requestAnimationFrame(r));
             await new Promise((r) => requestAnimationFrame(r));
             await new Promise((r) => setTimeout(r, 50));
 
-            // Calcula as dimensoes REAIS em pixels
             const dim = calcularDimensoes();
             console.log('Dimensoes calculadas:', dim);
 
-            // Forca o #area a ter exatamente essas dimensoes
             if (area) {
                 area.style.width = dim.largura + 'px';
                 area.style.height = dim.altura + 'px';
                 area.style.margin = '0 auto';
             }
 
-            // Renderiza com dimensoes em PIXELS (string)
             rendition = book.renderTo('area', {
                 width: dim.largura + 'px',
                 height: dim.altura + 'px',
@@ -358,16 +354,10 @@
                 snap: true
             });
 
-            // Forca o recalculo
-            if (typeof rendition.resize === 'function') {
-                rendition.resize(dim.largura, dim.altura);
-            }
-
             aplicarFonte();
             aplicarTema();
             aplicarModoMarcacao();
 
-            // Exibe
             const progresso = await carregarProgresso();
             if (progresso && progresso.position) {
                 await rendition.display(progresso.position);
@@ -375,7 +365,18 @@
                 await rendition.display();
             }
 
-            // Forca a altura do iframe (garantia final)
+            // ============================================================
+            // RESIZE — somente depois do display e com try/catch
+            // ============================================================
+            try {
+                if (rendition.manager && typeof rendition.resize === 'function') {
+                    rendition.resize(dim.largura, dim.altura);
+                }
+            } catch (e) {
+                console.warn('resize ignorado:', e.message);
+            }
+
+            // Forca a altura do iframe (garantia extra)
             setTimeout(() => {
                 const iframe = area.querySelector('iframe');
                 if (iframe && dim.altura > 0) {
@@ -411,16 +412,13 @@
                     area.style.width = d.largura + 'px';
                     area.style.height = d.altura + 'px';
                 }
-                if (rendition && typeof rendition.resize === 'function') {
-                    rendition.resize(d.largura, d.altura);
-                }
-                setTimeout(() => {
-                    const iframe = area.querySelector('iframe');
-                    if (iframe) {
-                        iframe.style.height = d.altura + 'px';
-                        iframe.setAttribute('height', d.altura);
+                try {
+                    if (rendition.manager && typeof rendition.resize === 'function') {
+                        rendition.resize(d.largura, d.altura);
                     }
-                }, 100);
+                } catch (e) {
+                    // ignora
+                }
             });
 
         } catch (erro) {
