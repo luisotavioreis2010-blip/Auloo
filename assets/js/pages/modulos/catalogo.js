@@ -1,22 +1,16 @@
 ﻿/* ============================================================
-   CATALOGO.JS — v11
-   Pagina de catalogo — somente fontes confiaveis
-   - 2 fontes: Standard Ebooks + Gutenberg
-   - Standard Ebooks: ate 1.500 livros (Edge Function paginada)
-   - Botao "Ler no Acervo" para Standard Ebooks (leitor interno)
-   - Botao "Ler agora" para os demais (abre externo)
-   - ORDENACAO: Standard Ebooks -> Portugues -> Resto
-   - Busca (Enter ou lupa)
-   - Popover de filtros
-   - Modais (livro / adicionar a estante)
-   - Sistema de foco (teclado virtual)
+   CATALOGO.JS — v12
+   - Standard Ebooks + Gutenberg
+   - Estatisticas na ficha (livros lidos + ultimos 3)
+   - Botao "Ler no Acervo" passa autor e capa
+   - Anti-flash de layout
    ============================================================ */
 (function () {
     'use strict';
 
-    /* ============================================================
-       1. CONSTANTES
-       ============================================================ */
+    // Anti-flash de layout
+    document.documentElement.classList.add('carregando-catalogo');
+
     const PAGINA_LOGIN = '/login.html';
     const LIMITE_RESULTADOS = 1500;
     const LIMITE_STANDARD_EBOOKS = 1500;
@@ -32,9 +26,6 @@
 
     const MQ_ROW = '(min-width: 568px) and (max-width: 950px) and (orientation: landscape) and (max-height: 500px)';
 
-    /* ============================================================
-       2. ESTADO
-       ============================================================ */
     const estado = {
         usuario: null,
         resultados: [],
@@ -52,12 +43,10 @@
     let timerEstabilidade = null;
     let vvHeightAnterior = 0;
     let ajusteRaf = false;
+    let db = null;
 
     const raiz = document.documentElement;
 
-    /* ============================================================
-       3. HELPERS
-       ============================================================ */
     const $ = (id) => document.getElementById(id);
     const esperar = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -68,8 +57,8 @@
 
     async function aguardarDb() {
         for (let i = 0; i < SUPABASE_TENTATIVAS; i++) {
-            const db = getDb();
-            if (db) return db;
+            const d = getDb();
+            if (d) return d;
             await esperar(SUPABASE_INTERVALO_MS);
         }
         return null;
@@ -116,11 +105,11 @@
     }
 
     /* ============================================================
-       4. AUTENTICACAO
+       AUTENTICACAO
        ============================================================ */
-    async function aguardarSessao(db) {
+    async function aguardarSessao(d) {
         for (let i = 0; i < SUPABASE_TENTATIVAS; i++) {
-            const resultado = await db.auth.getSession();
+            const resultado = await d.auth.getSession();
             if (resultado.error) throw resultado.error;
             const sessao = resultado.data && resultado.data.session;
             if (sessao && sessao.user) return sessao;
@@ -130,7 +119,7 @@
     }
 
     async function iniciarSessao() {
-        const db = await aguardarDb();
+        db = await aguardarDb();
         if (!db) {
             console.error('Supabase nao inicializou');
             irParaLogin();
@@ -162,43 +151,111 @@
             if (elNome) elNome.textContent = nome.split('@')[0];
             if (elEmail) elEmail.textContent = sessao.user.email || '';
 
+            // Carrega estatisticas
+            carregarEstatisticas();
+
         } catch (erro) {
             console.error('Erro getSession:', erro);
             irParaLogin();
         }
     }
 
-    function renderizarAvatar(container, avatarUrl, nome) {
+    /* ============================================================
+       ESTATISTICAS
+       ============================================================ */
+    async function carregarEstatisticas() {
+        if (!db || !estado.usuario) return;
+
+        try {
+            const { data: progresso, error: errProg } = await db
+                .from('reading_progress')
+                .select('book_slug')
+                .eq('user_id', estado.usuario.id)
+                .gt('percent', 0);
+
+            if (errProg) throw errProg;
+
+            const totalLidos = progresso ? progresso.length : 0;
+
+            const { data: historico, error: errHist } = await db
+                .from('reading_history')
+                .select('book_slug, book_title, book_author, book_cover, last_read_at')
+                .eq('user_id', estado.usuario.id)
+                .order('last_read_at', { ascending: false })
+                .limit(3);
+
+            if (errHist) throw errHist;
+
+            renderizarEstatisticas(totalLidos, historico || []);
+
+        } catch (e) {
+            console.warn('Erro ao carregar estatisticas:', e);
+        }
+    }
+
+    function renderizarEstatisticas(totalLidos, ultimos) {
+        const contador = $('ficha-total-lidos');
+        if (contador) contador.textContent = totalLidos;
+
+        const container = $('ficha-ultimos-lidos');
         if (!container) return;
+
         container.textContent = '';
 
-        if (!avatarUrl || avatarUrl === 'null') {
-            const span = document.createElement('span');
-            span.className = 'avatar-iniciais';
-            const partes = (nome || 'U').trim().split(/\s+/);
-            span.textContent = (partes[0][0] || 'U').toUpperCase() +
-                              (partes.length > 1 ? (partes[partes.length - 1][0] || '').toUpperCase() : '');
-            container.appendChild(span);
+        if (!ultimos || ultimos.length === 0) {
+            const vazio = document.createElement('p');
+            vazio.className = 'ficha-vazio';
+            vazio.textContent = 'Nenhum livro lido ainda';
+            container.appendChild(vazio);
             return;
         }
 
-        const img = document.createElement('img');
-        img.className = 'foto-perfil';
-        img.alt = 'Foto de perfil';
-        img.referrerPolicy = 'no-referrer';
-        img.src = avatarUrl;
-        img.onerror = () => {
-            img.remove();
-            const span = document.createElement('span');
-            span.className = 'avatar-iniciais';
-            span.textContent = (nome || 'U').charAt(0).toUpperCase();
-            container.appendChild(span);
-        };
-        container.appendChild(img);
+        ultimos.forEach((livro) => {
+            const item = document.createElement('a');
+            item.className = 'ficha-livro-recente';
+            item.href = 'leitor.html?url=' + encodeURIComponent(livro.book_slug) +
+                        '&titulo=' + encodeURIComponent(livro.book_title || '') +
+                        '&slug=' + encodeURIComponent(livro.book_slug) +
+                        '&autor=' + encodeURIComponent(livro.book_author || '') +
+                        '&capa=' + encodeURIComponent(livro.book_cover || '');
+            item.title = livro.book_title;
+
+            const capa = document.createElement('div');
+            capa.className = 'ficha-livro-capa';
+            if (livro.book_cover) {
+                const img = document.createElement('img');
+                img.src = livro.book_cover;
+                img.alt = livro.book_title;
+                img.loading = 'lazy';
+                img.referrerPolicy = 'no-referrer';
+                img.onerror = () => { capa.textContent = '📖'; };
+                capa.appendChild(img);
+            } else {
+                capa.textContent = '📖';
+            }
+
+            const info = document.createElement('div');
+            info.className = 'ficha-livro-info';
+
+            const titulo = document.createElement('span');
+            titulo.className = 'ficha-livro-titulo';
+            titulo.textContent = livro.book_title || 'Sem titulo';
+
+            const autor = document.createElement('span');
+            autor.className = 'ficha-livro-autor';
+            autor.textContent = livro.book_author || '';
+
+            info.appendChild(titulo);
+            if (livro.book_author) info.appendChild(autor);
+
+            item.appendChild(capa);
+            item.appendChild(info);
+            container.appendChild(item);
+        });
     }
 
     /* ============================================================
-       5. SISTEMA DE FOCO
+       SISTEMA DE FOCO
        ============================================================ */
     function setupAlturaFixa() {
         let maiorAltura = 0;
@@ -466,7 +523,7 @@
     }
 
     /* ============================================================
-       6. RENDERIZACAO
+       RENDERIZACAO
        ============================================================ */
     function esconderTudo() {
         const loading = $('catalogo-loading');
@@ -605,7 +662,7 @@
     }
 
     /* ============================================================
-       7. CARREGAR CATALOGO (2 fontes)
+       CARREGAR CATALOGO
        ============================================================ */
     async function carregarCatalogo() {
         estado.modo = 'populares';
@@ -634,10 +691,8 @@
                 mostrarResultados(todos);
             }
 
-            // ============================================================
-            // 1. STANDARD EBOOKS — ate 1.500 classicos premium
-            // ============================================================
-            atualizarLoading('Buscando no Standard Ebooks (pode demorar)...');
+            // 1. STANDARD EBOOKS
+            atualizarLoading('Buscando no Standard Ebooks...');
 
             try {
                 const se = await window.apiStandardEbooks.buscarPopulares();
@@ -650,9 +705,7 @@
                 console.warn('Standard Ebooks falhou:', e);
             }
 
-            // ============================================================
-            // 2. GUTENBERG — populares (todos os idiomas)
-            // ============================================================
+            // 2. GUTENBERG
             atualizarLoading('Buscando no Gutenberg...');
 
             for (let p = 1; p <= 10; p++) {
@@ -669,13 +722,10 @@
                 }
             }
 
-            // ============================================================
-            // 3. ORDENAR: Standard Ebooks -> Portugues -> Resto
-            // ============================================================
+            // 3. ORDENAR
             function pesoFonte(livro) {
                 const fonte = livro.source || '';
                 const idioma = (livro.language || '').toLowerCase();
-
                 if (fonte === 'standardebooks') return 1;
                 if (idioma.startsWith('pt')) return 2;
                 return 3;
@@ -685,7 +735,6 @@
                 const pa = pesoFonte(a);
                 const pb = pesoFonte(b);
                 if (pa !== pb) return pa - pb;
-
                 const da = a.download_count || 0;
                 const db = b.download_count || 0;
                 return db - da;
@@ -705,7 +754,7 @@
     }
 
     /* ============================================================
-       8. BUSCA
+       BUSCA
        ============================================================ */
     async function buscarLivros(termo) {
         termo = String(termo || '').trim();
@@ -796,7 +845,7 @@
     }
 
     /* ============================================================
-       9. POPOVER DE FILTROS
+       POPOVER DE FILTROS
        ============================================================ */
     function setupPopoverFiltros() {
         const btn = $('busca-filtro-btn');
@@ -838,7 +887,7 @@
     }
 
     /* ============================================================
-       10. MODAIS
+       MODAIS
        ============================================================ */
     function abrirModalLivro(livro) {
         estado.livroSelecionado = livro;
@@ -875,19 +924,17 @@
             descricao.textContent = livro.description || 'Sem descricao disponivel.';
         }
 
-        // ============================================================
-        // BOTAO LER — decide entre leitor interno ou externo
-        // ============================================================
+        // Botao Ler — passa autor e capa
         if (btnLer) {
             if (livro.ebook_url && livro.source === 'standardebooks') {
-                // Abre no LEITOR INTERNO do Acervo
                 btnLer.href = 'leitor.html?url=' + encodeURIComponent(livro.ebook_url) +
                               '&titulo=' + encodeURIComponent(livro.title || '') +
-                              '&slug=' + encodeURIComponent(livro.external_id || '');
+                              '&slug=' + encodeURIComponent(livro.external_id || '') +
+                              '&autor=' + encodeURIComponent(livro.author || '') +
+                              '&capa=' + encodeURIComponent(livro.cover_url || '');
                 btnLer.textContent = 'Ler no Acervo';
                 btnLer.hidden = false;
             } else if (livro.ebook_url) {
-                // Abre externo (outros formatos)
                 btnLer.href = livro.ebook_url;
                 btnLer.textContent = 'Ler agora';
                 btnLer.hidden = false;
@@ -927,7 +974,7 @@
     }
 
     /* ============================================================
-       11. ADICIONAR A ESTANTE
+       ADICIONAR A ESTANTE
        ============================================================ */
     async function adicionarAEstante(status) {
         if (!estado.livroSelecionado || !estado.usuario) return;
@@ -1043,7 +1090,7 @@
     }
 
     /* ============================================================
-       12. EVENTOS
+       EVENTOS
        ============================================================ */
     function setupEventos() {
         const form = $('busca-form');
@@ -1109,8 +1156,8 @@
         const btnSair = $('btn-sair');
         if (btnSair) {
             btnSair.addEventListener('click', async () => {
-                const db = getDb();
-                if (db) await db.auth.signOut();
+                const dbLocal = getDb();
+                if (dbLocal) await dbLocal.auth.signOut();
                 irParaLogin();
             });
         }
@@ -1195,7 +1242,7 @@
     }
 
     /* ============================================================
-       13. INICIALIZACAO
+       INICIALIZACAO
        ============================================================ */
     async function iniciar() {
         sincronizarTela();
@@ -1209,6 +1256,9 @@
         await iniciarSessao();
 
         await carregarCatalogo();
+
+        // Remove o anti-flash
+        document.documentElement.classList.remove('carregando-catalogo');
     }
 
     if (document.readyState === 'loading') {

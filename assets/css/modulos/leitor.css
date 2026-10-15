@@ -1,9 +1,7 @@
 @charset "UTF-8";
 /* ==============================================
-   LEITOR.CSS — v8
-   Layout: livro aberto, 2 paginas lado a lado
-   Navegacao lateral com setas
-   Contador e progresso na navbar
+   LEITOR.CSS — v9
+   Leitor com 2 paginas, barra colorida, marca texto
    ============================================== */
 
 :root {
@@ -57,7 +55,7 @@ body {
 }
 
 /* ==============================================
-   NAVBAR COM CONTADOR E PROGRESSO
+   NAVBAR
    ============================================== */
 .navbar-leitor {
     position: fixed;
@@ -87,7 +85,7 @@ body {
     flex-direction: column;
     align-items: center;
     gap: 0.4rem;
-    min-width: 200px;
+    min-width: 220px;
 }
 
 .navbar-leitor-right {
@@ -110,26 +108,31 @@ body {
 
 .leitor-pagina {
     font-family: var(--fonte-display);
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     font-style: italic;
-    color: var(--tinta-suave);
+    font-weight: 600;
+    color: var(--vinho);
     letter-spacing: 0.5px;
 }
 
+/* Barra de progresso COLORIDA e visível */
 .leitor-barra {
     width: 100%;
-    height: 3px;
+    height: 6px;
     background: var(--papel-escuro);
-    border-radius: 3px;
+    border-radius: 6px;
     overflow: hidden;
+    border: 1px solid rgba(184, 137, 74, 0.3);
+    box-shadow: inset 0 1px 2px rgba(26, 22, 20, 0.1);
 }
 
 .leitor-barra-fill {
     height: 100%;
     width: 0%;
-    background: linear-gradient(90deg, var(--dourado), var(--dourado-claro));
-    border-radius: 3px;
-    transition: width 0.3s ease;
+    background: linear-gradient(90deg, var(--vinho) 0%, var(--dourado) 50%, var(--dourado-claro) 100%);
+    border-radius: 6px;
+    transition: width 0.4s var(--ease);
+    box-shadow: 0 0 8px rgba(184, 137, 74, 0.5);
 }
 
 .btn-nav-leitor {
@@ -158,6 +161,17 @@ body {
 
 @media (hover: hover) {
     .btn-nav-leitor:hover { background: var(--dourado); color: var(--papel); }
+}
+
+.btn-nav-leitor[aria-pressed="true"] {
+    background: var(--vinho);
+    border-color: var(--vinho);
+    color: var(--papel);
+}
+
+.btn-nav-leitor[aria-pressed="true"]:hover {
+    background: var(--dourado);
+    border-color: var(--dourado);
 }
 
 .perfil-botao {
@@ -350,55 +364,23 @@ body {
 }
 
 .ficha-progresso-barra {
-    height: 6px;
+    height: 8px;
     overflow: hidden;
     background: var(--papel-escuro);
-    border-radius: 3px;
+    border-radius: 6px;
+    border: 1px solid rgba(184, 137, 74, 0.3);
 }
 
 .ficha-progresso-fill {
     height: 100%;
     width: 0%;
-    background: linear-gradient(90deg, var(--dourado), var(--dourado-claro));
-    border-radius: 3px;
-    transition: width 0.3s ease;
+    background: linear-gradient(90deg, var(--vinho) 0%, var(--dourado) 50%, var(--dourado-claro) 100%);
+    border-radius: 6px;
+    transition: width 0.4s var(--ease);
+    box-shadow: 0 0 6px rgba(184, 137, 74, 0.5);
 }
 
 .ficha-progresso-texto {
-    font-family: var(--fonte-display);
-    font-size: 0.9rem;
-    font-style: italic;
-    color: var(--dourado);
-}
-
-.ficha-menu {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-    margin-top: 0.5rem;
-}
-
-.ficha-item {
-    display: flex;
-    align-items: baseline;
-    gap: 0.8rem;
-    width: 100%;
-    padding: 0.7rem 0;
-    text-align: left;
-    color: var(--tinta);
-    background: transparent;
-    border: none;
-    border-bottom: 1px solid transparent;
-    cursor: pointer;
-    transition: color 0.25s, border-color 0.25s;
-}
-
-@media (hover: hover) {
-    .ficha-item:hover { color: var(--vinho); border-bottom-color: var(--dourado); }
-}
-
-.ficha-romano {
-    min-width: 2rem;
     font-family: var(--fonte-display);
     font-size: 1rem;
     font-style: italic;
@@ -406,16 +388,55 @@ body {
     color: var(--dourado);
 }
 
-.ficha-texto {
-    font-family: var(--fonte-corpo);
-    font-size: 0.75rem;
-    font-weight: 500;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
+.ficha-marcacoes {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+}
+
+.lista-marcacoes {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 300px;
+    overflow-y: auto;
+    padding-right: 0.25rem;
+}
+
+.marcacao-vazia {
+    font-family: var(--fonte-display);
+    font-size: 0.9rem;
+    font-style: italic;
+    color: var(--tinta-clara);
+    text-align: center;
+    padding: 0.75rem 0;
+}
+
+.marcacao-item {
+    padding: 0.7rem 0.85rem;
+    background: rgba(184, 137, 74, 0.1);
+    border-left: 3px solid var(--dourado);
+    border-radius: 3px;
+    font-family: var(--fonte-display);
+    font-size: 0.9rem;
+    font-style: italic;
+    line-height: 1.4;
+    color: var(--tinta-suave);
+    cursor: pointer;
+    transition: background 0.25s, border-color 0.25s;
+}
+
+@media (hover: hover) {
+    .marcacao-item:hover {
+        background: rgba(184, 137, 74, 0.2);
+        border-left-color: var(--vinho);
+    }
 }
 
 /* ==============================================
-   LEITOR — LIVRO ABERTO
+   LEITOR
    ============================================== */
 .leitor-main {
     position: fixed;
@@ -431,7 +452,6 @@ body {
 
 body.ficha-aberta .leitor-main { right: var(--ficha-w); }
 
-/* Livro aberto: setas laterais + paginas no meio */
 .leitor-livro {
     position: relative;
     width: 100%;
@@ -442,7 +462,6 @@ body.ficha-aberta .leitor-main { right: var(--ficha-w); }
     gap: 0;
 }
 
-/* Setas nas laterais */
 .leitor-seta {
     flex-shrink: 0;
     width: 56px;
@@ -473,7 +492,6 @@ body.ficha-aberta .leitor-main { right: var(--ficha-w); }
     background: rgba(184, 137, 74, 0.2);
 }
 
-/* Paginas lado a lado */
 .leitor-paginas {
     flex: 1;
     display: grid;
@@ -488,8 +506,6 @@ body.ficha-aberta .leitor-main { right: var(--ficha-w); }
     position: relative;
 }
 
-/* O epub.js renderiza o iframe no container esquerdo.
-   Quando em modo spread, ele ja ocupa 2 colunas internamente. */
 .leitor-pagina-esq {
     width: 100%;
     height: 100%;
@@ -497,15 +513,10 @@ body.ficha-aberta .leitor-main { right: var(--ficha-w); }
     overflow: hidden;
 }
 
-.leitor-pagina-esq iframe {
-    border: none;
-}
+.leitor-pagina-esq iframe { border: none; }
 
-.leitor-pagina-dir {
-    display: none;
-}
+.leitor-pagina-dir { display: none; }
 
-/* Area unica (mobile) */
 .leitor-area {
     display: block;
     width: 100%;
@@ -522,7 +533,6 @@ body.ficha-aberta .leitor-main { right: var(--ficha-w); }
 
 .leitor-area iframe { border: none; }
 
-/* Loading e Erro */
 .leitor-loading,
 .leitor-erro {
     position: absolute;
@@ -595,10 +605,7 @@ body.ficha-aberta .leitor-main { right: var(--ficha-w); }
    RESPONSIVO
    ============================================== */
 @media (max-width: 1023px) {
-    :root {
-        --leitor-padding: 1rem;
-    }
-
+    :root { --leitor-padding: 1rem; }
     .leitor-seta { width: 44px; }
     .leitor-seta svg { width: 26px; height: 26px; }
 }

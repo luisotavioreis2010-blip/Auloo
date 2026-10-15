@@ -33,6 +33,14 @@
         </div>
 
         <div class="navbar-leitor-right">
+            <button type="button" class="btn-nav-leitor" id="btn-marcar-modo" aria-label="Modo de marcação de texto" aria-pressed="false">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M12 20h9"/>
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                </svg>
+                <span>Marcar</span>
+            </button>
+
             <button type="button" class="btn-nav-leitor" id="btn-font-menos" aria-label="Diminuir fonte">A-</button>
             <button type="button" class="btn-nav-leitor" id="btn-font-mais" aria-label="Aumentar fonte">A+</button>
 
@@ -72,12 +80,12 @@
 
         <div class="ficha-filete"></div>
 
-        <nav class="ficha-menu">
-            <button class="ficha-item" id="btn-fechar-leitor" type="button">
-                <span class="ficha-romano">&#10005;</span>
-                <span class="ficha-texto">Voltar ao catálogo</span>
-            </button>
-        </nav>
+        <div class="ficha-marcacoes">
+            <span class="ficha-progresso-label">Marcações</span>
+            <ul class="lista-marcacoes" id="lista-marcacoes">
+                <li class="marcacao-vazia">Nenhuma marcação ainda</li>
+            </ul>
+        </div>
     </aside>
 
     <main class="leitor-main">
@@ -93,7 +101,6 @@
             <a href="catalogo.html" class="btn-tentar">Voltar ao catalogo</a>
         </div>
 
-        <!-- LIVRO ABERTO (2 PAGINAS) -->
         <div class="leitor-livro" id="leitor-livro" hidden>
             <button type="button" class="leitor-seta leitor-seta-esq" id="btn-anterior" aria-label="Pagina anterior">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -113,7 +120,6 @@
             </button>
         </div>
 
-        <!-- AREA UNICA (fallback para mobile) -->
         <div class="leitor-area" id="area" hidden></div>
     </main>
 

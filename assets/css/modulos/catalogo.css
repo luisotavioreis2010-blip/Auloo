@@ -1,12 +1,10 @@
 ﻿@charset "UTF-8";
 /* ==============================================
-   CATALOGO.CSS — v3
+   CATALOGO.CSS — v4
    Estilo Editorial
-
-   CORRECAO v3:
-   - Sidebar vai de alto a baixo (top: navbar-h, bottom: 0)
-   - Icones comecam do topo (justify-content: flex-start)
-   - Selo e Volume fixos no rodape
+   - Sidebar vai de alto a baixo
+   - Estatisticas na ficha do leitor
+   - Anti-flash de layout
    ============================================== */
 
 /* ==============================================
@@ -77,6 +75,7 @@ body {
     user-select: none;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    transition: opacity 0.3s ease;
 }
 
 input, textarea { -webkit-user-select: text; user-select: text; }
@@ -87,12 +86,23 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 }
 
 /* ==============================================
-   3. SPRITE
+   3. ANTI-FLASH DE LAYOUT
+   ============================================== */
+html.carregando-catalogo body {
+    opacity: 0;
+}
+
+html.carregando-catalogo .catalogo-main {
+    visibility: hidden;
+}
+
+/* ==============================================
+   4. SPRITE
    ============================================== */
 .sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
 
 /* ==============================================
-   4. NAVBAR
+   5. NAVBAR
    ============================================== */
 .navbar {
     position: sticky;
@@ -221,13 +231,12 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 .gaveta-overlay.ativa { opacity: 1; pointer-events: auto; }
 
 /* ==============================================
-   5. SIDEBAR ESQUERDA — CORRIGIDA
-   Vai do topo da tela ate o rodape
+   6. SIDEBAR ESQUERDA — CORRIGIDA
    ============================================== */
 .sidebar {
     position: fixed;
-    top: var(--navbar-h);   /* comeca abaixo da navbar */
-    bottom: 0;              /* vai ate o final da tela */
+    top: var(--navbar-h);
+    bottom: 0;
     left: 0;
     z-index: 50;
     display: flex;
@@ -256,13 +265,12 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 
 .sidebar:is(:hover, .expandida) { width: var(--sidebar-w); }
 
-/* Secao do menu: ocupa todo o espaco entre topo e rodape */
 .sidebar-secao {
     flex: 1 1 auto;
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    justify-content: flex-start;   /* ← comeca do TOPO */
+    justify-content: flex-start;
     min-height: 0;
     padding: 4.5rem 1.3rem 0.5rem;
     overflow-x: hidden;
@@ -298,7 +306,7 @@ input, textarea { -webkit-user-select: text; user-select: text; }
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    justify-content: flex-start;   /* ← comeca do TOPO */
+    justify-content: flex-start;
     gap: 1rem;
     width: 100%;
 }
@@ -374,10 +382,9 @@ input, textarea { -webkit-user-select: text; user-select: text; }
     white-space: nowrap;
 }
 
-/* Selo e Volume ficam grudados no RODAPE da sidebar */
 .sidebar-selo {
     flex-shrink: 0;
-    margin-top: auto;              /* ← empurra para o rodape */
+    margin-top: auto;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -452,7 +459,7 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 }
 
 /* ==============================================
-   6. FICHA DO LEITOR
+   7. FICHA DO LEITOR (sidebar direita)
    ============================================== */
 .sidebar-direita {
     position: fixed;
@@ -504,6 +511,11 @@ input, textarea { -webkit-user-select: text; user-select: text; }
     background: transparent;
     border: none;
     cursor: pointer;
+    transition: color 0.25s;
+}
+
+@media (hover: hover) {
+    .ficha-fechar:hover { color: var(--vinho); }
 }
 
 .ficha-filete {
@@ -582,6 +594,11 @@ input, textarea { -webkit-user-select: text; user-select: text; }
     border: none;
     border-bottom: 1px solid transparent;
     cursor: pointer;
+    transition: color 0.25s, border-color 0.25s;
+}
+
+@media (hover: hover) {
+    .ficha-item:hover { color: var(--vinho); border-bottom-color: var(--dourado); }
 }
 
 .ficha-romano {
@@ -602,7 +619,131 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 }
 
 /* ==============================================
-   7. MAIN DO CATALOGO
+   8. ESTATÍSTICAS DA FICHA DO LEITOR
+   ============================================== */
+.ficha-estatisticas {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+}
+
+.ficha-contador {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+}
+
+.ficha-contador-numero {
+    font-family: var(--fonte-display);
+    font-size: 2rem;
+    font-weight: 700;
+    font-style: italic;
+    line-height: 1;
+    color: var(--dourado);
+}
+
+.ficha-contador-texto {
+    font-family: var(--fonte-display);
+    font-size: 0.9rem;
+    font-style: italic;
+    color: var(--tinta-suave);
+}
+
+.ficha-recentes {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+}
+
+.ficha-ultimos-lidos {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.ficha-vazio {
+    font-family: var(--fonte-display);
+    font-size: 0.9rem;
+    font-style: italic;
+    color: var(--tinta-clara);
+    text-align: center;
+    padding: 0.75rem 0;
+}
+
+.ficha-livro-recente {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    text-decoration: none;
+    color: inherit;
+    background: var(--papel);
+    border: 1px solid rgba(184, 137, 74, 0.25);
+    border-radius: 4px;
+    transition: background 0.25s, border-color 0.25s, transform 0.25s;
+}
+
+@media (hover: hover) {
+    .ficha-livro-recente:hover {
+        background: rgba(184, 137, 74, 0.12);
+        border-color: var(--dourado);
+        transform: translateX(2px);
+    }
+}
+
+.ficha-livro-capa {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 40px;
+    height: 56px;
+    overflow: hidden;
+    background: var(--papel-escuro);
+    border: 1px solid rgba(184, 137, 74, 0.4);
+    border-radius: 2px;
+    font-size: 1.2rem;
+}
+
+.ficha-livro-capa img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.ficha-livro-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.ficha-livro-titulo {
+    font-family: var(--fonte-titulo);
+    font-size: 0.85rem;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--vinho);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ficha-livro-autor {
+    font-family: var(--fonte-display);
+    font-size: 0.75rem;
+    font-style: italic;
+    color: var(--tinta-clara);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ==============================================
+   9. MAIN DO CATALOGO
    ============================================== */
 .catalogo-main {
     display: flex;
@@ -616,7 +757,7 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 }
 
 /* ==============================================
-   8. TOPO — BUSCA + FILTROS
+   10. TOPO — BUSCA + FILTROS
    ============================================== */
 .catalogo-topo {
     position: relative;
@@ -704,7 +845,7 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 }
 
 /* ==============================================
-   9. POPOVER DE FILTROS
+   11. POPOVER DE FILTROS
    ============================================== */
 .filtros-popover {
     position: absolute;
@@ -810,7 +951,7 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 }
 
 /* ==============================================
-   10. RESULTADOS
+   12. RESULTADOS
    ============================================== */
 .catalogo-resultados {
     max-width: 1400px;
@@ -1007,7 +1148,7 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 }
 
 /* ==============================================
-   11. LOADING / ERRO / FIM
+   13. LOADING / ERRO / FIM
    ============================================== */
 .catalogo-loading,
 .catalogo-erro,
@@ -1095,7 +1236,7 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 }
 
 /* ==============================================
-   12. MODAL
+   14. MODAL
    ============================================== */
 .modal {
     position: fixed;
@@ -1384,7 +1525,249 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 }
 
 /* ==============================================
-   13. RESPONSIVO
+   15. CONTAINERS EXPANSÍVEIS (Editar Nome, Senha, Saiba Mais)
+   ============================================== */
+.container-expansivel {
+    position: relative;
+    flex-shrink: 0;
+    margin: 0.4rem 0 0.6rem;
+    padding: 1.2rem 1.3rem 1.4rem;
+    background: linear-gradient(180deg, var(--papel) 0%, var(--papel-claro) 100%);
+    border: 1px solid var(--dourado);
+    border-left-width: 2px;
+    transform-origin: top;
+    animation: surgirContainer 0.35s var(--ease);
+}
+
+.container-expansivel:not(#container-saiba-mais)::before {
+    content: '\2766';
+    position: absolute;
+    top: 0.4rem;
+    right: 0.6rem;
+    font-size: 0.85rem;
+    color: var(--dourado);
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+@keyframes surgirContainer {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.container-expansivel label {
+    display: block;
+    margin: 0.8rem 0 0.35rem;
+    font-family: var(--fonte-corpo);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--tinta-suave);
+}
+
+.container-expansivel input {
+    width: 100%;
+    margin-bottom: 0.4rem;
+    padding: 0.7rem 0.8rem;
+    font-family: var(--fonte-display);
+    font-size: 16px;
+    font-style: italic;
+    color: var(--tinta);
+    background: rgba(255, 255, 255, 0.5);
+    border: none;
+    border-bottom: 1px solid rgba(184, 137, 74, 0.4);
+    border-radius: 0;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    transition: border-color 0.3s ease;
+}
+
+.container-expansivel input:focus { border-bottom-color: var(--dourado); }
+
+.container-expansivel input::placeholder {
+    font-family: var(--fonte-display);
+    font-size: 16px;
+    font-style: italic;
+    color: var(--tinta-clara);
+}
+
+.btn-container {
+    width: 100%;
+    margin-top: 1rem;
+    padding: 0.75rem 1rem;
+    font-family: var(--fonte-corpo);
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--dourado);
+    background: transparent;
+    border: 1px solid var(--dourado);
+    border-radius: 2px;
+    cursor: pointer;
+    transition: color var(--transicao), background-color var(--transicao);
+}
+
+@media (hover: hover) {
+    .btn-container:hover:not(:disabled) {
+        color: var(--papel);
+        background: var(--dourado);
+    }
+}
+
+.btn-container:disabled { opacity: 0.6; cursor: wait; }
+
+/* ---------- Olho da senha ---------- */
+.wrapper-olho-senha {
+    position: relative;
+    width: 100%;
+    margin-bottom: 0.4rem;
+}
+
+.wrapper-olho-senha input { margin-bottom: 0; padding-right: 2.2rem; }
+
+.btn-olho-senha {
+    position: absolute;
+    top: 50%;
+    right: 0.2rem;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    opacity: 0.5;
+    transform: translateY(-50%);
+    transition: opacity 0.2s ease;
+}
+
+@media (hover: hover) {
+    .btn-olho-senha:hover { opacity: 1; }
+}
+
+.btn-olho-senha svg {
+    display: block;
+    width: 14px;
+    height: 14px;
+    fill: var(--tinta-suave);
+}
+
+.btn-olho-senha .icone-olho-aberto { display: none; }
+.btn-olho-senha.mostrando .icone-olho-aberto { display: block; }
+.btn-olho-senha.mostrando .icone-olho-fechado { display: none; }
+
+/* ---------- Saiba mais ---------- */
+#container-saiba-mais {
+    padding: 1rem 1.1rem 1.15rem;
+}
+
+.ficha-saiba-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.7rem 0.85rem;
+    margin-bottom: 0.4rem;
+    color: var(--tinta);
+    text-decoration: none;
+    background: var(--papel-claro);
+    border: 1px solid rgba(184, 137, 74, 0.28);
+    border-radius: 4px;
+    transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease, transform 0.25s ease;
+}
+
+.ficha-saiba-item:last-child { margin-bottom: 0; }
+
+.ficha-saiba-item:hover,
+.ficha-saiba-item:focus-visible {
+    background-color: rgba(184, 137, 74, 0.14);
+    border-color: var(--dourado);
+    color: var(--vinho);
+    transform: translateX(2px);
+    outline: none;
+}
+
+.ficha-saiba-num {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.8rem;
+    height: 1.8rem;
+    font-family: var(--fonte-display);
+    font-size: 0.85rem;
+    font-style: italic;
+    font-weight: 600;
+    color: var(--dourado);
+    background: rgba(184, 137, 74, 0.1);
+    border: 1px solid rgba(184, 137, 74, 0.4);
+    border-radius: 50%;
+    transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+}
+
+.ficha-saiba-item:hover .ficha-saiba-num {
+    background: var(--dourado);
+    color: var(--papel-claro);
+    border-color: var(--dourado);
+}
+
+.ficha-saiba-corpo {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+}
+
+.ficha-saiba-corpo strong {
+    font-family: var(--fonte-titulo);
+    font-size: 0.92rem;
+    font-weight: 600;
+    line-height: 1.2;
+    color: inherit;
+}
+
+.ficha-saiba-corpo small {
+    font-family: var(--fonte-display);
+    font-size: 0.82rem;
+    font-style: italic;
+    font-weight: 500;
+    line-height: 1.2;
+    color: var(--tinta-suave);
+}
+
+.ficha-saiba-item:hover .ficha-saiba-corpo small {
+    color: var(--tinta);
+}
+
+.ficha-saiba-item::after {
+    content: '\2192';
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    font-family: var(--fonte-display);
+    font-size: 1rem;
+    color: var(--dourado);
+    opacity: 0;
+    transform: translate(-4px, -50%);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    pointer-events: none;
+}
+
+.ficha-saiba-item:hover::after,
+.ficha-saiba-item:focus-visible::after {
+    opacity: 1;
+    transform: translate(0, -50%);
+}
+
+/* ==============================================
+   16. RESPONSIVO
    ============================================== */
 @media (max-width: 1366px) {
     .btn-hamburger { display: flex; }
@@ -1483,7 +1866,7 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 }
 
 /* ==============================================
-   14. ACESSIBILIDADE
+   17. ACESSIBILIDADE
    ============================================== */
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
