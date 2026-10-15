@@ -1,0 +1,14 @@
+﻿{
+  "name": "auloo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Plataforma de leitura e comunidade literária",
+  "scripts": {
+    "dev": "npx serve . -l 3000",
+    "format": "npx prettier --write \"**/*.{js,css,html,json,md}\"",
+    "lint": "npx eslint \"assets/js/**/*.js\""
+  },
+  "devDependencies": {
+    "prettier": "^3.3.0"
+  }
+}

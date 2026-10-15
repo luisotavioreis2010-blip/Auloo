@@ -3,559 +3,120 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="description" content="Auloo — Sua plataforma de aprendizado. Organize seus estudos, acompanhe seu progresso e alcance seus objetivos.">
-    <title>Auloo | Sua plataforma de aprendizado</title>
+    <meta name="description" content="Acervo — Sua estante digital. Leia livros de graça, organize sua estante e acompanhe seu progresso.">
+    <meta name="theme-color" content="#4A0E0E">
+    <title>Acervo | Sua estante digital</title>
     <link rel="icon" type="image/png" href="assets/img/logo/auloo-logo.png">
+
+    <meta property="og:title" content="Acervo — Sua estante digital">
+    <meta property="og:description" content="Leia livros de graça, organize sua estante e acompanhe seu progresso de leitura.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://auloo.com.br">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600;1,700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400;1,500&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600;1,700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="assets/css/global.css">
-    <style>
-        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-
-        :root {
-            --vinho: #4A0E0E;
-            --vinho-escuro: #3D0F0F;
-            --dourado: #B8894A;
-            --dourado-claro: #D9BC8A;
-            --fundo: #E5D9C0;
-            --creme: #F0E8D8;
-            --papel: #F8F2E4;
-            --tinta: #1A1614;
-            --tinta-suave: #6B5F4A;
-            --linha: rgba(184, 137, 74, 0.45);
-            --linha-suave: rgba(184, 137, 74, 0.25);
-
-            --fonte-titulo: 'Playfair Display', Georgia, serif;
-            --fonte-texto: 'Cormorant Garamond', Georgia, serif;
-            --fonte-corpo: 'Poppins', system-ui, sans-serif;
-
-            --gutter: clamp(1.25rem, 5vw, 3rem);
-            --navbar-h: 64px;
-        }
-
-        html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
-
-        body {
-            font-family: var(--fonte-corpo);
-            color: var(--tinta);
-            background: var(--creme);
-            line-height: 1.65;
-            -webkit-font-smoothing: antialiased;
-            text-rendering: optimizeLegibility;
-        }
-
-        a { color: inherit; }
-        :focus-visible { outline: 2px solid var(--dourado); outline-offset: 3px; }
-
-        /* ---------- Navbar ---------- */
-        .navbar {
-            position: fixed;
-            top: 0; left: 0; right: 0;
-            z-index: 100;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 0.5rem;
-            min-height: var(--navbar-h);
-            padding: 0 var(--gutter);
-            padding-top: env(safe-area-inset-top);
-            background: rgba(229, 217, 192, 0.92);
-            -webkit-backdrop-filter: blur(10px);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--linha);
-        }
-
-        .logo {
-            font-family: var(--fonte-titulo);
-            font-size: 1.45rem;
-            font-weight: 700;
-            font-style: italic;
-            letter-spacing: 3px;
-            color: var(--vinho);
-            text-decoration: none;
-            flex-shrink: 0;
-        }
-
-        .logo-dot { color: var(--dourado); font-style: normal; }
-
-        .nav-links {
-            display: flex;
-            align-items: center;
-            gap: clamp(1rem, 3vw, 2.25rem);
-            flex-wrap: nowrap;
-        }
-
-        .nav-links a {
-            font-size: 0.72rem;
-            font-weight: 500;
-            letter-spacing: 2.5px;
-            text-transform: uppercase;
-            text-decoration: none;
-            color: var(--tinta);
-            transition: color 0.25s;
-        }
-
-        .nav-links a:hover { color: var(--dourado); }
-
-        .nav-links .btn-entrar {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0.65rem 1.4rem;
-            line-height: 1;
-            white-space: nowrap;
-            color: var(--papel);
-            background: var(--vinho);
-            border-radius: 2px;
-            transition: background 0.25s;
-        }
-
-        .nav-links .btn-entrar:hover { background: var(--dourado); color: var(--papel); }
-
-        /* ---------- Botão VOLTAR ---------- */
-        .btn-voltar {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.4rem;
-            flex-shrink: 0;
-            padding: 0.55rem 1rem;
-            font-family: var(--fonte-corpo);
-            font-size: 0.68rem;
-            font-weight: 600;
-            letter-spacing: 2px;
-            line-height: 1;
-            text-transform: uppercase;
-            white-space: nowrap;
-            text-decoration: none;
-            color: var(--vinho);
-            background: transparent;
-            border: 1px solid var(--dourado);
-            border-radius: 4px;
-            transition: background 0.25s, color 0.25s, border-color 0.25s;
-        }
-
-        .btn-voltar:hover {
-            background: var(--vinho);
-            color: var(--papel);
-            border-color: var(--vinho);
-        }
-
-        .btn-voltar svg {
-            width: 12px;
-            height: 12px;
-            flex-shrink: 0;
-            stroke-width: 2;
-        }
-
-        /* Esconde o voltar quando não tem origem */
-        html[data-origem="nenhuma"] .nav-links .btn-voltar { display: none !important; }
-
-        /* Quando vem do dashboard, esconde o "Entrar" */
-        html[data-origem="dashboard"] .nav-links .btn-entrar,
-        html[data-origem="dashboard"] .footer-links a[href="/login.html"] { display: none !important; }
-
-        /* ---------- Ornamento e rótulos ---------- */
-        .eyebrow {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.9rem;
-            font-size: 0.7rem;
-            font-weight: 500;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            color: var(--dourado);
-        }
-
-        .eyebrow::before, .eyebrow::after {
-            content: '';
-            width: 2rem;
-            height: 1px;
-            background: var(--dourado);
-        }
-
-        .ornamento {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 1rem;
-            color: var(--dourado);
-            font-size: 0.8rem;
-        }
-
-        .ornamento::before, .ornamento::after {
-            content: '';
-            flex: 0 1 5rem;
-            height: 1px;
-            background: var(--linha);
-        }
-
-        /* ---------- Botões ---------- */
-        .btn-primario, .btn-secundario {
-            display: inline-block;
-            padding: 1.05rem 2.4rem;
-            font-size: 0.72rem;
-            font-weight: 500;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            text-decoration: none;
-            border-radius: 2px;
-            transition: background 0.25s, color 0.25s, border-color 0.25s;
-        }
-
-        .btn-primario { background: var(--vinho); color: var(--papel); border: 1px solid var(--vinho); }
-        .btn-primario:hover { background: var(--dourado); border-color: var(--dourado); }
-
-        .btn-secundario { color: var(--vinho); border: 1px solid var(--vinho); }
-        .btn-secundario:hover { background: var(--vinho); color: var(--papel); }
-
-        /* ---------- Rodapé ---------- */
-        footer {
-            padding: 3.5rem var(--gutter) calc(2.5rem + env(safe-area-inset-bottom));
-            background: var(--vinho-escuro);
-            color: rgba(250, 246, 238, 0.7);
-            text-align: center;
-        }
-
-        footer .logo { display: inline-block; margin-bottom: 1.75rem; color: #FAF6EE; }
-
-        .footer-links {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 0.75rem 2.25rem;
-            margin-bottom: 2rem;
-        }
-
-        .footer-links a {
-            font-size: 0.7rem;
-            letter-spacing: 2.5px;
-            text-transform: uppercase;
-            text-decoration: none;
-            color: var(--dourado-claro);
-            transition: color 0.25s;
-        }
-
-        .footer-links a:hover { color: #fff; }
-
-        footer .copy {
-            padding-top: 1.75rem;
-            border-top: 1px solid rgba(217, 188, 138, 0.2);
-            font-family: var(--fonte-texto);
-            font-size: 1rem;
-            font-style: italic;
-            letter-spacing: 0.4px;
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-            html { scroll-behavior: auto; }
-            *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
-        }
-
-        section[id] { scroll-margin-top: var(--navbar-h); }
-
-        /* ---------- Hero ---------- */
-        .hero {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            min-height: 100svh;
-            padding: calc(var(--navbar-h) + 4rem) var(--gutter) 4.5rem;
-            text-align: center;
-            background: radial-gradient(ellipse at 50% 30%, #F5EDDD 0%, var(--fundo) 70%, #D4C4A0 100%);
-        }
-
-        .hero-content { max-width: 820px; }
-
-        .hero-logo {
-            display: block;
-            width: clamp(84px, 14vw, 112px);
-            height: auto;
-            margin: 0 auto 2rem;
-        }
-
-        .hero .eyebrow { margin-bottom: 1.75rem; }
-
-        .hero h1 {
-            font-family: var(--fonte-titulo);
-            font-size: clamp(2.4rem, 7vw, 4.6rem);
-            font-weight: 700;
-            font-style: italic;
-            line-height: 1.08;
-            letter-spacing: -0.5px;
-            color: var(--vinho);
-            margin-bottom: 1.75rem;
-        }
-
-        .hero h1 span { color: var(--dourado); font-style: normal; }
-
-        .hero p {
-            max-width: 38rem;
-            margin: 0 auto 2.75rem;
-            font-family: var(--fonte-texto);
-            font-size: clamp(1.2rem, 2.4vw, 1.5rem);
-            font-style: italic;
-            line-height: 1.5;
-            color: var(--tinta-suave);
-        }
-
-        .hero-buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; }
-
-        /* ---------- Recursos ---------- */
-        .recursos {
-            padding: clamp(4rem, 9vw, 7.5rem) var(--gutter);
-            background: var(--papel);
-        }
-
-        .recursos-inner { max-width: 1120px; margin: 0 auto; }
-
-        .recursos-cabecalho {
-            max-width: 40rem;
-            margin: 0 auto clamp(3rem, 6vw, 5rem);
-            text-align: center;
-        }
-
-        .recursos-cabecalho .eyebrow { margin-bottom: 1.25rem; }
-
-        .recursos-cabecalho h2 {
-            font-family: var(--fonte-titulo);
-            font-size: clamp(1.9rem, 4.5vw, 3rem);
-            font-weight: 700;
-            font-style: italic;
-            line-height: 1.15;
-            color: var(--vinho);
-            margin-bottom: 1rem;
-        }
-
-        .recursos-cabecalho p {
-            font-family: var(--fonte-texto);
-            font-size: clamp(1.15rem, 2vw, 1.35rem);
-            font-style: italic;
-            color: var(--tinta-suave);
-        }
-
-        .recursos-lista {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 0 clamp(2rem, 4vw, 3.5rem);
-            list-style: none;
-        }
-
-        .recurso {
-            padding: 1.75rem 0 2.5rem;
-            border-top: 1px solid var(--linha);
-        }
-
-        .recurso-num {
-            display: block;
-            margin-bottom: 1rem;
-            font-family: var(--fonte-titulo);
-            font-size: 1rem;
-            font-style: italic;
-            letter-spacing: 2px;
-            color: var(--dourado);
-        }
-
-        .recurso h3 {
-            font-family: var(--fonte-titulo);
-            font-size: 1.4rem;
-            font-weight: 600;
-            font-style: italic;
-            line-height: 1.25;
-            color: var(--vinho);
-            margin-bottom: 0.7rem;
-        }
-
-        .recurso p { font-size: 0.92rem; line-height: 1.7; color: var(--tinta-suave); }
-
-        /* ---------- Chamada final ---------- */
-        .cta-final {
-            padding: clamp(4.5rem, 10vw, 7.5rem) var(--gutter);
-            text-align: center;
-            background: var(--vinho);
-            color: #FAF6EE;
-        }
-
-        .cta-final .ornamento { margin-bottom: 2rem; }
-
-        .cta-final h2 {
-            font-family: var(--fonte-titulo);
-            font-size: clamp(2rem, 5vw, 3.2rem);
-            font-weight: 700;
-            font-style: italic;
-            line-height: 1.15;
-            margin-bottom: 1.25rem;
-        }
-
-        .cta-final p {
-            max-width: 32rem;
-            margin: 0 auto 2.75rem;
-            font-family: var(--fonte-texto);
-            font-size: clamp(1.15rem, 2vw, 1.4rem);
-            font-style: italic;
-            color: rgba(250, 246, 238, 0.82);
-        }
-
-        .cta-final .btn-primario { background: var(--dourado); border-color: var(--dourado); }
-        .cta-final .btn-primario:hover { background: var(--papel); border-color: var(--papel); color: var(--vinho); }
-
-        /* ---------- Mobile: navbar compacta ---------- */
-        @media (max-width: 640px) {
-            .navbar {
-                --navbar-h: 54px;
-                padding-left: 0.9rem;
-                padding-right: 0.9rem;
-            }
-
-            .logo { font-size: 1.15rem; letter-spacing: 2px; }
-
-            .nav-links { gap: 0.5rem; }
-
-            .nav-links > a:not(.btn-entrar):not(.btn-voltar) {
-                display: none !important;
-            }
-
-            .btn-voltar {
-                gap: 0.3rem;
-                padding: 0.5rem 0.7rem;
-                font-size: 0.6rem;
-                letter-spacing: 1.2px;
-                border-radius: 3px;
-            }
-
-            .btn-voltar svg { width: 11px; height: 11px; }
-
-            .btn-voltar [data-voltar-texto] { display: none !important; }
-
-            .btn-voltar::after {
-                content: 'Voltar';
-                font-size: 0.6rem;
-                letter-spacing: 1.2px;
-                font-weight: 600;
-            }
-
-            .nav-links .btn-entrar {
-                padding: 0.5rem 0.9rem;
-                font-size: 0.6rem;
-                font-weight: 600;
-                letter-spacing: 1.2px;
-                border-radius: 3px;
-            }
-        }
-
-        @media (max-width: 380px) {
-            .navbar { padding-left: 0.7rem; padding-right: 0.7rem; }
-            .logo { font-size: 1rem; letter-spacing: 1.5px; }
-            .btn-voltar { padding: 0.45rem 0.6rem; font-size: 0.55rem; }
-            .nav-links .btn-entrar { padding: 0.45rem 0.75rem; font-size: 0.55rem; }
-        }
-
-        @media (max-width: 960px) {
-            .recursos-lista { grid-template-columns: repeat(2, 1fr); }
-        }
-
-        @media (max-width: 600px) {
-            .recursos-lista { grid-template-columns: 1fr; }
-            .recurso { padding-bottom: 2rem; }
-            .hero-buttons { flex-direction: column; align-items: stretch; max-width: 20rem; margin: 0 auto; }
-            .btn-primario, .btn-secundario { text-align: center; }
-        }
-    </style>
+    <link rel="stylesheet" href="assets/css/publico.css">
+    <link rel="stylesheet" href="assets/css/landing.css">
 </head>
 <body>
 
-<nav class="navbar" aria-label="Principal">
-    <a href="/" class="logo" translate="no">Auloo<span class="logo-dot">.</span></a>
-    <div class="nav-links">
-        <a href="/" class="btn-voltar" data-voltar>
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                <path d="M14 8H2M7 3 2 8l5 5"/>
-            </svg>
-            <span data-voltar-texto>Voltar</span>
-        </a>
-        <a href="#recursos">Recursos</a>
-        <a href="#sobre">Sobre</a>
-        <a href="/login.html" class="btn-entrar">Entrar</a>
-    </div>
-</nav>
+    <nav class="navbar" aria-label="Principal">
+        <a href="/" class="logo" translate="no">Acervo<span class="logo-dot">.</span></a>
+        <div class="nav-links">
+            <a href="/" class="btn-voltar" data-voltar>
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                    <path d="M14 8H2M7 3 2 8l5 5"/>
+                </svg>
+                <span data-voltar-texto>Voltar</span>
+            </a>
+            <a href="#recursos">Recursos</a>
+            <a href="#sobre">Sobre</a>
+            <a href="/login.html" class="btn-entrar">Entrar</a>
+        </div>
+    </nav>
 
-<main>
-    <section class="hero">
-        <div class="hero-content">
-            <img src="assets/img/logo/auloo-logo.png" alt="Auloo" class="hero-logo" width="112" height="112">
-            <span class="eyebrow">Plataforma educacional</span>
-            <h1>Sua jornada de<br>aprendizado começa <span>aqui</span>.</h1>
-            <p>O Auloo é uma plataforma educacional criada para organizar seus estudos, acompanhar seu progresso e manter você focado nos objetivos.</p>
-            <div class="hero-buttons">
-                <a href="/login.html" class="btn-primario">Começar agora</a>
-                <a href="#recursos" class="btn-secundario">Saber mais</a>
+    <main>
+        <section class="hero">
+            <div class="hero-content">
+                <img src="assets/img/logo/auloo-logo.png" alt="Acervo" class="hero-logo" width="112" height="112">
+                <span class="eyebrow">Sua estante digital</span>
+                <h1>Leia livros de <span>graça</span>.<br>Organize sua estante.</h1>
+                <p>O Acervo reúne milhares de livros de domínio público num só lugar. Leia, anote, acompanhe seu progresso e compartilhe com outros leitores.</p>
+                <div class="hero-buttons">
+                    <a href="/login.html" class="btn-primario">Começar agora</a>
+                    <a href="#recursos" class="btn-secundario">Saber mais</a>
+                </div>
             </div>
+        </section>
+
+        <section class="recursos" id="recursos">
+            <div class="recursos-inner">
+                <header class="recursos-cabecalho">
+                    <span class="eyebrow">Recursos</span>
+                    <h2>Por que usar o Acervo?</h2>
+                    <p>Tudo que um leitor precisa, num só lugar.</p>
+                </header>
+
+                <ol class="recursos-lista">
+                    <li class="recurso">
+                        <span class="recurso-num" aria-hidden="true">01</span>
+                        <h3>Biblioteca gratuita</h3>
+                        <p>Milhares de livros de domínio público disponíveis para leitura imediata, sem cadastro de cartão.</p>
+                    </li>
+                    <li class="recurso">
+                        <span class="recurso-num" aria-hidden="true">02</span>
+                        <h3>Sua estante pessoal</h3>
+                        <p>Organize o que está lendo, o que já leu e o que quer ler. Tudo visual, tudo seu.</p>
+                    </li>
+                    <li class="recurso">
+                        <span class="recurso-num" aria-hidden="true">03</span>
+                        <h3>Anotações e citações</h3>
+                        <p>Guarde passagens favoritas, escreva reflexões e nunca mais esqueça aquele trecho marcante.</p>
+                    </li>
+                    <li class="recurso">
+                        <span class="recurso-num" aria-hidden="true">04</span>
+                        <h3>Metas e progresso</h3>
+                        <p>Defina metas anuais, acompanhe o quanto leu e veja seu progresso crescer dia após dia.</p>
+                    </li>
+                    <li class="recurso">
+                        <span class="recurso-num" aria-hidden="true">05</span>
+                        <h3>Comunidade de leitores</h3>
+                        <p>Siga outros leitores, veja o que estão lendo e descubra livros novos pelas recomendações deles.</p>
+                    </li>
+                    <li class="recurso">
+                        <span class="recurso-num" aria-hidden="true">06</span>
+                        <h3>Leia em qualquer lugar</h3>
+                        <p>Funciona no computador, tablet ou celular. Seus dados e seu progresso sempre sincronizados.</p>
+                    </li>
+                </ol>
+            </div>
+        </section>
+
+        <section class="cta-final" id="sobre">
+            <div class="ornamento" aria-hidden="true">&#10022;</div>
+            <h2>Pronto para começar a ler?</h2>
+            <p>Crie sua conta gratuita em segundos e comece a montar sua estante digital.</p>
+            <a href="/login.html" class="btn-primario">Criar minha conta</a>
+        </section>
+    </main>
+
+    <footer>
+        <a href="/" class="logo" translate="no">Acervo<span class="logo-dot">.</span></a>
+        <div class="footer-links">
+            <a href="/privacidade.html" data-manter-origem>Política de Privacidade</a>
+            <a href="/termos.html" data-manter-origem>Termos de Serviço</a>
+            <a href="/login.html">Entrar</a>
         </div>
-    </section>
+        <p class="copy">&copy; 2026 Acervo. Sua estante digital.</p>
+    </footer>
 
-    <section class="recursos" id="recursos">
-        <div class="recursos-inner">
-            <header class="recursos-cabecalho">
-                <span class="eyebrow">Recursos</span>
-                <h2>Por que usar o Auloo?</h2>
-                <p>Ferramentas pensadas para o seu dia a dia de estudos.</p>
-            </header>
-
-            <ol class="recursos-lista">
-            <li class="recurso">
-                <span class="recurso-num" aria-hidden="true">01</span>
-                <h3>Biblioteca pessoal</h3>
-                <p>Organize seus materiais, anotações e progresso em um só lugar.</p>
-            </li>
-            <li class="recurso">
-                <span class="recurso-num" aria-hidden="true">02</span>
-                <h3>Calendário inteligente</h3>
-                <p>Acompanhe prazos, metas e sessões de estudo de forma visual.</p>
-            </li>
-            <li class="recurso">
-                <span class="recurso-num" aria-hidden="true">03</span>
-                <h3>Metas e conquistas</h3>
-                <p>Defina objetivos, cumpra metas e veja seu progresso crescer.</p>
-            </li>
-            <li class="recurso">
-                <span class="recurso-num" aria-hidden="true">04</span>
-                <h3>Login seguro</h3>
-                <p>Entre com e-mail, Google, GitHub ou Discord, com segurança total.</p>
-            </li>
-            <li class="recurso">
-                <span class="recurso-num" aria-hidden="true">05</span>
-                <h3>Acesso em qualquer lugar</h3>
-                <p>Use no computador, tablet ou celular. Seus dados sempre sincronizados.</p>
-            </li>
-            <li class="recurso">
-                <span class="recurso-num" aria-hidden="true">06</span>
-                <h3>Design elegante</h3>
-                <p>Interface minimalista pensada para não distrair você dos estudos.</p>
-            </li>
-            </ol>
-        </div>
-    </section>
-
-    <section class="cta-final" id="sobre">
-        <div class="ornamento" aria-hidden="true">&#10022;</div>
-        <h2>Pronto para começar?</h2>
-        <p>Crie sua conta gratuita em segundos e organize sua vida de estudos.</p>
-        <a href="/login.html" class="btn-primario">Criar minha conta</a>
-    </section>
-</main>
-
-<footer>
-    <a href="/" class="logo" translate="no">Auloo<span class="logo-dot">.</span></a>
-    <div class="footer-links">
-        <a href="/privacidade.html" data-manter-origem>Política de Privacidade</a>
-        <a href="/termos.html" data-manter-origem>Termos de Serviço</a>
-        <a href="/login.html">Entrar</a>
-    </div>
-    <p class="copy">&copy; 2026 Auloo. Plataforma educacional.</p>
-</footer>
-
-<script src="assets/js/voltar.js"></script>
+    <script src="assets/js/lib/utils.js"></script>
+    <script src="assets/js/lib/api-livros.js"></script>
+    <script src="assets/js/lib/api-gutenberg.js"></script>
+    <script src="assets/js/lib/voltar.js"></script>
+    <script src="assets/js/lib/api-standardebooks.js"></script>
 </body>
 </html>

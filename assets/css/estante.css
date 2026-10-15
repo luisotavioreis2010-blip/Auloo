@@ -1,6 +1,6 @@
 ﻿@charset "UTF-8";
 /* ==============================================
-   DASHBOARD.CSS — v20
+   ESTANTE.CSS — v1
 
    Estrutura
    1. Variáveis
@@ -892,7 +892,7 @@ input, textarea, .ficha-email {
 /* ==============================================
    6. CONTEÚDO PRINCIPAL E CALENDÁRIO
    ============================================== */
-.dashboard-main {
+.estante-main {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1129,11 +1129,11 @@ input, textarea, .ficha-email {
         margin-bottom: 1.2rem;
     }
 
-    .dashboard-main { transition: margin 0.4s var(--ease); }
+    .estante-main { transition: margin 0.4s var(--ease); }
 
-    body.ficha-aberta .dashboard-main { margin-right: var(--ficha-w); }
+    body.ficha-aberta .estante-main { margin-right: var(--ficha-w); }
 
-    body.ficha-aberta .sidebar:is(:hover, .expandida) ~ .dashboard-main {
+    body.ficha-aberta .sidebar:is(:hover, .expandida) ~ .estante-main {
         margin-left: var(--sidebar-w);
     }
 }
@@ -1239,7 +1239,7 @@ input, textarea, .ficha-email {
 
     body.campo-focado .sidebar-direita { padding-bottom: 50vh; }
 
-    .dashboard-main {
+    .estante-main {
         flex-direction: column;
         align-items: stretch;
         justify-content: flex-start;
@@ -1254,11 +1254,11 @@ input, textarea, .ficha-email {
         overscroll-behavior: contain;
     }
 
-    .dashboard-main,
+    .estante-main,
     .sidebar,
     .sidebar-direita { overflow-anchor: none; }
 
-    .dashboard-main > * { flex-shrink: 0; }
+    .estante-main > * { flex-shrink: 0; }
 
     .ilustracao-container {
         flex: 0 0 auto;
@@ -1301,7 +1301,7 @@ input, textarea, .ficha-email {
         box-shadow: -4px 0 12px rgba(26, 22, 20, 0.15);
     }
 
-    [data-layout="row"] .dashboard-main {
+    [data-layout="row"] .estante-main {
         flex-direction: row;
         align-items: flex-start;
         justify-content: center;
@@ -1309,7 +1309,7 @@ input, textarea, .ficha-email {
         padding: 0.9rem 1.2rem 0.9rem 1rem;
     }
 
-    [data-layout="row"] .dashboard-main > * { margin-block: auto; }
+    [data-layout="row"] .estante-main > * { margin-block: auto; }
 
     [data-layout="row"] .ilustracao-container {
         flex: 0 1 42%;
@@ -1351,7 +1351,7 @@ input, textarea, .ficha-email {
 
     [data-layout="row"] .btn-hamburger { font-size: 1rem; }
 
-    [data-layout="row"] .dashboard-main { gap: 0.5rem; padding: 0.5rem; }
+    [data-layout="row"] .estante-main { gap: 0.5rem; padding: 0.5rem; }
     [data-layout="row"] .ilustracao-container { flex-basis: 40%; max-width: 40%; }
     [data-layout="row"] .calendario-container { flex: 0 1 56%; max-width: 520px; margin-right: 0; }
 
@@ -1447,7 +1447,7 @@ input, textarea, .ficha-email {
     }
 
     html:not([data-layout="row"]) .btn-hamburger { font-size: 1.05rem; }
-    html:not([data-layout="row"]) .dashboard-main { gap: 0.8rem; padding: 0.8rem 1.2rem 2rem; }
+    html:not([data-layout="row"]) .estante-main { gap: 0.8rem; padding: 0.8rem 1.2rem 2rem; }
     html:not([data-layout="row"]) .ilustracao-container { max-width: 65%; margin-top: -0.5rem; }
 }
 
@@ -1474,7 +1474,7 @@ input, textarea, .ficha-email {
     }
 
     html:not([data-layout="row"]) .btn-hamburger { font-size: 1rem; }
-    html:not([data-layout="row"]) .dashboard-main { gap: 0.6rem; padding: 0.6rem 1rem 2rem; }
+    html:not([data-layout="row"]) .estante-main { gap: 0.6rem; padding: 0.6rem 1rem 2rem; }
     html:not([data-layout="row"]) .ilustracao-container { max-width: 70%; }
 
     .ficha-saiba-num {

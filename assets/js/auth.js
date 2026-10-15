@@ -158,8 +158,8 @@ async function loginUser(email, password) {
 
         if (data.user) {
             await saveUserToDatabase(data.user);
-            localStorage.setItem('auloo_user', JSON.stringify(data.user));
-            localStorage.setItem('auloo_saved_email', email);
+            localStorage.setItem('acervo_user', JSON.stringify(data.user));
+            localStorage.setItem('acervo_saved_email', email);
             return { success: true, user: data.user };
         }
 
@@ -263,12 +263,12 @@ async function logoutUser() {
 
     try {
         await client.auth.signOut();
-        localStorage.removeItem('auloo_user');
-        localStorage.removeItem('auloo_saved_email');
+        localStorage.removeItem('acervo_user');
+        localStorage.removeItem('acervo_saved_email');
         window.location.href = '/login.html';
     } catch (error) {
-        localStorage.removeItem('auloo_user');
-        localStorage.removeItem('auloo_saved_email');
+        localStorage.removeItem('acervo_user');
+        localStorage.removeItem('acervo_saved_email');
         window.location.href = '/login.html';
     }
 }

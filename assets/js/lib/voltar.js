@@ -1,14 +1,14 @@
-/* Botao "Voltar" das paginas publicas (portfolio, termos, privacidade).
-   Origem vem de ?de=dashboard|login e fica guardada na sessao, para o
+﻿/* Botao "Voltar" das paginas publicas (portfolio, termos, privacidade).
+   Origem vem de ?de=estante|login e fica guardada na sessao, para o
    botao continuar certo ao navegar entre as paginas. */
 (function () {
     'use strict';
 
     var DESTINOS = {
-        dashboard: { url: '/dashboard.html', rotulo: 'Voltar ao painel' },
+        estante: { url: '/estante.html', rotulo: 'Voltar à estante' },
         login:     { url: '/login.html',     rotulo: 'Voltar ao login' }
     };
-    var CHAVE = 'auloo-origem';
+    var CHAVE = 'acervo-origem';
 
     var origem = null;
     try {
@@ -25,7 +25,7 @@
 
     var botoes = document.querySelectorAll('[data-voltar]');
     Array.prototype.forEach.call(botoes, function (el) {
-        var destino = origem ? DESTINOS[origem] : { url: '/', rotulo: 'Voltar ao início' };
+        var destino = origem ? DESTINOS[origem] : { url: '/', rotulo: 'Voltar ao inÃ­cio' };
         el.setAttribute('href', destino.url);
         el.setAttribute('aria-label', destino.rotulo);
         el.style.whiteSpace = 'nowrap';

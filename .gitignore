@@ -1,9 +1,29 @@
-﻿*.bak
-*.txt
-*.ps1
-supabase/.temp/
+﻿# Dependências
+node_modules/
+.pnpm-store/
+
+# Ambiente
 .env
 .env.local
-node_modules/
+.env.*.local
+
+# Build
+dist/
+build/
+.next/
+out/
+
+# Diagnóstico e relatórios
+.diagnostico/
+relatorio-projeto.txt
+*.log
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea/
 .DS_Store
-Thumbs.db
+
+# Supabase
+supabase/.temp/
+supabase/.branches/

@@ -1,0 +1,173 @@
+@charset "UTF-8";
+/* ==============================================
+   LANDING.CSS
+   Só o CSS exclusivo da landing (index.html).
+   Navbar, footer, botões e ornamentos vêm
+   de publico.css.
+   ============================================== */
+
+/* ==============================================
+   HERO
+   ============================================== */
+.hero {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    min-height: 100svh;
+    padding: calc(var(--navbar-h) + 4rem) var(--gutter) 4.5rem;
+    text-align: center;
+    background: radial-gradient(ellipse at 50% 30%, #F5EDDD 0%, var(--fundo) 70%, #D4C4A0 100%);
+}
+
+.hero-content { max-width: 820px; }
+
+.hero-logo {
+    display: block;
+    width: clamp(84px, 14vw, 112px);
+    height: auto;
+    margin: 0 auto 2rem;
+}
+
+.hero .eyebrow { margin-bottom: 1.75rem; }
+
+.hero h1 {
+    font-family: var(--fonte-titulo);
+    font-size: clamp(2.4rem, 7vw, 4.6rem);
+    font-weight: 700;
+    font-style: italic;
+    line-height: 1.08;
+    letter-spacing: -0.5px;
+    color: var(--vinho);
+    margin-bottom: 1.75rem;
+}
+
+.hero h1 span { color: var(--dourado); font-style: normal; }
+
+.hero p {
+    max-width: 38rem;
+    margin: 0 auto 2.75rem;
+    font-family: var(--fonte-texto);
+    font-size: clamp(1.2rem, 2.4vw, 1.5rem);
+    font-style: italic;
+    line-height: 1.5;
+    color: var(--tinta-suave);
+}
+
+.hero-buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; }
+
+/* ==============================================
+   RECURSOS
+   ============================================== */
+.recursos {
+    padding: clamp(4rem, 9vw, 7.5rem) var(--gutter);
+    background: var(--papel);
+}
+
+.recursos-inner { max-width: 1120px; margin: 0 auto; }
+
+.recursos-cabecalho {
+    max-width: 40rem;
+    margin: 0 auto clamp(3rem, 6vw, 5rem);
+    text-align: center;
+}
+
+.recursos-cabecalho .eyebrow { margin-bottom: 1.25rem; }
+
+.recursos-cabecalho h2 {
+    font-family: var(--fonte-titulo);
+    font-size: clamp(1.9rem, 4.5vw, 3rem);
+    font-weight: 700;
+    font-style: italic;
+    line-height: 1.15;
+    color: var(--vinho);
+    margin-bottom: 1rem;
+}
+
+.recursos-cabecalho p {
+    font-family: var(--fonte-texto);
+    font-size: clamp(1.15rem, 2vw, 1.35rem);
+    font-style: italic;
+    color: var(--tinta-suave);
+}
+
+.recursos-lista {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0 clamp(2rem, 4vw, 3.5rem);
+    list-style: none;
+}
+
+.recurso {
+    padding: 1.75rem 0 2.5rem;
+    border-top: 1px solid var(--linha);
+}
+
+.recurso-num {
+    display: block;
+    margin-bottom: 1rem;
+    font-family: var(--fonte-titulo);
+    font-size: 1rem;
+    font-style: italic;
+    letter-spacing: 2px;
+    color: var(--dourado);
+}
+
+.recurso h3 {
+    font-family: var(--fonte-titulo);
+    font-size: 1.4rem;
+    font-weight: 600;
+    font-style: italic;
+    line-height: 1.25;
+    color: var(--vinho);
+    margin-bottom: 0.7rem;
+}
+
+.recurso p { font-size: 0.92rem; line-height: 1.7; color: var(--tinta-suave); }
+
+/* ==============================================
+   CHAMADA FINAL
+   ============================================== */
+.cta-final {
+    padding: clamp(4.5rem, 10vw, 7.5rem) var(--gutter);
+    text-align: center;
+    background: var(--vinho);
+    color: #FAF6EE;
+}
+
+.cta-final .ornamento { margin-bottom: 2rem; }
+
+.cta-final h2 {
+    font-family: var(--fonte-titulo);
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 700;
+    font-style: italic;
+    line-height: 1.15;
+    margin-bottom: 1.25rem;
+}
+
+.cta-final p {
+    max-width: 32rem;
+    margin: 0 auto 2.75rem;
+    font-family: var(--fonte-texto);
+    font-size: clamp(1.15rem, 2vw, 1.4rem);
+    font-style: italic;
+    color: rgba(250, 246, 238, 0.82);
+}
+
+.cta-final .btn-primario { background: var(--dourado); border-color: var(--dourado); }
+.cta-final .btn-primario:hover { background: var(--papel); border-color: var(--papel); color: var(--vinho); }
+
+/* ==============================================
+   RESPONSIVO
+   ============================================== */
+@media (max-width: 960px) {
+    .recursos-lista { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 600px) {
+    .recursos-lista { grid-template-columns: 1fr; }
+    .recurso { padding-bottom: 2rem; }
+    .hero-buttons { flex-direction: column; align-items: stretch; max-width: 20rem; margin: 0 auto; }
+    .btn-primario, .btn-secundario { text-align: center; }
+}

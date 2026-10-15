@@ -29,7 +29,7 @@ function inicializarSupabase() {
                     detectSessionInUrl: true,
                     flowType: 'pkce',
                     storage: window.localStorage,
-                    storageKey: 'auloo-auth'
+                    storageKey: 'acervo-auth'
                 }
             }
         );

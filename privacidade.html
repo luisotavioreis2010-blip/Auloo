@@ -1,386 +1,21 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="description" content="Política de Privacidade do Auloo: quais dados coletamos, como usamos e quais são os seus direitos conforme a LGPD.">
-    <title>Política de Privacidade | Auloo</title>
+    <meta name="description" content="Política de Privacidade do Acervo — quais dados coletamos, como usamos e seus direitos conforme a LGPD.">
+    <title>Política de Privacidade | Acervo</title>
     <link rel="icon" type="image/png" href="assets/img/logo/auloo-logo.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600;1,700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400;1,500&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/global.css">
-    <style>
-        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-
-        :root {
-            --vinho: #4A0E0E;
-            --vinho-escuro: #3D0F0F;
-            --dourado: #B8894A;
-            --dourado-claro: #D9BC8A;
-            --fundo: #E5D9C0;
-            --creme: #F0E8D8;
-            --papel: #F8F2E4;
-            --tinta: #1A1614;
-            --tinta-suave: #6B5F4A;
-            --linha: rgba(184, 137, 74, 0.45);
-            --linha-suave: rgba(184, 137, 74, 0.25);
-
-            --fonte-titulo: 'Playfair Display', Georgia, serif;
-            --fonte-texto: 'Cormorant Garamond', Georgia, serif;
-            --fonte-corpo: 'Poppins', system-ui, sans-serif;
-
-            --gutter: clamp(1.25rem, 5vw, 3rem);
-            --navbar-h: 64px;
-        }
-
-        html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
-
-        body {
-            font-family: var(--fonte-corpo);
-            color: var(--tinta);
-            background: var(--creme);
-            line-height: 1.65;
-            -webkit-font-smoothing: antialiased;
-            text-rendering: optimizeLegibility;
-        }
-
-        a { color: inherit; }
-        :focus-visible { outline: 2px solid var(--dourado); outline-offset: 3px; }
-
-        /* ---------- Navbar ---------- */
-        .navbar {
-            position: fixed;
-            top: 0; left: 0; right: 0;
-            z-index: 100;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 0.5rem;
-            min-height: var(--navbar-h);
-            padding: 0 var(--gutter);
-            padding-top: env(safe-area-inset-top);
-            background: rgba(229, 217, 192, 0.92);
-            -webkit-backdrop-filter: blur(10px);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--linha);
-        }
-
-        .logo {
-            font-family: var(--fonte-titulo);
-            font-size: 1.45rem;
-            font-weight: 700;
-            font-style: italic;
-            letter-spacing: 3px;
-            color: var(--vinho);
-            text-decoration: none;
-            flex-shrink: 0;
-        }
-
-        .logo-dot { color: var(--dourado); font-style: normal; }
-
-        .nav-links {
-            display: flex;
-            align-items: center;
-            gap: clamp(1rem, 3vw, 2.25rem);
-            flex-wrap: nowrap;
-        }
-
-        .nav-links a {
-            font-size: 0.72rem;
-            font-weight: 500;
-            letter-spacing: 2.5px;
-            text-transform: uppercase;
-            text-decoration: none;
-            color: var(--tinta);
-            transition: color 0.25s;
-        }
-
-        .nav-links a:hover { color: var(--dourado); }
-
-        .nav-links .btn-entrar {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0.65rem 1.4rem;
-            line-height: 1;
-            white-space: nowrap;
-            color: var(--papel);
-            background: var(--vinho);
-            border-radius: 2px;
-            transition: background 0.25s;
-        }
-
-        .nav-links .btn-entrar:hover { background: var(--dourado); color: var(--papel); }
-
-        .btn-voltar {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.4rem;
-            flex-shrink: 0;
-            padding: 0.55rem 1rem;
-            font-family: var(--fonte-corpo);
-            font-size: 0.68rem;
-            font-weight: 600;
-            letter-spacing: 2px;
-            line-height: 1;
-            text-transform: uppercase;
-            white-space: nowrap;
-            text-decoration: none;
-            color: var(--vinho);
-            background: transparent;
-            border: 1px solid var(--dourado);
-            border-radius: 4px;
-            transition: background 0.25s, color 0.25s, border-color 0.25s;
-        }
-
-        .btn-voltar:hover {
-            background: var(--vinho);
-            color: var(--papel);
-            border-color: var(--vinho);
-        }
-
-        .btn-voltar svg { width: 12px; height: 12px; flex-shrink: 0; stroke-width: 2; }
-
-        html[data-origem="nenhuma"] .nav-links .btn-voltar { display: none !important; }
-        html[data-origem="dashboard"] .nav-links .btn-entrar,
-        html[data-origem="dashboard"] .footer-links a[href="/login.html"] { display: none !important; }
-
-        /* ---------- Documento ---------- */
-        .eyebrow {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.9rem;
-            font-size: 0.7rem;
-            font-weight: 500;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            color: var(--dourado);
-        }
-
-        .eyebrow::before, .eyebrow::after {
-            content: '';
-            width: 2rem;
-            height: 1px;
-            background: var(--dourado);
-        }
-
-        footer {
-            padding: 3.5rem var(--gutter) calc(2.5rem + env(safe-area-inset-bottom));
-            background: var(--vinho-escuro);
-            color: rgba(250, 246, 238, 0.7);
-            text-align: center;
-        }
-
-        footer .logo { display: inline-block; margin-bottom: 1.75rem; color: #FAF6EE; }
-
-        .footer-links {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 0.75rem 2.25rem;
-            margin-bottom: 2rem;
-        }
-
-        .footer-links a {
-            font-size: 0.7rem;
-            letter-spacing: 2.5px;
-            text-transform: uppercase;
-            text-decoration: none;
-            color: var(--dourado-claro);
-            transition: color 0.25s;
-        }
-
-        .footer-links a:hover { color: #fff; }
-
-        footer .copy {
-            padding-top: 1.75rem;
-            border-top: 1px solid rgba(217, 188, 138, 0.2);
-            font-family: var(--fonte-texto);
-            font-size: 1rem;
-            font-style: italic;
-        }
-
-        .documento {
-            padding: calc(var(--navbar-h) + clamp(2.5rem, 7vw, 5rem)) var(--gutter) clamp(3.5rem, 8vw, 6rem);
-            background: radial-gradient(ellipse at 50% 0%, #F5EDDD 0%, var(--fundo) 80%);
-        }
-
-        .documento-inner {
-            max-width: 860px;
-            margin: 0 auto;
-            padding: clamp(2rem, 6vw, 4.5rem) clamp(1.35rem, 6vw, 4.5rem);
-            background: var(--papel);
-            border: 1px solid var(--linha);
-            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.5), 0 24px 70px rgba(74, 14, 14, 0.14);
-        }
-
-        .documento-cabecalho {
-            padding-bottom: clamp(1.75rem, 4vw, 2.75rem);
-            margin-bottom: clamp(0.5rem, 2vw, 1.5rem);
-            text-align: center;
-            border-bottom: 1px solid var(--linha);
-        }
-
-        .documento-cabecalho .eyebrow { margin-bottom: 1.5rem; }
-
-        .documento h1 {
-            font-family: var(--fonte-titulo);
-            font-size: clamp(2rem, 6vw, 3.2rem);
-            font-weight: 700;
-            font-style: italic;
-            line-height: 1.1;
-            letter-spacing: -0.3px;
-            color: var(--vinho);
-            margin-bottom: 1.1rem;
-        }
-
-        .atualizacao {
-            font-family: var(--fonte-texto);
-            font-size: 1.15rem;
-            font-style: italic;
-            color: var(--tinta-suave);
-        }
-
-        .secao {
-            display: grid;
-            grid-template-columns: 3.5rem 1fr;
-            column-gap: clamp(0.75rem, 3vw, 2rem);
-            padding: clamp(1.5rem, 4vw, 2.25rem) 0;
-            border-bottom: 1px solid var(--linha-suave);
-        }
-
-        .secao:last-of-type { border-bottom: 0; }
-
-        .secao-num {
-            padding-top: 0.2rem;
-            font-family: var(--fonte-titulo);
-            font-size: 1.1rem;
-            font-style: italic;
-            letter-spacing: 2px;
-            color: var(--dourado);
-        }
-
-        .secao h2 {
-            font-family: var(--fonte-titulo);
-            font-size: clamp(1.25rem, 3vw, 1.6rem);
-            font-weight: 600;
-            font-style: italic;
-            line-height: 1.25;
-            color: var(--vinho);
-            margin-bottom: 0.9rem;
-        }
-
-        .secao p, .secao li { font-size: 0.95rem; line-height: 1.8; color: var(--tinta); }
-        .secao p + p, .secao p + ul, .secao ul + p { margin-top: 0.9rem; }
-
-        .secao ul { list-style: none; }
-
-        .secao li {
-            position: relative;
-            padding-left: 1.35rem;
-            margin-top: 0.55rem;
-        }
-
-        .secao li::before {
-            content: '\2726';
-            position: absolute;
-            left: 0;
-            top: 0.15rem;
-            font-size: 0.6rem;
-            line-height: 1.9;
-            color: var(--dourado);
-        }
-
-        .secao strong { font-weight: 600; color: var(--vinho); }
-
-        .secao a, .voltar a {
-            color: var(--vinho);
-            text-decoration: underline;
-            text-decoration-color: var(--dourado);
-            text-underline-offset: 3px;
-            transition: color 0.25s;
-        }
-
-        .secao a:hover, .voltar a:hover { color: var(--dourado); }
-
-        .voltar {
-            padding-top: clamp(1.75rem, 4vw, 2.5rem);
-            margin-top: 0.5rem;
-            border-top: 1px solid var(--linha);
-            text-align: center;
-        }
-
-        .voltar a {
-            font-size: 0.72rem;
-            font-weight: 500;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            text-decoration: none;
-        }
-
-        @media (max-width: 560px) {
-            .secao { grid-template-columns: 1fr; }
-            .secao-num { padding: 0 0 0.35rem; font-size: 0.95rem; }
-        }
-
-        /* ---------- Mobile: navbar compacta ---------- */
-        @media (max-width: 640px) {
-            .navbar {
-                --navbar-h: 54px;
-                padding-left: 0.9rem;
-                padding-right: 0.9rem;
-            }
-
-            .logo { font-size: 1.15rem; letter-spacing: 2px; }
-
-            .nav-links { gap: 0.5rem; }
-
-            .nav-links > a:not(.btn-entrar):not(.btn-voltar) {
-                display: none !important;
-            }
-
-            .btn-voltar {
-                gap: 0.3rem;
-                padding: 0.5rem 0.7rem;
-                font-size: 0.6rem;
-                letter-spacing: 1.2px;
-                border-radius: 3px;
-            }
-
-            .btn-voltar svg { width: 11px; height: 11px; }
-
-            .btn-voltar [data-voltar-texto] { display: none !important; }
-
-            .btn-voltar::after {
-                content: 'Voltar';
-                font-size: 0.6rem;
-                letter-spacing: 1.2px;
-                font-weight: 600;
-            }
-
-            .nav-links .btn-entrar {
-                padding: 0.5rem 0.9rem;
-                font-size: 0.6rem;
-                font-weight: 600;
-                letter-spacing: 1.2px;
-                border-radius: 3px;
-            }
-        }
-
-        @media (max-width: 380px) {
-            .navbar { padding-left: 0.7rem; padding-right: 0.7rem; }
-            .logo { font-size: 1rem; letter-spacing: 1.5px; }
-            .btn-voltar { padding: 0.45rem 0.6rem; font-size: 0.55rem; }
-            .nav-links .btn-entrar { padding: 0.45rem 0.75rem; font-size: 0.55rem; }
-        }
-    </style>
+    <link rel="stylesheet" href="assets/css/publico.css">
 </head>
 <body>
 
 <nav class="navbar" aria-label="Principal">
-    <a href="/" class="logo" translate="no">Auloo<span class="logo-dot">.</span></a>
+    <a href="/" class="logo" translate="no">Acervo<span class="logo-dot">.</span></a>
     <div class="nav-links">
         <a href="/" class="btn-voltar" data-voltar>
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
@@ -404,7 +39,7 @@
             <span class="secao-num" aria-hidden="true">01</span>
             <div>
                 <h2>Quem somos</h2>
-                <p>O Auloo é uma plataforma educacional online acessível em <a href="https://auloo.com.br">https://auloo.com.br</a>. Permite que usuários criem contas e acessem um painel de estudos personalizado.</p>
+                <p>O Acervo é uma plataforma digital acessível em <a href="https://auloo.com.br">https://auloo.com.br</a>. Permite que usuários criem contas, leiam livros de domínio público e organizem sua estante digital.</p>
             </div>
         </section>
 
@@ -416,6 +51,7 @@
                     <li><strong>Dados de cadastro:</strong> nome completo e endereço de e-mail.</li>
                     <li><strong>Dados de autenticação:</strong> senha criptografada e, opcionalmente, login via Google, GitHub ou Discord.</li>
                     <li><strong>Foto de perfil:</strong> imagem enviada voluntariamente pelo usuário.</li>
+                    <li><strong>Dados de leitura:</strong> livros salvos na estante, anotações, citações e progresso.</li>
                     <li><strong>Dados de uso:</strong> informações básicas de acesso à plataforma (data, hora, dispositivo).</li>
                 </ul>
             </div>
@@ -429,7 +65,7 @@
                 <ul>
                     <li>Criar e gerenciar sua conta</li>
                     <li>Permitir login e autenticação segura</li>
-                    <li>Personalizar sua experiência (nome, foto)</li>
+                    <li>Personalizar sua experiência (nome, foto, estante)</li>
                     <li>Enviar códigos de verificação por e-mail</li>
                     <li>Garantir a segurança da plataforma</li>
                 </ul>
@@ -440,7 +76,7 @@
             <span class="secao-num" aria-hidden="true">04</span>
             <div>
                 <h2>Compartilhamento com terceiros</h2>
-                <p>Utilizamos os seguintes serviços para operar o Auloo:</p>
+                <p>Utilizamos os seguintes serviços para operar o Acervo:</p>
                 <ul>
                     <li><strong>Supabase</strong> — armazenamento seguro de dados e autenticação</li>
                     <li><strong>Resend</strong> — envio de e-mails de verificação</li>
@@ -486,15 +122,19 @@
 </main>
 
 <footer>
-    <a href="/" class="logo" translate="no">Auloo<span class="logo-dot">.</span></a>
+    <a href="/" class="logo" translate="no">Acervo<span class="logo-dot">.</span></a>
     <div class="footer-links">
         <a href="/privacidade.html" data-manter-origem>Política de Privacidade</a>
         <a href="/termos.html" data-manter-origem>Termos de Serviço</a>
         <a href="/login.html">Entrar</a>
     </div>
-    <p class="copy">&copy; 2026 Auloo. Plataforma educacional.</p>
+    <p class="copy">&copy; 2026 Acervo. Sua estante digital.</p>
 </footer>
 
-<script src="assets/js/voltar.js"></script>
+<script src="assets/js/lib/utils.js"></script>
+<script src="assets/js/lib/api-livros.js"></script>
+<script src="assets/js/lib/api-gutenberg.js"></script>
+<script src="assets/js/lib/voltar.js"></script>
+<script src="assets/js/lib/api-standardebooks.js"></script>
 </body>
 </html>

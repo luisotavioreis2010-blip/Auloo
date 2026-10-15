@@ -1,5 +1,5 @@
 ﻿/* ==============================================
-   DASHBOARD.JS — v23
+   ESTANTE.JS — v1
    Perfil, sessão (Supabase), layout responsivo e calendário.
    Sintaxe limitada a ES2017 (sem ?. nem ??) por causa de iPads antigos.
    ============================================== */
@@ -11,8 +11,8 @@
        ============================================== */
     const PAGINA_LOGIN = '/login.html';
 
-    const CHAVES_LOGOUT = ['auloo_user', 'auloo_saved_email'];
-    const PREFIXOS_STORAGE_AUTH = ['sb-', 'auloo-auth'];
+    const CHAVES_LOGOUT = ['acervo_user', 'acervo_saved_email'];
+    const PREFIXOS_STORAGE_AUTH = ['sb-', 'acervo-auth'];
     const TIMEOUT_SIGNOUT_MS = 3000;
 
     const SUPABASE_TENTATIVAS = 40;
@@ -153,7 +153,7 @@
     }
 
     function irParaLogin() {
-        /* replace: o dashboard não fica no histórico (botão "voltar" não cai num loop) */
+        /* replace: o estante não fica no histórico (botão "voltar" não cai num loop) */
         window.location.replace(PAGINA_LOGIN);
     }
 
@@ -188,7 +188,7 @@
 
     function resetarScroll() {
         window.scrollTo(0, 0);
-        const main = document.querySelector('.dashboard-main');
+        const main = document.querySelector('.estante-main');
         const ficha = $('sidebar-perfil');
         if (main) main.scrollTop = 0;
         if (ficha) ficha.scrollTop = 0;

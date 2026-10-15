@@ -14,8 +14,8 @@
     /* ============================================================
        1. CONSTANTES, ESTADO E UTILITÁRIOS
        ============================================================ */
-    const PAGINA_DASHBOARD = 'dashboard.html';
-    const URL_DASHBOARD_PRODUCAO = 'https://auloo.com.br/dashboard.html';
+    const PAGINA_ESTANTE = 'estante.html';
+    const URL_ESTANTE_PRODUCAO = 'https://auloo.com.br/estante.html';
     const LOTTIE_PATH = 'assets/img/animacoes/mail-animation.json';
 
     const REDIRECIONAR_MS = 500;
@@ -121,8 +121,8 @@
         });
     }
 
-    function irParaDashboard() {
-        setTimeout(() => { window.location.href = PAGINA_DASHBOARD; }, REDIRECIONAR_MS);
+    function irParaESTANTE() {
+        setTimeout(() => { window.location.href = PAGINA_ESTANTE; }, REDIRECIONAR_MS);
     }
 
     /* ============================================================
@@ -695,7 +695,7 @@
         executarComBotao(botaoLogin, rotuloLogin, async () => {
             const resultado = await loginUser(email, senha);
             if (resultado.success) {
-                irParaDashboard();
+                irParaESTANTE();
                 return true;
             }
             mostrarMensagem(resultado.message || 'E-mail ou senha incorretos!', 'erro');
@@ -1004,7 +1004,7 @@
                     const entrada = await loginUser(estado.email, senha.value);
                     if (entrada.success) {
                         mostrarMensagem('Conta criada!', 'sucesso');
-                        irParaDashboard();
+                        irParaESTANTE();
                         return true;
                     }
 
@@ -1158,11 +1158,11 @@
         if (botao) ligarOlho(botao, inputSenha);
     }
 
-    function urlDashboard() {
+    function urlEstante() {
         const host = window.location.hostname;
         return (host === 'localhost' || host === '127.0.0.1')
-            ? window.location.origin + '/dashboard.html'
-            : URL_DASHBOARD_PRODUCAO;
+            ? window.location.origin + '/estante.html'
+            : URL_ESTANTE_PRODUCAO;
     }
 
     function definirCarregandoSocial(botao, carregando) {
@@ -1184,7 +1184,7 @@
             const resultado = await db.auth.signInWithOAuth({
                 provider: provedor,
                 options: {
-                    redirectTo: urlDashboard(),
+                    redirectTo: urlEstante(),
                     queryParams: PROVEDORES_SOCIAIS[provedor].params
                 }
             });
@@ -1363,3 +1363,4 @@
         iniciar();
     }
 })();
+

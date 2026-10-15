@@ -1,4 +1,4 @@
-﻿# Auloo
+﻿# Acervo
 
 Plataforma educacional com autenticacao via Supabase.
 
@@ -12,7 +12,7 @@ Plataforma educacional com autenticacao via Supabase.
 
 ## Estrutura
 
-Auloo/
+Acervo/
   index.html              # Landing + login
   dashboard.html          # Area autenticada
   assets/
