@@ -1,10 +1,9 @@
 ﻿/* ============================================================
-   CATALOGO.JS — v16 (OTIMIZADO)
-   - Standard Ebooks + Gutenberg
-   - Gutenberg reduzido para 3 paginas (era 10)
-   - Mostra livros conforme carregam
-   - Sessao esperada corretamente
-   - Estatisticas na ficha
+   CATALOGO.JS — v17 (CARREGAMENTO PROGRESSIVO)
+   - Pagina aparece na hora
+   - Livros aparecem aos poucos (a cada lote)
+   - TODOS os livros sao carregados (sem cortar quantidade)
+   - Standard Ebooks: 40 paginas | Gutenberg: 10 paginas
    ============================================================ */
 (function () {
     'use strict';
@@ -12,9 +11,9 @@
     document.documentElement.classList.add('carregando-catalogo');
 
     const PAGINA_LOGIN = '/login.html';
-    const LIMITE_RESULTADOS = 500;
-    const LIMITE_STANDARD_EBOOKS = 400;
-    const LIMITE_GUTENBERG_PAGINAS = 3;
+    const LIMITE_RESULTADOS = 2000;
+    const LIMITE_STANDARD_EBOOKS = 2000;
+    const LIMITE_GUTENBERG_PAGINAS = 10;
     const SUPABASE_TENTATIVAS = 40;
     const SUPABASE_INTERVALO_MS = 200;
     const LIMITE_TECLADO_PX = 100;
@@ -502,26 +501,17 @@
     }
 
     /* ============================================================
-       RENDERIZACAO
+       RENDERIZACAO — PROGRESSIVA (adiciona sem limpar tudo)
        ============================================================ */
     function esconderTudo() {
         ['catalogo-loading', 'catalogo-erro', 'resultados-info', 'catalogo-fim'].forEach((id) => {
             const el = $(id); if (el) el.hidden = true;
         });
-        const grid = $('resultados-grid'); if (grid) limpar(grid);
     }
 
-    function mostrarLoading(mensagem) {
-        esconderTudo();
+    function esconderLoading() {
         const loading = $('catalogo-loading');
-        const texto = $('loading-texto');
-        if (texto && mensagem) texto.textContent = mensagem;
-        if (loading) loading.hidden = false;
-    }
-
-    function atualizarLoading(mensagem) {
-        const texto = $('loading-texto');
-        if (texto) texto.textContent = mensagem;
+        if (loading) loading.hidden = true;
     }
 
     function mostrarErro(mensagem) {
@@ -532,21 +522,39 @@
         if (erro) erro.hidden = false;
     }
 
-    function mostrarResultados(livros) {
-        esconderTudo();
-        if (!livros || livros.length === 0) return;
-        const grid = $('resultados-grid');
+    function atualizarContagem(total) {
         const info = $('resultados-info');
         const contagem = $('resultados-contagem');
         const btnVoltar = $('btn-voltar-populares');
 
-        if (contagem) contagem.textContent = livros.length === 1 ? '1 livro' : livros.length + ' livros';
+        if (contagem) {
+            contagem.textContent = total === 1 ? '1 livro' : total + ' livros';
+        }
         if (info) info.hidden = false;
         if (btnVoltar) btnVoltar.hidden = estado.modo !== 'busca';
+    }
+
+    /* Adiciona livros NOVOS sem limpar os que ja estao na tela.
+       Retorna quantos realmente foram adicionados. */
+    function adicionarLivrosNaGrade(livros, jaNaTela) {
+        const grid = $('resultados-grid');
+        if (!grid) return 0;
 
         const fragmento = document.createDocumentFragment();
-        livros.forEach((livro) => fragmento.appendChild(criarCardLivro(livro)));
-        grid.appendChild(fragmento);
+        let adicionados = 0;
+
+        livros.forEach((livro) => {
+            const chave = (livro.title || '').toLowerCase().trim() + '|' +
+                          (livro.author || '').toLowerCase().trim();
+            if (jaNaTela.has(chave)) return;
+            jaNaTela.add(chave);
+
+            fragmento.appendChild(criarCardLivro(livro));
+            adicionados++;
+        });
+
+        if (adicionados > 0) grid.appendChild(fragmento);
+        return adicionados;
     }
 
     function criarCardLivro(livro) {
@@ -615,58 +623,65 @@
     }
 
     /* ============================================================
-       CARREGAR CATALOGO — OTIMIZADO
+       CARREGAR CATALOGO — PROGRESSIVO
        ============================================================ */
     async function carregarCatalogo() {
         console.log('[CATALOGO] carregarCatalogo: comecando');
         estado.modo = 'populares';
         estado.buscaAtual = '';
-        mostrarLoading('Carregando catalogo...');
+
+        // Limpa a grade para comecar de novo
+        const grid = $('resultados-grid');
+        if (grid) limpar(grid);
+        esconderLoading();
+        esconderTudo();
+
+        const todos = [];
+        const jaNaTela = new Set();
+
+        function adicionarEAtualizar(lista, fonte) {
+            if (!lista || lista.length === 0) return 0;
+            const novos = [];
+            lista.forEach((livro) => {
+                if (!livro || !livro.title) return;
+                if (fonte) livro.source = fonte;
+                todos.push(livro);
+                novos.push(livro);
+            });
+
+            // Ordena os novos pelo peso, e adiciona na grade
+            novos.sort((a, b) => pesoFonte(a) - pesoFonte(b));
+            const adicionados = adicionarLivrosNaGrade(novos, jaNaTela);
+
+            if (adicionados > 0) {
+                atualizarContagem(todos.length);
+            }
+            return adicionados;
+        }
+
+        function pesoFonte(livro) {
+            const fonte = livro.source || '';
+            const idioma = (livro.language || '').toLowerCase();
+            if (fonte === 'standardebooks') return 1;
+            if (idioma.startsWith('pt')) return 2;
+            return 3;
+        }
 
         try {
-            const todos = [];
-            const vistos = new Set();
-            let jaMostrou = false;
-
-            function adicionar(lista, fonte) {
-                if (!lista) return;
-                lista.forEach((livro) => {
-                    if (!livro || !livro.title) return;
-                    const chave = (livro.title || '').toLowerCase().trim() + '|' + (livro.author || '').toLowerCase().trim();
-                    if (vistos.has(chave)) return;
-                    vistos.add(chave);
-                    if (fonte) livro.source = fonte;
-                    todos.push(livro);
-                });
-            }
-
-            // Mostra os livros conforme vao chegando (nao espera tudo)
-            function atualizar() {
-                estado.resultados = todos.slice();
-                if (todos.length > 0) {
-                    mostrarResultados(todos);
-                    jaMostrou = true;
-                }
-            }
-
             // 1. STANDARD EBOOKS
             console.log('[CATALOGO] Buscando Standard Ebooks...');
             const t1 = Date.now();
-            atualizarLoading('Buscando no Standard Ebooks...');
             try {
                 const se = await window.apiStandardEbooks.buscarPopulares();
                 console.log('[CATALOGO] Standard Ebooks:', se ? se.length : 0, 'em', Date.now() - t1, 'ms');
                 if (se && se.length > 0) {
-                    adicionar(se.slice(0, LIMITE_STANDARD_EBOOKS), 'standardebooks');
-                    atualizar();
-                    atualizarLoading('Carregando ' + todos.length + ' livros...');
+                    adicionarEAtualizar(se, 'standardebooks');
                 }
             } catch (e) { console.warn('[CATALOGO] Standard Ebooks falhou:', e); }
 
-            // 2. GUTENBERG (3 paginas apenas)
+            // 2. GUTENBERG (em lotes, atualiza a cada pagina)
             console.log('[CATALOGO] Buscando Gutenberg...');
             const t2 = Date.now();
-            atualizarLoading('Buscando no Gutenberg...');
             for (let p = 1; p <= LIMITE_GUTENBERG_PAGINAS; p++) {
                 if (todos.length >= LIMITE_RESULTADOS) break;
                 try {
@@ -674,9 +689,7 @@
                     const pagina = await window.apiGutenberg.buscarPopularesPaginado('', p);
                     console.log('[CATALOGO] Gutenberg p' + p + ':', pagina ? pagina.length : 0, 'em', Date.now() - tp, 'ms');
                     if (!pagina || pagina.length === 0) break;
-                    adicionar(pagina, 'gutenberg');
-                    atualizar();
-                    atualizarLoading('Carregando ' + todos.length + ' de ' + LIMITE_RESULTADOS + ' livros...');
+                    adicionarEAtualizar(pagina, 'gutenberg');
                 } catch (e) {
                     console.warn('[CATALOGO] Gutenberg p' + p + ' falhou');
                     break;
@@ -684,15 +697,8 @@
             }
             console.log('[CATALOGO] Gutenberg total:', Date.now() - t2, 'ms');
 
-            // 3. ORDENAR
-            function pesoFonte(livro) {
-                const fonte = livro.source || '';
-                const idioma = (livro.language || '').toLowerCase();
-                if (fonte === 'standardebooks') return 1;
-                if (idioma.startsWith('pt')) return 2;
-                return 3;
-            }
-
+            // 3. Reordenar tudo no final
+            console.log('[CATALOGO] Total final:', todos.length, 'livros');
             todos.sort((a, b) => {
                 const pa = pesoFonte(a);
                 const pb = pesoFonte(b);
@@ -702,14 +708,48 @@
                 return db - da;
             });
 
+            // Recria a grade com a ordem final (rapido, e so reordenar os DOM nodes)
+            if (grid) {
+                livrosOrdenados(grid, todos);
+            }
+            atualizarContagem(todos.length);
+
             estado.resultados = todos;
-            mostrarResultados(todos);
-            console.log('[CATALOGO] Total final:', todos.length, 'livros');
             if (todos.length === 0) mostrarErro('Nenhum livro carregado.');
         } catch (erro) {
             console.error('[CATALOGO] Erro ao carregar catalogo:', erro);
-            mostrarErro('Nao foi possivel carregar o catalogo.');
+            if (todos.length === 0) mostrarErro('Nao foi possivel carregar o catalogo.');
         }
+    }
+
+    /* Reordena os nodes do grid conforme a lista final (sem recriar) */
+    function livrosOrdenados(grid, lista) {
+        const filhos = Array.from(grid.children);
+        const mapa = new Map();
+
+        filhos.forEach((node) => {
+            const titulo = node.querySelector('.livro-titulo');
+            const autor = node.querySelector('.livro-autor');
+            const chave = (titulo ? titulo.textContent : '').toLowerCase().trim() + '|' +
+                          (autor ? autor.textContent : '').toLowerCase().trim();
+            mapa.set(chave, node);
+        });
+
+        const fragmento = document.createDocumentFragment();
+        lista.forEach((livro) => {
+            const chave = (livro.title || '').toLowerCase().trim() + '|' +
+                          (livro.author || '').toLowerCase().trim();
+            const node = mapa.get(chave);
+            if (node) fragmento.appendChild(node);
+        });
+
+        // Adiciona qualquer node que sobrou (caso nao esteja no mapa)
+        filhos.forEach((node) => {
+            if (node.parentNode) return;
+            fragmento.appendChild(node);
+        });
+
+        grid.appendChild(fragmento);
     }
 
     /* ============================================================
@@ -743,6 +783,27 @@
         } finally {
             estado.carregando = false;
         }
+    }
+
+    function mostrarLoading(mensagem) {
+        esconderTudo();
+        const loading = $('catalogo-loading');
+        const texto = $('loading-texto');
+        if (texto && mensagem) texto.textContent = mensagem;
+        if (loading) loading.hidden = false;
+    }
+
+    function mostrarResultados(livros) {
+        const grid = $('resultados-grid');
+        if (!grid) return;
+        limpar(grid);
+        esconderLoading();
+
+        if (!livros || livros.length === 0) return;
+
+        const jaNaTela = new Set();
+        adicionarLivrosNaGrade(livros, jaNaTela);
+        atualizarContagem(livros.length);
     }
 
     function mesclarLivros(lista1, lista2) {
@@ -780,8 +841,7 @@
     }
 
     /* ============================================================
-       FILTROS
-       ============================================================ */
+       FILTROS       ============================================================ */
     function setupPopoverFiltros() {
         const btn = $('busca-filtro-btn');
         const popover = $('filtros-popover');
@@ -1080,9 +1140,14 @@
         catch (e) { console.error('[CATALOGO] setupEventos FALHOU:', e); }
 
         await iniciarSessao();
-        await carregarCatalogo();
+
+        // Pagina ja aparece aqui — nao espera o catalogo
         document.documentElement.classList.remove('carregando-catalogo');
-        console.log('[CATALOGO] iniciar: FIM');
+
+        // Carrega em background
+        carregarCatalogo();
+
+        console.log('[CATALOGO] iniciar: FIM (catalogo carregando em background)');
     }
 
     if (document.readyState === 'loading') {

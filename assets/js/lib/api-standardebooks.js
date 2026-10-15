@@ -1,6 +1,6 @@
 /* ============================================================
-   API-STANDARDEBOOKS.JS — v3 (OTIMIZADO)
-   TOTAL_PAGINAS reduzido para 10 (era 40)
+   API-STANDARDEBOOKS.JS — v4
+   TOTAL_PAGINAS = 40 (todos os livros)
    ============================================================ */
 (function () {
     'use strict';
@@ -9,7 +9,7 @@
     var cache = new Map();
 
     var SUPABASE_URL_PADRAO = 'https://qswvoxkhicficbdkcpzn.supabase.co';
-    var TOTAL_PAGINAS = 10;   // ← era 40, agora 10 (mais rapido)
+    var TOTAL_PAGINAS = 40;
 
     function getUrlProxy() {
         var config = window.SUPABASE_CONFIG;
@@ -139,7 +139,7 @@
     }
 
     function buscarPopulares() {
-        var chaveCache = 'standardebooks:populares:v3';
+        var chaveCache = 'standardebooks:populares:v4';
 
         var emCache = cacheGet(chaveCache);
         if (emCache) return Promise.resolve(emCache);
@@ -191,5 +191,5 @@
         limparCache: function () { cache.clear(); }
     };
 
-    console.log('api-standardebooks.js v3 carregado (10 paginas)');
+    console.log('api-standardebooks.js v4 carregado (40 paginas)');
 })();
