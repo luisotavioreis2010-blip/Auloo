@@ -1,9 +1,10 @@
 ﻿/* ============================================================
-   CATALOGO.JS — v10
+   CATALOGO.JS — v11
    Pagina de catalogo — somente fontes confiaveis
    - 2 fontes: Standard Ebooks + Gutenberg
    - Standard Ebooks: ate 1.500 livros (Edge Function paginada)
-   - Gutenberg: ate 1.500 livros
+   - Botao "Ler no Acervo" para Standard Ebooks (leitor interno)
+   - Botao "Ler agora" para os demais (abre externo)
    - ORDENACAO: Standard Ebooks -> Portugues -> Resto
    - Busca (Enter ou lupa)
    - Popover de filtros
@@ -874,9 +875,21 @@
             descricao.textContent = livro.description || 'Sem descricao disponivel.';
         }
 
+        // ============================================================
+        // BOTAO LER — decide entre leitor interno ou externo
+        // ============================================================
         if (btnLer) {
-            if (livro.ebook_url) {
+            if (livro.ebook_url && livro.source === 'standardebooks') {
+                // Abre no LEITOR INTERNO do Acervo
+                btnLer.href = 'leitor.html?url=' + encodeURIComponent(livro.ebook_url) +
+                              '&titulo=' + encodeURIComponent(livro.title || '') +
+                              '&slug=' + encodeURIComponent(livro.external_id || '');
+                btnLer.textContent = 'Ler no Acervo';
+                btnLer.hidden = false;
+            } else if (livro.ebook_url) {
+                // Abre externo (outros formatos)
                 btnLer.href = livro.ebook_url;
+                btnLer.textContent = 'Ler agora';
                 btnLer.hidden = false;
             } else {
                 btnLer.hidden = true;

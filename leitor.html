@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#1A1614">
+    <title translate="no">Leitor | Acervo</title>
+    <link rel="icon" type="image/png" href="assets/img/logo/auloo-logo.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/global.css">
+    <link rel="stylesheet" href="assets/css/modulos/leitor.css">
+</head>
+<body>
+
+    <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+        <symbol id="icone-olho-aberto" viewBox="0 0 16 16"><path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/><path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/></symbol>
+        <symbol id="icone-olho-fechado" viewBox="0 0 16 16"><path d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7.028 7.028 0 0 0-2.79.588l.77.771A5.944 5.944 0 0 1 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.134 13.134 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755-.165.165-.337.328-.517.486l.708.709z"/><path d="M11.297 9.176a3.5 3.5 0 0 0-4.474-4.474l.823.823a2.5 2.5 0 0 1 2.829 2.829l.822.822zm-2.943 1.299.822.822a3.5 3.5 0 0 1-4.474-4.474l.823.823a2.5 2.5 0 0 0 2.829 2.829z"/><path d="M3.35 5.47c-.18.16-.353.322-.518.487A13.134 13.134 0 0 0 1.172 8l.195.288c.335.48.83 1.12 1.465 1.755C4.121 11.332 5.881 12.5 8 12.5c.716 0 1.39-.133 2.02-.36l.77.772A7.029 7.029 0 0 1 8 13.5C3 13.5 0 8 0 8s.939-1.721 2.641-3.238l.708.709zm10.296 8.884-12-12 .708-.708 12 12-.708.708z"/></symbol>
+    </svg>
+
+    <!-- NAVBAR -->
+    <header class="navbar">
+        <div class="navbar-left">
+            <button class="btn-hamburger" id="btn-hamburger" type="button" aria-label="Abrir sumário" aria-expanded="false" aria-controls="sidebar">&#9776;</button>
+            <a href="catalogo.html" class="btn-voltar-leitor" aria-label="Voltar ao catálogo">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                    <path d="M14 8H2M7 3 2 8l5 5"/>
+                </svg>
+                <span>Catálogo</span>
+            </a>
+            <span class="logo" translate="no">Acervo<span class="logo-dot">.</span></span>
+        </div>
+        <div class="navbar-right">
+            <div class="leitor-controles">
+                <button type="button" class="leitor-btn" id="btn-fonte-menos" aria-label="Diminuir fonte">A-</button>
+                <button type="button" class="leitor-btn" id="btn-fonte-mais" aria-label="Aumentar fonte">A+</button>
+                <button type="button" class="leitor-btn" id="btn-tema" aria-label="Alternar tema">☀</button>
+                <button type="button" class="leitor-btn" id="btn-marcar" aria-label="Marcar página">🔖</button>
+            </div>
+            <button class="perfil-botao" id="perfil-botao" type="button" aria-label="Abrir ficha do leitor" aria-expanded="false" aria-controls="sidebar-perfil">
+                <span class="perfil-usuario" id="perfil-usuario"></span>
+            </button>
+        </div>
+    </header>
+
+    <div class="gaveta-overlay" id="gaveta-overlay" aria-hidden="true"></div>
+
+    <!-- SIDEBAR ESQUERDA -->
+    <aside class="sidebar" id="sidebar" aria-label="Sumário">
+        <div class="sidebar-secao">
+            <h2 class="sidebar-titulo">Sumário</h2>
+            <div class="sidebar-filete"></div>
+            <nav class="sidebar-menu" id="sidebar-menu">
+                <a href="/estante.html" class="sidebar-link" aria-label="Início">
+                    <span class="sidebar-icone"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+                    <span class="sidebar-romano">I</span>
+                    <span class="sidebar-nome">Início</span>
+                </a>
+                <a href="/catalogo.html" class="sidebar-link" aria-label="Catálogo">
+                    <span class="sidebar-icone"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></span>
+                    <span class="sidebar-romano">II</span>
+                    <span class="sidebar-nome">Catálogo</span>
+                </a>
+                <a href="/estante.html" class="sidebar-link" aria-label="Minha Estante">
+                    <span class="sidebar-icone"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
+                    <span class="sidebar-romano">III</span>
+                    <span class="sidebar-nome">Estante</span>
+                </a>
+            </nav>
+            <h2 class="sidebar-titulo" id="titulo-capitulos" style="margin-top: 2rem;">Capítulos</h2>
+            <div class="sidebar-filete"></div>
+            <nav class="sidebar-menu" id="lista-capitulos"></nav>
+        </div>
+        <div class="sidebar-selo">
+            <span>&#10022;</span>
+            <span class="selo-texto">Acervo Library</span>
+            <span>&#10022;</span>
+        </div>
+        <div class="sidebar-volume">
+            <span class="volume-numero">Vol. I</span>
+            <span class="volume-ano">MMXXVI</span>
+        </div>
+    </aside>
+
+    <!-- FICHA DO LEITOR -->
+    <aside class="sidebar-direita" id="sidebar-perfil" aria-label="Ficha do Leitor">
+        <div class="ficha-header">
+            <h2 class="ficha-titulo">Ficha do Leitor</h2>
+            <button class="ficha-fechar" id="ficha-fechar" type="button" aria-label="Fechar ficha">&#10005;</button>
+        </div>
+        <div class="ficha-filete"></div>
+        <div class="ficha-perfil">
+            <div class="ficha-foto" id="sidebar-perfil-foto"></div>
+            <div class="ficha-info">
+                <span class="ficha-nome" id="sidebar-perfil-nome">Usuário</span>
+                <span class="ficha-email" id="sidebar-perfil-email">&nbsp;</span>
+            </div>
+        </div>
+        <div class="ficha-filete"></div>
+        <div class="ficha-progresso">
+            <span class="ficha-progresso-label">Progresso</span>
+            <div class="ficha-progresso-barra">
+                <div class="ficha-progresso-fill" id="progresso-fill"></div>
+            </div>
+            <span class="ficha-progresso-texto" id="progresso-texto">0%</span>
+        </div>
+    </aside>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="leitor-main" id="leitor-main">
+        <div class="leitor-loading" id="leitor-loading">
+            <div class="loading-spinner"></div>
+            <p id="loading-texto">Carregando livro...</p>
+        </div>
+        <div class="leitor-erro" id="leitor-erro" hidden>
+            <div class="erro-icone">&#9888;</div>
+            <h2>Não foi possível abrir o livro</h2>
+            <p id="erro-mensagem"></p>
+            <a href="catalogo.html" class="btn-tentar">Voltar ao catálogo</a>
+        </div>
+        <div class="leitor-area" id="area" hidden></div>
+    </main>
+
+    <!-- NAVEGAÇÃO INFERIOR -->
+    <div class="leitor-nav" id="leitor-nav" hidden>
+        <button type="button" class="nav-btn" id="btn-anterior" aria-label="Página anterior">&#8249;</button>
+        <span class="nav-pagina" id="nav-pagina">0 / 0</span>
+        <button type="button" class="nav-btn" id="btn-proximo" aria-label="Próxima página">&#8250;</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/epubjs/0.3.93/epub.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script src="assets/js/lib/utils.js"></script>
+    <script src="assets/js/pages/modulos/leitor.js"></script>
+</body>
+</html>
