@@ -1,8 +1,7 @@
 @charset "UTF-8";
 /* ==============================================
-   LEITOR.CSS — v6
-   Leitor em tela cheia com paginacao.
-   Modo livro aberto (2 paginas) em telas largas.
+   LEITOR.CSS — v7
+   Leitor com 2 paginas por padrao (livro aberto).
    ============================================== */
 
 :root {
@@ -32,7 +31,7 @@
     --navbar-h: 60px;
     --ficha-w: 360px;
     --leitor-padding: 1.5rem;
-    --leitor-max-width: 1200px;
+    --leitor-max-width: 1400px;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -435,8 +434,7 @@ body {
 }
 
 /* ==============================================
-   LEITOR — PAGINACAO (sem scroll)
-   O epub.js controla o iframe, so damos espaco.
+   LEITOR — 2 PAGINAS PADRAO
    ============================================== */
 .leitor-main {
     position: fixed;
@@ -466,9 +464,11 @@ body.ficha-aberta .leitor-main { right: var(--ficha-w); }
     position: relative;
 }
 
-/* Nao forcar tamanho/posicao do iframe: o epub.js precisa medir */
+/* Deixa o epub.js controlar o iframe, mas permite selecao de texto */
 .leitor-area iframe {
     border: none;
+    -webkit-user-select: text;
+    user-select: text;
 }
 
 /* Loading e Erro */
@@ -595,6 +595,12 @@ body.ficha-aberta .leitor-nav {
 /* ==============================================
    RESPONSIVO
    ============================================== */
+@media (max-width: 1023px) {
+    :root {
+        --leitor-max-width: 800px;
+    }
+}
+
 @media (max-width: 767px) {
     :root {
         --navbar-h: 54px;

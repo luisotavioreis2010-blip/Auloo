@@ -1,11 +1,10 @@
 /* ============================================================
-   LEITOR.JS — v11
+   LEITOR.JS — v12
    Leitor em tela cheia com:
    - EPUB via Edge Function (com fetch autenticado)
-   - Modo marcacao de texto (salva trechos no Supabase)
+   - Modo livro aberto (2 paginas) SEMPRE por padrao
+   - Marcar texto funcional (injeta listeners no iframe)
    - Ficha do leitor padrao estante
-   - Paginacao (sem scroll) com botao de 1 ou 2 paginas
-   - Modo livro aberto (2 paginas lado a lado) em telas largas
    ============================================================ */
 (function () {
     'use strict';
@@ -29,7 +28,8 @@
     let tamanhoFonte = TAMANHO_FONTE_PADRAO;
     let modoMarcacao = false;
     let timerSalvar = null;
-    let spreadAtivo = window.innerWidth >= MIN_WIDTH_PARA_SPREAD;
+    let intervalInjetar = null;
+    let cfiSelecaoAtual = null;
 
     const estado = {
         url: null,
@@ -290,7 +290,93 @@
     }
 
     /* ============================================================
-       EPUB — paginacao com 1 ou 2 paginas
+       MODO MARCACAO — injeta listeners diretamente nos iframes
+       ============================================================ */
+    function aplicarModoMarcacao() {
+        document.body.classList.toggle('modo-marcacao', modoMarcacao);
+
+        const btn = $('btn-marcar-modo');
+        if (btn) btn.setAttribute('aria-pressed', String(modoMarcacao));
+
+        // Injeta listeners em todos os iframes atuais
+        injetarListenersEmTodos();
+    }
+
+    function injetarListenersEmTodos() {
+        if (!rendition) return;
+
+        const contents = rendition.getContents();
+        contents.forEach((c) => {
+            injetarListeners(c);
+        });
+    }
+
+    function injetarListeners(contents) {
+        if (!contents || !contents.document) return;
+        if (contents._acervoMarcacaoAtiva) return;
+        contents._acervoMarcacaoAtiva = true;
+
+        const doc = contents.document;
+
+        doc.addEventListener('mouseup', () => {
+            if (!modoMarcacao) return;
+            setTimeout(() => processarSelecao(contents), 50);
+        });
+
+        doc.addEventListener('touchend', () => {
+            if (!modoMarcacao) return;
+            setTimeout(() => processarSelecao(contents), 50);
+        });
+    }
+
+    async function processarSelecao(contents) {
+        try {
+            const sel = contents.window.getSelection();
+            if (!sel || sel.rangeCount === 0) return;
+
+            const texto = sel.toString().trim();
+            if (!texto || texto.length < 3) return;
+
+            const range = sel.getRangeAt(0);
+            const cfi = contents.cfiFromRange(range);
+            if (!cfi) return;
+
+            if (cfi === cfiSelecaoAtual) return;
+            cfiSelecaoAtual = cfi;
+
+            const marcacao = await salvarMarcacao(cfi, texto);
+            if (marcacao) {
+                estado.marcacoes.unshift(marcacao);
+                renderizarMarcacoes();
+            }
+
+            try {
+                contents.addClass('acervo-highlight', cfi);
+            } catch (e) {
+                console.warn('addClass falhou:', e);
+            }
+
+            sel.removeAllRanges();
+
+        } catch (e) {
+            console.warn('Erro ao processar selecao:', e);
+        }
+    }
+
+    function aplicarHighlightsSalvos() {
+        if (!rendition || !estado.marcacoes) return;
+
+        estado.marcacoes.forEach((m) => {
+            try {
+                rendition.annotations.highlight(m.cfi, {}, () => {}, 'acervo-highlight');
+            } catch (e) {
+                // Ignora CFIs invalidos
+            }
+        });
+    }
+
+    /* ============================================================
+       EPUB — 2 paginas por padrao
        ============================================================ */
     async function abrirLivro() {
         const area = $('area');
@@ -311,31 +397,25 @@
             if (area) area.hidden = false;
             if (nav) nav.hidden = false;
 
-            // Deixa o navegador calcular o layout
             await new Promise((r) => requestAnimationFrame(r));
             await new Promise((r) => requestAnimationFrame(r));
             await new Promise((r) => setTimeout(r, 100));
 
-            // Detecta se a tela e larga o suficiente para 2 paginas
-            spreadAtivo = window.innerWidth >= MIN_WIDTH_PARA_SPREAD;
+            // SEMPRE 2 paginas por padrao (se a tela permitir)
+            const podeSpread = window.innerWidth >= MIN_WIDTH_PARA_SPREAD;
 
-            // Renderiza com paginacao (sem scroll)
             rendition = book.renderTo('area', {
                 width: '100%',
                 height: '100%',
                 flow: 'paginated',
-                spread: spreadAtivo ? 'auto' : 'none',
+                spread: podeSpread ? 'auto' : 'none',
                 minSpreadWidth: MIN_WIDTH_PARA_SPREAD
             });
-
-            // Atualiza o botao visual
-            atualizarBotaoSpread();
 
             aplicarFonte();
             aplicarTema();
             aplicarModoMarcacao();
 
-            // Exibe o conteudo
             const progresso = await carregarProgresso();
             if (progresso && progresso.position) {
                 await rendition.display(progresso.position);
@@ -355,27 +435,38 @@
                 }
             });
 
+            // Quando cada nova secao for renderizada, injeta os listeners
+            rendition.on('rendered', (section, view) => {
+                if (view && view.contents) {
+                    injetarListeners(view.contents);
+                }
+            });
+
             book.locations.generate(1000);
 
             estado.marcacoes = await carregarMarcacoes();
             renderizarMarcacoes();
 
-            configurarSelecaoTexto();
             aplicarHighlightsSalvos();
 
-            // Recalcula ao redimensionar a janela
+            // Injeta listeners no iframe atual (depois de um tempo pro epub.js renderizar)
+            setTimeout(injetarListenersEmTodos, 500);
+            setTimeout(injetarListenersEmTodos, 1500);
+            setTimeout(injetarListenersEmTodos, 3000);
+
+            // E continua tentando de tempo em tempo (caso abra novos iframes)
+            clearInterval(intervalInjetar);
+            intervalInjetar = setInterval(injetarListenersEmTodos, 2000);
+
+            // Ajusta spread ao redimensionar
             window.addEventListener('resize', () => {
-                const podeSpread = window.innerWidth >= MIN_WIDTH_PARA_SPREAD;
-                if (podeSpread !== spreadAtivo) {
-                    spreadAtivo = podeSpread;
-                    try {
-                        if (rendition && rendition.spread) {
-                            rendition.spread(spreadAtivo ? 'auto' : 'none', MIN_WIDTH_PARA_SPREAD);
-                        }
-                    } catch (e) {
-                        console.warn('Erro ao ajustar spread:', e);
+                const p = window.innerWidth >= MIN_WIDTH_PARA_SPREAD;
+                try {
+                    if (rendition && rendition.spread) {
+                        rendition.spread(p ? 'auto' : 'none', MIN_WIDTH_PARA_SPREAD);
                     }
-                    atualizarBotaoSpread();
+                } catch (e) {
+                    console.warn('Erro ao ajustar spread:', e);
                 }
             });
 
@@ -383,69 +474,6 @@
             console.error('Erro ao abrir EPUB:', erro);
             mostrarErro('Nao foi possivel carregar este livro. ' + (erro.message || ''));
         }
-    }
-
-    function atualizarBotaoSpread() {
-        const btn = $('btn-spread');
-        const texto = $('btn-spread-texto');
-        if (!btn) return;
-
-        btn.setAttribute('aria-pressed', String(spreadAtivo));
-        if (texto) {
-            texto.textContent = spreadAtivo ? '2 pág' : '1 pág';
-        }
-    }
-
-    /* ============================================================
-       MODO MARCACAO
-       ============================================================ */
-    function aplicarModoMarcacao() {
-        document.body.classList.toggle('modo-marcacao', modoMarcacao);
-    }
-
-    function configurarSelecaoTexto() {
-        if (!rendition) return;
-
-        rendition.on('selected', async (cfiRange, contents) => {
-            if (!modoMarcacao) return;
-
-            try {
-                const texto = contents.window.getSelection().toString().trim();
-                if (!texto || texto.length < 3) return;
-
-                const marcacao = await salvarMarcacao(cfiRange, texto);
-                if (marcacao) {
-                    estado.marcacoes.unshift(marcacao);
-                    renderizarMarcacoes();
-                }
-
-                contents.addClass('acervo-highlight', cfiRange);
-                contents.window.getSelection().removeAllRanges();
-
-            } catch (e) {
-                console.warn('Erro ao processar selecao:', e);
-            }
-        });
-
-        rendition.themes.default({
-            '.acervo-highlight': {
-                'background-color': 'rgba(184, 137, 74, 0.35)',
-                'border-bottom': '1px solid #B8894A',
-                'cursor': 'pointer'
-            }
-        });
-    }
-
-    function aplicarHighlightsSalvos() {
-        if (!rendition || !estado.marcacoes) return;
-
-        estado.marcacoes.forEach((m) => {
-            try {
-                rendition.annotations.highlight(m.cfi, {}, () => {}, 'acervo-highlight');
-            } catch (e) {
-                // Ignora CFIs invalidos
-            }
-        });
     }
 
     /* ============================================================
@@ -458,6 +486,8 @@
 
     function aplicarTema() {
         if (!rendition) return;
+
+        // Estilos do conteudo do livro
         rendition.themes.default({
             'body': {
                 'font-family': "'Cormorant Garamond', Georgia, serif",
@@ -466,7 +496,9 @@
                 'color': '#1A1614',
                 'background': '#F8F2E4',
                 'padding': '2rem 3rem',
-                'overflow': 'hidden'
+                'overflow': 'hidden',
+                '-webkit-user-select': 'text',
+                'user-select': 'text'
             },
             'p': { 'margin': '0 0 1em 0', 'text-align': 'justify' },
             'h1, h2, h3': {
@@ -474,7 +506,12 @@
                 'font-style': 'italic',
                 'color': '#5C1A1A'
             },
-            'a': { 'color': '#5C1A1A' }
+            'a': { 'color': '#5C1A1A' },
+            '.acervo-highlight': {
+                'background-color': 'rgba(184, 137, 74, 0.35)',
+                'border-bottom': '1px solid #B8894A',
+                'cursor': 'pointer'
+            }
         });
     }
 
@@ -482,7 +519,6 @@
         const btnMais = $('btn-font-mais');
         const btnMenos = $('btn-font-menos');
         const btnMarcar = $('btn-marcar-modo');
-        const btnSpread = $('btn-spread');
 
         if (btnMais) {
             btnMais.addEventListener('click', () => {
@@ -501,22 +537,14 @@
         if (btnMarcar) {
             btnMarcar.addEventListener('click', () => {
                 modoMarcacao = !modoMarcacao;
-                btnMarcar.setAttribute('aria-pressed', String(modoMarcacao));
                 aplicarModoMarcacao();
-            });
-        }
 
-        if (btnSpread) {
-            btnSpread.addEventListener('click', () => {
-                spreadAtivo = !spreadAtivo;
-                try {
-                    if (rendition && rendition.spread) {
-                        rendition.spread(spreadAtivo ? 'auto' : 'none', MIN_WIDTH_PARA_SPREAD);
-                    }
-                } catch (e) {
-                    console.warn('Erro ao trocar spread:', e);
+                // Feedback visual
+                if (modoMarcacao) {
+                    btnMarcar.querySelector('span').textContent = 'Marcando';
+                } else {
+                    btnMarcar.querySelector('span').textContent = 'Marcar';
                 }
-                atualizarBotaoSpread();
             });
         }
 
@@ -525,7 +553,7 @@
         if (btnAnterior) btnAnterior.addEventListener('click', () => rendition && rendition.prev());
         if (btnProximo) btnProximo.addEventListener('click', () => rendition && rendition.next());
 
-        // Teclado: setas e espaco
+        // Teclado
         document.addEventListener('keydown', (e) => {
             if (!rendition) return;
             if (e.key === 'ArrowLeft') { e.preventDefault(); rendition.prev(); }
