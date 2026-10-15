@@ -1,10 +1,11 @@
 /* ============================================================
-   LEITOR.JS — v10
+   LEITOR.JS — v11
    Leitor em tela cheia com:
    - EPUB via Edge Function (com fetch autenticado)
    - Modo marcacao de texto (salva trechos no Supabase)
    - Ficha do leitor padrao estante
-   - Usa flow: 'scrolled' para leitura continua (mais confiavel)
+   - Paginacao (sem scroll) com botao de 1 ou 2 paginas
+   - Modo livro aberto (2 paginas lado a lado) em telas largas
    ============================================================ */
 (function () {
     'use strict';
@@ -17,6 +18,8 @@
     const TAMANHO_FONTE_MAX = 28;
     const TAMANHO_FONTE_PADRAO = 19;
 
+    const MIN_WIDTH_PARA_SPREAD = 1024;
+
     const $ = (id) => document.getElementById(id);
 
     let book = null;
@@ -26,6 +29,7 @@
     let tamanhoFonte = TAMANHO_FONTE_PADRAO;
     let modoMarcacao = false;
     let timerSalvar = null;
+    let spreadAtivo = window.innerWidth >= MIN_WIDTH_PARA_SPREAD;
 
     const estado = {
         url: null,
@@ -286,7 +290,7 @@
     }
 
     /* ============================================================
-       EPUB — com flow: 'scrolled' (mais confiavel)
+       EPUB — paginacao com 1 ou 2 paginas
        ============================================================ */
     async function abrirLivro() {
         const area = $('area');
@@ -312,13 +316,20 @@
             await new Promise((r) => requestAnimationFrame(r));
             await new Promise((r) => setTimeout(r, 100));
 
-            // Renderiza com flow 'scrolled' — mais confiavel que 'paginated'
+            // Detecta se a tela e larga o suficiente para 2 paginas
+            spreadAtivo = window.innerWidth >= MIN_WIDTH_PARA_SPREAD;
+
+            // Renderiza com paginacao (sem scroll)
             rendition = book.renderTo('area', {
                 width: '100%',
                 height: '100%',
-                flow: 'scrolled',
-                spread: 'none'
+                flow: 'paginated',
+                spread: spreadAtivo ? 'auto' : 'none',
+                minSpreadWidth: MIN_WIDTH_PARA_SPREAD
             });
+
+            // Atualiza o botao visual
+            atualizarBotaoSpread();
 
             aplicarFonte();
             aplicarTema();
@@ -352,9 +363,36 @@
             configurarSelecaoTexto();
             aplicarHighlightsSalvos();
 
+            // Recalcula ao redimensionar a janela
+            window.addEventListener('resize', () => {
+                const podeSpread = window.innerWidth >= MIN_WIDTH_PARA_SPREAD;
+                if (podeSpread !== spreadAtivo) {
+                    spreadAtivo = podeSpread;
+                    try {
+                        if (rendition && rendition.spread) {
+                            rendition.spread(spreadAtivo ? 'auto' : 'none', MIN_WIDTH_PARA_SPREAD);
+                        }
+                    } catch (e) {
+                        console.warn('Erro ao ajustar spread:', e);
+                    }
+                    atualizarBotaoSpread();
+                }
+            });
+
         } catch (erro) {
             console.error('Erro ao abrir EPUB:', erro);
             mostrarErro('Nao foi possivel carregar este livro. ' + (erro.message || ''));
+        }
+    }
+
+    function atualizarBotaoSpread() {
+        const btn = $('btn-spread');
+        const texto = $('btn-spread-texto');
+        if (!btn) return;
+
+        btn.setAttribute('aria-pressed', String(spreadAtivo));
+        if (texto) {
+            texto.textContent = spreadAtivo ? '2 pág' : '1 pág';
         }
     }
 
@@ -427,7 +465,8 @@
                 'line-height': '1.75',
                 'color': '#1A1614',
                 'background': '#F8F2E4',
-                'padding': '2rem 3rem'
+                'padding': '2rem 3rem',
+                'overflow': 'hidden'
             },
             'p': { 'margin': '0 0 1em 0', 'text-align': 'justify' },
             'h1, h2, h3': {
@@ -443,6 +482,7 @@
         const btnMais = $('btn-font-mais');
         const btnMenos = $('btn-font-menos');
         const btnMarcar = $('btn-marcar-modo');
+        const btnSpread = $('btn-spread');
 
         if (btnMais) {
             btnMais.addEventListener('click', () => {
@@ -466,15 +506,31 @@
             });
         }
 
+        if (btnSpread) {
+            btnSpread.addEventListener('click', () => {
+                spreadAtivo = !spreadAtivo;
+                try {
+                    if (rendition && rendition.spread) {
+                        rendition.spread(spreadAtivo ? 'auto' : 'none', MIN_WIDTH_PARA_SPREAD);
+                    }
+                } catch (e) {
+                    console.warn('Erro ao trocar spread:', e);
+                }
+                atualizarBotaoSpread();
+            });
+        }
+
         const btnAnterior = $('btn-anterior');
         const btnProximo = $('btn-proximo');
         if (btnAnterior) btnAnterior.addEventListener('click', () => rendition && rendition.prev());
         if (btnProximo) btnProximo.addEventListener('click', () => rendition && rendition.next());
 
+        // Teclado: setas e espaco
         document.addEventListener('keydown', (e) => {
             if (!rendition) return;
             if (e.key === 'ArrowLeft') { e.preventDefault(); rendition.prev(); }
             if (e.key === 'ArrowRight') { e.preventDefault(); rendition.next(); }
+            if (e.key === ' ') { e.preventDefault(); rendition.next(); }
         });
     }
 

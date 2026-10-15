@@ -1,9 +1,8 @@
 @charset "UTF-8";
 /* ==============================================
-   LEITOR.CSS — v5
-   Leitor em tela cheia.
-   Solucao: deixar o epub.js controlar o iframe
-   (sem !important) para a paginacao funcionar.
+   LEITOR.CSS — v6
+   Leitor em tela cheia com paginacao.
+   Modo livro aberto (2 paginas) em telas largas.
    ============================================== */
 
 :root {
@@ -33,7 +32,7 @@
     --navbar-h: 60px;
     --ficha-w: 360px;
     --leitor-padding: 1.5rem;
-    --leitor-max-width: 720px;
+    --leitor-max-width: 1200px;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -436,8 +435,8 @@ body {
 }
 
 /* ==============================================
-   LEITOR — SEM FORCAR O IFRAME
-   Deixa o epub.js controlar o layout interno
+   LEITOR — PAGINACAO (sem scroll)
+   O epub.js controla o iframe, so damos espaco.
    ============================================== */
 .leitor-main {
     position: fixed;
@@ -467,7 +466,7 @@ body.ficha-aberta .leitor-main { right: var(--ficha-w); }
     position: relative;
 }
 
-/* O epub.js precisa controlar o iframe. Nao force tamanho/posicao. */
+/* Nao forcar tamanho/posicao do iframe: o epub.js precisa medir */
 .leitor-area iframe {
     border: none;
 }
@@ -601,6 +600,7 @@ body.ficha-aberta .leitor-nav {
         --navbar-h: 54px;
         --ficha-w: 100%;
         --leitor-padding: 0.5rem;
+        --leitor-max-width: 100%;
     }
 
     .navbar-leitor { padding: 0 0.7rem; gap: 0.5rem; }
