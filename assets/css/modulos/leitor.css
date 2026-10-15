@@ -1,9 +1,9 @@
 @charset "UTF-8";
 /* ==============================================
-   LEITOR.CSS — v4
-   Leitor em tela cheia. Solucao estrutural:
-   - .leitor-main e .leitor-area tem altura EXPLICITA
-   - epub.js recebe altura em pixels desde o inicio
+   LEITOR.CSS — v5
+   Leitor em tela cheia.
+   Solucao: deixar o epub.js controlar o iframe
+   (sem !important) para a paginacao funcionar.
    ============================================== */
 
 :root {
@@ -436,7 +436,8 @@ body {
 }
 
 /* ==============================================
-   LEITOR — ALTURA EXPLICITA (sem depender de flex)
+   LEITOR — SEM FORCAR O IFRAME
+   Deixa o epub.js controlar o layout interno
    ============================================== */
 .leitor-main {
     position: fixed;
@@ -466,15 +467,9 @@ body.ficha-aberta .leitor-main { right: var(--ficha-w); }
     position: relative;
 }
 
-/* epub.js cria o iframe dentro do #area — força 100% */
+/* O epub.js precisa controlar o iframe. Nao force tamanho/posicao. */
 .leitor-area iframe {
-    display: block !important;
-    width: 100% !important;
-    height: 100% !important;
-    border: none !important;
-    position: absolute !important;
-    top: 0 !important;
-    left: 0 !important;
+    border: none;
 }
 
 /* Loading e Erro */

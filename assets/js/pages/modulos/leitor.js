@@ -1,10 +1,10 @@
 /* ============================================================
-   LEITOR.JS — v9 (corrigido)
+   LEITOR.JS — v10
    Leitor em tela cheia com:
    - EPUB via Edge Function (com fetch autenticado)
    - Modo marcacao de texto (salva trechos no Supabase)
    - Ficha do leitor padrao estante
-   - CORRECAO: resize() so depois do display() e com try/catch
+   - Usa flow: 'scrolled' para leitura continua (mais confiavel)
    ============================================================ */
 (function () {
     'use strict';
@@ -75,32 +75,6 @@
         const r = await fetch(proxyUrl, { headers: headers });
         if (!r.ok) throw new Error('Proxy retornou ' + r.status);
         return await r.arrayBuffer();
-    }
-
-    function calcularDimensoes() {
-        const main = document.querySelector('.leitor-main');
-        if (!main) {
-            return {
-                largura: window.innerWidth,
-                altura: window.innerHeight - 60
-            };
-        }
-
-        const estilo = window.getComputedStyle(main);
-        const paddingX = parseFloat(estilo.paddingLeft) + parseFloat(estilo.paddingRight);
-        const paddingY = parseFloat(estilo.paddingTop) + parseFloat(estilo.paddingBottom);
-
-        const larguraTotal = main.clientWidth - paddingX;
-        const alturaTotal = main.clientHeight - paddingY;
-
-        const maxWidth = parseFloat(
-            window.getComputedStyle(document.documentElement).getPropertyValue('--leitor-max-width')
-        ) || 720;
-
-        return {
-            largura: Math.min(larguraTotal, maxWidth),
-            altura: alturaTotal
-        };
     }
 
     /* ============================================================
@@ -312,7 +286,7 @@
     }
 
     /* ============================================================
-       EPUB
+       EPUB — com flow: 'scrolled' (mais confiavel)
        ============================================================ */
     async function abrirLivro() {
         const area = $('area');
@@ -333,58 +307,30 @@
             if (area) area.hidden = false;
             if (nav) nav.hidden = false;
 
+            // Deixa o navegador calcular o layout
             await new Promise((r) => requestAnimationFrame(r));
             await new Promise((r) => requestAnimationFrame(r));
-            await new Promise((r) => setTimeout(r, 50));
+            await new Promise((r) => setTimeout(r, 100));
 
-            const dim = calcularDimensoes();
-            console.log('Dimensoes calculadas:', dim);
-
-            if (area) {
-                area.style.width = dim.largura + 'px';
-                area.style.height = dim.altura + 'px';
-                area.style.margin = '0 auto';
-            }
-
+            // Renderiza com flow 'scrolled' — mais confiavel que 'paginated'
             rendition = book.renderTo('area', {
-                width: dim.largura + 'px',
-                height: dim.altura + 'px',
-                flow: 'paginated',
-                spread: 'none',
-                snap: true
+                width: '100%',
+                height: '100%',
+                flow: 'scrolled',
+                spread: 'none'
             });
 
             aplicarFonte();
             aplicarTema();
             aplicarModoMarcacao();
 
+            // Exibe o conteudo
             const progresso = await carregarProgresso();
             if (progresso && progresso.position) {
                 await rendition.display(progresso.position);
             } else {
                 await rendition.display();
             }
-
-            // ============================================================
-            // RESIZE — somente depois do display e com try/catch
-            // ============================================================
-            try {
-                if (rendition.manager && typeof rendition.resize === 'function') {
-                    rendition.resize(dim.largura, dim.altura);
-                }
-            } catch (e) {
-                console.warn('resize ignorado:', e.message);
-            }
-
-            // Forca a altura do iframe (garantia extra)
-            setTimeout(() => {
-                const iframe = area.querySelector('iframe');
-                if (iframe && dim.altura > 0) {
-                    iframe.style.height = dim.altura + 'px';
-                    iframe.setAttribute('height', dim.altura);
-                    console.log('Altura forcada:', dim.altura);
-                }
-            }, 200);
 
             rendition.on('relocated', (location) => {
                 const pos = location.start.cfi;
@@ -405,21 +351,6 @@
 
             configurarSelecaoTexto();
             aplicarHighlightsSalvos();
-
-            window.addEventListener('resize', () => {
-                const d = calcularDimensoes();
-                if (area) {
-                    area.style.width = d.largura + 'px';
-                    area.style.height = d.altura + 'px';
-                }
-                try {
-                    if (rendition.manager && typeof rendition.resize === 'function') {
-                        rendition.resize(d.largura, d.altura);
-                    }
-                } catch (e) {
-                    // ignora
-                }
-            });
 
         } catch (erro) {
             console.error('Erro ao abrir EPUB:', erro);
