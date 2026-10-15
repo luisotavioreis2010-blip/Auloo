@@ -1,6 +1,5 @@
 ﻿// ==============================================
-// CONFIG.JS — Supabase com retry e sessao persistente
-// CHAVE: auloo-auth (unificada com a estante)
+// CONFIG.JS - Supabase com retry e deteccao OAuth
 // ==============================================
 
 var SUPABASE_CONFIG = {
@@ -13,8 +12,11 @@ var supabaseClient = null;
 function inicializarSupabase() {
     try {
         if (typeof window.supabase === 'undefined' || !window.supabase.createClient) {
+            console.warn('Supabase ainda nao carregou, tentando novamente...');
+            setTimeout(inicializarSupabase, 200);
             return false;
         }
+
         if (supabaseClient) return true;
 
         supabaseClient = window.supabase.createClient(
@@ -27,13 +29,13 @@ function inicializarSupabase() {
                     detectSessionInUrl: true,
                     flowType: 'pkce',
                     storage: window.localStorage,
-                    storageKey: 'auloo-auth'
+                    storageKey: 'acervo-auth'
                 }
             }
         );
 
         window.supabaseClient = supabaseClient;
-        console.log('Supabase inicializado (chave: auloo-auth)');
+        console.log('Supabase inicializado');
         return true;
     } catch (error) {
         console.error('Erro ao inicializar Supabase:', error);
@@ -44,12 +46,6 @@ function inicializarSupabase() {
 inicializarSupabase();
 document.addEventListener('DOMContentLoaded', inicializarSupabase);
 window.addEventListener('load', inicializarSupabase);
-
-window.getSupabaseClient = function () {
-    if (supabaseClient) return supabaseClient;
-    if (inicializarSupabase()) return supabaseClient;
-    return null;
-};
 
 window.SUPABASE_CONFIG = SUPABASE_CONFIG;
 console.log('Config.js carregado!');

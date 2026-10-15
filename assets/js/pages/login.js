@@ -1,20 +1,18 @@
 ﻿/* ============================================================
-   LOGIN.JS — v2
-   Login, cadastro (e-mail → código → senha), recuperação de senha,
+   LOGIN.JS
+   Login, cadastro (e-mail -> código -> senha), recuperação de senha,
    login social e ajustes de layout/teclado para celular e tablet.
+   Sintaxe limitada a ES2017 (sem ?. nem ??) por causa de iPads antigos.
 
-   Depende de:
-   - config.js  (aguardarSupabase)
-   - auth.js    (validateEmail, validarSenhaForte, loginUser,
-                 checkEmailExists, recoverPassword, sendSignupCode,
-                 verifySignupCode)
-   - utils.js   (criar, limpar, debounce)
+   Depende de funções globais de auth.js:
+   validateEmail, validarSenhaForte, loginUser, checkEmailExists,
+   recoverPassword, sendSignupCode, verifySignupCode.
    ============================================================ */
 (function () {
     'use strict';
 
     /* ============================================================
-       1. CONSTANTES E ESTADO
+       1. CONSTANTES, ESTADO E UTILITÁRIOS
        ============================================================ */
     const PAGINA_ESTANTE = 'estante.html';
     const URL_ESTANTE_PRODUCAO = 'https://auloo.com.br/estante.html';
@@ -30,10 +28,11 @@
     const ROTATING_MS = 500;
     const ESTABILIDADE_MS = 120;
     const WATCHDOG_MS = 1500;
+    const SUPABASE_TENTATIVAS = 30;
+    const SUPABASE_INTERVALO_MS = 200;
     const DIGITOS_CODIGO = 6;
 
-    const MQ_ROW =
-        '(min-width: 568px) and (max-width: 950px) and (orientation: landscape) and (max-height: 500px)';
+    const MQ_ROW = '(min-width: 568px) and (max-width: 950px) and (orientation: landscape) and (max-height: 500px)';
 
     const PROVEDORES_SOCIAIS = {
         google:  { rotulo: 'Google',  params: { prompt: 'select_account', access_type: 'online' } },
@@ -41,32 +40,20 @@
         github:  { rotulo: 'GitHub',  params: {} }
     };
 
-    /* ---------- Ícones SVG (inline para economizar requests) ---------- */
     const svgIcone = (caminho) =>
         '<svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" ' +
         'fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="' + caminho + '"/></svg>';
 
     const ICONE_EMAIL = svgIcone(
-        'M13.106 7.222c0-2.967-2.249-5.032-5.482-5.032-3.35 0-5.646 2.318-5.646 5.702 0 3.493 ' +
-        '2.235 5.708 5.762 5.708.862 0 1.689-.123 2.304-.335v-.862c-.43.199-1.354.328-2.29.328' +
-        '-2.926 0-4.813-1.88-4.813-4.798 0-2.844 1.921-4.881 4.594-4.881 2.735 0 4.608 1.688 ' +
-        '4.608 4.156 0 1.682-.554 2.769-1.416 2.769-.492 0-.772-.28-.772-.76V5.206H8.923v.834h' +
-        '-.11c-.266-.595-.881-.964-1.6-.964-1.4 0-2.378 1.162-2.378 2.823 0 1.737.957 2.906 ' +
-        '2.379 2.906.8 0 1.415-.39 1.709-1.087h.11c.081.67.703 1.148 1.503 1.148 1.572 0 ' +
-        '2.57-1.415 2.57-3.643zm-7.177.704c0-1.197.54-1.907 1.456-1.907.93 0 1.524.738 1.524 ' +
-        '1.907S8.308 9.84 7.371 9.84c-.895 0-1.442-.725-1.442-1.914z'
-    );
+        'M13.106 7.222c0-2.967-2.249-5.032-5.482-5.032-3.35 0-5.646 2.318-5.646 5.702 0 3.493 2.235 5.708 5.762 5.708.862 0 1.689-.123 2.304-.335v-.862c-.43.199-1.354.328-2.29.328-2.926 0-4.813-1.88-4.813-4.798 0-2.844 1.921-4.881 4.594-4.881 2.735 0 4.608 1.688 4.608 4.156 0 1.682-.554 2.769-1.416 2.769-.492 0-.772-.28-.772-.76V5.206H8.923v.834h-.11c-.266-.595-.881-.964-1.6-.964-1.4 0-2.378 1.162-2.378 2.823 0 1.737.957 2.906 2.379 2.906.8 0 1.415-.39 1.709-1.087h.11c.081.67.703 1.148 1.503 1.148 1.572 0 2.57-1.415 2.57-3.643zm-7.177.704c0-1.197.54-1.907 1.456-1.907.93 0 1.524.738 1.524 1.907S8.308 9.84 7.371 9.84c-.895 0-1.442-.725-1.442-1.914z');
 
     const ICONE_CADEADO = svgIcone(
-        'M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 ' +
-        '2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z'
-    );
+        'M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z');
 
     const $ = (id) => document.getElementById(id);
     const raiz = document.documentElement;
-    const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
 
-    /* ---------- Elementos (preenchidos em iniciar()) ---------- */
+    /* Elementos (preenchidos em iniciar()) */
     let form = null;
     let inputEmail = null;
     let inputSenha = null;
@@ -75,30 +62,34 @@
     let botaoForgot = null;
     let rotuloLogin = 'Login';
 
-    /* ---------- Estado compartilhado ---------- */
+    /* Estado compartilhado entre as seções */
     let animacoesLottie = [];
-    let offsetAtual = 0;
-    let razaoTeclado = 0.5;
-    let ativoAtual = null;
+    let offsetAtual = 0;             // deslocamento vertical aplicado por causa do teclado
+    let razaoTeclado = 0.5;          // proporção da tela ocupada pela área visível com teclado
+    let ativoAtual = null;           // input em foco no modo "row"
     let temporizadorMensagem = null;
     let timerAltura = null;
     let ajusteRaf = false;
     let vvHeightAnterior = 0;
     let timerEstabilidade = null;
 
-    /* ============================================================
-       2. HELPERS
-       ============================================================ */
+    const esperar = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
     function getDb() {
-        return window.getSupabaseClientSeguro ? window.getSupabaseClientSeguro()
-                                              : window.getSupabaseClient();
+        return window.supabaseClient ||
+               (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
     }
 
     async function aguardarSupabase() {
-        if (window.aguardarSupabase) return window.aguardarSupabase(40, 200);
-        return getDb();
+        for (let i = 0; i < SUPABASE_TENTATIVAS; i++) {
+            const db = getDb();
+            if (db) return db;
+            await esperar(SUPABASE_INTERVALO_MS);
+        }
+        return null;
     }
 
+    /* Remove < > e espaços das pontas; e-mail é sempre comparado em minúsculas */
     function normalizarEmail(valor) {
         return valor ? String(valor).replace(/[<>]/g, '').trim().toLowerCase() : '';
     }
@@ -108,6 +99,7 @@
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     }
 
+    /* Contexto lido por auth.js */
     function definirContexto(modoForgot, email, senha) {
         window.modoForgotPassword = modoForgot;
         window.emailVerificacao = email || null;
@@ -129,12 +121,12 @@
         });
     }
 
-    function irParaEstante() {
+    function irParaESTANTE() {
         setTimeout(() => { window.location.href = PAGINA_ESTANTE; }, REDIRECIONAR_MS);
     }
 
     /* ============================================================
-       3. VIEWPORT, ALTURA FIXA E LAYOUT
+       2. VIEWPORT, ALTURA FIXA E LAYOUT
        ============================================================ */
     function ehLayoutRow() {
         return raiz.getAttribute('data-layout') === 'row';
@@ -167,6 +159,7 @@
         return campoEmFoco() && (getAppH() - getAlturaVisivel()) > LIMITE_TECLADO_PX;
     }
 
+    /* Guarda a MAIOR altura vista, para o layout não encolher quando o teclado abre */
     function setupAlturaFixa() {
         let maiorAltura = 0;
         let larguraMedida = 0;
@@ -182,6 +175,7 @@
                 larguraMedida = window.innerWidth;
                 maiorAltura = 0;
             }
+
             const h = window.innerHeight;
             if (h > maiorAltura) aplicar(h);
 
@@ -193,15 +187,20 @@
             }, 700);
         }
 
+        /* O iOS/Android só "assentam" as dimensões alguns instantes depois */
         [0, 100, 300, 600, 1000, 1500].forEach((ms) => setTimeout(medir, ms));
+
         window.addEventListener('resize', medir);
+
         window.addEventListener('orientationchange', () => {
             maiorAltura = 0;
             [50, 300, 600, 1000].forEach((ms) => setTimeout(medir, ms));
         });
+
         medir();
     }
 
+    /* Trava a altura mínima do card para ele não "pular" ao trocar mensagens */
     function aplicarAlturaLogin() {
         if (campoEmFoco() || tecladoAberto()) return;
         if (form.classList.contains('modo-forgot')) return;
@@ -255,6 +254,7 @@
         form.querySelectorAll('[data-ativo="true"]').forEach((el) => el.removeAttribute('data-ativo'));
     }
 
+    /* Desfaz tudo que o teclado virtual alterou (foco, offset, altura visível) */
     function limparEstadoTeclado() {
         limparAtivos();
         raiz.classList.remove('kb-focus');
@@ -333,6 +333,7 @@
             }, 400);
         });
 
+        /* Rede de segurança: alguns navegadores móveis perdem eventos de resize/foco */
         setInterval(() => {
             if (document.hidden || campoEmFoco() || tecladoAberto()) return;
             if (raiz.classList.contains('kb-focus') || offsetAtual !== 0 ||
@@ -345,8 +346,9 @@
     }
 
     /* ============================================================
-       4. OFFSET DO TECLADO VIRTUAL
+       3. OFFSET DO TECLADO
        ============================================================ */
+    /* Elemento que precisa ficar visível acima do teclado */
     function escolherReferencia() {
         const ativo = form.querySelector('[data-ativo="true"]');
         if (ativo) return ativo;
@@ -414,6 +416,7 @@
         });
     }
 
+    /* Teclado abrindo (altura diminui): espera estabilizar. Fechando: ajusta na hora. */
     function agendarAposEstabilidade() {
         const vv = window.visualViewport;
         const h = vv ? vv.height : window.innerHeight;
@@ -462,7 +465,7 @@
     }
 
     /* ============================================================
-       5. MODO FOCO (celular deitado)
+       4. MODO FOCO (celular deitado)
        ============================================================ */
     function setupModoFoco() {
         function marcarAtivo(input) {
@@ -509,7 +512,7 @@
     }
 
     /* ============================================================
-       6. MENSAGENS E BOTÕES
+       5. MENSAGENS E BOTÕES
        ============================================================ */
     function removerMensagem(msg) {
         if (!msg) return;
@@ -527,6 +530,7 @@
         return lista[0] || null;
     }
 
+    /* Decide em qual contêiner e acima de qual campo a mensagem deve aparecer */
     function escolherPaiMensagem() {
         const modoAtivo = form.querySelector('.forgot-form');
         if (modoAtivo) {
@@ -537,6 +541,7 @@
         }
 
         const colLog = form.querySelector('.form-coluna-login');
+
         const ativo = form.querySelector('[data-ativo="true"]');
         if (ativo && colLog) return { parent: colLog, ref: ativo };
 
@@ -552,6 +557,7 @@
         return { parent: form, ref: null };
     }
 
+    /* Colunas com display:contents (tablet) não geram caixa: usa o form como referência */
     function paiPosicionavel(el) {
         return (el && getComputedStyle(el).display === 'contents') ? form : el;
     }
@@ -584,7 +590,7 @@
         msg.appendChild(p);
 
         posicionarMensagem(msg);
-        void msg.offsetHeight;
+        void msg.offsetHeight; // força o reflow para a transição de entrada rodar
         msg.classList.add('visivel');
 
         temporizadorMensagem = setTimeout(() => {
@@ -592,7 +598,7 @@
         }, Math.max(MENSAGEM_MIN_MS, String(texto).length * MENSAGEM_MS_CHAR));
     }
 
-    function mostrarLoadingBotao(botao) {
+    function mostrarLoading(botao) {
         botao.disabled = true;
         botao.textContent = '';
         const spinner = document.createElement('span');
@@ -606,9 +612,11 @@
         botao.textContent = textoOriginal;
     }
 
+    /* Roda `acao` com o botão em loading. Se ela devolver true, o botão fica em loading
+       (ex.: redirecionando); caso contrário volta ao texto original. */
     async function executarComBotao(botao, textoOriginal, acao) {
         if (!botao || botao.disabled) return;
-        mostrarLoadingBotao(botao);
+        mostrarLoading(botao);
         let manter = false;
         try {
             manter = await acao();
@@ -621,7 +629,7 @@
     }
 
     /* ============================================================
-       7. MODOS DO CARD (forgot / cadastro / nova senha)
+       6. MODOS DO CARD (forgot / cadastro / nova senha)
        ============================================================ */
     function carregarLottie(idContainer) {
         const container = $(idContainer);
@@ -650,7 +658,7 @@
         removerContainersDeModo();
         limparAtivos();
         form.classList.add('modo-forgot');
-        form.insertAdjacentHTML('beforeend', html);
+        form.insertAdjacentHTML('beforeend', html); // `html` é sempre texto estático deste arquivo
         agendarImediato();
     }
 
@@ -669,7 +677,7 @@
     }
 
     /* ============================================================
-       8. LOGIN
+       7. LOGIN
        ============================================================ */
     function validarCredenciais(email, senha) {
         if (!email || !senha) return 'Digite e-mail e senha!';
@@ -687,7 +695,7 @@
         executarComBotao(botaoLogin, rotuloLogin, async () => {
             const resultado = await loginUser(email, senha);
             if (resultado.success) {
-                irParaEstante();
+                irParaESTANTE();
                 return true;
             }
             mostrarMensagem(resultado.message || 'E-mail ou senha incorretos!', 'erro');
@@ -696,7 +704,7 @@
     }
 
     /* ============================================================
-       9. ESQUECI A SENHA
+       8. ESQUECI A SENHA
        ============================================================ */
     function mostrarForgotPassword() {
         abrirModo(
@@ -752,7 +760,7 @@
     }
 
     /* ============================================================
-       10. CADASTRO (e-mail → código → senha)
+       9. CADASTRO (e-mail -> código -> senha)
        ============================================================ */
     function ligarOlho(botao, input) {
         botao.addEventListener('click', () => {
@@ -769,6 +777,7 @@
         });
     }
 
+    /* Clona o botão de olho do login (#btn-olho) para os campos criados dinamicamente */
     function adicionarOlho(input) {
         const modelo = $('btn-olho');
         if (!modelo) return;
@@ -793,6 +802,7 @@
         return caixas.map((c) => c.value).join('');
     }
 
+    /* Navegação entre as caixas: digitar avança, backspace volta, colar/autofill distribui */
     function ligarCaixasCodigo(caixas) {
         const ultima = caixas.length - 1;
 
@@ -807,6 +817,7 @@
 
             caixa.addEventListener('input', () => {
                 const digitos = caixa.value.replace(/\D/g, '');
+                /* Autofill de SMS pode entregar o código inteiro na primeira caixa */
                 if (digitos.length > 1) { preencher(indice, digitos); return; }
 
                 caixa.value = digitos;
@@ -832,7 +843,7 @@
 
     function mostrarCadastro() {
         const emailInicial = normalizarEmail(inputEmail.value);
-        const est = { email: '', codigo: '' };
+        const estado = { email: '', codigo: '' };
 
         abrirModo(
             '<div id="container-forgot" class="modo-dois-campos">' +
@@ -848,9 +859,9 @@
             limparAtivos();
             ativoAtual = null;
             raiz.classList.remove('kb-focus');
-            painel.innerHTML = html;
+            painel.innerHTML = html; // `html` é sempre texto estático deste arquivo
             painel.classList.remove('aparece');
-            void painel.offsetWidth;
+            void painel.offsetWidth; // reinicia a animação de entrada
             painel.classList.add('aparece');
             agendarImediato();
         }
@@ -871,7 +882,7 @@
 
             const emailCad = $('email-cadastro');
             const btn = $('btn-cadastro-acao');
-            emailCad.value = est.email || emailInicial;
+            emailCad.value = estado.email || emailInicial;
 
             function enviarCodigo() {
                 const email = normalizarEmail(emailCad.value);
@@ -900,7 +911,7 @@
                         return false;
                     }
 
-                    est.email = email;
+                    estado.email = email;
                     etapaCodigo();
                     mostrarMensagem('Código enviado!', 'sucesso');
                     return false;
@@ -929,7 +940,7 @@
                     mostrarMensagem('Digite os ' + caixas.length + ' dígitos!', 'erro');
                     return;
                 }
-                est.codigo = codigo;
+                estado.codigo = codigo;
                 etapaSenha();
             }
 
@@ -974,26 +985,26 @@
                 }
 
                 executarComBotao(btn, 'CONFIRMAR', async () => {
-                    definirContexto(false, est.email, senha.value);
+                    definirContexto(false, estado.email, senha.value);
 
                     const criacao = await verifySignupCode(
-                        est.email, est.codigo, senha.value, est.email.split('@')[0]
+                        estado.email, estado.codigo, senha.value, estado.email.split('@')[0]
                     );
 
                     if (!criacao.success) {
                         const msg = criacao.message || 'Não foi possível criar a conta.';
                         if (/c[óo]digo|code|expir|inv[áa]lid/i.test(msg)) {
-                            est.codigo = '';
+                            estado.codigo = '';
                             etapaCodigo();
                         }
                         mostrarMensagem(msg, 'erro');
                         return false;
                     }
 
-                    const entrada = await loginUser(est.email, senha.value);
+                    const entrada = await loginUser(estado.email, senha.value);
                     if (entrada.success) {
                         mostrarMensagem('Conta criada!', 'sucesso');
-                        irParaEstante();
+                        irParaESTANTE();
                         return true;
                     }
 
@@ -1013,7 +1024,7 @@
     }
 
     /* ============================================================
-       11. NOVA SENHA (link de recuperação)
+       10. NOVA SENHA (link de recuperação)
        ============================================================ */
     function limparUrl() {
         window.history.replaceState(null, '', window.location.pathname);
@@ -1118,6 +1129,7 @@
                 }
 
                 const resultado = await db.auth.updateUser({ password: novaSenha.value });
+                /* Reenviar a mesma senha não é falha para o usuário */
                 const igualASenhaAntiga = !!resultado.error &&
                     String(resultado.error.message).indexOf('different from the old password') !== -1;
 
@@ -1139,7 +1151,7 @@
     }
 
     /* ============================================================
-       12. OLHO DA SENHA, LOGIN SOCIAL E MENU "SAIBA MAIS"
+       11. OLHO DA SENHA, LOGIN SOCIAL E MENU "SAIBA MAIS"
        ============================================================ */
     function setupOlhoSenha() {
         const botao = $('btn-olho');
@@ -1180,6 +1192,7 @@
                 definirCarregandoSocial(botao, false);
                 mostrarMensagem('Não foi possível entrar com ' + PROVEDORES_SOCIAIS[provedor].rotulo + '.', 'erro');
             }
+            /* Sem erro: o navegador está a caminho do provedor; o botão fica travado */
         } catch (erro) {
             console.error(erro);
             definirCarregandoSocial(botao, false);
@@ -1197,6 +1210,7 @@
             botao.addEventListener('click', () => entrarComProvedor(provedor, botao));
         });
 
+        /* Voltar pelo histórico (bfcache) restaura a página com os botões ainda travados */
         window.addEventListener('pageshow', (e) => {
             if (e.persisted) botoes.forEach((botao) => definirCarregandoSocial(botao, false));
         });
@@ -1207,6 +1221,7 @@
         const menu = $('navbar-saiba-menu');
         if (!botao || !menu) return;
 
+        /* No celular deitado o menu se alinha à coluna correta */
         function posicionar() {
             menu.style.left = menu.style.right = menu.style.width = '';
             menu.style.removeProperty('--seta-x');
@@ -1219,18 +1234,22 @@
             let esq, dir;
 
             if (emModoForgot) {
+                // Modo forgot/cadastro/nova senha: centraliza na coluna esquerda
+                // (até a linha divisória do #container-forgot)
                 const containerForgot = form.querySelector('#container-forgot');
                 if (!containerForgot) return;
 
                 const formRect = form.getBoundingClientRect();
                 const containerRect = containerForgot.getBoundingClientRect();
 
+                // A linha divisória fica em 0.8/1.8 da largura do container (grid 0.8fr 1fr)
                 const larguraContainer = containerRect.width;
                 const posicaoLinha = containerRect.left + (larguraContainer * 0.8 / 1.8);
 
                 esq = formRect.left + folga;
                 dir = posicaoLinha - folga;
             } else {
+                // Modo login normal: centraliza na coluna direita (botões sociais)
                 const coluna = document.querySelector('.form-coluna-sociais');
                 if (!coluna) return;
 
@@ -1277,7 +1296,7 @@
     }
 
     /* ============================================================
-       13. INICIALIZAÇÃO
+       12. INICIALIZAÇÃO
        ============================================================ */
     function aoCarregar() {
         sincronizarTela();
@@ -1287,7 +1306,7 @@
 
     function iniciar() {
         form = $('login-form');
-        if (!form) return;
+        if (!form) return; // outra página que reaproveita este script
 
         inputEmail = $('email');
         inputSenha = $('senha');
@@ -1296,13 +1315,13 @@
         botaoForgot = $('btn-forgot');
 
         if (!inputEmail || !inputSenha || !botaoLogin || !botaoSignUp || !botaoForgot) {
-            console.error('login.js: elementos obrigatórios não encontrados.');
+            console.error('login.js: elementos obrigatórios do formulário não encontrados.');
             return;
         }
 
         rotuloLogin = botaoLogin.textContent.trim() || 'Login';
 
-        /* Impede o zoom por pinça do iOS (layout é calculado para escala 1) */
+        /* Impede o zoom por pinça do iOS (o layout é todo calculado para escala 1) */
         document.addEventListener('gesturestart', (e) => e.preventDefault());
 
         sincronizarTela();
@@ -1323,11 +1342,7 @@
         aoPressionarEnter(inputEmail, () => inputSenha.focus());
         aoPressionarEnter(inputSenha, fazerLogin);
 
-        /* Só dispara recovery se houver parâmetro na URL */
-        const temRecoveryNaUrl =
-            window.location.search.indexOf('type=recovery') !== -1 ||
-            window.location.hash.indexOf('type=recovery') !== -1;
-        if (temRecoveryNaUrl) detectarRecovery();
+        detectarRecovery();
 
         if (document.fonts && document.fonts.ready) {
             document.fonts.ready.then(agendarAltura);

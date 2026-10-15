@@ -1,16 +1,13 @@
 ﻿// ==============================================
-// AUTH.JS — Autenticacao completa
+// AUTH.JS
 // ==============================================
 
 function getSupabaseClient() {
-    if (window.getSupabaseClient) {
-        const c = window.getSupabaseClient();
-        if (c) return c;
+    if (!supabaseClient) {
+        console.error('Supabase nao inicializado');
+        return null;
     }
-    if (window.supabaseClient) return window.supabaseClient;
-    if (typeof supabaseClient !== 'undefined' && supabaseClient) return supabaseClient;
-    console.error('Supabase nao inicializado');
-    return null;
+    return supabaseClient;
 }
 
 // ===== VALIDAR EMAIL =====
@@ -29,7 +26,7 @@ function validarSenhaForte(senha) {
     return { valida: true, mensagem: 'Senha forte!' };
 }
 
-// ===== HELPER: extrai a mensagem real do erro =====
+// ===== HELPER: extrai a mensagem real do erro da Edge Function =====
 async function extrairMensagemErro(error, fallback) {
     var msg = fallback || 'Erro inesperado.';
     try {
@@ -45,7 +42,7 @@ async function extrairMensagemErro(error, fallback) {
     return msg;
 }
 
-// ===== VERIFICAR SE EMAIL EXISTE =====
+// ===== VERIFICAR SE EMAIL EXISTE (via Edge Function) =====
 async function checkEmailExists(email) {
     var client = getSupabaseClient();
     if (!client) return { exists: false, source: null, provider: null, hasPassword: false };
@@ -100,7 +97,7 @@ async function sendSignupCode(email) {
     }
 }
 
-// ===== VERIFICAR CODIGO E CRIAR CONTA =====
+// ===== VERIFICAR CODIGO E SO ENTAO CRIAR A CONTA =====
 async function verifySignupCode(email, code, password, fullName) {
     var client = getSupabaseClient();
     if (!client) return { success: false, message: 'Erro de configuracao.' };
@@ -178,14 +175,16 @@ async function saveUserToDatabase(user) {
     if (!client || !user || !user.id) return;
 
     try {
-        var fullName = (user.user_metadata && (user.user_metadata.full_name || user.user_metadata.name)) ||
-                        (user.email ? user.email.split('@')[0] : 'Usuario');
+        var fullName = user.user_metadata?.full_name ||
+                        user.user_metadata?.name ||
+                        user.email?.split('@')[0] ||
+                        'Usuario';
 
         var userData = {
             id: user.id,
             email: user.email,
             full_name: fullName,
-            avatar_url: (user.user_metadata && (user.user_metadata.avatar_url || user.user_metadata.picture)) || null,
+            avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || null,
             updated_at: new Date().toISOString()
         };
 
@@ -193,7 +192,9 @@ async function saveUserToDatabase(user) {
             .from('profiles')
             .upsert(userData, { onConflict: 'id' });
 
-        if (error) console.error('Erro ao salvar perfil:', error);
+        if (error) {
+            console.error('Erro ao salvar perfil:', error);
+        }
     } catch (error) {
         console.error('Erro ao salvar usuario:', error);
     }
@@ -223,7 +224,11 @@ async function updatePassword(newPassword) {
 
     try {
         var { error } = await client.auth.updateUser({ password: newPassword });
-        if (error) return { success: false, message: error.message };
+
+        if (error) {
+            return { success: false, message: error.message };
+        }
+
         return { success: true, message: 'Senha atualizada!' };
     } catch (error) {
         return { success: false, message: 'Erro ao atualizar senha.' };
@@ -236,8 +241,15 @@ async function verifyCurrentPassword(email, password) {
     if (!client) return { success: false, message: 'Erro de configuracao.' };
 
     try {
-        var { error } = await client.auth.signInWithPassword({ email: email, password: password });
-        if (error) return { success: false, message: 'Senha atual incorreta!' };
+        var { error } = await client.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
+
+        if (error) {
+            return { success: false, message: 'Senha atual incorreta!' };
+        }
+
         return { success: true };
     } catch (error) {
         return { success: false, message: 'Erro ao verificar senha.' };
@@ -247,10 +259,7 @@ async function verifyCurrentPassword(email, password) {
 // ===== LOGOUT =====
 async function logoutUser() {
     var client = getSupabaseClient();
-    if (!client) {
-        window.location.href = '/login.html';
-        return;
-    }
+    if (!client) return;
 
     try {
         await client.auth.signOut();
