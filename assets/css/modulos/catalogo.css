@@ -1880,3 +1880,125 @@ html.carregando-catalogo .catalogo-main {
         animation-iteration-count: infinite !important;
     }
 }
+
+/* ==============================================
+   TELA DE LOADING BONITA
+   ============================================== */
+.catalogo-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    padding: 4rem 2rem;
+    text-align: center;
+    animation: fadeInLoading 0.4s ease;
+}
+
+@keyframes fadeInLoading {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.loading-livros {
+    display: flex;
+    gap: 0.4rem;
+    align-items: flex-end;
+    height: 60px;
+}
+
+.loading-livro {
+    width: 18px;
+    height: 48px;
+    background: var(--dourado);
+    border-radius: 2px;
+    box-shadow: 0 2px 8px rgba(184, 137, 74, 0.3);
+    animation: pulsarLivro 1.2s ease-in-out infinite;
+}
+
+.loading-livro:nth-child(1) {
+    animation-delay: 0s;
+    background: var(--vinho);
+    height: 40px;
+}
+
+.loading-livro:nth-child(2) {
+    animation-delay: 0.15s;
+    background: var(--dourado);
+    height: 52px;
+}
+
+.loading-livro:nth-child(3) {
+    animation-delay: 0.3s;
+    background: var(--vinho-medio);
+    height: 44px;
+}
+
+@keyframes pulsarLivro {
+    0%, 100% { transform: translateY(0) scaleY(1); }
+    50% { transform: translateY(-8px) scaleY(1.05); }
+}
+
+.loading-titulo {
+    font-family: var(--fonte-titulo);
+    font-size: 1.4rem;
+    font-weight: 700;
+    font-style: italic;
+    color: var(--vinho);
+    margin: 0;
+    letter-spacing: -0.3px;
+}
+
+.loading-titulo::after {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 1px;
+    margin: 0.75rem auto 0;
+    background: linear-gradient(90deg, transparent, var(--dourado), transparent);
+}
+
+.catalogo-loading p {
+    font-family: var(--fonte-display);
+    font-size: 1.05rem;
+    font-style: italic;
+    color: var(--tinta-suave);
+    max-width: 30rem;
+    line-height: 1.5;
+}
+
+.loading-barra {
+    width: 180px;
+    height: 3px;
+    background: var(--papel-escuro);
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+}
+
+.loading-barra-fill {
+    position: absolute;
+    top: 0;
+    left: -40%;
+    width: 40%;
+    height: 100%;
+    background: linear-gradient(90deg, var(--vinho), var(--dourado), var(--dourado-claro));
+    border-radius: 3px;
+    animation: barraIndo 1.8s ease-in-out infinite;
+    box-shadow: 0 0 8px rgba(184, 137, 74, 0.6);
+}
+
+@keyframes barraIndo {
+    0% { left: -40%; }
+    100% { left: 100%; }
+}
+
+@media (max-width: 767px) {
+    .catalogo-loading { padding: 3rem 1.5rem; gap: 1.2rem; }
+    .loading-titulo { font-size: 1.2rem; }
+    .loading-livro { width: 14px; }
+    .loading-livro:nth-child(1) { height: 32px; }
+    .loading-livro:nth-child(2) { height: 42px; }
+    .loading-livro:nth-child(3) { height: 36px; }
+    .loading-barra { width: 140px; }
+}

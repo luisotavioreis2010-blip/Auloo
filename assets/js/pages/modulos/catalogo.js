@@ -1,7 +1,7 @@
 ﻿/* ============================================================
-   CATALOGO.JS — v18 (PROGRESSIVO DE VERDADE)
-   - Forca o navegador a pintar entre lotes (await requestAnimationFrame)
-   - Standard Ebooks: 40 paginas | Gutenberg: 10 paginas
+   CATALOGO.JS — v19
+   - Tela de loading bonita enquanto carrega
+   - Carregamento progressivo (mostra aos poucos)
    - Todos os livros carregados
    ============================================================ */
 (function () {
@@ -110,15 +110,9 @@
         console.log('[CATALOGO] iniciarSessao: comecando');
 
         const db = await aguardarDb();
-        if (!db) {
-            console.error('[CATALOGO] Supabase nao inicializou');
-            irParaLogin();
-            return;
-        }
-        console.log('[CATALOGO] Supabase OK');
+        if (!db) { irParaLogin(); return; }
 
         db.auth.onAuthStateChange((evento) => {
-            console.log('[CATALOGO] Auth state change:', evento);
             if (evento === 'SIGNED_OUT') irParaLogin();
         });
 
@@ -126,18 +120,12 @@
             let sessao = null;
             for (let i = 0; i < 80; i++) {
                 const resultado = await db.auth.getSession();
-                if (resultado.error) console.warn('[CATALOGO] getSession erro:', resultado.error);
                 sessao = resultado.data && resultado.data.session;
-                if (sessao && sessao.user) {
-                    console.log('[CATALOGO] Sessao encontrada na tentativa', i + 1, ':', sessao.user.email);
-                    break;
-                }
-                if (i % 10 === 0 && i > 0) console.log('[CATALOGO] Tentativa', i + 1, '- sem sessao...');
+                if (sessao && sessao.user) break;
                 await esperar(SUPABASE_INTERVALO_MS);
             }
 
             if (!sessao || !sessao.user) {
-                console.warn('[CATALOGO] Sem sessao depois de 16s');
                 irParaLogin();
                 return;
             }
@@ -156,17 +144,10 @@
             if (elNome) elNome.textContent = nome.split('@')[0];
             if (elEmail) elEmail.textContent = sessao.user.email || '';
 
-            console.log('[CATALOGO] Usuario:', sessao.user.email);
-
-            try {
-                await carregarEstatisticas();
-                console.log('[CATALOGO] Estatisticas OK');
-            } catch (e) {
-                console.warn('[CATALOGO] Estatisticas falharam:', e);
-            }
-            console.log('[CATALOGO] iniciarSessao: OK');
+            try { await carregarEstatisticas(); }
+            catch (e) { console.warn('Estatisticas falharam:', e); }
         } catch (erro) {
-            console.error('[CATALOGO] Erro getSession:', erro);
+            console.error('Erro getSession:', erro);
             irParaLogin();
         }
     }
@@ -197,7 +178,7 @@
 
             renderizarEstatisticas(totalLidos, historico || []);
         } catch (e) {
-            console.warn('Erro ao carregar estatisticas:', e);
+            console.warn('Erro estatisticas:', e);
         }
     }
 
@@ -225,21 +206,17 @@
                         '&slug=' + encodeURIComponent(livro.book_slug) +
                         '&autor=' + encodeURIComponent(livro.book_author || '') +
                         '&capa=' + encodeURIComponent(livro.book_cover || '');
-            item.title = livro.book_title;
 
             const capa = document.createElement('div');
             capa.className = 'ficha-livro-capa';
             if (livro.book_cover) {
                 const img = document.createElement('img');
                 img.src = livro.book_cover;
-                img.alt = livro.book_title;
                 img.loading = 'lazy';
                 img.referrerPolicy = 'no-referrer';
                 img.onerror = () => { capa.textContent = '📖'; };
                 capa.appendChild(img);
-            } else {
-                capa.textContent = '📖';
-            }
+            } else capa.textContent = '📖';
 
             const info = document.createElement('div');
             info.className = 'ficha-livro-info';
@@ -280,7 +257,6 @@
 
         const img = document.createElement('img');
         img.className = 'foto-perfil';
-        img.alt = 'Foto de perfil';
         img.referrerPolicy = 'no-referrer';
         img.src = avatarUrl;
         img.onerror = () => {
@@ -300,9 +276,7 @@
         let maiorAltura = 0;
         let larguraMedida = 0;
         let timerAssentar = null;
-
         function aplicar(h) { maiorAltura = h; raiz.style.setProperty('--app-h', h + 'px'); }
-
         function medir() {
             if (window.innerWidth !== larguraMedida) { larguraMedida = window.innerWidth; maiorAltura = 0; }
             const h = window.innerHeight;
@@ -312,7 +286,6 @@
                 if (!campoEmFoco() && window.innerHeight !== maiorAltura) aplicar(window.innerHeight);
             }, 700);
         }
-
         [0, 100, 300, 600, 1000, 1500].forEach((ms) => setTimeout(medir, ms));
         window.addEventListener('resize', medir);
         window.addEventListener('orientationchange', () => {
@@ -369,7 +342,6 @@
         atualizarAlturaVisivel();
         if (!tecladoAberto()) { resetarKbOffset(); return; }
         if (ehLayoutRow() && raiz.classList.contains('kb-focus')) { resetarKbOffset(); return; }
-
         const ref = escolherReferencia();
         if (!ref) return;
         const bottomNatural = ref.getBoundingClientRect().bottom - offsetAtual;
@@ -409,7 +381,6 @@
             window.visualViewport.addEventListener('scroll', agendarAposEstabilidade);
         }
         window.addEventListener('resize', agendarAposEstabilidade);
-
         document.addEventListener('focusin', (e) => {
             if (e.target && e.target.tagName === 'INPUT') agendarAposEstabilidade();
         });
@@ -503,22 +474,9 @@
        RENDERIZACAO
        ============================================================ */
     function esconderTudo() {
-        ['catalogo-loading', 'catalogo-erro', 'resultados-info', 'catalogo-fim'].forEach((id) => {
+        ['catalogo-erro', 'resultados-info', 'catalogo-fim'].forEach((id) => {
             const el = $(id); if (el) el.hidden = true;
         });
-    }
-
-    function esconderLoading() {
-        const loading = $('catalogo-loading');
-        if (loading) loading.hidden = true;
-    }
-
-    function mostrarErro(mensagem) {
-        esconderTudo();
-        const erro = $('catalogo-erro');
-        const msg = $('erro-mensagem');
-        if (msg) msg.textContent = mensagem || 'Nao foi possivel buscar os livros.';
-        if (erro) erro.hidden = false;
     }
 
     function mostrarLoading(mensagem) {
@@ -529,14 +487,26 @@
         if (loading) loading.hidden = false;
     }
 
+    function esconderLoading() {
+        const loading = $('catalogo-loading');
+        if (loading) loading.hidden = true;
+    }
+
+    function mostrarErro(mensagem) {
+        esconderTudo();
+        esconderLoading();
+        const erro = $('catalogo-erro');
+        const msg = $('erro-mensagem');
+        if (msg) msg.textContent = mensagem || 'Nao foi possivel buscar os livros.';
+        if (erro) erro.hidden = false;
+    }
+
     function atualizarContagem(total) {
         const info = $('resultados-info');
         const contagem = $('resultados-contagem');
         const btnVoltar = $('btn-voltar-populares');
 
-        if (contagem) {
-            contagem.textContent = total === 1 ? '1 livro' : total + ' livros';
-        }
+        if (contagem) contagem.textContent = total === 1 ? '1 livro' : total + ' livros';
         if (info) info.hidden = false;
         if (btnVoltar) btnVoltar.hidden = estado.modo !== 'busca';
     }
@@ -606,13 +576,8 @@
         return card;
     }
 
-    /* Adiciona 1 card e deixa o navegador pintar (cedendo o controle) */
-    async function adicionarCardPausado(grid, livro) {
-        grid.appendChild(criarCardLivro(livro));
-    }
-
     /* ============================================================
-       CARREGAR CATALOGO — PROGRESSIVO DE VERDADE
+       CARREGAR CATALOGO — PROGRESSIVO
        ============================================================ */
     async function carregarCatalogo() {
         console.log('[CATALOGO] carregarCatalogo: comecando');
@@ -621,11 +586,14 @@
 
         const grid = $('resultados-grid');
         if (grid) limpar(grid);
-        esconderTudo();
+
+        // Mostra o loading bonito
+        mostrarLoading('Buscando livros nas melhores fontes');
 
         const todos = [];
         const jaNaTela = new Set();
         let totalNaTela = 0;
+        let jaEscondeuLoading = false;
 
         function pesoFonte(livro) {
             const fonte = livro.source || '';
@@ -635,11 +603,9 @@
             return 3;
         }
 
-        // Adiciona livros em lotes, cedendo o controle entre eles para o navegador pintar
         async function adicionarEmLotes(lista, fonte) {
             if (!lista || lista.length === 0) return 0;
 
-            // Adiciona na lista "todos" e no mapa de "ja na tela"
             const novos = [];
             lista.forEach((livro) => {
                 if (!livro || !livro.title) return;
@@ -652,24 +618,25 @@
                 novos.push(livro);
             });
 
-            // Ordena os novos por peso (Standard Ebooks primeiro)
             novos.sort((a, b) => pesoFonte(a) - pesoFonte(b));
 
-            // Adiciona em lotes de LIVROS_POR_LOTE, cedendo o controle a cada lote
             for (let i = 0; i < novos.length; i += LIVROS_POR_LOTE) {
                 const lote = novos.slice(i, i + LIVROS_POR_LOTE);
 
-                // Cria o fragmento do lote
+                // Esconde o loading assim que o primeiro lote chega
+                if (!jaEscondeuLoading && lote.length > 0) {
+                    jaEscondeuLoading = true;
+                    esconderLoading();
+                }
+
                 const fragmento = document.createDocumentFragment();
-                lote.forEach((livro) => {
-                    fragmento.appendChild(criarCardLivro(livro));
-                });
+                lote.forEach((livro) => fragmento.appendChild(criarCardLivro(livro)));
                 grid.appendChild(fragmento);
 
                 totalNaTela += lote.length;
                 atualizarContagem(totalNaTela);
 
-                // Cede o controle pro navegador PINTAR a tela antes de continuar
+                // Cede o controle pro navegador pintar
                 await proximoFrame();
                 await esperar(0);
             }
@@ -684,12 +651,12 @@
             try {
                 const se = await window.apiStandardEbooks.buscarPopulares();
                 console.log('[CATALOGO] Standard Ebooks:', se ? se.length : 0, 'em', Date.now() - t1, 'ms');
-                if (se && se.length > 0) {
-                    await adicionarEmLotes(se, 'standardebooks');
-                }
-            } catch (e) { console.warn('[CATALOGO] Standard Ebooks falhou:', e); }
+                if (se && se.length > 0) await adicionarEmLotes(se, 'standardebooks');
+            } catch (e) {
+                console.warn('[CATALOGO] Standard Ebooks falhou:', e);
+            }
 
-            // 2. GUTENBERG (lote por lote)
+            // 2. GUTENBERG
             console.log('[CATALOGO] Buscando Gutenberg...');
             const t2 = Date.now();
             for (let p = 1; p <= 10; p++) {
@@ -709,7 +676,12 @@
             console.log('[CATALOGO] Total final:', todos.length, 'livros');
 
             estado.resultados = todos;
-            if (todos.length === 0) mostrarErro('Nenhum livro carregado.');
+
+            if (todos.length === 0) {
+                mostrarErro('Nenhum livro carregado.');
+            } else {
+                esconderLoading();
+            }
         } catch (erro) {
             console.error('[CATALOGO] Erro ao carregar catalogo:', erro);
             if (todos.length === 0) mostrarErro('Nao foi possivel carregar o catalogo.');
@@ -749,20 +721,6 @@
         }
     }
 
-    function mostrarResultados(livros) {
-        const grid = $('resultados-grid');
-        if (!grid) return;
-        limpar(grid);
-        esconderLoading();
-
-        if (!livros || livros.length === 0) return;
-
-        const fragmento = document.createDocumentFragment();
-        livros.forEach((livro) => fragmento.appendChild(criarCardLivro(livro)));
-        grid.appendChild(fragmento);
-        atualizarContagem(livros.length);
-    }
-
     function mesclarLivros(lista1, lista2) {
         const vistos = new Set();
         const resultado = [];
@@ -795,6 +753,20 @@
 
         estado.resultadosFiltrados = livros;
         mostrarResultados(livros);
+    }
+
+    function mostrarResultados(livros) {
+        const grid = $('resultados-grid');
+        if (!grid) return;
+        limpar(grid);
+        esconderLoading();
+
+        if (!livros || livros.length === 0) return;
+
+        const fragmento = document.createDocumentFragment();
+        livros.forEach((livro) => fragmento.appendChild(criarCardLivro(livro)));
+        grid.appendChild(fragmento);
+        atualizarContagem(livros.length);
     }
 
     /* ============================================================
@@ -1094,18 +1066,14 @@
         setupTeclado();
         setupModoFoco();
         setupPopoverFiltros();
-        try { setupEventos(); console.log('[CATALOGO] setupEventos OK'); }
+        try { setupEventos(); }
         catch (e) { console.error('[CATALOGO] setupEventos FALHOU:', e); }
 
         await iniciarSessao();
 
-        // Pagina aparece aqui
         document.documentElement.classList.remove('carregando-catalogo');
 
-        // Carrega o catalogo em background
         carregarCatalogo();
-
-        console.log('[CATALOGO] iniciar: FIM (catalogo em background)');
     }
 
     if (document.readyState === 'loading') {
