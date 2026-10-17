@@ -1,5 +1,5 @@
 /* ============================================================
-   LEITOR.JS — v16 (CORRIGIDO: Paginação e Proxy)
+   LEITOR.JS — v17 (CORRIGIDO: CSS do EPUB)
    ============================================================ */
 (function () {
     'use strict';
@@ -70,7 +70,6 @@
         const r = await fetch(proxyUrl, { headers });
         if (!r.ok) throw new Error('Proxy retornou ' + r.status);
         
-        // O fetch segue o redirecionamento (302) automaticamente e nos dá o arquivo final
         return await r.arrayBuffer();
     }
 
@@ -382,7 +381,6 @@
             await rendition.display();
         }
 
-        // CORREÇÃO: Força o recálculo do layout após o livro abrir
         setTimeout(() => {
             if (rendition) rendition.resize();
         }, 200);
@@ -419,7 +417,6 @@
             await rendition.display();
         }
 
-        // CORREÇÃO: Força o recálculo do layout após o livro abrir
         setTimeout(() => {
             if (rendition) rendition.resize();
         }, 200);
@@ -522,22 +519,17 @@
                 'line-height': '1.75',
                 'color': '#1A1614', 
                 'background': '#F8F2E4',
-                'padding': '0', /* CORREÇÃO: sem padding no body */
-                'overflow': 'auto', /* CORREÇÃO: permitir rolagem se necessário */
                 '-webkit-user-select': 'text', 
-                'user-select': 'text',
-                'box-sizing': 'border-box'
+                'user-select': 'text'
             },
             'p': { 
                 'margin': '0 0 1em 0', 
-                'text-align': 'justify',
-                'padding': '0 1rem' /* CORREÇÃO: margem segura nos parágrafos */
+                'text-align': 'justify'
             },
             'h1, h2, h3': {
                 'font-family': "'Playfair Display', Georgia, serif",
                 'font-style': 'italic', 
-                'color': '#5C1A1A',
-                'padding': '0 1rem'
+                'color': '#5C1A1A'
             },
             'a': { 'color': '#5C1A1A' },
             '.acervo-highlight': {
