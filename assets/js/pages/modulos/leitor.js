@@ -1,5 +1,5 @@
 /* ============================================================
-   LEITOR.JS — v17 (CORRIGIDO: CSS do EPUB)
+   LEITOR.JS — v18 (MODO SCROLLED PARA EVITAR TEXTO SUMINDO)
    ============================================================ */
 (function () {
     'use strict';
@@ -361,10 +361,12 @@
         await new Promise((r) => requestAnimationFrame(r));
         await new Promise((r) => setTimeout(r, 100));
 
+        // MUDANÇA AQUI: flow scrolled
         rendition = book.renderTo('area-esq', {
             width: '100%',
             height: '100%',
-            flow: 'paginated',
+            flow: 'scrolled',
+            manager: 'continuous',
             spread: 'auto',
             minSpreadWidth: 600
         });
@@ -398,10 +400,12 @@
         await new Promise((r) => requestAnimationFrame(r));
         await new Promise((r) => setTimeout(r, 100));
 
+        // MUDANÇA AQUI: flow scrolled
         rendition = book.renderTo('area', {
             width: '100%',
             height: '100%',
-            flow: 'paginated',
+            flow: 'scrolled',
+            manager: 'continuous',
             spread: 'none'
         });
 
@@ -494,14 +498,38 @@
 
         const btnAnterior = $('btn-anterior');
         const btnProximo = $('btn-proximo');
-        if (btnAnterior) btnAnterior.addEventListener('click', () => rendition && rendition.prev());
-        if (btnProximo) btnProximo.addEventListener('click', () => rendition && rendition.next());
+        
+        // MUDANÇA AQUI: Como estamos no modo scrolled, prev() e next() não viram páginas.
+        // Adaptamos para rolar a tela do iframe.
+        if (btnAnterior) btnAnterior.addEventListener('click', () => {
+            if (!rendition) return;
+            const contents = rendition.getContents()[0];
+            if (contents && contents.document) {
+                contents.window.scrollBy({ top: -window.innerHeight * 0.8, behavior: 'smooth' });
+            }
+        });
+        
+        if (btnProximo) btnProximo.addEventListener('click', () => {
+            if (!rendition) return;
+            const contents = rendition.getContents()[0];
+            if (contents && contents.document) {
+                contents.window.scrollBy({ top: window.innerHeight * 0.8, behavior: 'smooth' });
+            }
+        });
 
         document.addEventListener('keydown', (e) => {
             if (!rendition) return;
-            if (e.key === 'ArrowLeft') { e.preventDefault(); rendition.prev(); }
-            if (e.key === 'ArrowRight') { e.preventDefault(); rendition.next(); }
-            if (e.key === ' ') { e.preventDefault(); rendition.next(); }
+            const contents = rendition.getContents()[0];
+            if (!contents || !contents.document) return;
+
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { 
+                e.preventDefault(); 
+                contents.window.scrollBy({ top: -window.innerHeight * 0.8, behavior: 'smooth' }); 
+            }
+            if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { 
+                e.preventDefault(); 
+                contents.window.scrollBy({ top: window.innerHeight * 0.8, behavior: 'smooth' }); 
+            }
         });
     }
 
@@ -519,12 +547,14 @@
                 'line-height': '1.75',
                 'color': '#1A1614', 
                 'background': '#F8F2E4',
+                /* Padding e overflow removidos para o modo scrolled */
                 '-webkit-user-select': 'text', 
                 'user-select': 'text'
             },
             'p': { 
                 'margin': '0 0 1em 0', 
-                'text-align': 'justify'
+                'text-align': 'justify',
+                'padding': '0 1rem'
             },
             'h1, h2, h3': {
                 'font-family': "'Playfair Display', Georgia, serif",
