@@ -1,8 +1,5 @@
 /* ============================================================
-   LEITOR.JS — v15 (VERSAO QUE FUNCIONAVA)
-   - Texto aparece em todas as paginas
-   - Navegacao com botoes
-   - Marcar texto funcionando
+   LEITOR.JS — v16 (CORRIGIDO: Paginação e Proxy)
    ============================================================ */
 (function () {
     'use strict';
@@ -69,8 +66,11 @@
             headers['Authorization'] = 'Bearer ' + config.anonKey;
             headers['apikey'] = config.anonKey;
         }
+        
         const r = await fetch(proxyUrl, { headers });
         if (!r.ok) throw new Error('Proxy retornou ' + r.status);
+        
+        // O fetch segue o redirecionamento (302) automaticamente e nos dá o arquivo final
         return await r.arrayBuffer();
     }
 
@@ -359,7 +359,6 @@
         const elEsq = $('area-esq');
         if (!elEsq) return;
 
-        // Espera o layout
         await new Promise((r) => requestAnimationFrame(r));
         await new Promise((r) => setTimeout(r, 100));
 
@@ -374,24 +373,23 @@
         aplicarFonte();
         aplicarTema();
 
-        // Carrega progresso
         const progresso = await carregarProgresso();
-
-        // Configura eventos ANTES do display
         configurarEventosRendition();
 
-        // Exibe
         if (progresso && progresso.position) {
             await rendition.display(progresso.position);
         } else {
             await rendition.display();
         }
 
-        // Gera locations para numeracao
+        // CORREÇÃO: Força o recálculo do layout após o livro abrir
+        setTimeout(() => {
+            if (rendition) rendition.resize();
+        }, 200);
+
         await book.locations.generate(600);
         paginasTotais = book.locations.length();
 
-        // Atualiza numeracao
         setTimeout(atualizarNumeracaoAtual, 500);
     }
 
@@ -421,6 +419,11 @@
             await rendition.display();
         }
 
+        // CORREÇÃO: Força o recálculo do layout após o livro abrir
+        setTimeout(() => {
+            if (rendition) rendition.resize();
+        }, 200);
+
         await book.locations.generate(600);
         paginasTotais = book.locations.length();
 
@@ -436,19 +439,16 @@
             if (!loc) return;
 
             const cfi = loc.start.cfi;
-
-            // Tenta pela localizacao
             let pagina = -1;
             try {
                 pagina = book.locations.locationFromCfi(cfi);
-            } catch (e) { /* ignora */ }
+            } catch (e) {}
 
             if (pagina >= 0 && paginasTotais > 0) {
                 el.textContent = (pagina + 1) + ' / ' + paginasTotais;
                 return;
             }
 
-            // Fallback
             if (loc.start.displayed && loc.start.displayed.page) {
                 el.textContent = loc.start.displayed.page + ' / ' + loc.start.displayed.total;
                 return;
@@ -474,7 +474,6 @@
         rendition.on('relocated', (location) => {
             const cfi = location.start.cfi;
 
-            // Numeracao
             const el = $('nav-pagina');
             if (el) {
                 const paginaAtual = book.locations.locationFromCfi(cfi);
@@ -485,12 +484,10 @@
                 }
             }
 
-            // Progresso
             const percent = book.locations.percentageFromCfi(cfi) * 100;
             atualizarProgresso(percent);
             salvarProgresso(cfi, percent);
 
-            // Re-injeta listeners
             setTimeout(injetarListenersEmTodos, 300);
         });
 
@@ -523,15 +520,24 @@
                 'font-family': "'Cormorant Garamond', Georgia, serif",
                 'font-size': tamanhoFonte + 'px',
                 'line-height': '1.75',
-                'color': '#1A1614', 'background': '#F8F2E4',
-                'padding': '2rem 3rem',
-                'overflow': 'hidden',
-                '-webkit-user-select': 'text', 'user-select': 'text'
+                'color': '#1A1614', 
+                'background': '#F8F2E4',
+                'padding': '0', /* CORREÇÃO: sem padding no body */
+                'overflow': 'auto', /* CORREÇÃO: permitir rolagem se necessário */
+                '-webkit-user-select': 'text', 
+                'user-select': 'text',
+                'box-sizing': 'border-box'
             },
-            'p': { 'margin': '0 0 1em 0', 'text-align': 'justify' },
+            'p': { 
+                'margin': '0 0 1em 0', 
+                'text-align': 'justify',
+                'padding': '0 1rem' /* CORREÇÃO: margem segura nos parágrafos */
+            },
             'h1, h2, h3': {
                 'font-family': "'Playfair Display', Georgia, serif",
-                'font-style': 'italic', 'color': '#5C1A1A'
+                'font-style': 'italic', 
+                'color': '#5C1A1A',
+                'padding': '0 1rem'
             },
             'a': { 'color': '#5C1A1A' },
             '.acervo-highlight': {

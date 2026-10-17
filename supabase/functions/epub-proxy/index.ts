@@ -1,8 +1,6 @@
 // ==============================================
-// EDGE FUNCTION: epub-proxy (v2)
-// Segue o redirect do Standard Ebooks para baixar
-// o EPUB real (a URL "downloads/" retorna uma
-// pagina HTML com um meta-refresh para o arquivo).
+// EDGE FUNCTION: epub-proxy (v3)
+// Redireciona para o arquivo real em vez de baixar
 // ==============================================
 
 const corsHeaders = {
@@ -11,31 +9,6 @@ const corsHeaders = {
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
 };
 
-const TIMEOUT_MS = 30000;
-
-async function fetchComHeaders(url: string) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
-
-    try {
-        const r = await fetch(url, {
-            signal: controller.signal,
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36',
-                'Accept': '*/*',
-                'Accept-Language': 'en-US,en;q=0.9',
-                'Referer': 'https://standardebooks.org/',
-            },
-        });
-        clearTimeout(timer);
-        return r;
-    } catch (e) {
-        clearTimeout(timer);
-        throw e;
-    }
-}
-
-/* Extrai a URL real do EPUB de dentro do HTML de "Your Download Has Started" */
 function extrairUrlReal(html: string): string | null {
     // Procura <meta http-equiv="refresh" content="0; url=..." />
     const metaMatch = html.match(/<meta[^>]*http-equiv=["']refresh["'][^>]*content=["']\d+;\s*url=([^"']+)["']/i);
@@ -64,7 +37,12 @@ Deno.serve(async (req) => {
         }
 
         console.log('Buscando:', targetUrl);
-        let resposta = await fetchComHeaders(targetUrl);
+        const resposta = await fetch(targetUrl, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'Accept': '*/*',
+            },
+        });
 
         if (!resposta.ok) {
             return new Response(
@@ -73,45 +51,33 @@ Deno.serve(async (req) => {
             );
         }
 
-        // Verifica se o Content-Type e EPUB
         const contentType = resposta.headers.get('content-type') || '';
         console.log('Content-Type inicial:', contentType);
 
-        // Se NAO for EPUB (veio HTML), extrai a URL real e baixa de novo
-        if (!contentType.includes('epub') && !contentType.includes('zip')) {
-            const html = await resposta.text();
-            const urlReal = extrairUrlReal(html);
-
-            if (!urlReal) {
-                return new Response(
-                    JSON.stringify({ error: 'Nao foi possivel encontrar a URL real do EPUB no HTML' }),
-                    { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-                );
-            }
-
-            console.log('URL real encontrada:', urlReal);
-            resposta = await fetchComHeaders(urlReal);
-
-            if (!resposta.ok) {
-                return new Response(
-                    JSON.stringify({ error: 'URL real retornou ' + resposta.status }),
-                    { status: resposta.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-                );
-            }
+        // Se JÁ for um EPUB direto, redireciona o navegador para ele
+        if (contentType.includes('epub') || contentType.includes('zip')) {
+            return new Response(null, {
+                status: 302,
+                headers: { ...corsHeaders, 'Location': targetUrl }
+            });
         }
 
-        // Baixa o EPUB
-        const arrayBuffer = await resposta.arrayBuffer();
-        console.log('EPUB baixado:', arrayBuffer.byteLength, 'bytes');
+        // Se for HTML (página de download), extrai a URL real e redireciona
+        const html = await resposta.text();
+        const urlReal = extrairUrlReal(html);
 
-        return new Response(arrayBuffer, {
-            status: 200,
-            headers: {
-                ...corsHeaders,
-                'Content-Type': 'application/epub+zip',
-                'Cache-Control': 'public, max-age=86400',
-            },
-        });
+        if (urlReal) {
+            console.log('Redirecionando para URL real:', urlReal);
+            return new Response(null, {
+                status: 302,
+                headers: { ...corsHeaders, 'Location': urlReal }
+            });
+        }
+
+        return new Response(
+            JSON.stringify({ error: 'Nao foi possivel encontrar a URL real do EPUB no HTML' }),
+            { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
 
     } catch (err: any) {
         console.error('Erro no epub-proxy:', err.message || String(err));
