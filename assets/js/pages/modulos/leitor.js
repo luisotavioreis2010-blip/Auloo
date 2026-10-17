@@ -1,5 +1,9 @@
 /* ============================================================
-   LEITOR.JS — v18 (MODO SCROLLED PARA EVITAR TEXTO SUMINDO)
+   LEITOR.JS — v19 (HÍBRIDO)
+   - flow: 'scrolled' (texto nunca some)
+   - Setas simulam virada de página (scroll programático)
+   - Numeração calculada pela posição do scroll
+   - 2 colunas lado a lado em telas grandes
    ============================================================ */
 (function () {
     'use strict';
@@ -24,6 +28,7 @@
     let paginasTotais = 0;
     let modoMarcacao = false;
     let cfiSelecaoAtual = null;
+    let listeningScroll = false;
 
     const estado = {
         url: null,
@@ -66,10 +71,10 @@
             headers['Authorization'] = 'Bearer ' + config.anonKey;
             headers['apikey'] = config.anonKey;
         }
-        
+
         const r = await fetch(proxyUrl, { headers });
         if (!r.ok) throw new Error('Proxy retornou ' + r.status);
-        
+
         return await r.arrayBuffer();
     }
 
@@ -323,6 +328,71 @@
         });
     }
 
+    /* ============================================================
+       CONTROLE DO SCROLL "PÁGINA"
+       ============================================================ */
+    function obterViewport() {
+        // O epub.js injeta o conteúdo dentro de um iframe
+        const contents = rendition && rendition.getContents()[0];
+        if (!contents) return null;
+
+        const win = contents.window;
+        const doc = contents.document;
+        if (!win || !doc) return null;
+
+        return {
+            win,
+            doc,
+            scrollTop: win.scrollY || doc.documentElement.scrollTop || 0,
+            scrollHeight: doc.documentElement.scrollHeight || 0,
+            clientHeight: win.innerHeight || 0
+        };
+    }
+
+    function rolarPagina(direcao) {
+        const vp = obterViewport();
+        if (!vp) return;
+
+        const alturaPagina = vp.clientHeight * 0.85;
+        const destino = vp.scrollTop + (direcao * alturaPagina);
+
+        vp.win.scrollTo({
+            top: Math.max(0, Math.min(destino, vp.scrollHeight)),
+            behavior: 'smooth'
+        });
+    }
+
+    function atualizarNumeracao() {
+        const el = $('nav-pagina');
+        if (!el) return;
+
+        const vp = obterViewport();
+        if (!vp || vp.scrollHeight === 0) return;
+
+        const alturaPagina = vp.clientHeight * 0.85;
+        const totalPaginas = Math.max(1, Math.ceil(vp.scrollHeight / alturaPagina));
+        const paginaAtual = Math.min(totalPaginas, Math.floor(vp.scrollTop / alturaPagina) + 1);
+
+        el.textContent = paginaAtual + ' / ' + totalPaginas;
+    }
+
+    function escutarScroll() {
+        if (listeningScroll) return;
+        listeningScroll = true;
+
+        const contents = rendition && rendition.getContents()[0];
+        if (!contents || !contents.window) return;
+
+        let timer = null;
+        contents.window.addEventListener('scroll', () => {
+            clearTimeout(timer);
+            timer = setTimeout(atualizarNumeracao, 150);
+        }, { passive: true });
+    }
+
+    /* ============================================================
+       EPUB
+       ============================================================ */
     async function abrirLivro() {
         const loading = $('leitor-loading');
         const livro = $('leitor-livro');
@@ -361,18 +431,17 @@
         await new Promise((r) => requestAnimationFrame(r));
         await new Promise((r) => setTimeout(r, 100));
 
-        // MUDANÇA AQUI: flow scrolled
+        // MODIFICADO: spread 'none' + scroll + 2 colunas CSS
         rendition = book.renderTo('area-esq', {
             width: '100%',
             height: '100%',
             flow: 'scrolled',
-            manager: 'continuous',
-            spread: 'auto',
-            minSpreadWidth: 600
+            spread: 'none'
         });
 
         aplicarFonte();
         aplicarTema();
+        aplicarEstiloLivroAberto();
 
         const progresso = await carregarProgresso();
         configurarEventosRendition();
@@ -383,14 +452,14 @@
             await rendition.display();
         }
 
+        // Espera o iframe renderizar
         setTimeout(() => {
-            if (rendition) rendition.resize();
-        }, 200);
+            escutarScroll();
+            atualizarNumeracao();
+        }, 800);
 
-        await book.locations.generate(600);
+        await book.locations.generate(1000);
         paginasTotais = book.locations.length();
-
-        setTimeout(atualizarNumeracaoAtual, 500);
     }
 
     async function renderizarPaginaUnica() {
@@ -400,12 +469,10 @@
         await new Promise((r) => requestAnimationFrame(r));
         await new Promise((r) => setTimeout(r, 100));
 
-        // MUDANÇA AQUI: flow scrolled
         rendition = book.renderTo('area', {
             width: '100%',
             height: '100%',
             flow: 'scrolled',
-            manager: 'continuous',
             spread: 'none'
         });
 
@@ -422,45 +489,39 @@
         }
 
         setTimeout(() => {
-            if (rendition) rendition.resize();
-        }, 200);
+            escutarScroll();
+            atualizarNumeracao();
+        }, 800);
 
-        await book.locations.generate(600);
+        await book.locations.generate(1000);
         paginasTotais = book.locations.length();
-
-        setTimeout(atualizarNumeracaoAtual, 500);
     }
 
-    function atualizarNumeracaoAtual() {
-        const el = $('nav-pagina');
-        if (!el || !rendition) return;
+    /* CSS especial para 2 colunas no modo scrolled */
+    function aplicarEstiloLivroAberto() {
+        if (!rendition) return;
 
-        try {
-            const loc = rendition.currentLocation();
-            if (!loc) return;
-
-            const cfi = loc.start.cfi;
-            let pagina = -1;
-            try {
-                pagina = book.locations.locationFromCfi(cfi);
-            } catch (e) {}
-
-            if (pagina >= 0 && paginasTotais > 0) {
-                el.textContent = (pagina + 1) + ' / ' + paginasTotais;
-                return;
-            }
-
-            if (loc.start.displayed && loc.start.displayed.page) {
-                el.textContent = loc.start.displayed.page + ' / ' + loc.start.displayed.total;
-                return;
-            }
-
-            if (el.textContent === '— / —') {
-                el.textContent = '1 / ' + (paginasTotais || '...');
-            }
-        } catch (e) {
-            console.warn('Erro numeracao:', e);
+        const contents = rendition.getContents()[0];
+        if (!contents || !contents.document) {
+            setTimeout(aplicarEstiloLivroAberto, 300);
+            return;
         }
+
+        const doc = contents.document;
+        const style = doc.createElement('style');
+        style.textContent = `
+            body {
+                column-count: 2 !important;
+                column-gap: 4rem !important;
+                padding: 1rem 2rem !important;
+                max-width: 100% !important;
+                margin: 0 auto !important;
+            }
+            p, h1, h2, h3, h4, h5, h6, blockquote {
+                break-inside: avoid-column !important;
+            }
+        `;
+        doc.head.appendChild(style);
     }
 
     function configurarEventosRendition() {
@@ -474,61 +535,53 @@
 
         rendition.on('relocated', (location) => {
             const cfi = location.start.cfi;
-
-            const el = $('nav-pagina');
-            if (el) {
-                const paginaAtual = book.locations.locationFromCfi(cfi);
-                if (paginaAtual >= 0 && paginasTotais > 0) {
-                    el.textContent = (paginaAtual + 1) + ' / ' + paginasTotais;
-                } else if (location.start.displayed) {
-                    el.textContent = location.start.displayed.page + ' / ' + location.start.displayed.total;
-                }
-            }
-
-            const percent = book.locations.percentageFromCfi(cfi) * 100;
-            atualizarProgresso(percent);
-            salvarProgresso(cfi, percent);
-
+            try {
+                const percent = book.locations.percentageFromCfi(cfi) * 100;
+                atualizarProgresso(percent);
+                salvarProgresso(cfi, percent);
+            } catch (e) {}
             setTimeout(injetarListenersEmTodos, 300);
         });
 
         rendition.on('rendered', (section, view) => {
             if (view && view.contents) injetarListeners(view.contents);
+            escutarScroll();
+            setTimeout(atualizarNumeracao, 500);
         });
 
         const btnAnterior = $('btn-anterior');
         const btnProximo = $('btn-proximo');
-        
-        // MUDANÇA AQUI: Como estamos no modo scrolled, prev() e next() não viram páginas.
-        // Adaptamos para rolar a tela do iframe.
-        if (btnAnterior) btnAnterior.addEventListener('click', () => {
-            if (!rendition) return;
-            const contents = rendition.getContents()[0];
-            if (contents && contents.document) {
-                contents.window.scrollBy({ top: -window.innerHeight * 0.8, behavior: 'smooth' });
-            }
-        });
-        
-        if (btnProximo) btnProximo.addEventListener('click', () => {
-            if (!rendition) return;
-            const contents = rendition.getContents()[0];
-            if (contents && contents.document) {
-                contents.window.scrollBy({ top: window.innerHeight * 0.8, behavior: 'smooth' });
-            }
-        });
+
+        if (btnAnterior) {
+            btnAnterior.addEventListener('click', (e) => {
+                e.preventDefault();
+                rolarPagina(-1);
+                setTimeout(atualizarNumeracao, 400);
+            });
+        }
+
+        if (btnProximo) {
+            btnProximo.addEventListener('click', (e) => {
+                e.preventDefault();
+                rolarPagina(1);
+                setTimeout(atualizarNumeracao, 400);
+            });
+        }
 
         document.addEventListener('keydown', (e) => {
             if (!rendition) return;
-            const contents = rendition.getContents()[0];
-            if (!contents || !contents.document) return;
+            const ativo = document.activeElement;
+            if (ativo && (ativo.tagName === 'INPUT' || ativo.tagName === 'TEXTAREA')) return;
 
-            if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { 
-                e.preventDefault(); 
-                contents.window.scrollBy({ top: -window.innerHeight * 0.8, behavior: 'smooth' }); 
+            if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+                e.preventDefault();
+                rolarPagina(-1);
+                setTimeout(atualizarNumeracao, 400);
             }
-            if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { 
-                e.preventDefault(); 
-                contents.window.scrollBy({ top: window.innerHeight * 0.8, behavior: 'smooth' }); 
+            if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
+                e.preventDefault();
+                rolarPagina(1);
+                setTimeout(atualizarNumeracao, 400);
             }
         });
     }
@@ -536,6 +589,11 @@
     function aplicarFonte() {
         if (!rendition) return;
         rendition.themes.fontSize(tamanhoFonte + 'px');
+        setTimeout(() => {
+            if (rendition && rendition.getContents()[0]) {
+                aplicarEstiloLivroAberto();
+            }
+        }, 200);
     }
 
     function aplicarTema() {
@@ -545,20 +603,18 @@
                 'font-family': "'Cormorant Garamond', Georgia, serif",
                 'font-size': tamanhoFonte + 'px',
                 'line-height': '1.75',
-                'color': '#1A1614', 
+                'color': '#1A1614',
                 'background': '#F8F2E4',
-                /* Padding e overflow removidos para o modo scrolled */
-                '-webkit-user-select': 'text', 
+                '-webkit-user-select': 'text',
                 'user-select': 'text'
             },
-            'p': { 
-                'margin': '0 0 1em 0', 
-                'text-align': 'justify',
-                'padding': '0 1rem'
+            'p': {
+                'margin': '0 0 1em 0',
+                'text-align': 'justify'
             },
             'h1, h2, h3': {
                 'font-family': "'Playfair Display', Georgia, serif",
-                'font-style': 'italic', 
+                'font-style': 'italic',
                 'color': '#5C1A1A'
             },
             'a': { 'color': '#5C1A1A' },
@@ -578,10 +634,12 @@
         if (btnMais) btnMais.addEventListener('click', () => {
             tamanhoFonte = Math.min(TAMANHO_FONTE_MAX, tamanhoFonte + 2);
             aplicarFonte();
+            setTimeout(atualizarNumeracao, 400);
         });
         if (btnMenos) btnMenos.addEventListener('click', () => {
             tamanhoFonte = Math.max(TAMANHO_FONTE_MIN, tamanhoFonte - 2);
             aplicarFonte();
+            setTimeout(atualizarNumeracao, 400);
         });
         if (btnMarcar) btnMarcar.addEventListener('click', () => {
             modoMarcacao = !modoMarcacao;
