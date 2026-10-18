@@ -2,27 +2,24 @@
     'use strict';
 
     const params = new URLSearchParams(window.location.search);
-    const aulaId = params.get('id') || 'fracoes'; // Padrão é frações
+    const aulaId = params.get('id') || 'fracoes';
     const container = document.getElementById('aula-container');
-    const tituloEl = document.getElementById('aula-titulo');
 
     const aula = window.CATALOGO_AULAS.find(a => a.id === aulaId);
 
     if (!aula) {
         container.innerHTML = '<h2 style="color: #5C1A1A; font-family: serif; text-align: center;">Aula não encontrada.</h2>';
-        tituloEl.textContent = 'Erro';
         return;
     }
 
-    tituloEl.textContent = aula.titulo;
+    // Coloca o título da aula na aba do navegador
     document.title = aula.titulo + ' | Auloo';
 
-    // Carrega o simulador dinamicamente (ex: window.SimuladorFracoes)
     const nomeSimulador = 'Simulador' + aula.simulador.charAt(0).toUpperCase() + aula.simulador.slice(1);
     const simulador = window[nomeSimulador];
 
     if (!simulador) {
-        container.innerHTML = '<h2 style="text-align:center;">Simulador não encontrado.</h2>';
+        container.innerHTML = '<h2 style="text-align:center; font-family: sans-serif;">Simulador em construção.</h2>';
         return;
     }
 
@@ -34,7 +31,7 @@
         },
         {
             titulo: 'Passo 2 — Dividindo a pizza',
-            texto: 'Use o controle deslizante acima para dividir a pizza em 4 partes iguais. Cada parte agora é chamada de "um quarto" (1/4).',
+            texto: 'Use o controle deslizante para dividir a pizza em 4 partes iguais. Cada parte agora é chamada de "um quarto" (1/4).',
             requerInteracao: true
         },
         {

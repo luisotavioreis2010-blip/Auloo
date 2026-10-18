@@ -1,6 +1,5 @@
 /* ============================================================
-   SIMULADOR: FRAÇÕES (v2 - Limpo e Integrado)
-   Pizza interativa com slider de fatias e clique para pintar.
+   SIMULADOR: FRAÇÕES (v3 - Design Integrado)
    ============================================================ */
 window.SimuladorFracoes = (function () {
     'use strict';
@@ -8,10 +7,8 @@ window.SimuladorFracoes = (function () {
     let svg, containerEl;
     let totalFatias = 4;
     let fatiasPintadas = new Set();
-    
-    // Guarda a referência do motor para liberar o botão "Próximo"
     let ctxMotor = null;
-    let interacaoAlvo = null; // O que o aluno precisa fazer para liberar o botão
+    let interacaoAlvo = null;
 
     const COR_DOURADO = '#B8894A';
     const COR_FUNDO = '#E5D9C0';
@@ -19,10 +16,7 @@ window.SimuladorFracoes = (function () {
 
     function polarParaCartesiano(cx, cy, r, anguloGraus) {
         const rad = (anguloGraus - 90) * Math.PI / 180.0;
-        return {
-            x: cx + (r * Math.cos(rad)),
-            y: cy + (r * Math.sin(rad))
-        };
+        return { x: cx + (r * Math.cos(rad)), y: cy + (r * Math.sin(rad)) };
     }
 
     function gerarCaminhoFatia(cx, cy, r, inicioAngulo, fimAngulo) {
@@ -61,7 +55,6 @@ window.SimuladorFracoes = (function () {
             path.addEventListener('click', () => {
                 if (fatiasPintadas.has(i)) fatiasPintadas.delete(i);
                 else fatiasPintadas.add(i);
-                
                 desenhar();
                 verificarInteracao();
             });
@@ -77,7 +70,6 @@ window.SimuladorFracoes = (function () {
 
     function verificarInteracao() {
         if (!interacaoAlvo || !ctxMotor) return;
-
         if (interacaoAlvo.tipo === 'pintar' && fatiasPintadas.size === interacaoAlvo.quantidade) {
             ctxMotor.interacaoConcluida();
         }
@@ -88,24 +80,22 @@ window.SimuladorFracoes = (function () {
             containerEl = container;
             container.innerHTML = '';
 
-            // Cria o container do slider
             const sliderWrapper = document.createElement('div');
-            sliderWrapper.style.cssText = 'text-align: center; margin-bottom: 1.5rem; width: 100%;';
+            sliderWrapper.style.cssText = 'text-align: center; width: 100%; margin-bottom: 2rem;';
 
             const label = document.createElement('label');
             label.textContent = 'Número de fatias: ';
-            label.style.fontFamily = 'var(--fonte-corpo)';
-            label.style.fontSize = '0.9rem';
-            label.style.color = 'var(--tinta-suave)';
-
+            
             const valorLabel = document.createElement('span');
             valorLabel.textContent = totalFatias;
             valorLabel.style.fontWeight = 'bold';
+            valorLabel.style.color = 'var(--vinho)';
 
             const slider = document.createElement('input');
             slider.type = 'range'; slider.min = '2'; slider.max = '12'; slider.value = totalFatias;
-            slider.style.marginLeft = '10px'; slider.style.verticalAlign = 'middle';
-            slider.style.accentColor = 'var(--dourado)';
+            slider.style.marginTop = '0.5rem';
+            slider.style.display = 'block';
+            slider.style.margin = '0.5rem auto 0';
 
             slider.addEventListener('input', (e) => {
                 totalFatias = parseInt(e.target.value);
@@ -113,7 +103,6 @@ window.SimuladorFracoes = (function () {
                 fatiasPintadas.clear();
                 desenhar();
                 
-                // Se a interação era arrastar o slider, libera o botão
                 if (interacaoAlvo && interacaoAlvo.tipo === 'slider' && totalFatias === interacaoAlvo.quantidade) {
                     if (ctxMotor) ctxMotor.interacaoConcluida();
                 }
@@ -121,12 +110,11 @@ window.SimuladorFracoes = (function () {
 
             label.appendChild(valorLabel);
             sliderWrapper.appendChild(label);
-            sliderWrapper.appendChild(document.createElement('br'));
             sliderWrapper.appendChild(slider);
 
             svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
             svg.setAttribute('viewBox', '0 0 300 300');
-            svg.style.cssText = 'width: 100%; max-width: 300px; height: auto; display: block; margin: 0 auto;';
+            svg.style.cssText = 'width: 100%; max-width: 320px; height: auto; display: block; margin: 0 auto; filter: drop-shadow(0 10px 20px rgba(92,26,26,0.1));';
 
             container.appendChild(sliderWrapper);
             container.appendChild(svg);
@@ -136,27 +124,20 @@ window.SimuladorFracoes = (function () {
 
         aoMudarPasso: function (indice, passo, ctx) {
             ctxMotor = ctx;
-            interacaoAlvo = null; // Reseta
+            interacaoAlvo = null;
 
-            // Configura o que o aluno precisa fazer em cada passo
             if (indice === 0) {
-                totalFatias = 4;
-                fatiasPintadas.clear();
+                totalFatias = 4; fatiasPintadas.clear();
             } else if (indice === 1) {
-                totalFatias = 2; // Começa com 2 para forçar ele a mudar
-                fatiasPintadas.clear();
-                interacaoAlvo = { tipo: 'slider', quantidade: 4 }; // Precisa mudar para 4
+                totalFatias = 2; fatiasPintadas.clear();
+                interacaoAlvo = { tipo: 'slider', quantidade: 4 };
             } else if (indice === 2) {
-                totalFatias = 4;
-                fatiasPintadas.clear();
-                fatiasPintadas.add(0);
+                totalFatias = 4; fatiasPintadas.clear(); fatiasPintadas.add(0);
             } else if (indice === 3) {
-                totalFatias = 4;
-                fatiasPintadas.clear();
-                interacaoAlvo = { tipo: 'pintar', quantidade: 3 }; // Precisa pintar 3
+                totalFatias = 4; fatiasPintadas.clear();
+                interacaoAlvo = { tipo: 'pintar', quantidade: 3 };
             } else if (indice === 4) {
-                totalFatias = 8;
-                fatiasPintadas.clear();
+                totalFatias = 8; fatiasPintadas.clear();
                 for (let i = 0; i < 5; i++) fatiasPintadas.add(i);
             }
             
@@ -170,10 +151,7 @@ window.SimuladorFracoes = (function () {
 
         destruir: function () {
             if (containerEl) containerEl.innerHTML = '';
-            svg = null;
-            containerEl = null;
-            ctxMotor = null;
-            interacaoAlvo = null;
+            svg = null; containerEl = null; ctxMotor = null; interacaoAlvo = null;
         }
     };
 })();
