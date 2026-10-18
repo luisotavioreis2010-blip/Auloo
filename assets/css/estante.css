@@ -1,8 +1,8 @@
 ﻿@charset "UTF-8";
 /* ==============================================
-   ESTANTE.CSS — v3
+   ESTANTE.CSS — v4
    Sidebar com submenu sanfona (Matemática / Ciências)
-   Ornamento fixo no desktop (não rola)
+   Ornamento fixo no topo (não rola)
    ============================================== */
 
 /* ==============================================
@@ -270,11 +270,11 @@ input, textarea, .ficha-email {
     box-shadow: 4px 0 30px rgba(61, 15, 15, 0.35);
 }
 
-/* Ornamento ❦ — FIXO no topo (não rola junto com o conteúdo) */
+/* Ornamento ❦ — fica no topo da sidebar, não rola */
 .sidebar::before {
     content: '\2766';
-    position: fixed;
-    top: calc(var(--navbar-h) + var(--ornamento-top));
+    position: absolute;
+    top: var(--ornamento-top);
     left: 50%;
     z-index: 3;
     transform: translateX(-50%);
@@ -1299,13 +1299,6 @@ input, textarea, .ficha-email {
         transform: translateX(0);
         visibility: visible;
         transition: transform 0.4s var(--ease), visibility 0s;
-    }
-
-    /* No modo compacto, o ornamento volta a ser absolute (fica no topo da sidebar) */
-    .sidebar::before {
-        position: absolute;
-        top: var(--ornamento-top);
-        left: 50%;
     }
 
     .sidebar-secao { flex: 0 0 auto; overflow: visible; }
