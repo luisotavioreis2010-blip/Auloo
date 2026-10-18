@@ -1,10 +1,12 @@
 ﻿@charset "UTF-8";
 /* ==============================================
-   ESTANTE.CSS — v7
-   - Ornamento ❦ dentro do scroll (rola junto)
-   - Rodapé fixo no fundo (mobile com fundo, desktop transparente)
-   - Desktop: sidebar sempre aberta (300px)
-   - Conteúdo não vaza por baixo do rodapé
+   ESTANTE.CSS — v8
+   Sidebar repensada:
+   - Rodapé reserva espaço via flex (não sobrepõe)
+   - Conteúdo rola dentro do espaço que sobra
+   - ❦ no topo, rola junto com o conteúdo
+   - Mobile: gaveta com fundo sólido no rodapé
+   - Desktop: rodapé transparente (gradiente aparece)
    ============================================== */
 
 /* ==============================================
@@ -253,8 +255,10 @@ input, textarea, .ficha-email {
 .gaveta-overlay.ativa { opacity: 1; pointer-events: auto; }
 
 /* ==============================================
-   3. SIDEBAR ESQUERDA
+   3. SIDEBAR ESQUERDA — ARQUITETURA LIMPA
    ============================================== */
+
+/* 3.1 Container principal: flex column, altura fixa */
 .sidebar {
     position: fixed;
     top: var(--navbar-h);
@@ -263,13 +267,32 @@ input, textarea, .ficha-email {
     z-index: 50;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    width: var(--sidebar-w);
+    overflow: hidden;           /* o conteúdo que rola é o .sidebar-secao */
     background: var(--sidebar-bg-2);
     border-right: 3px double var(--dourado);
     box-shadow: 4px 0 30px rgba(61, 15, 15, 0.35);
+    contain: layout style;      /* isola o layout do resto da página */
 }
 
-/* Ornamento ❦ — DENTRO do scroll, no topo do conteúdo */
+/* 3.2 Área que rola: ocupa "o que sobra" depois do rodapé */
+.sidebar-secao {
+    flex: 1 1 auto;             /* ← cresce/encolhe pra preencher o espaço */
+    min-height: 0;              /* ← ESSENCIAL: permite scroll em flex child */
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 1.5rem var(--secao-px) 0.5rem;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overflow-anchor: none;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+
+.sidebar-secao::-webkit-scrollbar { display: none; }
+
+/* 3.3 Ornamento ❦ — primeiro "filho" do scroll */
 .sidebar-secao::before {
     content: '\2766';
     display: block;
@@ -283,20 +306,7 @@ input, textarea, .ficha-email {
     flex-shrink: 0;
 }
 
-.sidebar-secao {
-    flex: 1 1 auto;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    padding: 1.5rem var(--secao-px) 0.5rem;
-    overflow-x: hidden;
-    overflow-y: auto;
-    scrollbar-width: none;
-}
-
-.sidebar-secao::-webkit-scrollbar { display: none; }
-
+/* 3.4 Título e filete */
 .sidebar-titulo {
     min-height: 1.2rem;
     margin-bottom: 1.2rem;
@@ -309,6 +319,7 @@ input, textarea, .ficha-email {
     font-style: italic;
     letter-spacing: var(--titulo-ls);
     color: var(--dourado);
+    flex-shrink: 0;
 }
 
 .sidebar-filete {
@@ -316,14 +327,17 @@ input, textarea, .ficha-email {
     margin: 0 1rem 1.5rem;
     background: var(--dourado);
     opacity: 0.6;
+    flex-shrink: 0;
 }
 
+/* 3.5 Menu e links */
 .sidebar-menu {
     display: flex;
     flex-direction: column;
     align-items: stretch;
     gap: var(--menu-gap);
     width: 100%;
+    flex-shrink: 0;
 }
 
 .sidebar-link {
@@ -397,10 +411,10 @@ input, textarea, .ficha-email {
     white-space: nowrap;
 }
 
-/* Rodapé da sidebar — fixo no fundo, com fundo sólido no mobile */
+/* 3.6 RODAPÉ — reserva espaço via flex, não sobrepõe */
 .sidebar-selo,
 .sidebar-volume {
-    flex-shrink: 0;
+    flex-shrink: 0;              /* ← NÃO encolhe */
     position: relative;
     z-index: 2;
     background: var(--sidebar-bg-3);
@@ -417,18 +431,6 @@ input, textarea, .ficha-email {
     color: var(--dourado);
     opacity: 0.75;
     border-top: 1px solid rgba(184, 137, 74, 0.15);
-}
-
-/* Sombra em cima do rodapé (gradiente indicando que o conteúdo some atrás) */
-.sidebar-selo::before {
-    content: '';
-    position: absolute;
-    top: -12px;
-    left: 0;
-    right: 0;
-    height: 12px;
-    background: linear-gradient(180deg, transparent, var(--sidebar-bg-3));
-    pointer-events: none;
 }
 
 .selo-texto {
@@ -509,6 +511,7 @@ input, textarea, .ficha-email {
     margin: 0.4rem 0 0.8rem 0;
     padding-left: 3rem;
     overflow: hidden;
+    flex-shrink: 0;
     animation: submenuAbrir 0.25s ease;
 }
 
@@ -1145,7 +1148,6 @@ input, textarea, .ficha-email {
 
 /* ==============================================
    8. DESKTOP (≥ 1367px) — sidebar sempre aberta
-   Rodapé TRANSPARENTE (fundo do gradiente aparece)
    ============================================== */
 @media (min-width: 1367px) {
     :root {
@@ -1169,31 +1171,15 @@ input, textarea, .ficha-email {
             var(--sidebar-bg-3) 100%);
     }
 
-    /* Conteúdo rola internamente, rodapé fica fixo no fundo */
-    .sidebar-secao {
-        flex: 1 1 auto;
-        min-height: 0;
-        overflow-x: hidden;
-        overflow-y: auto;
-        scrollbar-width: none;
-    }
-
-    .sidebar-secao::-webkit-scrollbar { display: none; }
-
-    /* Desktop: rodapé transparente (mostra o gradiente da sidebar) */
+    /* Desktop: rodapé transparente (gradiente da sidebar aparece) */
     .sidebar-selo,
     .sidebar-volume {
-        flex-shrink: 0;
         background: transparent;
     }
 
     .sidebar-selo {
         border-top: 1px solid rgba(184, 137, 74, 0.15);
         padding-top: 1rem;
-    }
-
-    .sidebar-selo::before {
-        display: none;
     }
 
     .estante-main { transition: margin 0.4s var(--ease); }
@@ -1238,7 +1224,6 @@ input, textarea, .ficha-email {
 
 /* ==============================================
    9. COMPACTO (≤ 1366px) — mobile: gaveta
-   Rodapé COM fundo sólido (gaveta rola)
    ============================================== */
 @media (max-width: 1366px) {
     html, body {
@@ -1280,24 +1265,6 @@ input, textarea, .ficha-email {
         transform: translateX(0);
         visibility: visible;
         transition: transform 0.4s var(--ease), visibility 0s;
-    }
-
-    /* Mobile: sidebar-secao ocupa todo o espaço restante, rodapé fica no fundo */
-    .sidebar-secao {
-        flex: 1 1 auto;
-        min-height: 0;
-        overflow-x: hidden;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-        overscroll-behavior: contain;
-        scrollbar-width: none;
-    }
-
-    .sidebar-secao::-webkit-scrollbar { display: none; }
-
-    .sidebar-selo,
-    .sidebar-volume {
-        flex-shrink: 0;
     }
 
     .sidebar-icone { display: none; }
