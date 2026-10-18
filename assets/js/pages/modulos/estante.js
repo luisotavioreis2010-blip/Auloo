@@ -1,7 +1,7 @@
 ﻿/* ==============================================
-   ESTANTE.JS — v1
-   Perfil, sessão (Supabase), layout responsivo e calendário.
-   Sintaxe limitada a ES2017 (sem ?. nem ??) por causa de iPads antigos.
+   ESTANTE.JS — v2
+   Perfil, sessão (Supabase), layout responsivo, calendário
+   e accordion da sidebar (Matemática / Ciências).
    ============================================== */
 (function () {
     'use strict';
@@ -42,7 +42,6 @@
         'container-saiba-mais'
     ];
 
-    /* Campos que devem ser limpos sempre que o formulário de senha abre/fecha */
     const CAMPOS_SENHA = {
         'container-editar-senha': ['input-senha-atual', 'input-senha-nova'],
         'container-criar-senha': ['input-nova-senha-criar', 'input-confirmar-senha-criar']
@@ -57,9 +56,9 @@
 
     const perfil = { usuario: null, nome: 'Usuário', email: '', avatarUrl: null };
 
-    let perfilCarregadoId = null;   // id cujo perfil remoto já foi lido
-    let perfilCarregandoId = null;  // id com leitura em andamento
-    let saindo = false;             // true durante o logout (evita redirecionar duas vezes)
+    let perfilCarregadoId = null;
+    let perfilCarregandoId = null;
+    let saindo = false;
     let temporizadorMensagem = null;
 
     /* ==============================================
@@ -73,7 +72,6 @@
                (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
     }
 
-    /* Espera o client do Supabase existir (config.js pode inicializar depois) */
     async function aguardarDb() {
         for (let i = 0; i < SUPABASE_TENTATIVAS; i++) {
             const db = getDb();
@@ -83,13 +81,11 @@
         return null;
     }
 
-    /* Lança o erro do Supabase (se houver) e devolve `data` */
     function verificar(resultado) {
         if (resultado && resultado.error) throw resultado.error;
         return resultado ? resultado.data : null;
     }
 
-    /* Erro com mensagem já pronta para o usuário (sem o prefixo "Erro:") */
     function erroUsuario(texto) {
         const erro = new Error(texto);
         erro.paraUsuario = true;
@@ -129,10 +125,9 @@
         img.className = 'foto-perfil';
         img.alt = 'Foto de perfil';
         img.decoding = 'async';
-        /* Fotos do Google costumam dar 403/429 quando enviam o Referer */
         img.referrerPolicy = 'no-referrer';
         img.onerror = () => {
-            if (!img.parentNode) return; // o container já foi redesenhado
+            if (!img.parentNode) return;
             img.remove();
             container.appendChild(criarIniciais(nome));
         };
@@ -153,19 +148,17 @@
     }
 
     function irParaLogin() {
-        /* replace: o estante não fica no histórico (botão "voltar" não cai num loop) */
         window.location.replace(PAGINA_LOGIN);
     }
 
     /* ==============================================
-       3. TELA (viewport, layout, teclado virtual)
+       3. TELA
        ============================================== */
     function campoEmFoco() {
         const ativo = document.activeElement;
         return !!ativo && (ativo.tagName === 'INPUT' || ativo.tagName === 'TEXTAREA');
     }
 
-    /* Detecta se a mudança de viewport veio do teclado virtual */
     function veioDoTeclado() {
         const vv = window.visualViewport;
         return !!vv && (window.innerHeight - vv.height) > LIMITE_TECLADO_PX;
@@ -178,7 +171,6 @@
         raiz.setAttribute('data-layout', window.innerWidth > window.innerHeight ? 'row' : 'stacked');
     }
 
-    /* No layout em linha a ficha ocupa o espaço à direita do calendário */
     function ajustarLarguraFicha() {
         const calendario = document.querySelector('.calendario-container');
         if (!calendario) return;
@@ -201,7 +193,6 @@
         let ultimaLargura = window.innerWidth;
         let ultimaAltura = window.innerHeight;
 
-        /* Nunca reavalia com campo focado ou teclado aberto */
         const bloqueado = () => campoEmFoco() || veioDoTeclado();
 
         function sincronizarSeNecessario() {
@@ -210,7 +201,6 @@
             const larguraAtual = window.innerWidth;
             const alturaAtual = window.innerHeight;
 
-            /* Só mexe no layout se a LARGURA ou a ORIENTAÇÃO mudou de verdade */
             const larguraMudou = larguraAtual !== ultimaLargura;
             const orientacaoMudou = (larguraAtual > alturaAtual) !== (ultimaLargura > ultimaAltura);
 
@@ -236,12 +226,10 @@
             temporizador = setTimeout(sincronizarSeNecessario, 250);
         });
 
-        /* O iOS demora a atualizar as dimensões depois de girar a tela */
         window.addEventListener('orientationchange', () => {
             [100, 400, 900].forEach((ms) => setTimeout(sincronizarSeNecessario, ms));
         });
 
-        /* Foco: só marca o body com campo-focado, NÃO reavalia o layout */
         document.addEventListener('focusin', (e) => {
             const campo = e.target;
             if (campo && campo.matches && campo.matches('input, textarea')) {
@@ -255,7 +243,6 @@
             }, 350);
         });
 
-        /* ResizeObserver: só ajusta a largura da ficha, sem reavaliar o layout */
         if ('ResizeObserver' in window) {
             const observador = new ResizeObserver(() => {
                 if (!bloqueado()) ajustarLarguraFicha();
@@ -269,7 +256,7 @@
     }
 
     /* ==============================================
-       4. MENSAGENS E CONTAINERS EXPANSÍVEIS
+       4. MENSAGENS E CONTAINERS
        ============================================== */
     function removerMensagem() {
         clearTimeout(temporizadorMensagem);
@@ -301,7 +288,6 @@
         }, MENSAGEM_MS);
     }
 
-    /* Mantém aria-expanded dos botões em sincronia com os containers */
     function sincronizarAria() {
         document.querySelectorAll('[aria-controls][aria-expanded]').forEach((gatilho) => {
             const ids = gatilho.getAttribute('aria-controls').split(/\s+/);
@@ -309,7 +295,6 @@
                 const alvo = $(id);
                 return !!alvo && !alvo.hidden;
             });
-            /* Só os gatilhos dos containers; hambúrguer e perfil são tratados no layout */
             if (ids.every((id) => IDS_CONTAINERS.indexOf(id) !== -1)) {
                 gatilho.setAttribute('aria-expanded', String(aberto));
             }
@@ -329,7 +314,6 @@
         const container = $(id);
         if (!container || container.hidden) return;
         container.hidden = true;
-        /* Senha nunca deve reabrir "revelada" */
         container.querySelectorAll('.btn-olho-senha.mostrando')
             .forEach((botao) => alternarVisibilidadeSenha(botao, false));
     }
@@ -349,7 +333,7 @@
     }
 
     /* ==============================================
-       5. PERFIL (leitura, exibição, logout)
+       5. PERFIL
        ============================================== */
     function renderizarPerfil() {
         renderizarAvatar($('perfil-usuario'), perfil.avatarUrl, perfil.nome);
@@ -360,7 +344,6 @@
         if (email) email.textContent = perfil.email;
     }
 
-    /* Lê a tabela `profiles` (nome/foto editados pelo usuário têm prioridade sobre o provedor) */
     async function carregarPerfilRemoto(usuario, nome, avatarUrl) {
         perfilCarregandoId = usuario.id;
         try {
@@ -370,12 +353,11 @@
                 .eq('id', usuario.id)
                 .maybeSingle();
 
-            /* Outro usuário assumiu a sessão enquanto a consulta rodava */
             if (!perfil.usuario || perfil.usuario.id !== usuario.id) return;
 
             if (consulta.error) {
                 console.warn('Não foi possível ler profiles:', consulta.error.message);
-                return; // perfilCarregadoId fica nulo: o próximo evento tenta de novo
+                return;
             }
 
             if (consulta.data) {
@@ -394,19 +376,16 @@
         }
     }
 
-    /* Ponto único de entrada: chamado pelo getSession e pelo onAuthStateChange */
     function aplicarUsuario(usuario) {
         perfil.usuario = usuario;
         perfil.email = usuario.email || '';
 
-        /* Perfil já lido (ou sendo lido) para este usuário: só renova o objeto da sessão */
         if (perfilCarregadoId === usuario.id || perfilCarregandoId === usuario.id) return;
 
         const meta = usuario.user_metadata || {};
         const nome = meta.full_name || meta.name || null;
         const avatarUrl = meta.avatar_url || meta.picture || null;
 
-        /* Mostra já o que o provedor entregou; a tabela `profiles` refina depois */
         perfil.nome = formatarNome(nome, perfil.email);
         perfil.avatarUrl = avatarUrl;
         renderizarPerfil();
@@ -414,7 +393,6 @@
         carregarPerfilRemoto(usuario, nome, avatarUrl);
     }
 
-    /* O usuário tem senha própria (login por e-mail), ou entrou só por OAuth? */
     function usuarioTemSenha() {
         const usuario = perfil.usuario;
         if (!usuario) return false;
@@ -464,7 +442,6 @@
     /* ==============================================
        6. AÇÕES DO PERFIL
        ============================================== */
-    /* Executa uma ação com o botão travado e trata erro de forma uniforme */
     async function executarAcao(botao, acao) {
         if (botao.disabled) return;
         botao.disabled = true;
@@ -482,7 +459,6 @@
         }
     }
 
-    /* Usa a mesma regra do cadastro (auth.js) quando disponível */
     function validarNovaSenha(senha) {
         if (typeof validarSenhaForte === 'function') {
             const forca = validarSenhaForte(senha);
@@ -526,7 +502,6 @@
 
         const db = exigirSessao();
 
-        /* Reautentica para confirmar que quem está na tela conhece a senha atual */
         const login = await db.auth.signInWithPassword({ email: perfil.email, password: senhaAtual });
         if (login.error) {
             const credenciaisInvalidas = login.error.code === 'invalid_credentials' || login.error.status === 400;
@@ -543,7 +518,6 @@
         mostrarMensagem('Senha atualizada!');
     }
 
-    /* Cria senha para quem entrou apenas com Google/OAuth */
     async function criarSenha() {
         const senha = valorDe('input-nova-senha-criar');
         const confirmacao = valorDe('input-confirmar-senha-criar');
@@ -563,7 +537,6 @@
         mostrarMensagem('Senha criada!');
     }
 
-    /* Extrai o caminho dentro do bucket a partir da URL pública (só se for do próprio usuário) */
     function caminhoDoAvatar(url, usuarioId) {
         if (!url) return null;
         const marcador = '/' + BUCKET_AVATARES + '/';
@@ -577,7 +550,6 @@
         }
     }
 
-    /* Remove arquivo do bucket sem nunca interromper o fluxo do usuário */
     async function removerArquivoAvatar(db, caminho) {
         if (!caminho) return;
         try {
@@ -618,17 +590,15 @@
             renderizarPerfil();
             mostrarMensagem('Foto atualizada!');
         } catch (erro) {
-            /* Falhou depois do upload: não deixa o arquivo órfão no bucket */
             await removerArquivoAvatar(db, caminho);
             throw erro;
         }
 
-        /* Foto antiga já não é referenciada por ninguém */
         removerArquivoAvatar(db, caminhoDoAvatar(avatarAnterior, usuarioId));
     }
 
     /* ==============================================
-       7. LIGAÇÃO DOS EVENTOS DO PERFIL
+       7. EVENTOS DO PERFIL
        ============================================== */
     function ligarFormulario(idForm, idBotao, acao) {
         const formulario = $(idForm);
@@ -641,7 +611,6 @@
     }
 
     function setupPerfil() {
-        /* Sair */
         const btnSair = $('btn-sair');
         if (btnSair) {
             btnSair.addEventListener('click', () => {
@@ -650,7 +619,6 @@
             });
         }
 
-        /* Mudar foto */
         const btnEditarFoto = $('btn-editar-foto');
         const inputFoto = $('input-foto');
         if (btnEditarFoto && inputFoto) {
@@ -665,7 +633,6 @@
             });
         }
 
-        /* Editar nome */
         const btnEditarNome = $('btn-editar-nome');
         if (btnEditarNome) {
             btnEditarNome.addEventListener('click', () => {
@@ -676,7 +643,6 @@
         }
         ligarFormulario('container-editar-nome', 'btn-salvar-nome', salvarNome);
 
-        /* Botão "Senha": abre "alterar" (tem senha) ou "criar" (só OAuth) */
         const btnEditarSenha = $('btn-editar-senha');
         if (btnEditarSenha) {
             btnEditarSenha.addEventListener('click', () => {
@@ -688,13 +654,11 @@
         ligarFormulario('container-editar-senha', 'btn-confirmar-senha', alterarSenha);
         ligarFormulario('container-criar-senha', 'btn-confirmar-criar-senha', criarSenha);
 
-        /* Saiba mais */
         const btnSaibaMais = $('btn-saiba-mais');
         if (btnSaibaMais) {
             btnSaibaMais.addEventListener('click', () => alternarContainer('container-saiba-mais'));
         }
 
-        /* Olho da senha (delegação: vale para qualquer campo da ficha) */
         const ficha = $('sidebar-perfil');
         if (ficha) {
             ficha.addEventListener('click', (e) => {
@@ -774,7 +738,6 @@
             });
         }
 
-        /* Clique fora fecha a gaveta e (no modo compacto) a ficha */
         document.addEventListener('click', (e) => {
             const alvo = e.target;
             if (sidebarAberta() && !sidebar.contains(alvo) &&
@@ -789,7 +752,12 @@
 
         if (sidebar) {
             sidebar.addEventListener('click', (e) => {
-                if (mqCompacto.matches && e.target.closest('.sidebar-link')) fecharSidebar();
+                // Só fecha a sidebar quando for um LINK DE NAVEGAÇÃO (<a>)
+                // Não fecha quando for o BOTÃO TOGGLE da sanfona (<button>)
+                const link = e.target.closest('a.sidebar-link');
+                if (mqCompacto.matches && link && !link.classList.contains('sidebar-toggle')) {
+                    fecharSidebar();
+                }
             });
         }
 
@@ -809,7 +777,6 @@
             ajustarLarguraFicha();
         }
 
-        /* addListener: Safari < 14 */
         if (mqCompacto.addEventListener) mqCompacto.addEventListener('change', aoCruzarBreakpoint);
         else if (mqCompacto.addListener) mqCompacto.addListener(aoCruzarBreakpoint);
     }
@@ -881,7 +848,6 @@
     /* ==============================================
        10. SESSÃO (Supabase)
        ============================================== */
-    /* Aguarda a sessão: no retorno do OAuth o supabase-js ainda pode estar trocando o código */
     async function aguardarSessao(db) {
         for (let i = 0; i < SUPABASE_TENTATIVAS; i++) {
             const resultado = await db.auth.getSession();
@@ -902,13 +868,11 @@
         }
 
         db.auth.onAuthStateChange((evento, sessao) => {
-            /* Logout em outra aba, refresh token inválido, etc. */
             if (evento === 'SIGNED_OUT') {
                 if (!saindo) irParaLogin();
                 return;
             }
             if (sessao && sessao.user) {
-                /* Não chamar o Supabase dentro deste callback (risco de deadlock): adia um tick */
                 setTimeout(() => aplicarUsuario(sessao.user), 0);
             }
         });
@@ -927,32 +891,8 @@
     }
 
     /* ==============================================
-       11. INICIALIZAÇÃO
+       11. ACCORDION DA SIDEBAR
        ============================================== */
-    sincronizarTela(); // antes do DOM ficar pronto, para o layout não "pular"
-
-    function iniciar() {
-        setupTela();
-        setupPerfil();
-        setupLayout();
-        setupCalendario();
-        iniciarSessao();
-    }
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', iniciar);
-    } else {
-        iniciar();
-    }
-})();
-
-/* ==============================================
-   ACCORDION DA SIDEBAR (Matemática / Ciências)
-   Só um submenu aberto por vez.
-   ============================================== */
-(function () {
-    'use strict';
-
     function setupAccordionSidebar() {
         const toggles = document.querySelectorAll('.sidebar-toggle');
         if (!toggles.length) return;
@@ -972,7 +912,10 @@
         }
 
         toggles.forEach((toggle) => {
-            toggle.addEventListener('click', () => {
+            toggle.addEventListener('click', (ev) => {
+                // Impede que o clique "vaze" para o listener que fecha a sidebar
+                ev.stopPropagation();
+
                 const jaAberto = toggle.getAttribute('aria-expanded') === 'true';
 
                 toggles.forEach((outro) => {
@@ -985,9 +928,23 @@
         });
     }
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', setupAccordionSidebar);
-    } else {
+    /* ==============================================
+       12. INICIALIZAÇÃO
+       ============================================== */
+    sincronizarTela();
+
+    function iniciar() {
+        setupTela();
+        setupPerfil();
+        setupLayout();
+        setupCalendario();
         setupAccordionSidebar();
+        iniciarSessao();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', iniciar);
+    } else {
+        iniciar();
     }
 })();

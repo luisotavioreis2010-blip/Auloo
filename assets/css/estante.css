@@ -1,17 +1,7 @@
 ﻿@charset "UTF-8";
 /* ==============================================
-   ESTANTE.CSS — v1
-
-   Estrutura
-   1. Variáveis
-   2. Reset, base e navbar
-   3. Sidebar esquerda (estrutura)
-   4. Ficha do leitor (sidebar direita)
-   5. Containers expansivos (nome, senha, saiba mais)
-   6. Conteúdo principal e calendário
-   7. DESKTOP  (≥ 1367px)
-   8. COMPACTO (≤ 1366px)
-   9. Acessibilidade
+   ESTANTE.CSS — v2
+   Inclui submenu sanfona (Matemática / Ciências)
    ============================================== */
 
 /* ==============================================
@@ -97,7 +87,6 @@
 
 [hidden] { display: none !important; }
 
-/* Sprite SVG: ícones declarados uma vez e reutilizados via <use> */
 .sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
 
 html {
@@ -127,13 +116,11 @@ input, textarea, .ficha-email {
     user-select: text;
 }
 
-/* Foco visível para navegação por teclado (especificidade zero: não briga com ninguém) */
 :where(a, button, [tabindex]):focus-visible {
     outline: 2px solid var(--dourado);
     outline-offset: 2px;
 }
 
-/* Dentro de containers com overflow:hidden o outline externo seria cortado */
 .sidebar-link:focus-visible { outline-offset: -2px; }
 
 .navbar {
@@ -266,7 +253,7 @@ input, textarea, .ficha-email {
 .gaveta-overlay.ativa { opacity: 1; pointer-events: auto; }
 
 /* ==============================================
-   3. SIDEBAR ESQUERDA (estrutura)
+   3. SIDEBAR ESQUERDA
    ============================================== */
 .sidebar {
     position: fixed;
@@ -465,7 +452,95 @@ input, textarea, .ficha-email {
 }
 
 /* ==============================================
-   4. FICHA DO LEITOR (sidebar direita)
+   4. SUBMENU SANFONA (Matemática / Ciências)
+   ============================================== */
+.sidebar-toggle {
+    width: 100%;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.sidebar-seta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+    color: var(--dourado);
+    opacity: 0.7;
+    transition: transform 0.3s ease;
+}
+
+.sidebar-seta svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.sidebar-toggle[aria-expanded="true"] .sidebar-seta {
+    transform: rotate(180deg);
+}
+
+.sidebar-submenu {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    margin: 0.3rem 0 0.6rem 0;
+    padding-left: 2.8rem;
+    overflow: hidden;
+    animation: submenuAbrir 0.25s ease;
+}
+
+@keyframes submenuAbrir {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.sidebar-sublink {
+    position: relative;
+    display: block;
+    padding: 0.55rem 0.7rem 0.55rem 1rem;
+    font-family: var(--fonte-display);
+    font-size: 0.92rem;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    text-decoration: none;
+    color: rgba(248, 242, 228, 0.78);
+    background: transparent;
+    border-left: 2px solid transparent;
+    border-radius: 2px;
+    transition: color 0.25s, background 0.25s, border-color 0.25s;
+}
+
+.sidebar-sublink::before {
+    content: '•';
+    position: absolute;
+    left: 0.25rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--dourado);
+    opacity: 0.7;
+    font-size: 0.9rem;
+    line-height: 1;
+    transition: opacity 0.25s;
+}
+
+@media (hover: hover) {
+    .sidebar-sublink:hover {
+        color: var(--dourado);
+        background: rgba(184, 137, 74, 0.1);
+        border-left-color: var(--dourado);
+    }
+    .sidebar-sublink:hover::before {
+        opacity: 1;
+    }
+}
+
+/* ==============================================
+   5. FICHA DO LEITOR (sidebar direita)
    ============================================== */
 .sidebar-direita {
     position: fixed;
@@ -630,8 +705,7 @@ input, textarea, .ficha-email {
 }
 
 /* ==============================================
-   5. CONTAINERS EXPANSIVOS
-   Todos usam a mesma base visual e animação
+   6. CONTAINERS EXPANSIVOS
    ============================================== */
 .container-expansivel {
     position: relative;
@@ -645,7 +719,6 @@ input, textarea, .ficha-email {
     animation: surgirContainer 0.35s var(--ease);
 }
 
-/* Ornamento (floral heart) - apenas nos containers de edicao (nome/senha) */
 .container-expansivel:not(#container-saiba-mais)::before {
     content: '\2766';
     position: absolute;
@@ -662,7 +735,6 @@ input, textarea, .ficha-email {
     to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Labels e inputs (usado pelos formulários de edição) */
 .container-expansivel label {
     display: block;
     margin: 0.8rem 0 0.35rem;
@@ -727,7 +799,6 @@ input, textarea, .ficha-email {
 
 .btn-container:disabled { opacity: 0.6; cursor: wait; }
 
-/* ---------- Olho da senha ---------- */
 .wrapper-olho-senha {
     position: relative;
     width: 100%;
@@ -770,7 +841,6 @@ input, textarea, .ficha-email {
 .btn-olho-senha.mostrando .icone-olho-aberto { display: block; }
 .btn-olho-senha.mostrando .icone-olho-fechado { display: none; }
 
-/* ---------- Itens do "Saiba mais" ---------- */
 #container-saiba-mais {
     padding: 1rem 1.1rem 1.15rem;
 }
@@ -874,7 +944,6 @@ input, textarea, .ficha-email {
     transform: translate(0, -50%);
 }
 
-/* ---------- Mensagens ---------- */
 .mensagem-sidebar {
     margin: 0.5rem 0;
     padding: 0.6rem 1rem;
@@ -890,7 +959,7 @@ input, textarea, .ficha-email {
 .mensagem-sidebar.saindo   { opacity: 0; }
 
 /* ==============================================
-   6. CONTEÚDO PRINCIPAL E CALENDÁRIO
+   7. CONTEÚDO PRINCIPAL E CALENDÁRIO
    ============================================== */
 .estante-main {
     display: flex;
@@ -1056,7 +1125,7 @@ input, textarea, .ficha-email {
 .calendario-dias span.dia-outro-mes { opacity: 0.25; }
 
 /* ==============================================
-   7. DESKTOP (≥ 1367px)
+   8. DESKTOP (≥ 1367px)
    ============================================== */
 @media (min-width: 1367px) {
     :root {
@@ -1129,6 +1198,10 @@ input, textarea, .ficha-email {
         margin-bottom: 1.2rem;
     }
 
+    .sidebar:not(:hover):not(.expandida) .sidebar-submenu {
+        display: none !important;
+    }
+
     .estante-main { transition: margin 0.4s var(--ease); }
 
     body.ficha-aberta .estante-main { margin-right: var(--ficha-w); }
@@ -1177,12 +1250,9 @@ input, textarea, .ficha-email {
 }
 
 /* ==============================================
-   8. COMPACTO (≤ 1366px)
+   9. COMPACTO (≤ 1366px)
    ============================================== */
-
-/* ---------- 8.1 base: layout empilhado ---------- */
 @media (max-width: 1366px) {
-
     html, body {
         position: fixed;
         top: 0;
@@ -1226,6 +1296,14 @@ input, textarea, .ficha-email {
     .sidebar-secao { flex: 0 0 auto; overflow: visible; }
     .sidebar-icone { display: none; }
     .sidebar-romano { display: inline-block; }
+
+    .sidebar-submenu {
+        padding-left: 2rem;
+    }
+
+    .sidebar-sublink {
+        font-size: 0.95rem;
+    }
 
     .sidebar-direita {
         top: 0;
@@ -1274,160 +1352,6 @@ input, textarea, .ficha-email {
     }
 }
 
-@media (min-width: 1025px) and (max-width: 1366px) {
-    :root {
-        --secao-px: 1.4rem;
-        --menu-gap: 1.1rem;
-        --titulo-size: 1.05rem;
-        --nome-size: 0.88rem;
-        --nome-ls: 1.8px;
-        --romano-size: 1.4rem;
-        --foto-size: 76px;
-        --cal-titulo-size: 1.5rem;
-    }
-}
-
-/* ---------- 8.2 layout em linha ---------- */
-@media (max-width: 1366px) {
-    :root:where([data-layout="row"]) {
-        --navbar-px: 1.8rem;
-        --logo-size: 1.75rem;
-        --drawer-w: 55vw;
-        --ficha-pad: 2rem 1.5rem 1.5rem;
-    }
-
-    [data-layout="row"] .sidebar-direita {
-        width: var(--ficha-row-w, 52%);
-        box-shadow: -4px 0 12px rgba(26, 22, 20, 0.15);
-    }
-
-    [data-layout="row"] .estante-main {
-        flex-direction: row;
-        align-items: flex-start;
-        justify-content: center;
-        gap: 1rem;
-        padding: 0.9rem 1.2rem 0.9rem 1rem;
-    }
-
-    [data-layout="row"] .estante-main > * { margin-block: auto; }
-
-    [data-layout="row"] .ilustracao-container {
-        flex: 0 1 42%;
-        order: 0;
-        min-width: 0;
-        max-width: 42%;
-        margin-inline: 0;
-    }
-
-    [data-layout="row"] .ilustracao-central {
-        max-height: calc(var(--viewport-h) - var(--navbar-h) - 1rem);
-        object-fit: contain;
-    }
-
-    [data-layout="row"] .calendario-container {
-        flex: 1 1 48%;
-        order: 0;
-        min-width: 0;
-        max-width: 48%;
-        margin-right: 1.5rem;
-    }
-}
-
-/* ---------- 8.3 celular em linha (paisagem) ---------- */
-@media (max-width: 900px), (max-height: 500px) {
-    :root:where([data-layout="row"]) {
-        --navbar-h: 52px;
-        --navbar-px: 1rem;
-        --logo-size: 1.1rem;
-        --logo-ls: 3px;
-        --sair-pad: 0.38rem 0.85rem;
-        --sair-size: 0.55rem;
-        --avatar-size: 32px;
-        --hamb-size: 32px;
-        --drawer-w: 60vw;
-        --drawer-max: 340px;
-        --ficha-pad: 2.5rem 1.5rem 1.5rem;
-    }
-
-    [data-layout="row"] .btn-hamburger { font-size: 1rem; }
-
-    [data-layout="row"] .estante-main { gap: 0.5rem; padding: 0.5rem; }
-    [data-layout="row"] .ilustracao-container { flex-basis: 40%; max-width: 40%; }
-    [data-layout="row"] .calendario-container { flex: 0 1 56%; max-width: 520px; margin-right: 0; }
-
-    [data-layout="row"] .calendario-cabecalho { padding: clamp(0.4rem, 1.8vh, 0.7rem) clamp(0.6rem, 2.5vw, 1rem); }
-    [data-layout="row"] .calendario-titulo { font-size: clamp(0.9rem, 2.8vh, 1.15rem); }
-    [data-layout="row"] .calendario-subtitulo {
-        margin-top: 2px;
-        font-size: clamp(0.4rem, 1.3vh, 0.55rem);
-        letter-spacing: clamp(2px, 0.7vw, 3px);
-    }
-    [data-layout="row"] .calendario-btn {
-        width: clamp(20px, 3vh, 26px);
-        height: clamp(20px, 3vh, 26px);
-        font-size: clamp(0.7rem, 2.2vh, 0.95rem);
-    }
-    [data-layout="row"] .calendario-dias-semana { padding: clamp(0.35rem, 1.5vh, 0.55rem) clamp(0.3rem, 1.5vw, 0.5rem); }
-    [data-layout="row"] .dia-semana {
-        font-size: clamp(0.42rem, 1.5vh, 0.55rem);
-        letter-spacing: clamp(0.8px, 0.4vw, 1.4px);
-    }
-    [data-layout="row"] .calendario-dias {
-        gap: clamp(1px, 0.4vh, 3px);
-        padding: clamp(0.35rem, 1.5vh, 0.6rem);
-    }
-    [data-layout="row"] .calendario-dias span {
-        padding: clamp(0.3rem, 1.7vh, 0.55rem) 0;
-        font-size: clamp(0.65rem, 2.2vh, 0.85rem);
-        line-height: 1.15;
-    }
-    [data-layout="row"] .calendario-dias span.dia-atual { font-size: clamp(0.75rem, 2.5vh, 0.95rem); }
-}
-
-@media (max-width: 411px) {
-    :root:where([data-layout="row"]) {
-        --navbar-h: clamp(40px, 11vw, 50px);
-        --navbar-px: clamp(0.5rem, 3vw, 1rem);
-        --logo-size: clamp(0.8rem, 3.2vw, 1.1rem);
-        --logo-ls: clamp(1.5px, 0.8vw, 3px);
-        --sair-pad: clamp(0.25rem, 1.2vw, 0.38rem) clamp(0.5rem, 2.5vw, 0.85rem);
-        --sair-size: clamp(0.42rem, 1.6vw, 0.55rem);
-        --avatar-size: clamp(22px, 9vw, 32px);
-        --hamb-size: clamp(22px, 9vw, 32px);
-        --ficha-pad: clamp(1.5rem, 7vw, 2.5rem) clamp(1rem, 4vw, 1.5rem) 1.5rem;
-    }
-
-    [data-layout="row"] .btn-hamburger { font-size: clamp(0.7rem, 3vw, 1rem); }
-
-    [data-layout="row"] .calendario-cabecalho { padding: clamp(0.4rem, 1.8vh, 0.7rem) clamp(0.5rem, 2.5vw, 0.9rem); }
-    [data-layout="row"] .calendario-titulo { font-size: clamp(0.85rem, 2.8vh, 1.1rem); }
-    [data-layout="row"] .calendario-subtitulo {
-        font-size: clamp(0.38rem, 1.3vh, 0.5rem);
-        letter-spacing: clamp(1.8px, 0.6vw, 2.5px);
-    }
-    [data-layout="row"] .calendario-btn {
-        width: clamp(18px, 2.8vh, 24px);
-        height: clamp(18px, 2.8vh, 24px);
-        font-size: clamp(0.65rem, 2vh, 0.85rem);
-    }
-    [data-layout="row"] .calendario-dias-semana { padding: clamp(0.3rem, 1.4vh, 0.5rem) clamp(0.25rem, 1.2vw, 0.4rem); }
-    [data-layout="row"] .dia-semana {
-        font-size: clamp(0.38rem, 1.3vh, 0.5rem);
-        letter-spacing: clamp(0.6px, 0.3vw, 1.2px);
-    }
-    [data-layout="row"] .calendario-dias {
-        gap: clamp(1px, 0.3vh, 2px);
-        padding: clamp(0.3rem, 1.4vh, 0.5rem);
-    }
-    [data-layout="row"] .calendario-dias span {
-        padding: clamp(0.25rem, 1.5vh, 0.45rem) 0;
-        font-size: clamp(0.6rem, 2vh, 0.75rem);
-        line-height: 1.1;
-    }
-    [data-layout="row"] .calendario-dias span.dia-atual { font-size: clamp(0.7rem, 2.3vh, 0.85rem); }
-}
-
-/* ---------- 8.4 celular empilhado (em pé) ---------- */
 @media (max-width: 767px) {
     :root:where(:not([data-layout="row"])) {
         --navbar-h: 56px;
@@ -1503,35 +1427,6 @@ input, textarea, .ficha-email {
     html:not([data-layout="row"]) .sidebar::before { font-size: 1rem; }
 }
 
-/* ---------- 8.5 ajustes por altura ---------- */
-@media (max-width: 1366px) and (max-height: 700px) {
-    :root {
-        --secao-pt: 3.5rem;
-        --volume-pad: 0.9rem 1rem 1.2rem;
-    }
-    .volume-numero { font-size: 0.82rem; }
-    .volume-ano { font-size: 0.45rem; }
-}
-
-@media (max-width: 1366px) and (min-height: 851px) {
-    :root {
-        --secao-pt: 5.5rem;
-        --menu-gap: 1.2rem;
-        --link-pad-y: 1.15rem;
-        --volume-pad: 1.2rem 1.3rem 2rem;
-    }
-}
-
-@media (max-width: 1366px) and (min-height: 1000px) {
-    :root {
-        --secao-pt: 6rem;
-        --menu-gap: 1.5rem;
-        --link-pad-y: 1.3rem;
-        --link-pad-x: 1.1rem;
-        --volume-pad: 1.2rem 1.3rem 2.5rem;
-    }
-}
-
 html.redimensionando,
 html.redimensionando *,
 html.redimensionando *::before,
@@ -1541,7 +1436,7 @@ html.redimensionando *::after {
 }
 
 /* ==============================================
-   9. ACESSIBILIDADE
+   10. ACESSIBILIDADE
    ============================================== */
 @media (prefers-reduced-motion: reduce) {
     .ilustracao-central { animation: none; }
@@ -1551,89 +1446,5 @@ html.redimensionando *::after {
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
         transition-delay: 0s !important;
-    }
-}
-
-/* ==============================================
-   SUBMENU SANFONA (Matemática / Ciências)
-   ============================================== */
-
-.sidebar-toggle {
-    width: 100%;
-    font-family: inherit;
-    cursor: pointer;
-}
-
-.sidebar-seta {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    margin-left: auto;
-    width: 10px;
-    height: 10px;
-    flex-shrink: 0;
-    color: var(--dourado);
-    opacity: 0.7;
-    transition: transform 0.3s ease;
-}
-
-.sidebar-seta svg {
-    display: block;
-    width: 100%;
-    height: 100%;
-}
-
-.sidebar-toggle[aria-expanded="true"] .sidebar-seta {
-    transform: rotate(180deg);
-}
-
-.sidebar-submenu {
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    margin: 0.25rem 0 0.5rem 0;
-    padding-left: 2.2rem;
-    overflow: hidden;
-    animation: submenuAbrir 0.25s ease;
-}
-
-@keyframes submenuAbrir {
-    from { opacity: 0; transform: translateY(-4px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-
-.sidebar-sublink {
-    display: block;
-    padding: 0.5rem 0.7rem;
-    font-family: var(--fonte-display);
-    font-size: 0.78rem;
-    font-weight: 500;
-    letter-spacing: 0.5px;
-    text-decoration: none;
-    color: rgba(248, 242, 228, 0.72);
-    background: transparent;
-    border-left: 2px solid transparent;
-    border-radius: 2px;
-    transition: color 0.25s, background 0.25s, border-color 0.25s;
-}
-
-@media (hover: hover) {
-    .sidebar-sublink:hover {
-        color: var(--dourado);
-        background: rgba(184, 137, 74, 0.1);
-        border-left-color: var(--dourado);
-    }
-}
-
-@media (max-width: 1366px) {
-    .sidebar-submenu {
-        padding-left: 0.8rem;
-    }
-}
-
-@media (min-width: 1367px) {
-    .sidebar:not(:hover):not(.expandida) .sidebar-submenu {
-        display: none !important;
     }
 }
