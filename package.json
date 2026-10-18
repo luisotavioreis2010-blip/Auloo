@@ -2,7 +2,7 @@
   "name": "auloo",
   "version": "0.1.0",
   "private": true,
-  "description": "Plataforma de leitura e comunidade literária",
+  "description": "Plataforma educacional de matemática e ciências com explicações animadas e simuladores interativos",
   "scripts": {
     "dev": "npx serve . -l 3000",
     "format": "npx prettier --write \"**/*.{js,css,html,json,md}\"",
