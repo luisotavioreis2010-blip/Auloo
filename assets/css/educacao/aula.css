@@ -1,0 +1,185 @@
+@charset "UTF-8";
+
+:root {
+    --papel: #F0E8D8;
+    --papel-claro: #F8F2E4;
+    --papel-escuro: #E5D9C0;
+    --tinta: #1A1614;
+    --tinta-suave: #3D3528;
+    --tinta-clara: #7A6E5A;
+    --dourado: #B8894A;
+    --dourado-fraco: rgba(184, 137, 74, 0.15);
+    --vinho: #5C1A1A;
+    --fonte-display: 'Cormorant Garamond', Georgia, serif;
+    --fonte-corpo: 'Poppins', system-ui, sans-serif;
+    --fonte-titulo: 'Playfair Display', Georgia, serif;
+    --ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body.aula-body {
+    background: var(--papel);
+    color: var(--tinta);
+    font-family: var(--fonte-corpo);
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.aula-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.5rem 2rem;
+    background: var(--papel-claro);
+    border-bottom: 1px solid var(--dourado-fraco);
+}
+
+.aula-header h1 {
+    font-family: var(--fonte-titulo);
+    font-size: 1.5rem;
+    font-style: italic;
+    color: var(--vinho);
+    margin: 0;
+}
+
+.aula-btn-voltar {
+    font-family: var(--fonte-corpo);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--tinta);
+    text-decoration: none;
+    border: 1px solid var(--tinta);
+    padding: 0.5rem 1rem;
+    border-radius: 2px;
+    transition: all 0.3s var(--ease);
+}
+
+.aula-btn-voltar:hover {
+    background: var(--tinta);
+    color: var(--papel);
+}
+
+.aula-main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+/* --- Estilo do Motor (Deixa a tela bonita) --- */
+.motor-container {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 0;
+    width: 100%;
+    max-width: 1100px;
+    background: var(--papel-claro);
+    border: 1px solid var(--dourado-fraco);
+    border-radius: 4px;
+    box-shadow: 0 20px 50px rgba(26, 22, 20, 0.08);
+    overflow: hidden;
+    min-height: 550px;
+}
+
+.motor-simulador {
+    background: var(--papel-escuro);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    border-right: 1px solid var(--dourado-fraco);
+    position: relative;
+    overflow: hidden;
+}
+
+.motor-texto {
+    padding: 3rem 2.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.motor-titulo {
+    font-family: var(--fonte-titulo);
+    font-size: 1.8rem;
+    font-style: italic;
+    color: var(--vinho);
+    margin-top: 0;
+    margin-bottom: 1rem;
+    line-height: 1.2;
+}
+
+.motor-corpo {
+    font-family: var(--fonte-display);
+    font-size: 1.3rem;
+    line-height: 1.6;
+    color: var(--tinta-suave);
+}
+
+.motor-barra {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.5rem 2rem;
+    background: var(--papel-claro);
+    border-top: 1px solid var(--dourado-fraco);
+}
+
+.motor-btn {
+    background: transparent;
+    border: 1px solid var(--dourado);
+    color: var(--dourado);
+    font-family: var(--fonte-corpo);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    padding: 0.7rem 1.5rem;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.3s var(--ease);
+}
+
+.motor-btn:hover:not(:disabled) {
+    background: var(--dourado);
+    color: var(--papel-claro);
+}
+
+.motor-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    border-color: var(--tinta-clara);
+    color: var(--tinta-clara);
+}
+
+.motor-indicador {
+    font-family: var(--fonte-display);
+    font-size: 1.1rem;
+    font-style: italic;
+    color: var(--tinta-clara);
+}
+
+@media (max-width: 900px) {
+    .motor-container {
+        grid-template-columns: 1fr;
+    }
+    .motor-simulador {
+        min-height: 300px;
+        border-right: none;
+        border-bottom: 1px solid var(--dourado-fraco);
+    }
+    .motor-texto {
+        padding: 2rem 1.5rem;
+    }
+    .aula-header {
+        padding: 1rem;
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+}
