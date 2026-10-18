@@ -1,10 +1,10 @@
 ﻿@charset "UTF-8";
 /* ==============================================
-   ESTANTE.CSS — v9
-   Sidebar com rodapé NO FLUXO (rola junto com o conteúdo)
-   - Rodapé dentro do .sidebar-secao
-   - Tudo rola junto naturalmente
-   - Sem position, sem z-index, sem background próprio no rodapé
+   ESTANTE.CSS — v10
+   Rodapé com a MESMA lógica da maçã (❦):
+   rola junto com o conteúdo, sem ficar preso no fundo.
+   - .sidebar-secao com align-content: flex-start
+   - Rodapé com flex: 0 0 auto + position: static
    ============================================== */
 
 /* ==============================================
@@ -270,13 +270,16 @@ input, textarea, .ficha-email {
     box-shadow: 4px 0 30px rgba(61, 15, 15, 0.35);
 }
 
-/* Área de scroll — TUDO que está dentro rola junto */
+/* Área de scroll — TUDO que está dentro rola junto.
+   align-content: flex-start empilha os filhos no TOPO (não estica).
+   É o que faz o rodapé ficar logo após o último link, rolando junto. */
 .sidebar-secao {
     flex: 1 1 auto;
     min-height: 0;
     display: flex;
     flex-direction: column;
     align-items: stretch;
+    align-content: flex-start;
     padding: 1.5rem var(--secao-px) 1.5rem;
     overflow-x: hidden;
     overflow-y: auto;
@@ -403,12 +406,16 @@ input, textarea, .ficha-email {
     white-space: nowrap;
 }
 
-/* RODAPÉ — agora é parte do fluxo, rola junto com o conteúdo */
+/* RODAPÉ — mesma lógica da maçã: filho normal do flex column,
+   rola junto com o conteúdo, sem ficar preso no fundo. */
 .sidebar-selo,
 .sidebar-volume {
-    flex-shrink: 0;
     width: 100%;
     text-align: center;
+    flex: 0 0 auto;
+    position: static;
+    margin: 0;
+    padding: 0;
 }
 
 .sidebar-selo {
@@ -417,7 +424,8 @@ input, textarea, .ficha-email {
     justify-content: center;
     gap: 0.5rem;
     margin-top: 2rem;
-    padding: 1.2rem 0 0.6rem;
+    padding-top: 1.2rem;
+    padding-bottom: 0.6rem;
     white-space: nowrap;
     color: var(--dourado);
     opacity: 0.75;
@@ -439,7 +447,8 @@ input, textarea, .ficha-email {
     align-items: center;
     justify-content: center;
     gap: 0.4rem;
-    padding: 0.6rem 0 0;
+    padding-top: 0.6rem;
+    padding-bottom: 0;
 }
 
 .volume-numero {
