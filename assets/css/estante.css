@@ -1,8 +1,8 @@
 ﻿@charset "UTF-8";
 /* ==============================================
-   ESTANTE.CSS — v4
+   ESTANTE.CSS — v5
    Sidebar com submenu sanfona (Matemática / Ciências)
-   Ornamento fixo no topo (não rola)
+   Ornamento ❦ sempre visível no desktop
    ============================================== */
 
 /* ==============================================
@@ -28,7 +28,7 @@
     --sucesso: #2E7D4F;
     --erro: #B23A2E;
 
-    --fonte-display: 'Cormorant Garamond', Georgia, serif;
+    --fonte-display: 'Cormorant Garamond', 'Segoe UI Symbol', 'Apple Symbols', 'Noto Sans Symbols', Georgia, serif;
     --fonte-corpo: 'Poppins', system-ui, sans-serif;
     --fonte-titulo: 'Playfair Display', Georgia, serif;
 
@@ -270,7 +270,7 @@ input, textarea, .ficha-email {
     box-shadow: 4px 0 30px rgba(61, 15, 15, 0.35);
 }
 
-/* Ornamento ❦ — fica no topo da sidebar, não rola */
+/* Ornamento ❦ — absolute no .sidebar (que é fixed), fica preso no topo */
 .sidebar::before {
     content: '\2766';
     position: absolute;
@@ -282,8 +282,12 @@ input, textarea, .ficha-email {
     font-size: 1.2rem;
     color: var(--dourado);
     opacity: 0.7;
+    visibility: visible;
     pointer-events: none;
+    transition: opacity 0.3s ease;
 }
+
+.sidebar:is(:hover, .expandida)::before { opacity: 1; }
 
 .sidebar-secao {
     flex: 1;
@@ -454,7 +458,7 @@ input, textarea, .ficha-email {
 }
 
 /* ==============================================
-   4. SUBMENU SANFONA (Matemática / Ciências)
+   4. SUBMENU SANFONA
    ============================================== */
 .sidebar-toggle {
     width: 100%;
@@ -726,6 +730,7 @@ input, textarea, .ficha-email {
     position: absolute;
     top: 0.4rem;
     right: 0.6rem;
+    font-family: var(--fonte-display);
     font-size: 0.85rem;
     color: var(--dourado);
     opacity: 0.6;
@@ -1161,8 +1166,24 @@ input, textarea, .ficha-email {
 
     .sidebar:is(:hover, .expandida) { width: var(--sidebar-w); }
 
-    .sidebar::before { transition: opacity 0.3s ease; }
-    .sidebar:is(:hover, .expandida)::before { opacity: 1; }
+    /* Ornamento ❦ — sempre visível no desktop (força) */
+    .sidebar::before {
+        content: '\2766';
+        position: absolute !important;
+        top: var(--ornamento-top) !important;
+        left: 50% !important;
+        z-index: 3;
+        transform: translateX(-50%) !important;
+        font-family: var(--fonte-display);
+        font-size: 1.2rem;
+        color: var(--dourado);
+        opacity: 0.7 !important;
+        visibility: visible !important;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+    }
+
+    .sidebar:is(:hover, .expandida)::before { opacity: 1 !important; }
 
     .sidebar::after {
         content: '';
@@ -1200,12 +1221,10 @@ input, textarea, .ficha-email {
         margin-bottom: 1.2rem;
     }
 
-    /* No modo colapsado, submenu escondido */
     .sidebar:not(:hover):not(.expandida) .sidebar-submenu {
         display: none !important;
     }
 
-    /* Seta invisível no modo colapsado (não tem espaço) */
     .sidebar:not(:hover):not(.expandida) .sidebar-seta {
         display: none;
     }
