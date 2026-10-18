@@ -945,3 +945,49 @@
         iniciar();
     }
 })();
+
+/* ==============================================
+   ACCORDION DA SIDEBAR (Matemática / Ciências)
+   Só um submenu aberto por vez.
+   ============================================== */
+(function () {
+    'use strict';
+
+    function setupAccordionSidebar() {
+        const toggles = document.querySelectorAll('.sidebar-toggle');
+        if (!toggles.length) return;
+
+        function fechar(toggle) {
+            const alvoId = toggle.getAttribute('aria-controls');
+            const submenu = alvoId ? document.getElementById(alvoId) : null;
+            toggle.setAttribute('aria-expanded', 'false');
+            if (submenu) submenu.hidden = true;
+        }
+
+        function abrir(toggle) {
+            const alvoId = toggle.getAttribute('aria-controls');
+            const submenu = alvoId ? document.getElementById(alvoId) : null;
+            toggle.setAttribute('aria-expanded', 'true');
+            if (submenu) submenu.hidden = false;
+        }
+
+        toggles.forEach((toggle) => {
+            toggle.addEventListener('click', () => {
+                const jaAberto = toggle.getAttribute('aria-expanded') === 'true';
+
+                toggles.forEach((outro) => {
+                    if (outro !== toggle) fechar(outro);
+                });
+
+                if (jaAberto) fechar(toggle);
+                else abrir(toggle);
+            });
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setupAccordionSidebar);
+    } else {
+        setupAccordionSidebar();
+    }
+})();
