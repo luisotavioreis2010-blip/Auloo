@@ -1,10 +1,10 @@
 ﻿@charset "UTF-8";
 /* ==============================================
-   ESTANTE.CSS — v6
-   Sidebar com submenu sanfona (Matemática / Ciências)
-   Ornamento ❦ DENTRO do scroll (rola junto com o conteúdo)
-   Rodapé da sidebar com fundo sólido (não vaza)
-   Desktop: sidebar sempre aberta (300px)
+   ESTANTE.CSS — v7
+   - Ornamento ❦ dentro do scroll (rola junto)
+   - Rodapé fixo no fundo (mobile com fundo, desktop transparente)
+   - Desktop: sidebar sempre aberta (300px)
+   - Conteúdo não vaza por baixo do rodapé
    ============================================== */
 
 /* ==============================================
@@ -284,7 +284,8 @@ input, textarea, .ficha-email {
 }
 
 .sidebar-secao {
-    flex: 1;
+    flex: 1 1 auto;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     align-items: stretch;
@@ -396,13 +397,13 @@ input, textarea, .ficha-email {
     white-space: nowrap;
 }
 
-/* Rodapé da sidebar — fundo sólido, fixo, com sombra em cima */
+/* Rodapé da sidebar — fixo no fundo, com fundo sólido no mobile */
 .sidebar-selo,
 .sidebar-volume {
+    flex-shrink: 0;
     position: relative;
     z-index: 2;
     background: var(--sidebar-bg-3);
-    flex-shrink: 0;
 }
 
 .sidebar-selo {
@@ -1144,6 +1145,7 @@ input, textarea, .ficha-email {
 
 /* ==============================================
    8. DESKTOP (≥ 1367px) — sidebar sempre aberta
+   Rodapé TRANSPARENTE (fundo do gradiente aparece)
    ============================================== */
 @media (min-width: 1367px) {
     :root {
@@ -1158,11 +1160,40 @@ input, textarea, .ficha-email {
     }
 
     .sidebar {
+        display: flex;
+        flex-direction: column;
         width: var(--sidebar-w);
         background: linear-gradient(180deg,
             var(--sidebar-bg-1) 0%,
             var(--sidebar-bg-2) 50%,
             var(--sidebar-bg-3) 100%);
+    }
+
+    /* Conteúdo rola internamente, rodapé fica fixo no fundo */
+    .sidebar-secao {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-x: hidden;
+        overflow-y: auto;
+        scrollbar-width: none;
+    }
+
+    .sidebar-secao::-webkit-scrollbar { display: none; }
+
+    /* Desktop: rodapé transparente (mostra o gradiente da sidebar) */
+    .sidebar-selo,
+    .sidebar-volume {
+        flex-shrink: 0;
+        background: transparent;
+    }
+
+    .sidebar-selo {
+        border-top: 1px solid rgba(184, 137, 74, 0.15);
+        padding-top: 1rem;
+    }
+
+    .sidebar-selo::before {
+        display: none;
     }
 
     .estante-main { transition: margin 0.4s var(--ease); }
@@ -1206,7 +1237,8 @@ input, textarea, .ficha-email {
 }
 
 /* ==============================================
-   9. COMPACTO (≤ 1366px)
+   9. COMPACTO (≤ 1366px) — mobile: gaveta
+   Rodapé COM fundo sólido (gaveta rola)
    ============================================== */
 @media (max-width: 1366px) {
     html, body {
@@ -1231,8 +1263,9 @@ input, textarea, .ficha-email {
         width: var(--drawer-w);
         max-width: var(--drawer-max);
         height: var(--viewport-h);
-        overflow-x: hidden;
-        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
         -webkit-overflow-scrolling: touch;
         overscroll-behavior: none;
         scrollbar-width: none;
@@ -1249,9 +1282,22 @@ input, textarea, .ficha-email {
         transition: transform 0.4s var(--ease), visibility 0s;
     }
 
+    /* Mobile: sidebar-secao ocupa todo o espaço restante, rodapé fica no fundo */
     .sidebar-secao {
-        flex: 0 0 auto;
-        overflow: visible;
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-x: hidden;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+        scrollbar-width: none;
+    }
+
+    .sidebar-secao::-webkit-scrollbar { display: none; }
+
+    .sidebar-selo,
+    .sidebar-volume {
+        flex-shrink: 0;
     }
 
     .sidebar-icone { display: none; }
