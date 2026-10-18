@@ -1,12 +1,10 @@
 ﻿@charset "UTF-8";
 /* ==============================================
-   ESTANTE.CSS — v8
-   Sidebar repensada:
-   - Rodapé reserva espaço via flex (não sobrepõe)
-   - Conteúdo rola dentro do espaço que sobra
-   - ❦ no topo, rola junto com o conteúdo
-   - Mobile: gaveta com fundo sólido no rodapé
-   - Desktop: rodapé transparente (gradiente aparece)
+   ESTANTE.CSS — v9
+   Sidebar com rodapé NO FLUXO (rola junto com o conteúdo)
+   - Rodapé dentro do .sidebar-secao
+   - Tudo rola junto naturalmente
+   - Sem position, sem z-index, sem background próprio no rodapé
    ============================================== */
 
 /* ==============================================
@@ -255,10 +253,8 @@ input, textarea, .ficha-email {
 .gaveta-overlay.ativa { opacity: 1; pointer-events: auto; }
 
 /* ==============================================
-   3. SIDEBAR ESQUERDA — ARQUITETURA LIMPA
+   3. SIDEBAR ESQUERDA
    ============================================== */
-
-/* 3.1 Container principal: flex column, altura fixa */
 .sidebar {
     position: fixed;
     top: var(--navbar-h);
@@ -268,31 +264,29 @@ input, textarea, .ficha-email {
     display: flex;
     flex-direction: column;
     width: var(--sidebar-w);
-    overflow: hidden;           /* o conteúdo que rola é o .sidebar-secao */
+    overflow: hidden;
     background: var(--sidebar-bg-2);
     border-right: 3px double var(--dourado);
     box-shadow: 4px 0 30px rgba(61, 15, 15, 0.35);
-    contain: layout style;      /* isola o layout do resto da página */
 }
 
-/* 3.2 Área que rola: ocupa "o que sobra" depois do rodapé */
+/* Área de scroll — TUDO que está dentro rola junto */
 .sidebar-secao {
-    flex: 1 1 auto;             /* ← cresce/encolhe pra preencher o espaço */
-    min-height: 0;              /* ← ESSENCIAL: permite scroll em flex child */
+    flex: 1 1 auto;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    padding: 1.5rem var(--secao-px) 0.5rem;
+    padding: 1.5rem var(--secao-px) 1.5rem;
     overflow-x: hidden;
     overflow-y: auto;
-    overflow-anchor: none;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
 }
 
 .sidebar-secao::-webkit-scrollbar { display: none; }
 
-/* 3.3 Ornamento ❦ — primeiro "filho" do scroll */
+/* Ornamento ❦ — primeiro "filho" do scroll */
 .sidebar-secao::before {
     content: '\2766';
     display: block;
@@ -306,7 +300,6 @@ input, textarea, .ficha-email {
     flex-shrink: 0;
 }
 
-/* 3.4 Título e filete */
 .sidebar-titulo {
     min-height: 1.2rem;
     margin-bottom: 1.2rem;
@@ -330,7 +323,6 @@ input, textarea, .ficha-email {
     flex-shrink: 0;
 }
 
-/* 3.5 Menu e links */
 .sidebar-menu {
     display: flex;
     flex-direction: column;
@@ -411,13 +403,12 @@ input, textarea, .ficha-email {
     white-space: nowrap;
 }
 
-/* 3.6 RODAPÉ — reserva espaço via flex, não sobrepõe */
+/* RODAPÉ — agora é parte do fluxo, rola junto com o conteúdo */
 .sidebar-selo,
 .sidebar-volume {
-    flex-shrink: 0;              /* ← NÃO encolhe */
-    position: relative;
-    z-index: 2;
-    background: var(--sidebar-bg-3);
+    flex-shrink: 0;
+    width: 100%;
+    text-align: center;
 }
 
 .sidebar-selo {
@@ -425,12 +416,12 @@ input, textarea, .ficha-email {
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    width: 100%;
-    padding: 1rem 1rem 0.6rem;
+    margin-top: 2rem;
+    padding: 1.2rem 0 0.6rem;
     white-space: nowrap;
     color: var(--dourado);
     opacity: 0.75;
-    border-top: 1px solid rgba(184, 137, 74, 0.15);
+    border-top: 1px solid rgba(184, 137, 74, 0.2);
 }
 
 .selo-texto {
@@ -448,9 +439,7 @@ input, textarea, .ficha-email {
     align-items: center;
     justify-content: center;
     gap: 0.4rem;
-    width: 100%;
-    padding: 0.6rem 1rem 1.2rem;
-    text-align: center;
+    padding: 0.6rem 0 0;
 }
 
 .volume-numero {
@@ -1147,7 +1136,7 @@ input, textarea, .ficha-email {
 .calendario-dias span.dia-outro-mes { opacity: 0.25; }
 
 /* ==============================================
-   8. DESKTOP (≥ 1367px) — sidebar sempre aberta
+   8. DESKTOP (≥ 1367px)
    ============================================== */
 @media (min-width: 1367px) {
     :root {
@@ -1169,17 +1158,6 @@ input, textarea, .ficha-email {
             var(--sidebar-bg-1) 0%,
             var(--sidebar-bg-2) 50%,
             var(--sidebar-bg-3) 100%);
-    }
-
-    /* Desktop: rodapé transparente (gradiente da sidebar aparece) */
-    .sidebar-selo,
-    .sidebar-volume {
-        background: transparent;
-    }
-
-    .sidebar-selo {
-        border-top: 1px solid rgba(184, 137, 74, 0.15);
-        padding-top: 1rem;
     }
 
     .estante-main { transition: margin 0.4s var(--ease); }
