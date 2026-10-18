@@ -1,10 +1,9 @@
 ﻿@charset "UTF-8";
 /* ==============================================
-   ESTANTE.CSS — v10
-   Rodapé com a MESMA lógica da maçã (❦):
-   rola junto com o conteúdo, sem ficar preso no fundo.
-   - .sidebar-secao com align-content: flex-start
-   - Rodapé com flex: 0 0 auto + position: static
+   ESTANTE.CSS — v11
+   Rodapé (selo + volume) rola junto com o conteúdo
+   quando o menu excede a altura da sidebar, mas fica
+   no FUNDO visual quando sobra espaço (margin-top: auto).
    ============================================== */
 
 /* ==============================================
@@ -272,7 +271,8 @@ input, textarea, .ficha-email {
 
 /* Área de scroll — TUDO que está dentro rola junto.
    align-content: flex-start empilha os filhos no TOPO (não estica).
-   É o que faz o rodapé ficar logo após o último link, rolando junto. */
+   O rodapé usa margin-top: auto para "cair" no fundo quando
+   sobra espaço, e rolar junto quando o menu é maior que a sidebar. */
 .sidebar-secao {
     flex: 1 1 auto;
     min-height: 0;
@@ -406,8 +406,9 @@ input, textarea, .ficha-email {
     white-space: nowrap;
 }
 
-/* RODAPÉ — mesma lógica da maçã: filho normal do flex column,
-   rola junto com o conteúdo, sem ficar preso no fundo. */
+/* RODAPÉ — rola junto quando o menu excede a sidebar,
+   mas "cai" para o fundo visual quando sobra espaço
+   (graças ao margin-top: auto no .sidebar-selo). */
 .sidebar-selo,
 .sidebar-volume {
     width: 100%;
@@ -423,7 +424,7 @@ input, textarea, .ficha-email {
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    margin-top: 2rem;
+    margin-top: auto;              /* ← empurra para o fundo se houver espaço */
     padding-top: 1.2rem;
     padding-bottom: 0.6rem;
     white-space: nowrap;
