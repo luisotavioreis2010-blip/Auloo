@@ -1,6 +1,5 @@
 /* ==============================================
-   LAYOUT.JS — v3 (Original que Funcionava)
-   Interface, Perfil, Calendário e Sessão
+   LAYOUT.JS — v3 (Original)
    ============================================== */
 (function () {
     'use strict';
