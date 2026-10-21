@@ -1,0 +1,142 @@
+@charset "UTF-8";
+/* ==============================================
+   CANAL.CSS — Página Pública do Canal
+   ============================================== */
+
+.canal-main {
+    margin-left: var(--sidebar-w);
+    min-height: calc(100vh - var(--navbar-h));
+    background: var(--papel);
+    padding: 3rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Estado Vazio (Usuário sem canal) */
+.canal-vazio {
+    background: var(--papel-claro);
+    border: 1px dashed var(--dourado);
+    padding: 4rem;
+    text-align: center;
+    margin-top: 5rem;
+}
+.canal-vazio h2 {
+    font-family: var(--fonte-titulo);
+    font-style: italic;
+    color: var(--vinho);
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+.canal-vazio p {
+    font-family: var(--fonte-display);
+    font-size: 1.2rem;
+    color: var(--tinta-suave);
+    margin-bottom: 2rem;
+}
+
+/* Conteúdo do Canal */
+.canal-conteudo {
+    width: 100%;
+    max-width: 900px;
+    background: var(--papel-claro);
+    border: 1px solid var(--dourado-fraco);
+    border-radius: 4px;
+    box-shadow: 0 10px 30px rgba(26, 22, 20, 0.05);
+    overflow: hidden;
+}
+
+/* Capa */
+.canal-capa {
+    width: 100%;
+    height: 250px;
+    background-color: var(--papel-escuro);
+    background-size: cover;
+    background-position: center;
+    border-bottom: 2px solid var(--dourado);
+}
+
+/* Cabeçalho do Canal */
+.canal-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 2rem;
+    padding: 0 3rem 3rem;
+    position: relative;
+}
+
+/* Avatar */
+.canal-avatar {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    background: var(--papel);
+    border: 4px solid var(--papel-claro);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    margin-top: -70px; /* Puxa o avatar para cima da capa */
+    background-size: cover;
+    background-position: center;
+    flex-shrink: 0;
+}
+
+.canal-info {
+    flex: 1;
+    margin-top: 1rem;
+}
+
+.canal-nome {
+    font-family: var(--fonte-titulo);
+    font-size: 2.5rem;
+    font-style: italic;
+    color: var(--vinho);
+    margin-bottom: 0.2rem;
+}
+
+.canal-handle {
+    font-family: var(--fonte-corpo);
+    font-size: 0.9rem;
+    color: var(--dourado);
+    text-transform: lowercase;
+    display: block;
+    margin-bottom: 1rem;
+}
+
+.canal-bio {
+    font-family: var(--fonte-display);
+    font-size: 1.2rem;
+    line-height: 1.5;
+    color: var(--tinta-suave);
+}
+
+.canal-acoes {
+    margin-top: 1rem;
+}
+
+.btn-primario {
+    background: var(--vinho);
+    color: var(--papel);
+    border: 1px solid var(--vinho);
+    padding: 0.8rem 2rem;
+    font-family: var(--fonte-corpo);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+.btn-primario:hover {
+    background: var(--dourado);
+    border-color: var(--dourado);
+}
+
+/* Responsivo */
+@media (max-width: 1366px) {
+    .canal-main { margin-left: 0; padding: 2rem 1rem; }
+}
+@media (max-width: 768px) {
+    .canal-header { flex-direction: column; align-items: center; text-align: center; padding: 0 1.5rem 2rem; }
+    .canal-avatar { margin-top: -60px; width: 120px; height: 120px; }
+    .canal-nome { font-size: 2rem; }
+    .canal-capa { height: 180px; }
+}

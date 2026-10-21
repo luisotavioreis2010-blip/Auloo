@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#1A1614">
+    <title>Meu Canal | Auloo</title>
+    <link rel="icon" type="image/png" href="assets/img/logo/auloo-logo.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400;1,500&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="assets/css/global.css">
+    <link rel="stylesheet" href="assets/css/estante.css">
+    <link rel="stylesheet" href="assets/css/canal.css">
+</head>
+<body>
+
+    <!-- NAVBAR -->
+    <header class="navbar">
+        <div class="navbar-left">
+            <button class="btn-hamburger" id="btn-hamburger" type="button" aria-label="Abrir sumário" aria-expanded="false" aria-controls="sidebar">&#9776;</button>
+            <a href="estante.html" class="logo" translate="no" style="text-decoration: none;">Auloo<span class="logo-dot">.</span></a>
+        </div>
+        <div class="navbar-right">
+            <button class="btn-sair" id="btn-sair" type="button" aria-label="Sair do sistema">Sair</button>
+            <button class="perfil-botao" id="perfil-botao" type="button" aria-label="Abrir ficha do aluno" aria-expanded="false" aria-controls="sidebar-perfil">
+                <span class="perfil-usuario" id="perfil-usuario"></span>
+            </button>
+        </div>
+    </header>
+
+    <div class="gaveta-overlay" id="gaveta-overlay" aria-hidden="true"></div>
+
+    <!-- SIDEBAR ESQUERDA -->
+    <aside class="sidebar" id="sidebar" aria-label="Sumário">
+        <div class="sidebar-secao">
+            <h2 class="sidebar-titulo">Sumário</h2>
+            <div class="sidebar-filete"></div>
+            <nav class="sidebar-menu">
+                <a href="estante.html" class="sidebar-link"><span class="sidebar-romano">I</span><span class="sidebar-nome">Início</span></a>
+                <a href="comunidade.html" class="sidebar-link"><span class="sidebar-romano">II</span><span class="sidebar-nome">Mural</span></a>
+            </nav>
+        </div>
+    </aside>
+
+    <!-- FICHA DO ALUNO -->
+    <aside class="sidebar-direita" id="sidebar-perfil" aria-label="Ficha do Aluno">
+        <div class="ficha-header">
+            <h2 class="ficha-titulo">Ficha do Aluno</h2>
+            <button class="ficha-fechar" id="ficha-fechar" type="button">&#10005;</button>
+        </div>
+        <div class="ficha-perfil">
+            <div class="ficha-foto" id="sidebar-perfil-foto"></div>
+            <div class="ficha-info">
+                <span class="ficha-nome" id="sidebar-perfil-nome">Usuário</span>
+                <span class="ficha-email" id="sidebar-perfil-email">&nbsp;</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- CONTEÚDO DO CANAL -->
+    <main class="canal-main">
+        <!-- Se o usuário não tiver canal, o JS mostra esta mensagem -->
+        <div id="canal-vazio" class="canal-vazio" hidden>
+            <h2>Você ainda não tem um Canal.</h2>
+            <p>Crie seu espaço para começar a publicar no Auloo.</p>
+            <button id="btn-criar-canal" class="btn-primario">Criar Meu Canal</button>
+        </div>
+
+        <!-- Se o usuário tiver canal, o JS mostra isso -->
+        <div id="canal-conteudo" class="canal-conteudo" hidden>
+            <div class="canal-capa" id="canal-capa"></div>
+            <div class="canal-header">
+                <div class="canal-avatar" id="canal-avatar"></div>
+                <div class="canal-info">
+                    <h1 class="canal-nome" id="canal-nome">Nome do Canal</h1>
+                    <span class="canal-handle" id="canal-handle">@handle</span>
+                    <p class="canal-bio" id="canal-bio">Bio do canal aqui.</p>
+                </div>
+                <div class="canal-acoes">
+                    <button class="btn-primario" id="btn-editar-canal">Editar Canal</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- SCRIPTS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script src="assets/js/lib/utils.js"></script>
+    <script src="assets/js/layout.js"></script>
+    <script src="assets/js/pages/canal.js"></script>
+</body>
+</html>

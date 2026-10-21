@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=overlays-content">
     <meta name="theme-color" content="#1A1614">
-    <meta name="description" content="Auloo - Aprenda matemática e ciências com explicações animadas e simuladores.">
+    <meta name="description" content="Auloo - Aprenda e compartilhe conhecimento.">
     <title translate="no">Minha Estante | Auloo</title>
     <link rel="icon" type="image/png" href="assets/img/logo/auloo-logo.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -35,13 +35,15 @@
 
     <div class="gaveta-overlay" id="gaveta-overlay" aria-hidden="true"></div>
 
+    <!-- SIDEBAR ESQUERDA -->
     <aside class="sidebar" id="sidebar" aria-label="Sumário">
         <div class="sidebar-secao">
             <h2 class="sidebar-titulo">Sumário</h2>
             <div class="sidebar-filete"></div>
 
             <nav class="sidebar-menu">
-                <a href="/estante.html" class="sidebar-link" aria-label="Início">
+                <!-- Início -->
+                <a href="estante.html" class="sidebar-link" aria-label="Início">
                     <span class="sidebar-icone">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
                     </span>
@@ -49,48 +51,35 @@
                     <span class="sidebar-nome">Início</span>
                 </a>
 
-                <div class="sidebar-grupo" data-grupo="matematica">
-                    <button type="button" class="sidebar-link sidebar-toggle" aria-expanded="false" aria-controls="submenu-matematica">
+                <!-- Quizzes (Sanfona) -->
+                <div class="sidebar-grupo" data-grupo="quizzes">
+                    <button type="button" class="sidebar-link sidebar-toggle" aria-expanded="false" aria-controls="submenu-quizzes">
                         <span class="sidebar-icone">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="12" x2="8" y2="12"/><line x1="12" y1="12" x2="12" y2="12"/><line x1="16" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="8" y2="16"/><line x1="12" y1="16" x2="12" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                         </span>
                         <span class="sidebar-romano">II</span>
-                        <span class="sidebar-nome">Matemática</span>
+                        <span class="sidebar-nome">Quizzes</span>
                         <span class="sidebar-seta" aria-hidden="true">
                             <svg viewBox="0 0 12 8" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 1.5l5 5 5-5"/></svg>
                         </span>
                     </button>
-                    <ul class="sidebar-submenu" id="submenu-matematica" hidden>
-                        <li><a href="/educacao/aula.html?id=fracoes" class="sidebar-sublink">Frações</a></li>
-                        <li><a href="/educacao/aula.html?id=pitagoras" class="sidebar-sublink">Pitágoras</a></li>
-                        <li><a href="/educacao/aula.html?id=funcoes" class="sidebar-sublink">Funções</a></li>
-                        <li><a href="/educacao/aula.html?id=trigonometria" class="sidebar-sublink">Trigonometria</a></li>
-                        <li><a href="/educacao/aula.html?id=geometria" class="sidebar-sublink">Geometria</a></li>
-                        <li><a href="/educacao/aula.html?id=estatistica" class="sidebar-sublink">Estatística</a></li>
+                    <ul class="sidebar-submenu" id="submenu-quizzes" hidden>
+                        <li><a href="#" class="sidebar-sublink">Explorar Salas</a></li>
+                        <li><a href="#" class="sidebar-sublink">Criar Quiz</a></li>
+                        <li><a href="#" class="sidebar-sublink">Meus Quizzes</a></li>
                     </ul>
                 </div>
 
-                <div class="sidebar-grupo" data-grupo="ciencias">
-                    <button type="button" class="sidebar-link sidebar-toggle" aria-expanded="false" aria-controls="submenu-ciencias">
-                        <span class="sidebar-icone">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><path d="M20.2 20.2c2.04-2.03.02-7.36-4.5-11.9-4.54-4.52-9.87-6.54-11.9-4.5-2.04 2.03-.02 7.36 4.5 11.9 4.54 4.52 9.87 6.54 11.9 4.5Z"/><path d="M15.7 15.7c4.52-4.54 6.54-9.87 4.5-11.9-2.03-2.04-7.36-.02-11.9 4.5-4.52 4.54-6.54 9.87-4.5 11.9 2.03 2.04 7.36.02 11.9-4.5Z"/></svg>
-                        </span>
-                        <span class="sidebar-romano">III</span>
-                        <span class="sidebar-nome">Ciências</span>
-                        <span class="sidebar-seta" aria-hidden="true">
-                            <svg viewBox="0 0 12 8" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 1.5l5 5 5-5"/></svg>
-                        </span>
-                    </button>
-                    <ul class="sidebar-submenu" id="submenu-ciencias" hidden>
-                        <li><a href="/educacao/aula.html?id=pendulo" class="sidebar-sublink">Pêndulo</a></li>
-                        <li><a href="/educacao/aula.html?id=projeteis" class="sidebar-sublink">Projéteis</a></li>
-                        <li><a href="/educacao/aula.html?id=circuito" class="sidebar-sublink">Circuito elétrico</a></li>
-                        <li><a href="/educacao/aula.html?id=tabela-periodica" class="sidebar-sublink">Tabela periódica</a></li>
-                        <li><a href="/educacao/aula.html?id=celula" class="sidebar-sublink">Célula</a></li>
-                        <li><a href="/educacao/aula.html?id=genetica" class="sidebar-sublink">Genética</a></li>
-                    </ul>
-                </div>
+                <!-- Comunidade (Link para o Mural) -->
+                <a href="comunidade.html" class="sidebar-link" aria-label="Comunidade">
+                    <span class="sidebar-icone">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    </span>
+                    <span class="sidebar-romano">III</span>
+                    <span class="sidebar-nome">Comunidade</span>
+                </a>
 
+                <!-- Progresso -->
                 <a href="#" class="sidebar-link" aria-label="Progresso">
                     <span class="sidebar-icone">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
@@ -99,20 +88,13 @@
                     <span class="sidebar-nome">Progresso</span>
                 </a>
 
-                <a href="#" class="sidebar-link" aria-label="Exercícios">
+                <!-- Configurações -->
+                <a href="#" class="sidebar-link" aria-label="Configurações">
                     <span class="sidebar-icone">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
                     </span>
                     <span class="sidebar-romano">V</span>
-                    <span class="sidebar-nome">Exercícios</span>
-                </a>
-
-                <a href="#" class="sidebar-link" aria-label="Comunidade">
-                    <span class="sidebar-icone">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                    </span>
-                    <span class="sidebar-romano">VI</span>
-                    <span class="sidebar-nome">Comunidade</span>
+                    <span class="sidebar-nome">Configurações</span>
                 </a>
             </nav>
 
@@ -129,6 +111,7 @@
         </div>
     </aside>
 
+    <!-- FICHA DO ALUNO (Sidebar Direita) -->
     <aside class="sidebar-direita" id="sidebar-perfil" aria-label="Ficha do Aluno">
         <div class="ficha-header">
             <h2 class="ficha-titulo">Ficha do Aluno</h2>
@@ -152,93 +135,25 @@
                 <span class="ficha-romano">&#10070;</span>
                 <span class="ficha-texto">Mudar Foto</span>
             </button>
-
             <button class="ficha-item" id="btn-editar-nome" type="button" aria-expanded="false" aria-controls="container-editar-nome">
                 <span class="ficha-romano">&#9998;</span>
                 <span class="ficha-texto">Editar Nome</span>
             </button>
-
+            <!-- Forms de edição -->
             <form id="container-editar-nome" class="container-expansivel" hidden novalidate>
                 <label for="input-novo-nome">Nome</label>
-                <input type="text" id="input-novo-nome" autocomplete="off" autocapitalize="words" maxlength="60" name="nome-usuario" placeholder="Digite seu novo nome" aria-label="Novo nome">
+                <input type="text" id="input-novo-nome" autocomplete="off" placeholder="Digite seu novo nome">
                 <button id="btn-salvar-nome" class="btn-container" type="submit">Salvar</button>
             </form>
-
-            <button class="ficha-item" id="btn-editar-senha" type="button" aria-expanded="false" aria-controls="container-editar-senha container-criar-senha">
-                <span class="ficha-romano">&#10033;</span>
-                <span class="ficha-texto">Senha</span>
-            </button>
-
-            <form id="container-editar-senha" class="container-expansivel" hidden novalidate>
-                <label for="input-senha-atual">Senha Atual</label>
-                <div class="wrapper-olho-senha">
-                    <input type="password" id="input-senha-atual" placeholder="Senha atual" aria-label="Senha atual" autocomplete="current-password">
-                    <button type="button" class="btn-olho-senha" aria-pressed="false" data-target="input-senha-atual" aria-label="Mostrar senha atual">
-                        <svg class="icone-olho-aberto" aria-hidden="true"><use href="#icone-olho-aberto"/></svg>
-                        <svg class="icone-olho-fechado" aria-hidden="true"><use href="#icone-olho-fechado"/></svg>
-                    </button>
-                </div>
-
-                <label for="input-senha-nova">Nova Senha</label>
-                <div class="wrapper-olho-senha">
-                    <input type="password" id="input-senha-nova" placeholder="Nova senha" aria-label="Nova senha" autocomplete="new-password">
-                    <button type="button" class="btn-olho-senha" aria-pressed="false" data-target="input-senha-nova" aria-label="Mostrar nova senha">
-                        <svg class="icone-olho-aberto" aria-hidden="true"><use href="#icone-olho-aberto"/></svg>
-                        <svg class="icone-olho-fechado" aria-hidden="true"><use href="#icone-olho-fechado"/></svg>
-                    </button>
-                </div>
-
-                <button id="btn-confirmar-senha" class="btn-container" type="submit">Atualizar Senha</button>
-            </form>
-
-            <form id="container-criar-senha" class="container-expansivel" hidden novalidate>
-                <label for="input-nova-senha-criar">Criar Senha</label>
-                <div class="wrapper-olho-senha">
-                    <input type="password" id="input-nova-senha-criar" placeholder="Nova senha" aria-label="Nova senha" autocomplete="new-password">
-                    <button type="button" class="btn-olho-senha" aria-pressed="false" data-target="input-nova-senha-criar" aria-label="Mostrar nova senha">
-                        <svg class="icone-olho-aberto" aria-hidden="true"><use href="#icone-olho-aberto"/></svg>
-                        <svg class="icone-olho-fechado" aria-hidden="true"><use href="#icone-olho-fechado"/></svg>
-                    </button>
-                </div>
-
-                <label for="input-confirmar-senha-criar">Confirmar Senha</label>
-                <div class="wrapper-olho-senha">
-                    <input type="password" id="input-confirmar-senha-criar" placeholder="Confirmar senha" aria-label="Confirmar senha" autocomplete="new-password">
-                    <button type="button" class="btn-olho-senha" aria-pressed="false" data-target="input-confirmar-senha-criar" aria-label="Mostrar confirmação">
-                        <svg class="icone-olho-aberto" aria-hidden="true"><use href="#icone-olho-aberto"/></svg>
-                        <svg class="icone-olho-fechado" aria-hidden="true"><use href="#icone-olho-fechado"/></svg>
-                    </button>
-                </div>
-
-                <button id="btn-confirmar-criar-senha" class="btn-container" type="submit">Criar Senha</button>
-            </form>
-
+            
             <button class="ficha-item" id="btn-saiba-mais" type="button" aria-expanded="false" aria-controls="container-saiba-mais">
                 <span class="ficha-romano">&#10022;</span>
                 <span class="ficha-texto">Saiba mais</span>
             </button>
-
             <div id="container-saiba-mais" class="container-expansivel" hidden>
                 <a class="ficha-saiba-item" href="/?de=estante">
                     <span class="ficha-saiba-num">I</span>
-                    <span class="ficha-saiba-corpo">
-                        <strong>Conheça o Auloo</strong>
-                        <small>Visão geral da plataforma</small>
-                    </span>
-                </a>
-                <a class="ficha-saiba-item" href="/termos.html?de=estante">
-                    <span class="ficha-saiba-num">II</span>
-                    <span class="ficha-saiba-corpo">
-                        <strong>Regras da Casa</strong>
-                        <small>Termos de uso</small>
-                    </span>
-                </a>
-                <a class="ficha-saiba-item" href="/privacidade.html?de=estante">
-                    <span class="ficha-saiba-num">III</span>
-                    <span class="ficha-saiba-corpo">
-                        <strong>Seus Dados</strong>
-                        <small>Política de privacidade</small>
-                    </span>
+                    <span class="ficha-saiba-corpo"><strong>Conheça o Auloo</strong><small>Visão geral</small></span>
                 </a>
             </div>
         </nav>
@@ -246,6 +161,7 @@
 
     <input type="file" id="input-foto" accept="image/jpeg,image/png,image/gif,image/webp" hidden aria-label="Upload de foto de perfil">
 
+    <!-- CONTEÚDO PRINCIPAL (Calendário e Ilustração) -->
     <main class="estante-main">
         <div class="ilustracao-container">
             <picture>
@@ -265,12 +181,8 @@
                     <button class="calendario-btn" id="btn-proximo-mes" type="button" aria-label="Próximo mês">&#8250;</button>
                 </div>
                 <div class="calendario-dias-semana">
-                    <span class="dia-semana">DOM</span>
-                    <span class="dia-semana">SEG</span>
-                    <span class="dia-semana">TER</span>
-                    <span class="dia-semana">QUA</span>
-                    <span class="dia-semana">QUI</span>
-                    <span class="dia-semana">SEX</span>
+                    <span class="dia-semana">DOM</span><span class="dia-semana">SEG</span><span class="dia-semana">TER</span>
+                    <span class="dia-semana">QUA</span><span class="dia-semana">QUI</span><span class="dia-semana">SEX</span>
                     <span class="dia-semana">SÁB</span>
                 </div>
                 <div class="calendario-dias" id="calendario-dias"></div>
@@ -282,6 +194,6 @@
     <script src="assets/js/config.js"></script>
     <script src="assets/js/auth.js"></script>
     <script src="assets/js/lib/utils.js"></script>
-    <script src="assets/js/pages/modulos/estante.js"></script>
+    <script src="assets/js/layout.js"></script>
 </body>
 </html>
