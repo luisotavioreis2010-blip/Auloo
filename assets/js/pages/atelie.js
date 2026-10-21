@@ -13,6 +13,7 @@
     let isDragging = false;
     let startX, startY;
     let bgImageTemp = null;
+    let pinchInicial = 0;
 
     async function aguardarSupabase() {
         for (let i = 0; i < 30; i++) {
@@ -56,6 +57,13 @@
         }
     }
 
+    function iniciais(nome) {
+        const p = String(nome || '?').trim().split(/\s+/);
+        const a = (p[0] || '?').charAt(0).toUpperCase();
+        const b = p.length > 1 ? (p[p.length - 1] || '').charAt(0).toUpperCase() : '';
+        return a + b;
+    }
+
     function renderizarAtelie(atelie) {
         $('atelie-nome').textContent = atelie.name;
         $('atelie-handle').textContent = '@' + atelie.handle;
@@ -65,25 +73,38 @@
         const fotoDoPerfil = document.querySelector('#perfil-usuario img.foto-perfil');
         const urlAvatar = atelie.avatar_url || (fotoDoPerfil ? fotoDoPerfil.src : null);
 
+        /* FIX: sem innerHTML — usa DOM */
         avatarContainer.textContent = '';
         if (urlAvatar) {
             const img = document.createElement('img');
             img.src = urlAvatar;
+            img.alt = 'Avatar do ateliê';
+            img.referrerPolicy = 'no-referrer';
+            img.onerror = function () {
+                img.remove();
+                const span = document.createElement('span');
+                span.className = 'avatar-iniciais';
+                span.textContent = iniciais(atelie.name);
+                avatarContainer.appendChild(span);
+            };
             avatarContainer.appendChild(img);
         } else {
-            avatarContainer.innerHTML = `<span class="avatar-iniciais">${atelie.name.substring(0, 2).toUpperCase()}</span>`;
+            const span = document.createElement('span');
+            span.className = 'avatar-iniciais';
+            span.textContent = iniciais(atelie.name);
+            avatarContainer.appendChild(span);
         }
 
         if (atelie.cover_url) {
             const capaImg = $('atelie-capa-img');
             capaImg.src = atelie.cover_url;
-            
+
             const cPos = atelie.cover_position || '50% 50%';
             const cZoom = atelie.cover_zoom || 1;
-            
+
             capaImg.style.objectPosition = cPos;
             capaImg.style.transform = `scale(${cZoom})`;
-            
+
             posX = parseFloat(cPos.split(' ')[0]) || 50;
             posY = parseFloat(cPos.split(' ')[1]) || 50;
             zoom = parseFloat(cZoom);
@@ -113,7 +134,6 @@
             btn.textContent = 'Abrindo...';
 
             try {
-                // Chama a função do banco para gerar o handle único
                 const { data: handleGerado, error: errHandle } = await db.rpc('gerar_handle_unico');
                 if (errHandle) throw errHandle;
 
@@ -136,7 +156,11 @@
 
             } catch (err) {
                 console.error(err);
-                alert('Erro ao abrir o Ateliê. Tente novamente.');
+                /* FIX: mensagem mais específica se for conflito de handle */
+                const msg = (err && err.code === '23505')
+                    ? 'Já existe um ateliê com esse nome. Tente outro.'
+                    : 'Erro ao abrir o Ateliê. Tente novamente.';
+                alert(msg);
                 btn.disabled = false;
                 btn.textContent = 'Abrir Ateliê';
             }
@@ -154,7 +178,7 @@
         function abrirGaveta() {
             gaveta.classList.add('ativa');
             overlay.classList.add('ativa');
-            
+
             if (atelieAtual.cover_url) {
                 arrastavel.style.backgroundImage = `url('${atelieAtual.cover_url}')`;
                 container.style.display = 'block';
@@ -195,8 +219,15 @@
         const inputAvatar = $('input-config-avatar');
         btnUploadAvatar.addEventListener('click', () => inputAvatar.click());
         inputAvatar.addEventListener('change', () => {
-            fileAvatar = inputAvatar.files[0];
-            if (fileAvatar) btnUploadAvatar.textContent = 'Avatar Selecionado ✓';
+            const f = inputAvatar.files[0];
+            /* FIX: se cancelar, reseta fileAvatar */
+            if (!f) {
+                fileAvatar = null;
+                btnUploadAvatar.textContent = 'Escolher Imagem de Perfil';
+                return;
+            }
+            fileAvatar = f;
+            btnUploadAvatar.textContent = 'Avatar Selecionado ✓';
         });
 
         function atualizarTransformacao() {
@@ -204,19 +235,53 @@
             arrastavel.style.transform = `scale(${zoom})`;
         }
 
-        container.addEventListener('mousedown', (e) => {
+        /* FIX: unifica mouse + toque com pointer events */
+        container.addEventListener('pointerdown', (e) => {
+            if (e.pointerType === 'touch' && e.isPrimary === false) return;
+            if (e.touches && e.touches.length === 2) return;
+
             isDragging = true;
+            container.setPointerCapture(e.pointerId);
             startX = e.clientX - (posX * container.offsetWidth / 100);
             startY = e.clientY - (posY * container.offsetHeight / 100);
         });
-        window.addEventListener('mousemove', (e) => {
+
+        container.addEventListener('pointermove', (e) => {
             if (!isDragging) return;
+            if (e.pointerType === 'touch' && e.touches && e.touches.length === 2) return;
             e.preventDefault();
             posX = Math.max(0, Math.min(100, (e.clientX - startX) / container.offsetWidth * 100));
             posY = Math.max(0, Math.min(100, (e.clientY - startY) / container.offsetHeight * 100));
             atualizarTransformacao();
         });
-        window.addEventListener('mouseup', () => { isDragging = false; });
+
+        container.addEventListener('pointerup', () => { isDragging = false; });
+        container.addEventListener('pointercancel', () => { isDragging = false; });
+
+        /* Pinch to zoom (dois dedos) */
+        container.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) {
+                isDragging = false;
+                const dx = e.touches[0].clientX - e.touches[1].clientX;
+                const dy = e.touches[0].clientY - e.touches[1].clientY;
+                pinchInicial = Math.hypot(dx, dy);
+            }
+        }, { passive: true });
+
+        container.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 2 && pinchInicial > 0) {
+                e.preventDefault();
+                const dx = e.touches[0].clientX - e.touches[1].clientX;
+                const dy = e.touches[0].clientY - e.touches[1].clientY;
+                const dist = Math.hypot(dx, dy);
+                const fator = dist / pinchInicial;
+                pinchInicial = dist;
+                zoom = Math.max(1, Math.min(3, zoom * fator));
+                atualizarTransformacao();
+            }
+        }, { passive: false });
+
+        container.addEventListener('touchend', () => { pinchInicial = 0; });
 
         container.addEventListener('wheel', (e) => {
             e.preventDefault();
@@ -240,13 +305,15 @@
             try {
                 if (fileAvatar) {
                     const path = usuarioLogado.id + '/atelie-avatar-' + Date.now() + '.jpg';
-                    await db.storage.from('avatars').upload(path, fileAvatar);
+                    const up = await db.storage.from('avatars').upload(path, fileAvatar);
+                    if (up.error) throw up.error;
                     newAvatarUrl = db.storage.from('avatars').getPublicUrl(path).data.publicUrl;
                 }
 
                 if (fileCapa) {
                     const path = usuarioLogado.id + '/atelie-capa-' + Date.now() + '.jpg';
-                    await db.storage.from('avatars').upload(path, fileCapa);
+                    const up = await db.storage.from('avatars').upload(path, fileCapa);
+                    if (up.error) throw up.error;
                     newCoverUrl = db.storage.from('avatars').getPublicUrl(path).data.publicUrl;
                 }
 
@@ -265,8 +332,14 @@
 
                 atelieAtual = data;
                 renderizarAtelie(data);
+
+                /* FIX: reseta os arquivos após salvar */
+                fileAvatar = null;
+                fileCapa = null;
+                btnUploadAvatar.textContent = 'Escolher Imagem de Perfil';
+
                 fecharGaveta();
-                
+
             } catch (err) {
                 console.error(err);
                 alert('Erro ao salvar as configurações.');

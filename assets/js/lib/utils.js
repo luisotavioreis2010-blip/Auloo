@@ -1,5 +1,5 @@
 ﻿/* ============================================================
-   UTILS.JS — v3
+   UTILS.JS — v4
    Helpers compartilhados (DOM, texto, storage, UI, cache HTTP)
    ============================================================ */
 (function () {
@@ -98,11 +98,9 @@
 
     function cacheGet(chave, ttlMs) {
         var agora = Date.now();
-        /* Memória primeiro */
         var emMem = cacheMemoria[chave];
         if (emMem && agora - emMem.ts < ttlMs) return emMem.valor;
 
-        /* localStorage depois */
         try {
             var bruto = localStorage.getItem(CACHE_PREFIXO + chave);
             if (bruto) {
@@ -122,6 +120,21 @@
         cacheMemoria[chave] = obj;
         try { localStorage.setItem(CACHE_PREFIXO + chave, JSON.stringify(obj)); }
         catch (e) { /* quota cheia: ignora */ }
+    }
+
+    /* FIX: permite invalidar cache após mutations */
+    function cacheLimpar(chave) {
+        if (chave) {
+            delete cacheMemoria[chave];
+            try { localStorage.removeItem(CACHE_PREFIXO + chave); } catch (e) {}
+            return;
+        }
+        cacheMemoria = {};
+        try {
+            Object.keys(localStorage)
+                .filter(function (k) { return k.indexOf(CACHE_PREFIXO) === 0; })
+                .forEach(function (k) { localStorage.removeItem(k); });
+        } catch (e) {}
     }
 
     /* ---------- URL ---------- */
@@ -193,15 +206,19 @@
         container.appendChild(img);
     }
 
+    /* FIX: toast acessível com aria-live */
     function toast(mensagem, ehErro) {
         var el = document.createElement('div');
+        el.setAttribute('role', ehErro ? 'alert' : 'status');
+        el.setAttribute('aria-live', ehErro ? 'assertive' : 'polite');
         el.style.cssText = [
             'position:fixed', 'bottom:2rem', 'left:50%',
             'transform:translateX(-50%)', 'padding:0.9rem 1.5rem',
             'background:' + (ehErro ? '#B23A2E' : '#2E7D4F'),
             'color:#fff', 'font-family:Poppins,sans-serif', 'font-size:0.85rem',
             'border-radius:4px', 'box-shadow:0 12px 32px rgba(0,0,0,0.25)',
-            'z-index:9999', 'opacity:0', 'transition:opacity 0.3s'
+            'z-index:9999', 'opacity:0', 'transition:opacity 0.3s',
+            'max-width:calc(100vw - 2rem)', 'text-align:center'
         ].join(';');
         el.textContent = mensagem;
         document.body.appendChild(el);
@@ -237,7 +254,7 @@
         truncar: truncar, escapar: escapar, slug: slug,
         formatarData: formatarData, tempoRelativo: tempoRelativo,
         salvarLocal: salvarLocal, lerLocal: lerLocal, removerLocal: removerLocal,
-        cacheGet: cacheGet, cacheSet: cacheSet,
+        cacheGet: cacheGet, cacheSet: cacheSet, cacheLimpar: cacheLimpar,
         getParametro: getParametro, debounce: debounce,
         mostrarLoading: mostrarLoading, restaurarBotao: restaurarBotao,
         iniciais: iniciais, renderizarAvatar: renderizarAvatar, toast: toast,
