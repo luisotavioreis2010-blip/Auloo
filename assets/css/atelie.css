@@ -1,7 +1,8 @@
 @charset "UTF-8";
 /* ==============================================
-   ATELIE.CSS — v13
-   Gaveta abaixo da navbar + card centralizado
+   ATELIE.CSS — v14
+   Corrige: Espaçamentos, centralização (iPad/Desktop) 
+   e celular deitado.
    ============================================== */
 
 /* ==============================================
@@ -16,7 +17,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    transition: margin-right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: padding-right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ==============================================
@@ -31,6 +32,8 @@
     box-shadow: 0 15px 40px rgba(26, 22, 20, 0.08);
     overflow: hidden;
     animation: cardEntrar 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+    /* Prepara para a animação de centralização */
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @keyframes cardEntrar {
@@ -164,6 +167,7 @@
     margin-top: 3rem;
     max-width: 500px;
     box-shadow: 0 10px 30px rgba(26, 22, 20, 0.03);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .atelie-vazio h2 {
     font-family: var(--fonte-titulo);
@@ -184,7 +188,7 @@
    ============================================== */
 .atelie-gaveta {
     position: fixed;
-    top: var(--navbar-h, 68px);     /* começa abaixo da navbar */
+    top: var(--navbar-h, 68px);
     right: 0;
     bottom: 0;
     z-index: 250;
@@ -220,7 +224,6 @@
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s;
 }
 
-/* Overlay também começa abaixo da navbar (não cobre o menu) */
 .gaveta-overlay-config {
     position: fixed;
     top: var(--navbar-h, 68px);
@@ -238,7 +241,7 @@
 
 .gaveta-overlay-config.ativa { opacity: 1; pointer-events: auto; }
 
-/* Cabeçalho da gaveta */
+/* Cabeçalho */
 .atelie-gaveta-header {
     position: sticky;
     top: 0;
@@ -310,14 +313,16 @@
 .atelie-gaveta-corpo {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
-    padding: 1.75rem 1.75rem 2.5rem;
+    gap: 1.25rem;
+    padding: 1.5rem 1.75rem 2.5rem;
 }
 
 /* ==============================================
-   7. FORMULÁRIOS (dentro da gaveta)
+   7. FORMULÁRIOS (com espaçamento corrigido)
    ============================================== */
-.atelie-gaveta-corpo .campo { margin-bottom: 0; }
+.atelie-gaveta-corpo .campo { 
+    margin-bottom: 0.5rem; /* Respiro entre os blocos */
+}
 
 .atelie-gaveta-corpo .campo label {
     display: block;
@@ -368,7 +373,7 @@
     background: rgba(184, 137, 74, 0.06);
     border: 1px dashed rgba(184, 137, 74, 0.4);
     border-radius: 4px;
-    margin-bottom: 0;
+    margin-bottom: 0.5rem;
 }
 
 .campo-upload label {
@@ -392,7 +397,7 @@
     line-height: 1.4;
 }
 
-/* Preview da capa mais bonito */
+/* Preview da capa */
 .capa-preview-container {
     position: relative;
     width: 100%;
@@ -442,13 +447,11 @@
     transition: transform 0.08s linear;
 }
 
-/* Botão de upload (reutiliza .btn-container) */
 .campo-upload .btn-container {
     width: 100%;
     margin-top: 0;
 }
 
-/* Botão de salvar no rodapé */
 .atelie-gaveta-corpo .btn-primario {
     margin-top: 0.5rem;
     padding: 0.85rem 1.5rem;
@@ -457,20 +460,30 @@
 }
 
 /* ==============================================
-   CARD CENTRALIZADO QUANDO A GAVETA ABRE
+   CENTRALIZAÇÃO DO CARD QUANDO A GAVETA ABRE
    ============================================== */
-body.atelie-gaveta-aberta .atelie-main {
-    margin-right: 460px;             /* = max-width da gaveta */
-}
 
-body.atelie-gaveta-aberta .atelie-conteudo,
-body.atelie-gaveta-aberta .atelie-vazio {
-    transform: translateX(0);
-}
-
-@media (max-width: 1024px) {
+/* Desktop Grande (Sidebar Esquerda Ativa) */
+@media (min-width: 1367px) {
     body.atelie-gaveta-aberta .atelie-main {
-        margin-right: 0;              /* em tablet/celular a gaveta cobre */
+        padding-right: 460px;
+    }
+    body.atelie-gaveta-aberta .atelie-conteudo,
+    body.atelie-gaveta-aberta .atelie-vazio {
+        transform: translateX(-230px); /* Move metade da gaveta para a esquerda */
+    }
+}
+
+/* iPad Deitado e Notebook (Adeus sidebar, layout compacto) */
+@media (min-width: 1025px) and (max-width: 1366px) {
+    body.atelie-gaveta-aberta .atelie-main {
+        padding-right: 460px; 
+    }
+    body.atelie-gaveta-aberta .atelie-conteudo,
+    body.atelie-gaveta-aberta .atelie-vazio {
+        /* No tablet a sidebar não existe, então o card ocupa a tela inteira. 
+           Empurramos metade da gaveta para centralizar. */
+        transform: translateX(-230px); 
     }
 }
 
@@ -524,24 +537,28 @@ body.atelie-gaveta-aberta .atelie-vazio {
 }
 
 /* ==============================================
-   9. RESPONSIVIDADE GERAL
+   9. RESPONSIVIDADE (Mobile)
    ============================================== */
 
-/* Tablet e Notebook Pequeno */
 @media (max-width: 1024px) {
-    .atelie-main { margin-left: 0; padding: 2rem 1rem; }
+    .atelie-main { 
+        margin-left: 0; 
+        padding: 2rem 1rem; 
+    }
     .atelie-conteudo { max-width: 600px; }
+    body.atelie-gaveta-aberta .atelie-main { padding-right: 1rem; }
+    body.atelie-gaveta-aberta .atelie-conteudo,
+    body.atelie-gaveta-aberta .atelie-vazio { 
+        transform: none; /* No mobile o card não se move, a gaveta cobre */
+    }
 }
 
-/* Celular em Pé */
 @media (max-width: 768px) {
     .atelie-main {
         padding: 1.5rem 1rem;
         justify-content: flex-start;
     }
-
     .atelie-capa-wrapper { height: 160px; }
-
     .atelie-header {
         flex-direction: column;
         align-items: center;
@@ -549,65 +566,33 @@ body.atelie-gaveta-aberta .atelie-vazio {
         padding: 0 1.2rem 1.5rem;
         gap: 0.5rem;
     }
-
     .atelie-avatar { margin-top: -50px; margin-bottom: 0.5rem; }
     .atelie-info { margin-top: 0; }
     .atelie-nome { font-size: 1.8rem; }
     .atelie-bio { font-size: 1rem; max-width: 90%; margin: 0 auto; }
+    .atelie-acoes { margin-top: 0.8rem; width: 100%; display: flex; justify-content: center; }
+    .btn-primario { width: 100%; max-width: 300px; }
 
-    .atelie-acoes {
-        margin-top: 0.8rem;
-        width: 100%;
-        display: flex;
-        justify-content: center;
-    }
-
-    .btn-primario {
-        width: 100%;
-        max-width: 300px;
-    }
-
-    /* Gaveta ocupa tela toda abaixo da navbar */
     .atelie-gaveta {
         top: var(--navbar-h, 56px);
         max-width: 100%;
         border-left: none;
     }
-
     .atelie-gaveta-header { padding: 1.25rem 1.25rem 0.9rem; }
     .atelie-gaveta-header::after { left: 1.25rem; right: 1.25rem; }
     .atelie-gaveta-header h2 { font-size: 1.25rem; }
-
-    .atelie-gaveta-corpo {
-        padding: 1.25rem 1.25rem 2rem;
-        gap: 1.25rem;
-    }
-
+    .atelie-gaveta-corpo { padding: 1.25rem 1.25rem 2rem; gap: 1.25rem; }
     .capa-preview-container { height: 140px; }
-
     .campo-upload { padding: 0.9rem 0.85rem; }
 }
 
 /* ==============================================
-   CELULAR E TABLET DEITADO (Vertical e Compacto)
+   CELULAR E TABLET DEITADO (Modo Compacto)
    ============================================== */
 @media (max-height: 550px) and (orientation: landscape) {
-    .atelie-main {
-        padding: 0.5rem;
-        justify-content: center;
-    }
-
-    /* O Card diminui a altura geral */
-    .atelie-conteudo {
-        max-width: 420px; /* Card mais estreito */
-    }
-
-    /* Capa bem fininha */
-    .atelie-capa-wrapper {
-        height: 100px;
-    }
-
-    /* Header compacto mas mantendo o formato original (capa em cima) */
+    .atelie-main { padding: 0.5rem; justify-content: center; }
+    .atelie-conteudo { max-width: 420px; }
+    .atelie-capa-wrapper { height: 100px; }
     .atelie-header {
         flex-direction: row;
         align-items: flex-start;
@@ -615,42 +600,30 @@ body.atelie-gaveta-aberta .atelie-vazio {
         padding: 0 1rem 1rem;
         gap: 0.8rem;
     }
-
-    .atelie-avatar {
-        margin-top: -35px;
-        width: 70px;
-        height: 70px;
-    }
-
+    .atelie-avatar { margin-top: -35px; width: 70px; height: 70px; }
     .atelie-info { margin-top: 0.2rem; }
-
     .atelie-nome { font-size: 1.4rem; }
     .atelie-handle { font-size: 0.7rem; margin-bottom: 0.3rem; }
     .atelie-bio { font-size: 0.85rem; line-height: 1.3; }
-
     .atelie-acoes { margin-top: 0.5rem; }
-
-    .btn-primario {
-        padding: 0.4rem 1rem;
-        font-size: 0.6rem;
-        width: auto;
-    }
+    .btn-primario { padding: 0.4rem 1rem; font-size: 0.6rem; width: auto; }
 
     /* Gaveta compacta */
     .atelie-gaveta { max-width: 420px; }
     .atelie-gaveta-header { padding: 0.75rem 1rem 0.6rem; }
     .atelie-gaveta-header h2 { font-size: 1.1rem; }
-    .atelie-gaveta-corpo {
-        padding: 0.9rem 1rem 1.5rem;
-        gap: 0.85rem;
-    }
-    .campo { margin-bottom: 0.6rem; }
-    .campo input, .campo textarea { padding: 0.5rem; font-size: 0.9rem; }
+    .atelie-gaveta-corpo { padding: 0.9rem 1rem 1.5rem; gap: 0.85rem; }
+    .atelie-gaveta-corpo .campo { margin-bottom: 0.2rem; }
+    .atelie-gaveta-corpo .campo input, 
+    .atelie-gaveta-corpo .campo textarea { padding: 0.5rem; font-size: 0.9rem; }
+    .capa-preview-container { display: block !important; height: 90px; }
+    .campo-upload { padding: 0.7rem; margin-bottom: 0.2rem; }
 
-    /* Preview da capa visível */
-    .capa-preview-container {
-        display: block !important;
-        height: 90px;
+    /* Centralização no celular deitado */
+    @media (min-width: 900px) {
+        body.atelie-gaveta-aberta .atelie-conteudo,
+        body.atelie-gaveta-aberta .atelie-vazio {
+            transform: translateX(-210px); /* Metade de 420px */
+        }
     }
-    .campo-upload { padding: 0.7rem; }
 }
