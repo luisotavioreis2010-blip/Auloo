@@ -1,7 +1,6 @@
 ﻿@charset "UTF-8";
 /* ==============================================
-   ESTANTE.CSS — v11 (Layout Original Restaurado)
-   Rodapé inteligente e suporte total a data-layout
+   ESTANTE.CSS — v1 (Original)
    ============================================== */
 
 /* ==============================================
@@ -193,7 +192,6 @@ input, textarea, .ficha-email {
     .perfil-usuario:hover { box-shadow: 0 0 0 3px var(--dourado-fraco); }
 }
 
-/* A FOTO DE PERFIL CORRIGIDA */
 .foto-perfil {
     display: block;
     width: 100%;
