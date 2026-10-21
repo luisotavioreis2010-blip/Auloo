@@ -32,8 +32,8 @@
         usuarioLogado = session.user;
 
         await verificarAtelie();
-        configurarCriacao();      // Inicia o modal de criação (caso não tenha ateliê)
-        configurarEditorDeCapa(); // Inicia o editor de configuração (arrastar e zoom)
+        configurarCriacao();
+        configurarGavetaConfig(); // Nova função
     }
 
     async function verificarAtelie() {
@@ -76,7 +76,7 @@
             avatarContainer.innerHTML = `<span class="avatar-iniciais">${atelie.name.substring(0, 2).toUpperCase()}</span>`;
         }
 
-        // --- CAPA (Carrega com posição e zoom) ---
+        // --- CAPA ---
         if (atelie.cover_url) {
             const capaImg = $('atelie-capa-img');
             capaImg.src = atelie.cover_url;
@@ -87,20 +87,18 @@
             capaImg.style.objectPosition = cPos;
             capaImg.style.transform = `scale(${cZoom})`;
             
-            // Salva nas variáveis globais para o editor
             posX = parseFloat(cPos.split(' ')[0]) || 50;
             posY = parseFloat(cPos.split(' ')[1]) || 50;
             zoom = parseFloat(cZoom);
             bgImageTemp = atelie.cover_url;
         }
 
-        // Preenche o Modal de Configuração
+        // Preenche o Formulário
         $('input-config-nome').value = atelie.name;
         $('input-config-handle').value = atelie.handle;
         $('input-config-bio').value = atelie.description || '';
     }
 
-    // --- MODAL DE CRIAÇÃO DE ATELIÊ ---
     function configurarCriacao() {
         const modalCriar = $('modal-criar-atelie');
         if (!modalCriar) return;
@@ -132,8 +130,7 @@
             if (error) {
                 btn.disabled = false;
                 btn.textContent = 'Abrir Ateliê';
-                alert('Erro: O @usuario já pode estar em uso ou houve um erro no servidor.');
-                console.error(error);
+                alert('Erro: O @usuario já pode estar em uso.');
             } else {
                 modalCriar.hidden = true;
                 $('atelie-vazio').hidden = true;
@@ -144,19 +141,18 @@
         });
     }
 
-    // --- MODAL DE CONFIGURAÇÃO (Editar Capa, Zoom, etc) ---
-    function configurarEditorDeCapa() {
-        const modalConfig = $('modal-config-atelie');
+    function configurarGavetaConfig() {
+        const gaveta = $('gaveta-config');
+        const overlay = $('overlay-config');
         const container = $('capa-preview-container');
         const arrastavel = $('capa-preview-arrastavel');
         const inputCapa = $('input-config-capa');
         const btnUploadCapa = $('btn-upload-capa');
 
-        if (!modalConfig) return;
-
-        // Abre o modal de configuração
-        $('btn-configurar-atelie').addEventListener('click', () => {
-            modalConfig.hidden = false;
+        function abrirGaveta() {
+            gaveta.classList.add('ativa');
+            overlay.classList.add('ativa');
+            
             if (atelieAtual.cover_url) {
                 arrastavel.style.backgroundImage = `url('${atelieAtual.cover_url}')`;
                 container.style.display = 'block';
@@ -164,12 +160,19 @@
                 container.style.display = 'none';
             }
             atualizarTransformacao();
-        });
+        }
 
-        $('btn-fechar-config').addEventListener('click', () => modalConfig.hidden = true);
-        modalConfig.addEventListener('click', (e) => { if (e.target === modalConfig) modalConfig.hidden = true; });
+        function fecharGaveta() {
+            gaveta.classList.remove('ativa');
+            overlay.classList.remove('ativa');
+        }
 
-        // Upload da capa
+        // Eventos de abrir/fechar
+        $('btn-configurar-atelie').addEventListener('click', abrirGaveta);
+        $('btn-fechar-config').addEventListener('click', fecharGaveta);
+        overlay.addEventListener('click', fecharGaveta);
+
+        // Upload Capa
         btnUploadCapa.addEventListener('click', () => inputCapa.click());
         inputCapa.addEventListener('change', () => {
             const file = inputCapa.files[0];
@@ -181,14 +184,14 @@
                 bgImageTemp = e.target.result;
                 arrastavel.style.backgroundImage = `url('${bgImageTemp}')`;
                 container.style.display = 'block';
-                posX = 50; posY = 50; zoom = 1; // Reseta o zoom ao subir uma nova imagem
+                posX = 50; posY = 50; zoom = 1;
                 atualizarTransformacao();
             };
             reader.readAsDataURL(file);
             inputCapa.value = '';
         });
 
-        // Upload do avatar
+        // Upload Avatar
         const btnUploadAvatar = $('btn-upload-avatar');
         const inputAvatar = $('input-config-avatar');
         btnUploadAvatar.addEventListener('click', () => inputAvatar.click());
@@ -197,12 +200,12 @@
             if (fileAvatar) btnUploadAvatar.textContent = 'Avatar Selecionado ✓';
         });
 
+        // Arrastar e Zoom
         function atualizarTransformacao() {
             arrastavel.style.backgroundPosition = `${posX}% ${posY}%`;
             arrastavel.style.transform = `scale(${zoom})`;
         }
 
-        // Mouse (Arrastar)
         container.addEventListener('mousedown', (e) => {
             isDragging = true;
             startX = e.clientX - (posX * container.offsetWidth / 100);
@@ -217,7 +220,6 @@
         });
         window.addEventListener('mouseup', () => { isDragging = false; });
 
-        // Zoom (Roda do Mouse)
         container.addEventListener('wheel', (e) => {
             e.preventDefault();
             if (e.deltaY < 0) zoom += 0.1; else zoom -= 0.1;
@@ -225,25 +227,7 @@
             atualizarTransformacao();
         }, { passive: false });
 
-        // Touch (Arrastar no celular)
-        container.addEventListener('touchstart', (e) => {
-            isDragging = true;
-            const touch = e.touches[0];
-            startX = touch.clientX - (posX * container.offsetWidth / 100);
-            startY = touch.clientY - (posY * container.offsetHeight / 100);
-        }, { passive: true });
-
-        container.addEventListener('touchmove', (e) => {
-            if (!isDragging) return;
-            e.preventDefault();
-            const touch = e.touches[0];
-            posX = Math.max(0, Math.min(100, (touch.clientX - startX) / container.offsetWidth * 100));
-            posY = Math.max(0, Math.min(100, (touch.clientY - startY) / container.offsetHeight * 100));
-            atualizarTransformacao();
-        }, { passive: false });
-        container.addEventListener('touchend', () => { isDragging = false; });
-
-        // Salvar Configurações
+        // Salvar
         $('form-config-atelie').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = $('btn-salvar-config');
@@ -286,13 +270,13 @@
 
                 atelieAtual = data;
                 renderizarAtelie(data);
-                modalConfig.hidden = true;
+                fecharGaveta();
                 btn.textContent = 'Salvar Alterações';
-                btn.disabled = false;
                 
             } catch (err) {
                 console.error(err);
                 alert('Erro ao salvar as configurações.');
+            } finally {
                 btn.disabled = false;
                 btn.textContent = 'Salvar Alterações';
             }

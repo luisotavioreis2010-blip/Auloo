@@ -17,15 +17,16 @@
 <body>
 
     <main class="atelie-main">
+        <!-- Estado Vazio (Usuário sem ateliê) -->
         <div id="atelie-vazio" class="atelie-vazio" hidden>
             <h2>Seu Ateliê está vazio.</h2>
-            <p>Este é o seu espaço de criação. Abra o seu Ateliê para começar a escrever.</p>
+            <p>Este é o seu espaço de criação. Abra o seu Ateliê para começar a escrever, criar quizzes e publicar no Mural.</p>
             <button id="btn-criar-atelie" class="btn-primario">Abrir Meu Ateliê</button>
         </div>
 
         <!-- O CARD DO ATELIÊ -->
         <div id="atelie-conteudo" class="atelie-conteudo" hidden>
-            <!-- A capa agora recebe a tag <img> diretamente para permitir o zoom e arrasto -->
+            <!-- A capa recebe a tag <img> diretamente para permitir o zoom e arrasto -->
             <div class="atelie-capa-wrapper">
                 <img id="atelie-capa-img" class="atelie-capa-img" src="" alt="Capa do Ateliê">
             </div>
@@ -44,14 +45,42 @@
         </div>
     </main>
 
-    <!-- MODAL DE CONFIGURAÇÃO -->
-    <div id="modal-config-atelie" class="modal-overlay" hidden>
+    <!-- MODAL DE CRIAÇÃO (Para quem ainda não tem ateliê) -->
+    <div id="modal-criar-atelie" class="modal-overlay" hidden>
         <div class="modal-conteudo">
             <header class="modal-header">
-                <h2>Configurar Ateliê</h2>
-                <button type="button" id="btn-fechar-config" class="modal-fechar">&#10005;</button>
+                <h2>Forjar seu Ateliê</h2>
+                <button type="button" id="btn-fechar-modal" class="modal-fechar">&#10005;</button>
             </header>
             
+            <form id="form-criar-atelie">
+                <div class="campo">
+                    <label for="input-nome-atelie">Nome do Ateliê</label>
+                    <input type="text" id="input-nome-atelie" placeholder="Ex: O Ateliê do João" required>
+                </div>
+                <div class="campo">
+                    <label for="input-handle-atelie">@ Usuário (único)</label>
+                    <input type="text" id="input-handle-atelie" placeholder="Ex: joao-matematica" required>
+                </div>
+                <div class="campo">
+                    <label for="input-bio-atelie">Descrição (Bio)</label>
+                    <textarea id="input-bio-atelie" placeholder="Amante de exatas e café..." rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn-primario" id="btn-salvar-atelie" style="width: 100%; margin-top: 1rem;">Criar Ateliê</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- GAVETA LATERAL DE CONFIGURAÇÃO (Estilo Ficha do Aluno) -->
+    <div class="gaveta-overlay-config" id="overlay-config"></div>
+    
+    <aside class="atelie-gaveta" id="gaveta-config">
+        <header class="atelie-gaveta-header">
+            <h2>Configurar Ateliê</h2>
+            <button type="button" class="atelie-gaveta-fechar" id="btn-fechar-config">&#10005;</button>
+        </header>
+
+        <div class="atelie-gaveta-corpo">
             <form id="form-config-atelie">
                 <div class="campo">
                     <label for="input-config-nome">Nome do Ateliê</label>
@@ -72,11 +101,10 @@
                     <input type="file" id="input-config-avatar" accept="image/*" hidden>
                 </div>
 
-                <!-- ÁREA DE ARRASTAR E ZOOM DA CAPA -->
                 <div class="campo-upload">
                     <label>Capa do Ateliê</label>
                     <small style="display:block; margin-bottom: 0.5rem; color: var(--tinta-clara); font-size: 0.7rem;">
-                        * Arraste para mover e use a roda do mouse (ou pinça) para dar zoom.
+                        * Arraste para mover e use a roda do mouse para dar zoom.
                     </small>
                     
                     <div id="capa-preview-container" class="capa-preview-container" style="display: none;">
@@ -87,10 +115,10 @@
                     <input type="file" id="input-config-capa" accept="image/*" hidden>
                 </div>
 
-                <button type="submit" class="btn-primario" id="btn-salvar-config">Salvar Alterações</button>
+                <button type="submit" class="btn-primario" id="btn-salvar-config" style="width: 100%; margin-top: 1rem;">Salvar Alterações</button>
             </form>
         </div>
-    </div>
+    </aside>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script src="assets/js/config.js"></script>
