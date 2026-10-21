@@ -1,6 +1,6 @@
 @charset "UTF-8";
 /* ==============================================
-   ATELIE.CSS — v19 (Desktop a partir de 1025px)
+   ATELIE.CSS — v20 (Sidebar Fixa no Desktop)
    ============================================== */
 
 /* ==============================================
@@ -13,8 +13,9 @@
     padding: 3rem 1rem;
     display: flex;
     flex-direction: column;
+    align-items: center;
     justify-content: center;
-    /* Sem margin fixa ou transforms. O flexbox vai centralizar sozinho. */
+    transition: margin-right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ==============================================
@@ -23,13 +24,13 @@
 .atelie-conteudo {
     width: 100%;
     max-width: 650px;
-    margin: 0 auto; /* Centraliza o card no espaço disponível */
     background: var(--papel-claro);
     border: 1px solid var(--dourado-fraco);
     border-radius: 8px;
     box-shadow: 0 15px 40px rgba(26, 22, 20, 0.08);
     overflow: hidden;
     animation: cardEntrar 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @keyframes cardEntrar {
@@ -145,9 +146,10 @@
     border: 1px dashed var(--dourado);
     padding: 3rem 2rem;
     text-align: center;
-    margin: 3rem auto 0;
+    margin-top: 3rem;
     max-width: 500px;
     box-shadow: 0 10px 30px rgba(26, 22, 20, 0.03);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .atelie-vazio h2 { font-family: var(--fonte-titulo); font-style: italic; color: var(--vinho); font-size: 1.8rem; margin-bottom: 1rem; }
 .atelie-vazio p { font-family: var(--fonte-display); font-size: 1.1rem; color: var(--tinta-suave); margin-bottom: 1.5rem; }
@@ -311,11 +313,12 @@
 .modal-fechar { background: transparent; border: none; font-size: 1.2rem; cursor: pointer; }
 
 /* ==============================================
-   9. RESPONSIVIDADE (Mobile < 1024px)
+   9. RESPONSIVIDADE (Mobile e Tablet)
    ============================================== */
-@media (max-width: 1024px) {
+@media (max-width: 1366px) {
     .atelie-main { margin-left: 0; padding: 2rem 1rem; }
-    .atelie-conteudo { max-width: 600px; }
+    body.atelie-gaveta-aberta .atelie-conteudo,
+    body.atelie-gaveta-aberta .atelie-vazio { transform: none !important; }
 }
 
 @media (max-width: 768px) {
@@ -365,23 +368,20 @@
 }
 
 /* ==============================================
-   10. DESKTOP E NOTEBOOKS (>= 1025px)
+   10. DESKTOP GRANDE (Painel Fixo e Sempre Aberto)
    ============================================== */
-@media (min-width: 1025px) {
-    /* 1. O conteúdo principal ganha uma margem à direita do tamanho da gaveta */
+@media (min-width: 1367px) {
     .atelie-main {
-        margin-right: 460px;
-        padding-right: 1rem; /* Um respiro extra */
+        margin-right: 460px; 
+        padding-right: 0;
     }
 
-    /* 2. A gaveta fica sempre visível */
     .atelie-gaveta {
         transform: translateX(0) !important;
         visibility: visible !important;
         box-shadow: -4px 0 20px rgba(26, 22, 20, 0.05);
     }
 
-    /* 3. Esconde controles de modal */
     .gaveta-overlay-config { display: none !important; }
     .atelie-gaveta-fechar { display: none !important; }
     #btn-configurar-atelie { display: none !important; }

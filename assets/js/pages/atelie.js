@@ -15,8 +15,8 @@
     let bgImageTemp = null;
     let pinchInicial = 0;
 
-    // MUDOU AQUI: Agora considera Desktop a partir de 1025px (Notebooks e iPads deitados)
-    const isDesktop = () => window.matchMedia('(min-width: 1025px)').matches;
+    // Verifica se está no Desktop Grande (>= 1367px)
+    const isDesktop = () => window.matchMedia('(min-width: 1367px)').matches;
 
     async function aguardarSupabase() {
         for (let i = 0; i < 30; i++) {
@@ -40,11 +40,12 @@
     }
 
     async function verificarAtelie() {
+        // No futuro, se houver mais de um, você pode usar .limit(1) ou buscar uma lista
         const { data: atelie, error } = await db
             .from('ateliers')
             .select('*')
             .eq('owner_id', usuarioLogado.id)
-            .maybeSingle();
+            .maybeSingle(); // Pega o primeiro (ou único)
 
         if (error) return console.error('Erro ao buscar ateliê:', error);
 
@@ -58,6 +59,7 @@
             atelieAtual = atelie;
             renderizarAtelie(atelie);
 
+            // Se for Desktop, já abre a gaveta preenchida automaticamente!
             if (isDesktop()) {
                 preencherPainel(atelie);
             }
@@ -200,6 +202,7 @@
             arrastavel.style.transform = `scale(${zoom})`;
         }
 
+        // Abre a gaveta (apenas útil para mobile/tablet)
         function abrirGaveta() {
             gaveta.classList.add('ativa');
             overlay.classList.add('ativa');
@@ -209,6 +212,7 @@
         }
 
         function fecharGaveta() {
+            // Se estiver no desktop, não permite fechar
             if (isDesktop()) return; 
             gaveta.classList.remove('ativa');
             overlay.classList.remove('ativa');
@@ -251,6 +255,7 @@
             btnUploadAvatar.textContent = 'Avatar Selecionado ✓';
         });
 
+        // Lógica de Drag & Pinch (Pointer/Touch)
         container.addEventListener('pointerdown', (e) => {
             if (e.pointerType === 'touch' && e.isPrimary === false) return;
             if (e.touches && e.touches.length === 2) return;
@@ -303,6 +308,7 @@
             atualizarTransformacao();
         }, { passive: false });
 
+        // Submissão do formulário
         $('form-config-atelie').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = $('btn-salvar-config');
@@ -352,6 +358,7 @@
 
                 fecharGaveta();
                 
+                // Se estiver no desktop, apenas atualiza o painel visualmente (sem fechar)
                 if (isDesktop()) preencherPainel(data);
 
             } catch (err) {
