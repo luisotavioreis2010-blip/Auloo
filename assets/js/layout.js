@@ -1,5 +1,5 @@
 /* ==============================================
-   LAYOUT.JS — v9 (Definitivo - Avatar e Layout)
+   LAYOUT.JS — v11 (Restauração do Layout Original)
    ============================================== */
 (function () {
     'use strict';
@@ -45,12 +45,41 @@
     }
 
     /* ==============================================
-       1. INJEÇÃO DE INTERFACE (Navbar e Sidebars)
+       LÓGICA DE TELA (A Mágica Original Restaurada)
+       ============================================== */
+    function sincronizarTela() {
+        const raiz = document.documentElement;
+        
+        // Define a altura fixa para o mobile
+        raiz.style.setProperty('--viewport-h', window.innerHeight + 'px');
+        
+        // Se a tela estiver deitada (landscape), define data-layout="row"
+        const layout = window.innerWidth > window.innerHeight ? 'row' : 'stacked';
+        if (raiz.getAttribute('data-layout') !== layout) {
+            raiz.setAttribute('data-layout', layout);
+        }
+    }
+
+    function setupTela() {
+        // Chama ao iniciar
+        sincronizarTela();
+        
+        // Chama ao redimensionar
+        window.addEventListener('resize', sincronizarTela);
+        
+        // Chama ao girar a tela
+        window.addEventListener('orientationchange', () => {
+            setTimeout(sincronizarTela, 100);
+            setTimeout(sincronizarTela, 300);
+        });
+    }
+
+    /* ==============================================
+       INJEÇÃO DE INTERFACE
        ============================================== */
     function injetarInterface() {
         const pagina = getPaginaAtual();
         
-        // 1. Injetar Navbar
         const navbarHTML = `
             <header class="navbar">
                 <div class="navbar-left">
@@ -71,7 +100,6 @@
         `;
         document.body.insertAdjacentHTML('afterbegin', navbarHTML);
 
-        // 2. Injetar Sidebar Esquerda
         const sidebarHTML = `
             <aside class="sidebar" id="sidebar" aria-label="Sumário">
                 <div class="sidebar-secao">
@@ -98,7 +126,6 @@
         `;
         document.body.insertAdjacentHTML('beforeend', sidebarHTML);
 
-        // 3. Injetar Ficha do Aluno (Sidebar Direita)
         const fichaHTML = `
             <aside class="sidebar-direita" id="sidebar-perfil" aria-label="Ficha do Aluno">
                 <div class="ficha-header">
@@ -142,7 +169,7 @@
     }
 
     /* ==============================================
-       2. LÓGICA DO CALENDÁRIO
+       LÓGICA DO CALENDÁRIO
        ============================================== */
     function setupCalendario() {
         const titulo = $('calendario-titulo');
@@ -200,7 +227,7 @@
     }
 
     /* ==============================================
-       3. LÓGICA DO PERFIL E UPLOAD
+       LÓGICA DO PERFIL E SESSÃO
        ============================================== */
     function criarIniciais(nome) {
         const partes = (nome || 'Usuário').trim().split(/\s+/);
@@ -213,25 +240,19 @@
 
     function renderizarAvatar(container, avatarUrl, nome) {
         if (!container) return;
-        
-        // Limpa o container
         container.textContent = '';
-        
         if (!avatarUrl || avatarUrl === 'null' || avatarUrl === 'undefined' || avatarUrl.trim() === '') { 
             container.appendChild(criarIniciais(nome)); 
             return; 
         }
-        
         const img = document.createElement('img');
         img.className = 'foto-perfil'; 
         img.alt = 'Foto de perfil'; 
         img.referrerPolicy = 'no-referrer';
-        
         img.onerror = () => { 
             container.textContent = '';
             container.appendChild(criarIniciais(nome)); 
         };
-        
         img.src = avatarUrl; 
         container.appendChild(img);
     }
@@ -312,9 +333,6 @@
         }
     }
 
-    /* ==============================================
-       4. LOGOUT E SESSÃO
-       ============================================== */
     function irParaLogin() { window.location.href = PAGINA_LOGIN; }
 
     function limparArmazenamento() {
@@ -352,19 +370,13 @@
         perfil.email = session.user.email || '';
         const meta = session.user.user_metadata || {};
         
-        // Pega os dados iniciais do Auth
         perfil.nome = meta.full_name || meta.name || perfil.email.split('@')[0];
         perfil.avatarUrl = meta.avatar_url || meta.picture || null;
         
         renderizarPerfil();
-
-        // Vai no banco e busca os dados mais atualizados
         await buscarPerfilNoBanco(perfil.usuario.id);
     }
 
-    /* ==============================================
-       5. EVENTOS DO LAYOUT
-       ============================================== */
     function setupLayout() {
         const sidebar = $('sidebar');
         const ficha = $('sidebar-perfil');
@@ -397,6 +409,7 @@
 
     function iniciar() {
         injetarInterface();
+        setupTela(); // Ativa a lógica de tela (row/stacked)
         setupCalendario();
         setupLayout();
         setupUploadFoto();
