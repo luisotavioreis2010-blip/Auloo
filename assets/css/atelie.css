@@ -1,8 +1,7 @@
 @charset "UTF-8";
 /* ==============================================
-   ATELIE.CSS — v14
-   Corrige: Espaçamentos, centralização (iPad/Desktop) 
-   e celular deitado.
+   ATELIE.CSS — v15
+   Corrige: Glitch no tablet, centralização fluida
    ============================================== */
 
 /* ==============================================
@@ -32,7 +31,7 @@
     box-shadow: 0 15px 40px rgba(26, 22, 20, 0.08);
     overflow: hidden;
     animation: cardEntrar 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
-    /* Prepara para a animação de centralização */
+    /* Transição suave para quando move no desktop */
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -321,7 +320,7 @@
    7. FORMULÁRIOS (com espaçamento corrigido)
    ============================================== */
 .atelie-gaveta-corpo .campo { 
-    margin-bottom: 0.5rem; /* Respiro entre os blocos */
+    margin-bottom: 0.5rem;
 }
 
 .atelie-gaveta-corpo .campo label {
@@ -463,27 +462,15 @@
    CENTRALIZAÇÃO DO CARD QUANDO A GAVETA ABRE
    ============================================== */
 
-/* Desktop Grande (Sidebar Esquerda Ativa) */
+/* REGRA GERAL: Aplica apenas em telas GRANDES (Desktop).
+   No tablet e celular o card NÃO se move, a gaveta cobre ele. */
 @media (min-width: 1367px) {
     body.atelie-gaveta-aberta .atelie-main {
-        padding-right: 460px;
+        padding-right: 460px; /* Reserva espaço na direita */
     }
     body.atelie-gaveta-aberta .atelie-conteudo,
     body.atelie-gaveta-aberta .atelie-vazio {
-        transform: translateX(-230px); /* Move metade da gaveta para a esquerda */
-    }
-}
-
-/* iPad Deitado e Notebook (Adeus sidebar, layout compacto) */
-@media (min-width: 1025px) and (max-width: 1366px) {
-    body.atelie-gaveta-aberta .atelie-main {
-        padding-right: 460px; 
-    }
-    body.atelie-gaveta-aberta .atelie-conteudo,
-    body.atelie-gaveta-aberta .atelie-vazio {
-        /* No tablet a sidebar não existe, então o card ocupa a tela inteira. 
-           Empurramos metade da gaveta para centralizar. */
-        transform: translateX(-230px); 
+        transform: translateX(-230px); /* Desloca metade da gaveta para a esquerda */
     }
 }
 
@@ -537,19 +524,18 @@
 }
 
 /* ==============================================
-   9. RESPONSIVIDADE (Mobile)
+   9. RESPONSIVIDADE (Mobile e Tablet)
    ============================================== */
-
-@media (max-width: 1024px) {
+@media (max-width: 1366px) {
     .atelie-main { 
         margin-left: 0; 
         padding: 2rem 1rem; 
     }
-    .atelie-conteudo { max-width: 600px; }
-    body.atelie-gaveta-aberta .atelie-main { padding-right: 1rem; }
+    
+    /* Força o card a ignorar qualquer transformação quando a gaveta abre */
     body.atelie-gaveta-aberta .atelie-conteudo,
     body.atelie-gaveta-aberta .atelie-vazio { 
-        transform: none; /* No mobile o card não se move, a gaveta cobre */
+        transform: none !important; 
     }
 }
 
@@ -618,12 +604,4 @@
     .atelie-gaveta-corpo .campo textarea { padding: 0.5rem; font-size: 0.9rem; }
     .capa-preview-container { display: block !important; height: 90px; }
     .campo-upload { padding: 0.7rem; margin-bottom: 0.2rem; }
-
-    /* Centralização no celular deitado */
-    @media (min-width: 900px) {
-        body.atelie-gaveta-aberta .atelie-conteudo,
-        body.atelie-gaveta-aberta .atelie-vazio {
-            transform: translateX(-210px); /* Metade de 420px */
-        }
-    }
 }
