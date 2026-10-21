@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#1A1614">
-    <title>Escrever | Auloo</title>
+    <title>Escrever no Mural | Auloo</title>
     <link rel="icon" type="image/png" href="assets/img/logo/auloo-logo.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,22 +14,64 @@
     <link rel="stylesheet" href="assets/css/estante.css">
     <link rel="stylesheet" href="assets/css/editor.css">
 </head>
-<body>
+<body class="editor-body">
 
-    <main class="estante-main" style="padding: 3rem;">
-        <div class="editor-container" style="background: var(--papel-claro); padding: 3rem; width: 100%; max-width: 800px; margin: 0 auto; border: 1px solid var(--dourado-fraco);">
-            <h1 style="font-family: var(--fonte-titulo); font-style: italic; color: var(--vinho); font-size: 2.5rem; margin-bottom: 1rem;">Escrever para o Mural</h1>
-            <p style="font-family: var(--fonte-display); font-size: 1.2rem; color: var(--tinta-suave); margin-bottom: 2rem;">
-                O editor de texto rico (o "Word do Auloo") será construído aqui no próximo passo. Ele permitirá inserir imagens, formatar texto e publicar no Mural.
-            </p>
-            <a href="comunidade.html" class="btn-sair" style="text-decoration: none;">Voltar para o Mural</a>
+    <!-- Barra de Ferramentas Fixa no Topo -->
+    <header class="editor-topo">
+        <div class="editor-topo-esq">
+            <a href="atelie.html" class="btn-voltar">← Sair</a>
+            <span class="editor-status" id="editor-status">Rascunho não salvo</span>
+        </div>
+        
+        <div class="editor-toolbar">
+            <button type="button" title="Negrito" data-cmd="bold"><b>B</b></button>
+            <button type="button" title="Itálico" data-cmd="italic"><i>I</i></button>
+            <button type="button" title="Sublinhado" data-cmd="underline"><u>U</u></button>
+            <div class="editor-divisor"></div>
+            <button type="button" title="Título" data-cmd="formatBlock" data-value="h2">H2</button>
+            <button type="button" title="Citação" data-cmd="formatBlock" data-value="blockquote">❝</button>
+            <div class="editor-divisor"></div>
+            <button type="button" title="Inserir Imagem" id="btn-inserir-img">🖼️</button>
+        </div>
+
+        <div class="editor-topo-dir">
+            <button type="button" class="btn-publicar" id="btn-publicar">Publicar</button>
+        </div>
+    </header>
+
+    <!-- Área de Escrita -->
+    <main class="editor-main">
+        <div class="editor-folha">
+            <!-- Capa Opcional -->
+            <div class="editor-capa" id="editor-capa" title="Clique para adicionar uma capa">
+                <span>Adicionar Capa</span>
+            </div>
+
+            <!-- Categoria -->
+            <select class="editor-categoria" id="input-categoria">
+                <option value="Leituras">Leituras</option>
+                <option value="Dúvidas">Dúvidas</option>
+                <option value="Vídeos">Vídeos</option>
+            </select>
+
+            <!-- Título -->
+            <input type="text" class="editor-titulo" id="input-titulo" placeholder="Título do artigo..." maxlength="120">
+
+            <!-- Corpo do Texto (contenteditable) -->
+            <div class="editor-conteudo" id="input-conteudo" contenteditable="true" aria-label="Conteúdo do artigo">
+                <p>Comece a escrever sua história...</p>
+            </div>
         </div>
     </main>
 
+    <!-- Input escondido para upload de imagem -->
+    <input type="file" id="input-img" accept="image/*" hidden>
+
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script src="assets/js/config.js"></script>
     <script src="assets/js/auth.js"></script>
     <script src="assets/js/lib/utils.js"></script>
-    <script src="assets/js/layout.js"></script>
+    <script src="assets/js/pages/editor.js"></script>
 </body>
 </html>
