@@ -50,8 +50,34 @@
         $('atelie-handle').textContent = '@' + atelie.handle;
         $('atelie-bio').textContent = atelie.description || 'Nenhuma descrição adicionada.';
 
-        if (atelie.avatar_url) $('atelie-avatar').style.backgroundImage = `url('${atelie.avatar_url}')`;
-        if (atelie.cover_url) $('atelie-capa').style.backgroundImage = `url('${atelie.cover_url}')`;
+        // --- CORREÇÃO DO AVATAR DO ATELIÊ ---
+        const avatarContainer = $('atelie-avatar');
+        avatarContainer.style.backgroundImage = 'none'; // Limpa o fundo vinho
+        avatarContainer.textContent = ''; // Limpa o conteúdo
+
+        // Puxa a foto do seu perfil de usuário (direto da Navbar que já carregou)
+        const fotoDoPerfil = document.querySelector('#perfil-usuario img.foto-perfil');
+        
+        if (fotoDoPerfil && fotoDoPerfil.src) {
+            const img = document.createElement('img');
+            img.src = fotoDoPerfil.src;
+            img.className = 'foto-perfil';
+            // Estilos inline para garantir que preencha o círculo do ateliê
+            img.style.width = '100%';
+            img.style.height = '100%';
+            img.style.objectFit = 'cover';
+            img.style.borderRadius = '50%';
+            avatarContainer.appendChild(img);
+        } else {
+            // Se não tiver foto, coloca as iniciais
+            const iniciais = atelie.name.substring(0, 2).toUpperCase();
+            avatarContainer.innerHTML = `<span class="avatar-iniciais" style="font-size:2rem;">${iniciais}</span>`;
+        }
+
+        // Capa do Ateliê
+        if (atelie.cover_url) {
+            $('atelie-capa').style.backgroundImage = `url('${atelie.cover_url}')`;
+        }
 
         $('btn-configurar-atelie').addEventListener('click', () => {
             alert('A tela de configurações do Ateliê (trocar capa, bio, etc) será aberta aqui.');
