@@ -8,6 +8,13 @@
     let fileAvatar = null;
     let fileCapa = null;
 
+    // Variáveis de controle do Editor de Capa
+    let posX = 50, posY = 50; // Posição em %
+    let zoom = 1; // Escala
+    let isDragging = false;
+    let startX, startY;
+    let bgImageTemp = null; // Imagem em Base64 para preview antes de salvar
+
     async function aguardarSupabase() {
         for (let i = 0; i < 30; i++) {
             if (window.supabaseClient) return window.supabaseClient;
@@ -26,6 +33,7 @@
 
         await verificarAtelie();
         configurarModais();
+        configurarEditorDeCapa();
     }
 
     async function verificarAtelie() {
@@ -54,98 +62,172 @@
         $('atelie-handle').textContent = '@' + atelie.handle;
         $('atelie-bio').textContent = atelie.description || 'Nenhuma descrição adicionada.';
 
+        // Avatar
         const avatarContainer = $('atelie-avatar');
         const fotoDoPerfil = document.querySelector('#perfil-usuario img.foto-perfil');
         const urlAvatar = atelie.avatar_url || (fotoDoPerfil ? fotoDoPerfil.src : null);
 
-        avatarContainer.style.backgroundImage = 'none';
         avatarContainer.textContent = '';
-
         if (urlAvatar) {
             const img = document.createElement('img');
             img.src = urlAvatar;
-            img.style.width = '100%';
-            img.style.height = '100%';
-            img.style.objectFit = 'cover';
-            img.style.borderRadius = '50%';
             avatarContainer.appendChild(img);
         } else {
-            const iniciais = atelie.name.substring(0, 2).toUpperCase();
-            avatarContainer.innerHTML = `<span class="avatar-iniciais" style="font-size:2rem;">${iniciais}</span>`;
+            avatarContainer.innerHTML = `<span class="avatar-iniciais">${atelie.name.substring(0, 2).toUpperCase()}</span>`;
         }
 
+        // Capa (Carrega com a Posição e Zoom salvos no banco)
         if (atelie.cover_url) {
-            $('atelie-capa').style.backgroundImage = `url('${atelie.cover_url}')`;
+            const capaImg = $('atelie-capa-img');
+            capaImg.src = atelie.cover_url;
+            // Pega a posição e zoom do banco, ou usa o padrão
+            const cPos = atelie.cover_position || 'center center';
+            const cZoom = atelie.cover_zoom || 1;
+            
+            capaImg.style.objectPosition = cPos;
+            capaImg.style.transform = `scale(${cZoom})`;
+            
+            // Preenche as variáveis para o editor
+            posX = parseFloat(cPos.split(' ')[0]) || 50;
+            posY = parseFloat(cPos.split(' ')[1]) || 50;
+            zoom = parseFloat(cZoom);
+            bgImageTemp = atelie.cover_url;
         }
 
-        // Preenche os campos do modal de configuração
+        // Preenche o Modal
         $('input-config-nome').value = atelie.name;
         $('input-config-handle').value = atelie.handle;
         $('input-config-bio').value = atelie.description || '';
     }
 
-    function configurarModais() {
-        // --- CRIAÇÃO ---
-        const modalCriar = $('modal-criar-atelie');
-        $('btn-fechar-modal').addEventListener('click', () => modalCriar.hidden = true);
-        modalCriar.addEventListener('click', (e) => { if (e.target === modalCriar) modalCriar.hidden = true; });
+    // --- O EDITOR DE CAPA (Arrastar e Zoom) ---
+    function configurarEditorDeCapa() {
+        const container = $('capa-preview-container');
+        const arrastavel = $('capa-preview-arrastavel');
+        const inputCapa = $('input-config-capa');
+        const btnUploadCapa = $('btn-upload-capa');
 
-        $('form-criar-atelie').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btn = $('btn-salvar-atelie');
-            const nome = $('input-nome-atelie').value.trim();
-            const handle = $('input-handle-atelie').value.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-            const bio = $('input-bio-atelie').value.trim();
+        // Abre o seletor de arquivos
+        btnUploadCapa.addEventListener('click', () => inputCapa.click());
 
-            if (!nome || !handle) return alert('Nome e @usuario são obrigatórios.');
-            btn.disabled = true;
-            btn.textContent = 'Abrindo...';
+        // Carrega a imagem nova em base64 para o preview
+        inputCapa.addEventListener('change', () => {
+            const file = inputCapa.files[0];
+            if (!file) return;
+            fileCapa = file;
 
-            const { data, error } = await db.from('ateliers').insert([{
-                owner_id: usuarioLogado.id,
-                name: nome,
-                handle: handle,
-                description: bio
-            }]).select().single();
-
-            if (error) {
-                btn.disabled = false;
-                btn.textContent = 'Abrir Ateliê';
-                alert('Erro: O @usuario já pode estar em uso.');
-            } else {
-                modalCriar.hidden = true;
-                $('atelie-vazio').hidden = true;
-                $('atelie-conteudo').hidden = false;
-                atelieAtual = data;
-                renderizarAtelie(data);
-            }
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                bgImageTemp = e.target.result;
+                arrastavel.style.backgroundImage = `url('${bgImageTemp}')`;
+                container.style.display = 'block';
+                atualizarTransformacao();
+            };
+            reader.readAsDataURL(file);
+            inputCapa.value = '';
         });
 
-        // --- CONFIGURAÇÃO ---
+        // Função para aplicar o zoom e a posição
+        function atualizarTransformacao() {
+            arrastavel.style.backgroundPosition = `${posX}% ${posY}%`;
+            arrastavel.style.transform = `scale(${zoom})`;
+        }
+
+        // Lógica de arrastar (Mouse)
+        container.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            startX = e.clientX - (posX * container.offsetWidth / 100);
+            startY = e.clientY - (posY * container.offsetHeight / 100);
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            const novoX = (e.clientX - startX) / container.offsetWidth * 100;
+            const novoY = (e.clientY - startY) / container.offsetHeight * 100;
+            posX = Math.max(0, Math.min(100, novoX));
+            posY = Math.max(0, Math.min(100, novoY));
+            atualizarTransformacao();
+        });
+
+        window.addEventListener('mouseup', () => { isDragging = false; });
+
+        // Lógica de arrastar (Touch - Celular)
+        container.addEventListener('touchstart', (e) => {
+            isDragging = true;
+            const touch = e.touches[0];
+            startX = touch.clientX - (posX * container.offsetWidth / 100);
+            startY = touch.clientY - (posY * container.offsetHeight / 100);
+        }, { passive: true });
+
+        container.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            const touch = e.touches[0];
+            const novoX = (touch.clientX - startX) / container.offsetWidth * 100;
+            const novoY = (touch.clientY - startY) / container.offsetHeight * 100;
+            posX = Math.max(0, Math.min(100, novoX));
+            posY = Math.max(0, Math.min(100, novoY));
+            atualizarTransformacao();
+        }, { passive: false });
+
+        container.addEventListener('touchend', () => { isDragging = false; });
+
+        // Lógica de Zoom (Roda do Mouse)
+        container.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            if (e.deltaY < 0) zoom += 0.1;
+            else zoom -= 0.1;
+            zoom = Math.max(1, Math.min(3, zoom)); // Limita o zoom entre 1x e 3x
+            atualizarTransformacao();
+        }, { passive: false });
+
+        // Lógica de Zoom (Pinça no celular)
+        let initialDistance = 0;
+        container.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) {
+                initialDistance = Math.hypot(
+                    e.touches[0].pageX - e.touches[1].pageX,
+                    e.touches[0].pageY - e.touches[1].pageY
+                );
+            }
+        }, { passive: true });
+
+        container.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 2) {
+                e.preventDefault();
+                const distance = Math.hypot(
+                    e.touches[0].pageX - e.touches[1].pageX,
+                    e.touches[0].pageY - e.touches[1].pageY
+                );
+                if (initialDistance > 0) {
+                    const factor = distance / initialDistance;
+                    zoom = Math.max(1, Math.min(3, zoom * factor));
+                    atualizarTransformacao();
+                    initialDistance = distance;
+                }
+            }
+        }, { passive: false });
+
+        container.addEventListener('touchend', () => { initialDistance = 0; });
+        
+        // --- CONFIGURAÇÃO DO MODAL DE SALVAR ---
         const modalConfig = $('modal-config-atelie');
-        $('btn-configurar-atelie').addEventListener('click', () => modalConfig.hidden = false);
+        $('btn-configurar-atelie').addEventListener('click', () => {
+            modalConfig.hidden = false;
+            if (atelieAtual.cover_url) {
+                arrastavel.style.backgroundImage = `url('${atelieAtual.cover_url}')`;
+                container.style.display = 'block';
+            }
+            atualizarTransformacao();
+        });
+
         $('btn-fechar-config').addEventListener('click', () => modalConfig.hidden = true);
         modalConfig.addEventListener('click', (e) => { if (e.target === modalConfig) modalConfig.hidden = true; });
 
-        // Upload de imagens no Modal de Configuração
-        const inputAvatar = $('input-config-avatar');
-        const inputCapa = $('input-config-capa');
-
-        $('btn-upload-avatar').addEventListener('click', () => inputAvatar.click());
-        $('btn-upload-capa').addEventListener('click', () => inputCapa.click());
-
-        inputAvatar.addEventListener('change', () => {
-            fileAvatar = inputAvatar.files[0];
-            if (fileAvatar) $('btn-upload-avatar').textContent = 'Avatar Selecionado ✓';
-        });
-
-        inputCapa.addEventListener('change', () => {
-            fileCapa = inputCapa.files[0];
-            if (fileCapa) $('btn-upload-capa').textContent = 'Capa Selecionada ✓';
-        });
-
-        // Salvar Configurações
-        $('form-config-atelie').addEventListener('submit', async (e) => {
+        // --- SALVAR CONFIGURAÇÕES ---
+        const form = $('form-config-atelie');
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = $('btn-salvar-config');
             btn.disabled = true;
@@ -171,12 +253,17 @@
                     newCoverUrl = db.storage.from('avatars').getPublicUrl(path).data.publicUrl;
                 }
 
+                // Salva as posições da capa
+                const cPos = `${posX.toFixed(0)}% ${posY.toFixed(0)}%`;
+
                 const { data, error } = await db.from('ateliers').update({
                     name: nome,
                     handle: handle,
                     description: bio,
                     avatar_url: newAvatarUrl,
-                    cover_url: newCoverUrl
+                    cover_url: newCoverUrl,
+                    cover_position: cPos, // Salva no banco
+                    cover_zoom: zoom      // Salva no banco
                 }).eq('id', atelieAtual.id).select().single();
 
                 if (error) throw error;
@@ -184,13 +271,11 @@
                 atelieAtual = data;
                 renderizarAtelie(data);
                 modalConfig.hidden = true;
-                $('btn-upload-avatar').textContent = 'Escolher Imagem de Perfil';
-                $('btn-upload-capa').textContent = 'Escolher Imagem de Capa';
+                btn.textContent = 'Salvar Alterações';
                 
             } catch (err) {
                 console.error(err);
                 alert('Erro ao salvar as configurações.');
-            } finally {
                 btn.disabled = false;
                 btn.textContent = 'Salvar Alterações';
             }

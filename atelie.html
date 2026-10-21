@@ -19,12 +19,17 @@
     <main class="atelie-main">
         <div id="atelie-vazio" class="atelie-vazio" hidden>
             <h2>Seu Ateliê está vazio.</h2>
-            <p>Este é o seu espaço de criação. Abra o seu Ateliê para começar a escrever, criar quizzes e publicar no Mural.</p>
+            <p>Este é o seu espaço de criação. Abra o seu Ateliê para começar a escrever.</p>
             <button id="btn-criar-atelie" class="btn-primario">Abrir Meu Ateliê</button>
         </div>
 
+        <!-- O CARD DO ATELIÊ -->
         <div id="atelie-conteudo" class="atelie-conteudo" hidden>
-            <div class="atelie-capa" id="atelie-capa"></div>
+            <!-- A capa agora recebe a tag <img> diretamente para permitir o zoom e arrasto -->
+            <div class="atelie-capa-wrapper">
+                <img id="atelie-capa-img" class="atelie-capa-img" src="" alt="Capa do Ateliê">
+            </div>
+            
             <div class="atelie-header">
                 <div class="atelie-avatar" id="atelie-avatar"></div>
                 <div class="atelie-info">
@@ -38,32 +43,6 @@
             </div>
         </div>
     </main>
-
-    <!-- MODAL DE CRIAÇÃO -->
-    <div id="modal-criar-atelie" class="modal-overlay" hidden>
-        <div class="modal-conteudo">
-            <header class="modal-header">
-                <h2>Forjar seu Ateliê</h2>
-                <button type="button" id="btn-fechar-modal" class="modal-fechar">&#10005;</button>
-            </header>
-            
-            <form id="form-criar-atelie">
-                <div class="campo">
-                    <label for="input-nome-atelie">Nome do Ateliê</label>
-                    <input type="text" id="input-nome-atelie" placeholder="Ex: O Ateliê do João" required>
-                </div>
-                <div class="campo">
-                    <label for="input-handle-atelie">@ Usuário (único)</label>
-                    <input type="text" id="input-handle-atelie" placeholder="Ex: joao-matematica" required>
-                </div>
-                <div class="campo">
-                    <label for="input-bio-atelie">Descrição (Bio)</label>
-                    <textarea id="input-bio-atelie" placeholder="Amante de exatas e café..." rows="3"></textarea>
-                </div>
-                <button type="submit" class="btn-primario" id="btn-salvar-atelie">Criar Ateliê</button>
-            </form>
-        </div>
-    </div>
 
     <!-- MODAL DE CONFIGURAÇÃO -->
     <div id="modal-config-atelie" class="modal-overlay" hidden>
@@ -93,9 +72,18 @@
                     <input type="file" id="input-config-avatar" accept="image/*" hidden>
                 </div>
 
+                <!-- ÁREA DE ARRASTAR E ZOOM DA CAPA -->
                 <div class="campo-upload">
                     <label>Capa do Ateliê</label>
-                    <button type="button" class="btn-container" id="btn-upload-capa">Escolher Imagem de Capa</button>
+                    <small style="display:block; margin-bottom: 0.5rem; color: var(--tinta-clara); font-size: 0.7rem;">
+                        * Arraste para mover e use a roda do mouse (ou pinça) para dar zoom.
+                    </small>
+                    
+                    <div id="capa-preview-container" class="capa-preview-container" style="display: none;">
+                        <div id="capa-preview-arrastavel" class="capa-preview-arrastavel"></div>
+                    </div>
+
+                    <button type="button" class="btn-container" id="btn-upload-capa" style="margin-top: 0.5rem;">Escolher Nova Imagem de Capa</button>
                     <input type="file" id="input-config-capa" accept="image/*" hidden>
                 </div>
 
