@@ -4,6 +4,9 @@
     const $ = (id) => document.getElementById(id);
     let db = null;
     let usuarioLogado = null;
+    let atelieAtual = null;
+    let fileAvatar = null;
+    let fileCapa = null;
 
     async function aguardarSupabase() {
         for (let i = 0; i < 30; i++) {
@@ -19,10 +22,10 @@
 
         const { data: { session } } = await db.auth.getSession();
         if (!session) return window.location.href = 'login.html';
-        
         usuarioLogado = session.user;
+
         await verificarAtelie();
-        configurarModal();
+        configurarModais();
     }
 
     async function verificarAtelie() {
@@ -41,6 +44,7 @@
         } else {
             $('atelie-vazio').hidden = true;
             $('atelie-conteudo').hidden = false;
+            atelieAtual = atelie;
             renderizarAtelie(atelie);
         }
     }
@@ -50,51 +54,43 @@
         $('atelie-handle').textContent = '@' + atelie.handle;
         $('atelie-bio').textContent = atelie.description || 'Nenhuma descrição adicionada.';
 
-        // --- CORREÇÃO DO AVATAR DO ATELIÊ ---
         const avatarContainer = $('atelie-avatar');
-        avatarContainer.style.backgroundImage = 'none'; // Limpa o fundo vinho
-        avatarContainer.textContent = ''; // Limpa o conteúdo
-
-        // Puxa a foto do seu perfil de usuário (direto da Navbar que já carregou)
         const fotoDoPerfil = document.querySelector('#perfil-usuario img.foto-perfil');
-        
-        if (fotoDoPerfil && fotoDoPerfil.src) {
+        const urlAvatar = atelie.avatar_url || (fotoDoPerfil ? fotoDoPerfil.src : null);
+
+        avatarContainer.style.backgroundImage = 'none';
+        avatarContainer.textContent = '';
+
+        if (urlAvatar) {
             const img = document.createElement('img');
-            img.src = fotoDoPerfil.src;
-            img.className = 'foto-perfil';
-            // Estilos inline para garantir que preencha o círculo do ateliê
+            img.src = urlAvatar;
             img.style.width = '100%';
             img.style.height = '100%';
             img.style.objectFit = 'cover';
             img.style.borderRadius = '50%';
             avatarContainer.appendChild(img);
         } else {
-            // Se não tiver foto, coloca as iniciais
             const iniciais = atelie.name.substring(0, 2).toUpperCase();
             avatarContainer.innerHTML = `<span class="avatar-iniciais" style="font-size:2rem;">${iniciais}</span>`;
         }
 
-        // Capa do Ateliê
         if (atelie.cover_url) {
             $('atelie-capa').style.backgroundImage = `url('${atelie.cover_url}')`;
         }
 
-        $('btn-configurar-atelie').addEventListener('click', () => {
-            alert('A tela de configurações do Ateliê (trocar capa, bio, etc) será aberta aqui.');
-        });
+        // Preenche os campos do modal de configuração
+        $('input-config-nome').value = atelie.name;
+        $('input-config-handle').value = atelie.handle;
+        $('input-config-bio').value = atelie.description || '';
     }
 
-    function configurarModal() {
-        const modal = $('modal-criar-atelie');
-        const btnFechar = $('btn-fechar-modal');
-        const form = $('form-criar-atelie');
+    function configurarModais() {
+        // --- CRIAÇÃO ---
+        const modalCriar = $('modal-criar-atelie');
+        $('btn-fechar-modal').addEventListener('click', () => modalCriar.hidden = true);
+        modalCriar.addEventListener('click', (e) => { if (e.target === modalCriar) modalCriar.hidden = true; });
 
-        if (!modal) return;
-
-        btnFechar.addEventListener('click', () => modal.hidden = true);
-        modal.addEventListener('click', (e) => { if (e.target === modal) modal.hidden = true; });
-
-        form.addEventListener('submit', async (e) => {
+        $('form-criar-atelie').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = $('btn-salvar-atelie');
             const nome = $('input-nome-atelie').value.trim();
@@ -102,7 +98,6 @@
             const bio = $('input-bio-atelie').value.trim();
 
             if (!nome || !handle) return alert('Nome e @usuario são obrigatórios.');
-
             btn.disabled = true;
             btn.textContent = 'Abrindo...';
 
@@ -116,13 +111,88 @@
             if (error) {
                 btn.disabled = false;
                 btn.textContent = 'Abrir Ateliê';
-                alert('Erro: O @usuario já pode estar em uso ou houve um erro no servidor.');
-                console.error(error);
+                alert('Erro: O @usuario já pode estar em uso.');
             } else {
-                modal.hidden = true;
+                modalCriar.hidden = true;
                 $('atelie-vazio').hidden = true;
                 $('atelie-conteudo').hidden = false;
+                atelieAtual = data;
                 renderizarAtelie(data);
+            }
+        });
+
+        // --- CONFIGURAÇÃO ---
+        const modalConfig = $('modal-config-atelie');
+        $('btn-configurar-atelie').addEventListener('click', () => modalConfig.hidden = false);
+        $('btn-fechar-config').addEventListener('click', () => modalConfig.hidden = true);
+        modalConfig.addEventListener('click', (e) => { if (e.target === modalConfig) modalConfig.hidden = true; });
+
+        // Upload de imagens no Modal de Configuração
+        const inputAvatar = $('input-config-avatar');
+        const inputCapa = $('input-config-capa');
+
+        $('btn-upload-avatar').addEventListener('click', () => inputAvatar.click());
+        $('btn-upload-capa').addEventListener('click', () => inputCapa.click());
+
+        inputAvatar.addEventListener('change', () => {
+            fileAvatar = inputAvatar.files[0];
+            if (fileAvatar) $('btn-upload-avatar').textContent = 'Avatar Selecionado ✓';
+        });
+
+        inputCapa.addEventListener('change', () => {
+            fileCapa = inputCapa.files[0];
+            if (fileCapa) $('btn-upload-capa').textContent = 'Capa Selecionada ✓';
+        });
+
+        // Salvar Configurações
+        $('form-config-atelie').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = $('btn-salvar-config');
+            btn.disabled = true;
+            btn.textContent = 'Salvando...';
+
+            const nome = $('input-config-nome').value.trim();
+            const handle = $('input-config-handle').value.trim().toLowerCase().replace(/\s+/g, '-');
+            const bio = $('input-config-bio').value.trim();
+
+            let newAvatarUrl = atelieAtual.avatar_url;
+            let newCoverUrl = atelieAtual.cover_url;
+
+            try {
+                if (fileAvatar) {
+                    const path = usuarioLogado.id + '/atelie-avatar-' + Date.now() + '.jpg';
+                    await db.storage.from('avatars').upload(path, fileAvatar);
+                    newAvatarUrl = db.storage.from('avatars').getPublicUrl(path).data.publicUrl;
+                }
+
+                if (fileCapa) {
+                    const path = usuarioLogado.id + '/atelie-capa-' + Date.now() + '.jpg';
+                    await db.storage.from('avatars').upload(path, fileCapa);
+                    newCoverUrl = db.storage.from('avatars').getPublicUrl(path).data.publicUrl;
+                }
+
+                const { data, error } = await db.from('ateliers').update({
+                    name: nome,
+                    handle: handle,
+                    description: bio,
+                    avatar_url: newAvatarUrl,
+                    cover_url: newCoverUrl
+                }).eq('id', atelieAtual.id).select().single();
+
+                if (error) throw error;
+
+                atelieAtual = data;
+                renderizarAtelie(data);
+                modalConfig.hidden = true;
+                $('btn-upload-avatar').textContent = 'Escolher Imagem de Perfil';
+                $('btn-upload-capa').textContent = 'Escolher Imagem de Capa';
+                
+            } catch (err) {
+                console.error(err);
+                alert('Erro ao salvar as configurações.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Salvar Alterações';
             }
         });
     }

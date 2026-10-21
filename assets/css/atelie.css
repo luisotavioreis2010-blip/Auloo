@@ -248,3 +248,41 @@
     .atelie-vazio { padding: 2rem; }
     .modal-conteudo { padding: 1.5rem; }
 }
+
+/* Estilos extras para o Modal de Configuração */
+.campo-upload {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px dashed rgba(184, 137, 74, 0.3);
+}
+
+.campo-upload label {
+    display: block;
+    font-family: var(--fonte-corpo);
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--tinta-suave);
+    margin-bottom: 0.5rem;
+}
+
+.btn-container {
+    background: transparent;
+    border: 1px solid var(--dourado);
+    color: var(--dourado);
+    padding: 0.6rem 1rem;
+    font-family: var(--fonte-corpo);
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    border-radius: 2px;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.3s;
+}
+
+.btn-container:hover {
+    background: var(--dourado);
+    color: var(--papel-claro);
+}

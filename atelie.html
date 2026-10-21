@@ -52,18 +52,54 @@
                     <label for="input-nome-atelie">Nome do Ateliê</label>
                     <input type="text" id="input-nome-atelie" placeholder="Ex: O Ateliê do João" required>
                 </div>
-                
                 <div class="campo">
                     <label for="input-handle-atelie">@ Usuário (único)</label>
                     <input type="text" id="input-handle-atelie" placeholder="Ex: joao-matematica" required>
                 </div>
-                
                 <div class="campo">
                     <label for="input-bio-atelie">Descrição (Bio)</label>
                     <textarea id="input-bio-atelie" placeholder="Amante de exatas e café..." rows="3"></textarea>
                 </div>
-
                 <button type="submit" class="btn-primario" id="btn-salvar-atelie">Criar Ateliê</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL DE CONFIGURAÇÃO -->
+    <div id="modal-config-atelie" class="modal-overlay" hidden>
+        <div class="modal-conteudo">
+            <header class="modal-header">
+                <h2>Configurar Ateliê</h2>
+                <button type="button" id="btn-fechar-config" class="modal-fechar">&#10005;</button>
+            </header>
+            
+            <form id="form-config-atelie">
+                <div class="campo">
+                    <label for="input-config-nome">Nome do Ateliê</label>
+                    <input type="text" id="input-config-nome" required>
+                </div>
+                <div class="campo">
+                    <label for="input-config-handle">@ Usuário (único)</label>
+                    <input type="text" id="input-config-handle" required>
+                </div>
+                <div class="campo">
+                    <label for="input-config-bio">Descrição (Bio)</label>
+                    <textarea id="input-config-bio" rows="3"></textarea>
+                </div>
+                
+                <div class="campo-upload">
+                    <label>Avatar do Ateliê</label>
+                    <button type="button" class="btn-container" id="btn-upload-avatar">Escolher Imagem de Perfil</button>
+                    <input type="file" id="input-config-avatar" accept="image/*" hidden>
+                </div>
+
+                <div class="campo-upload">
+                    <label>Capa do Ateliê</label>
+                    <button type="button" class="btn-container" id="btn-upload-capa">Escolher Imagem de Capa</button>
+                    <input type="file" id="input-config-capa" accept="image/*" hidden>
+                </div>
+
+                <button type="submit" class="btn-primario" id="btn-salvar-config">Salvar Alterações</button>
             </form>
         </div>
     </div>
