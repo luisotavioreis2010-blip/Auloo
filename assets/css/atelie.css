@@ -1,6 +1,6 @@
 @charset "UTF-8";
 /* ==============================================
-   ATELIE.CSS — v9 (Responsividade Premium)
+   ATELIE.CSS — v10 (Card + Gaveta + Responsivo)
    ============================================== */
 
 /* ==============================================
@@ -38,7 +38,7 @@
    ============================================== */
 .atelie-capa-wrapper {
     width: 100%;
-    height: 240px; /* Altura base para Desktop */
+    height: 240px;
     overflow: hidden;
     position: relative;
     background: var(--papel-escuro);
@@ -54,7 +54,7 @@
     object-fit: cover;
     transform-origin: center center;
     transition: transform 0.1s;
-    pointer-events: none; /* Importante para o mouse/dedo interagir com o wrapper */
+    pointer-events: none;
 }
 
 .atelie-capa-wrapper::after {
@@ -149,7 +149,33 @@
 .btn-primario:disabled { opacity: 0.6; cursor: wait; }
 
 /* ==============================================
-   4. GAVETA LATERAL DE CONFIGURAÇÃO
+   4. ESTADO VAZIO
+   ============================================== */
+.atelie-vazio {
+    background: var(--papel-claro);
+    border: 1px dashed var(--dourado);
+    padding: 3rem 2rem;
+    text-align: center;
+    margin-top: 3rem;
+    max-width: 500px;
+    box-shadow: 0 10px 30px rgba(26, 22, 20, 0.03);
+}
+.atelie-vazio h2 {
+    font-family: var(--fonte-titulo);
+    font-style: italic;
+    color: var(--vinho);
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+}
+.atelie-vazio p {
+    font-family: var(--fonte-display);
+    font-size: 1.1rem;
+    color: var(--tinta-suave);
+    margin-bottom: 1.5rem;
+}
+
+/* ==============================================
+   5. GAVETA LATERAL DE CONFIGURAÇÃO
    ============================================== */
 .atelie-gaveta {
     position: fixed;
@@ -158,7 +184,7 @@
     bottom: 0;
     z-index: 250;
     width: 100%;
-    max-width: 480px;
+    max-width: 450px;
     background: var(--papel-claro);
     border-left: 1px solid var(--papel-sombra);
     box-shadow: -20px 0 40px rgba(26, 22, 20, 0.15);
@@ -244,7 +270,7 @@
 }
 
 /* ==============================================
-   5. FORMULÁRIOS
+   6. FORMULÁRIOS
    ============================================== */
 .campo { margin-bottom: 1.2rem; }
 
@@ -310,28 +336,71 @@
 }
 
 /* ==============================================
-   6. RESPONSIVIDADE (A Mágica acontece aqui)
+   7. MODAL DE CRIAÇÃO
    ============================================== */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(26, 22, 20, 0.8);
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    backdrop-filter: blur(4px);
+}
 
-/* Tablet (Deitado e em pé) */
+.modal-conteudo {
+    background: var(--papel-claro);
+    border: 1px solid var(--dourado);
+    border-top: 4px solid var(--vinho);
+    width: 100%;
+    max-width: 500px;
+    padding: 2.5rem;
+    border-radius: 4px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.modal-header h2 {
+    font-family: var(--fonte-titulo);
+    font-size: 1.8rem;
+    font-style: italic;
+    color: var(--vinho);
+    margin: 0;
+}
+
+.modal-fechar {
+    background: transparent;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+
+/* ==============================================
+   8. RESPONSIVIDADE (A Mágica acontece aqui)
+   ============================================== */
 @media (max-width: 1024px) {
     .atelie-main { margin-left: 0; padding: 2rem 1rem; }
     .atelie-capa-wrapper { height: 220px; }
     .atelie-conteudo { max-width: 600px; }
 }
 
-/* Celular em pé (Mobile) */
 @media (max-width: 768px) {
     .atelie-main {
         padding: 1.5rem 1rem;
-        justify-content: flex-start; /* No celular, o card sobe para o topo */
+        justify-content: flex-start;
     }
 
-    .atelie-capa-wrapper {
-        height: 160px; /* Capa mais fina no celular */
-    }
+    .atelie-capa-wrapper { height: 160px; }
 
-    /* Cabeçalho vira uma coluna centralizada */
     .atelie-header {
         flex-direction: column;
         align-items: center;
@@ -340,24 +409,10 @@
         gap: 0.5rem;
     }
 
-    .atelie-avatar {
-        margin-top: -50px;
-        margin-bottom: 0.5rem;
-    }
-
-    .atelie-info {
-        margin-top: 0;
-    }
-
-    .atelie-nome {
-        font-size: 1.8rem;
-    }
-
-    .atelie-bio {
-        font-size: 1rem;
-        max-width: 90%;
-        margin: 0 auto;
-    }
+    .atelie-avatar { margin-top: -50px; margin-bottom: 0.5rem; }
+    .atelie-info { margin-top: 0; }
+    .atelie-nome { font-size: 1.8rem; }
+    .atelie-bio { font-size: 1rem; max-width: 90%; margin: 0 auto; }
 
     .atelie-acoes {
         margin-top: 0.8rem;
@@ -367,33 +422,22 @@
     }
 
     .btn-primario {
-        width: 100%; /* Botão ocupa toda a largura no celular */
+        width: 100%;
         max-width: 300px;
     }
 
-    /* Gaveta ocupa a tela toda no celular */
     .atelie-gaveta {
         max-width: 100%;
         border-left: none;
     }
 
-    .atelie-gaveta-corpo {
-        padding: 1.5rem;
-    }
-
-    .capa-preview-container {
-        height: 140px;
-    }
+    .atelie-gaveta-corpo { padding: 1.5rem; }
+    .capa-preview-container { height: 140px; }
 }
 
-/* Celular Deitado (Landscape) */
 @media (max-height: 500px) and (orientation: landscape) {
-    .atelie-main {
-        padding: 1rem;
-        justify-content: center;
-    }
+    .atelie-main { padding: 1rem; justify-content: center; }
 
-    /* Card fica lado a lado para não estourar a altura */
     .atelie-header {
         flex-direction: row;
         align-items: center;
@@ -401,27 +445,10 @@
         padding: 0 1.5rem 1rem;
     }
 
-    .atelie-avatar {
-        margin-top: -40px;
-        width: 80px;
-        height: 80px;
-    }
-
-    .atelie-capa-wrapper {
-        height: 120px;
-    }
-
-    .btn-primario {
-        width: auto;
-    }
-
-    .atelie-gaveta-corpo {
-        padding: 1rem;
-        gap: 0.8rem;
-    }
-    
+    .atelie-avatar { margin-top: -40px; width: 80px; height: 80px; }
+    .atelie-capa-wrapper { height: 120px; }
+    .btn-primario { width: auto; }
+    .atelie-gaveta-corpo { padding: 1rem; gap: 0.8rem; }
     .campo { margin-bottom: 0.6rem; }
-    
-    /* Esconde o preview de capa no celular deitado para caber tudo */
     .capa-preview-container { display: none !important; }
 }

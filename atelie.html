@@ -26,7 +26,7 @@
 
         <!-- O CARD DO ATELIÊ -->
         <div id="atelie-conteudo" class="atelie-conteudo" hidden>
-            <!-- A capa recebe a tag <img> diretamente para permitir o zoom e arrasto -->
+            <!-- A capa recebe a tag <img> para permitir arrastar e dar zoom -->
             <div class="atelie-capa-wrapper">
                 <img id="atelie-capa-img" class="atelie-capa-img" src="" alt="Capa do Ateliê">
             </div>
@@ -35,7 +35,8 @@
                 <div class="atelie-avatar" id="atelie-avatar"></div>
                 <div class="atelie-info">
                     <h1 class="atelie-nome" id="atelie-nome">Nome do Ateliê</h1>
-                    <span class="atelie-handle" id="atelie-handle">@handle</span>
+                    <!-- O Handle agora é um código único gerado pelo sistema -->
+                    <span class="atelie-handle" id="atelie-handle">@auloo-00000</span>
                     <p class="atelie-bio" id="atelie-bio">Bio do ateliê aqui.</p>
                 </div>
                 <div class="atelie-acoes">
@@ -57,10 +58,6 @@
                 <div class="campo">
                     <label for="input-nome-atelie">Nome do Ateliê</label>
                     <input type="text" id="input-nome-atelie" placeholder="Ex: O Ateliê do João" required>
-                </div>
-                <div class="campo">
-                    <label for="input-handle-atelie">@ Usuário (único)</label>
-                    <input type="text" id="input-handle-atelie" placeholder="Ex: joao-matematica" required>
                 </div>
                 <div class="campo">
                     <label for="input-bio-atelie">Descrição (Bio)</label>
@@ -86,10 +83,7 @@
                     <label for="input-config-nome">Nome do Ateliê</label>
                     <input type="text" id="input-config-nome" required>
                 </div>
-                <div class="campo">
-                    <label for="input-config-handle">@ Usuário (único)</label>
-                    <input type="text" id="input-config-handle" required>
-                </div>
+                <!-- Campo @ removido da edição, pois é gerado pelo sistema -->
                 <div class="campo">
                     <label for="input-config-bio">Descrição (Bio)</label>
                     <textarea id="input-config-bio" rows="3"></textarea>

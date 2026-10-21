@@ -8,7 +8,6 @@
     let fileAvatar = null;
     let fileCapa = null;
 
-    // Variáveis do Editor de Capa
     let posX = 50, posY = 50;
     let zoom = 1;
     let isDragging = false;
@@ -33,7 +32,7 @@
 
         await verificarAtelie();
         configurarCriacao();
-        configurarGavetaConfig(); // Nova função
+        configurarGavetaConfig();
     }
 
     async function verificarAtelie() {
@@ -62,7 +61,6 @@
         $('atelie-handle').textContent = '@' + atelie.handle;
         $('atelie-bio').textContent = atelie.description || 'Nenhuma descrição adicionada.';
 
-        // --- AVATAR ---
         const avatarContainer = $('atelie-avatar');
         const fotoDoPerfil = document.querySelector('#perfil-usuario img.foto-perfil');
         const urlAvatar = atelie.avatar_url || (fotoDoPerfil ? fotoDoPerfil.src : null);
@@ -76,7 +74,6 @@
             avatarContainer.innerHTML = `<span class="avatar-iniciais">${atelie.name.substring(0, 2).toUpperCase()}</span>`;
         }
 
-        // --- CAPA ---
         if (atelie.cover_url) {
             const capaImg = $('atelie-capa-img');
             capaImg.src = atelie.cover_url;
@@ -93,9 +90,7 @@
             bgImageTemp = atelie.cover_url;
         }
 
-        // Preenche o Formulário
         $('input-config-nome').value = atelie.name;
-        $('input-config-handle').value = atelie.handle;
         $('input-config-bio').value = atelie.description || '';
     }
 
@@ -110,33 +105,40 @@
             e.preventDefault();
             const btn = $('btn-salvar-atelie');
             const nome = $('input-nome-atelie').value.trim();
-            const handle = $('input-handle-atelie').value.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
             const bio = $('input-bio-atelie').value.trim();
 
-            if (!nome || !handle) return alert('Nome e @usuario são obrigatórios.');
+            if (!nome) return alert('O Nome do Ateliê é obrigatório.');
 
             btn.disabled = true;
             btn.textContent = 'Abrindo...';
 
-            const { data, error } = await db.from('ateliers').insert([{
-                owner_id: usuarioLogado.id,
-                name: nome,
-                handle: handle,
-                description: bio,
-                cover_position: '50% 50%',
-                cover_zoom: 1
-            }]).select().single();
+            try {
+                // Chama a função do banco para gerar o handle único
+                const { data: handleGerado, error: errHandle } = await db.rpc('gerar_handle_unico');
+                if (errHandle) throw errHandle;
 
-            if (error) {
-                btn.disabled = false;
-                btn.textContent = 'Abrir Ateliê';
-                alert('Erro: O @usuario já pode estar em uso.');
-            } else {
+                const { data, error } = await db.from('ateliers').insert([{
+                    owner_id: usuarioLogado.id,
+                    name: nome,
+                    handle: handleGerado,
+                    description: bio,
+                    cover_position: '50% 50%',
+                    cover_zoom: 1
+                }]).select().single();
+
+                if (error) throw error;
+
                 modalCriar.hidden = true;
                 $('atelie-vazio').hidden = true;
                 $('atelie-conteudo').hidden = false;
                 atelieAtual = data;
                 renderizarAtelie(data);
+
+            } catch (err) {
+                console.error(err);
+                alert('Erro ao abrir o Ateliê. Tente novamente.');
+                btn.disabled = false;
+                btn.textContent = 'Abrir Ateliê';
             }
         });
     }
@@ -167,12 +169,10 @@
             overlay.classList.remove('ativa');
         }
 
-        // Eventos de abrir/fechar
         $('btn-configurar-atelie').addEventListener('click', abrirGaveta);
         $('btn-fechar-config').addEventListener('click', fecharGaveta);
         overlay.addEventListener('click', fecharGaveta);
 
-        // Upload Capa
         btnUploadCapa.addEventListener('click', () => inputCapa.click());
         inputCapa.addEventListener('change', () => {
             const file = inputCapa.files[0];
@@ -191,7 +191,6 @@
             inputCapa.value = '';
         });
 
-        // Upload Avatar
         const btnUploadAvatar = $('btn-upload-avatar');
         const inputAvatar = $('input-config-avatar');
         btnUploadAvatar.addEventListener('click', () => inputAvatar.click());
@@ -200,7 +199,6 @@
             if (fileAvatar) btnUploadAvatar.textContent = 'Avatar Selecionado ✓';
         });
 
-        // Arrastar e Zoom
         function atualizarTransformacao() {
             arrastavel.style.backgroundPosition = `${posX}% ${posY}%`;
             arrastavel.style.transform = `scale(${zoom})`;
@@ -227,7 +225,6 @@
             atualizarTransformacao();
         }, { passive: false });
 
-        // Salvar
         $('form-config-atelie').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = $('btn-salvar-config');
@@ -235,7 +232,6 @@
             btn.textContent = 'Salvando...';
 
             const nome = $('input-config-nome').value.trim();
-            const handle = $('input-config-handle').value.trim().toLowerCase().replace(/\s+/g, '-');
             const bio = $('input-config-bio').value.trim();
 
             let newAvatarUrl = atelieAtual.avatar_url;
@@ -258,7 +254,6 @@
 
                 const { data, error } = await db.from('ateliers').update({
                     name: nome,
-                    handle: handle,
                     description: bio,
                     avatar_url: newAvatarUrl,
                     cover_url: newCoverUrl,
@@ -271,7 +266,6 @@
                 atelieAtual = data;
                 renderizarAtelie(data);
                 fecharGaveta();
-                btn.textContent = 'Salvar Alterações';
                 
             } catch (err) {
                 console.error(err);
