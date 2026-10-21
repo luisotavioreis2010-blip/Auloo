@@ -1,5 +1,5 @@
 /* ==============================================
-   LAYOUT.JS — v3 (Original)
+   LAYOUT.JS — v4 (Original com Lógica de Tela)
    ============================================== */
 (function () {
     'use strict';
@@ -122,6 +122,28 @@
 
     function irParaLogin() {
         window.location.href = PAGINA_LOGIN;
+    }
+
+    /* ==============================================
+       LÓGICA DE TELA (O Segredo do Layout Original)
+       ============================================== */
+    function sincronizarTela() {
+        const raiz = document.documentElement;
+        raiz.style.setProperty('--viewport-h', window.innerHeight + 'px');
+        
+        const layout = window.innerWidth > window.innerHeight ? 'row' : 'stacked';
+        if (raiz.getAttribute('data-layout') !== layout) {
+            raiz.setAttribute('data-layout', layout);
+        }
+    }
+
+    function setupTela() {
+        sincronizarTela();
+        window.addEventListener('resize', sincronizarTela);
+        window.addEventListener('orientationchange', () => {
+            setTimeout(sincronizarTela, 100);
+            setTimeout(sincronizarTela, 300);
+        });
     }
 
     /* ==============================================
@@ -559,6 +581,7 @@
     }
 
     function iniciar() {
+        setupTela(); // Ativa a lógica de data-layout
         setupCalendario();
         setupLayout();
         setupFicha();
