@@ -8,11 +8,10 @@
     color: var(--tinta);
     font-family: var(--fonte-corpo);
     margin: 0;
-    padding-top: 70px; /* Espaço para a barra fixa */
+    padding-top: 70px;
     min-height: 100vh;
 }
 
-/* --- Topo --- */
 .editor-topo {
     position: fixed;
     top: 0;
@@ -45,7 +44,6 @@
     letter-spacing: 1px;
     color: var(--tinta-suave);
 }
-
 .btn-voltar:hover { color: var(--vinho); }
 
 .editor-status {
@@ -55,7 +53,6 @@
     color: var(--tinta-clara);
 }
 
-/* --- Toolbar --- */
 .editor-toolbar {
     display: flex;
     align-items: center;
@@ -111,7 +108,6 @@
 
 .btn-publicar:hover { background: var(--dourado); border-color: var(--dourado); }
 
-/* --- Área de Escrita --- */
 .editor-main {
     display: flex;
     justify-content: center;
@@ -128,7 +124,6 @@
     padding: 3rem;
 }
 
-/* Capa Opcional */
 .editor-capa {
     width: 100%;
     height: 200px;
@@ -150,7 +145,6 @@
 }
 .editor-capa:hover { background-color: var(--papel); }
 
-/* Categoria */
 .editor-categoria {
     background: transparent;
     border: none;
@@ -165,7 +159,6 @@
     outline: none;
 }
 
-/* Título */
 .editor-titulo {
     width: 100%;
     background: transparent;
@@ -180,7 +173,6 @@
 }
 .editor-titulo::placeholder { color: rgba(92, 26, 26, 0.3); }
 
-/* Texto Rico */
 .editor-conteudo {
     min-height: 400px;
     outline: none;
@@ -196,7 +188,6 @@
     font-style: italic;
 }
 
-/* Estilos que o usuário pode aplicar no texto */
 .editor-conteudo h2 {
     font-family: var(--fonte-titulo);
     color: var(--vinho);
@@ -216,7 +207,6 @@
     margin: 1.5rem 0;
 }
 
-/* Responsivo */
 @media (max-width: 768px) {
     .editor-topo { padding: 0 1rem; flex-wrap: wrap; height: auto; padding-bottom: 0.5rem; }
     .editor-toolbar { order: 3; width: 100%; overflow-x: auto; margin-top: 0.5rem; justify-content: center; }

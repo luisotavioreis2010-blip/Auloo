@@ -5,7 +5,6 @@
     let db = null;
     let usuarioLogado = null;
     let arquivoCapa = null;
-    let arquivoImagem = null;
 
     async function aguardarSupabase() {
         for (let i = 0; i < 30; i++) {
@@ -28,7 +27,6 @@
         configurarPublicacao();
     }
 
-    // --- Lógica da Barra de Ferramentas ---
     function configurarToolbar() {
         const botoes = document.querySelectorAll('.editor-toolbar button[data-cmd]');
         const editor = $('input-conteudo');
@@ -43,7 +41,6 @@
             });
         });
 
-        // Lógica para Inserir Imagem no texto
         const btnImg = $('btn-inserir-img');
         const inputImg = $('input-img');
 
@@ -56,7 +53,6 @@
             const file = inputImg.files[0];
             if (!file) return;
             
-            // Upload rápido para o Supabase
             const path = usuarioLogado.id + '/img_' + Date.now() + '_' + file.name;
             const { error } = await db.storage.from('avatars').upload(path, file);
             
@@ -68,7 +64,6 @@
         });
     }
 
-    // --- Lógica da Capa ---
     function configurarCapa() {
         const capaEl = $('editor-capa');
         const inputCapa = document.createElement('input');
@@ -91,13 +86,11 @@
         });
     }
 
-    // --- Lógica de Publicação ---
     function configurarPublicacao() {
         const btn = $('btn-publicar');
         const tituloEl = $('input-titulo');
         const conteudoEl = $('input-conteudo');
 
-        // Muda o status visual conforme digita
         [tituloEl, conteudoEl].forEach(el => {
             el.addEventListener('input', () => {
                 $('editor-status').textContent = 'Rascunho não salvo';
@@ -120,7 +113,6 @@
             try {
                 let capaUrl = null;
 
-                // 1. Faz upload da capa (se existir)
                 if (arquivoCapa) {
                     const pathCapa = usuarioLogado.id + '/capa_' + Date.now() + '.jpg';
                     const { error: errCapa } = await db.storage.from('avatars').upload(pathCapa, arquivoCapa);
@@ -129,7 +121,6 @@
                     }
                 }
 
-                // 2. Salva no banco
                 const { error } = await db.from('posts').insert([{
                     author_id: usuarioLogado.id,
                     title: titulo,
@@ -144,7 +135,7 @@
                 $('editor-status').style.color = 'var(--sucesso)';
                 
                 setTimeout(() => {
-                    window.location.href = 'comunidade.html'; // Vai para o Mural
+                    window.location.href = 'comunidade.html';
                 }, 1000);
 
             } catch (err) {

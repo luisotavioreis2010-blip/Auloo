@@ -16,10 +16,9 @@
 </head>
 <body class="editor-body">
 
-    <!-- Barra de Ferramentas Fixa no Topo -->
     <header class="editor-topo">
         <div class="editor-topo-esq">
-            <a href="atelie.html" class="btn-voltar">← Sair</a>
+            <a href="comunidade.html" class="btn-voltar">← Sair</a>
             <span class="editor-status" id="editor-status">Rascunho não salvo</span>
         </div>
         
@@ -39,35 +38,28 @@
         </div>
     </header>
 
-    <!-- Área de Escrita -->
     <main class="editor-main">
         <div class="editor-folha">
-            <!-- Capa Opcional -->
             <div class="editor-capa" id="editor-capa" title="Clique para adicionar uma capa">
                 <span>Adicionar Capa</span>
             </div>
 
-            <!-- Categoria -->
             <select class="editor-categoria" id="input-categoria">
                 <option value="Leituras">Leituras</option>
                 <option value="Dúvidas">Dúvidas</option>
                 <option value="Vídeos">Vídeos</option>
             </select>
 
-            <!-- Título -->
             <input type="text" class="editor-titulo" id="input-titulo" placeholder="Título do artigo..." maxlength="120">
 
-            <!-- Corpo do Texto (contenteditable) -->
             <div class="editor-conteudo" id="input-conteudo" contenteditable="true" aria-label="Conteúdo do artigo">
                 <p>Comece a escrever sua história...</p>
             </div>
         </div>
     </main>
 
-    <!-- Input escondido para upload de imagem -->
     <input type="file" id="input-img" accept="image/*" hidden>
 
-    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script src="assets/js/config.js"></script>
     <script src="assets/js/auth.js"></script>
