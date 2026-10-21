@@ -1,6 +1,17 @@
 ﻿@charset "UTF-8";
 /* ==============================================
-   ESTANTE.CSS — v13 (Com correção de Avatar e data-layout)
+   DASHBOARD.CSS — v20
+
+   Estrutura
+   1. Variáveis
+   2. Reset, base e navbar
+   3. Sidebar esquerda (estrutura)
+   4. Ficha do leitor (sidebar direita)
+   5. Containers expansivos (nome, senha, saiba mais)
+   6. Conteúdo principal e calendário
+   7. DESKTOP  (≥ 1367px)
+   8. COMPACTO (≤ 1366px)
+   9. Acessibilidade
    ============================================== */
 
 /* ==============================================
@@ -26,7 +37,7 @@
     --sucesso: #2E7D4F;
     --erro: #B23A2E;
 
-    --fonte-display: 'Cormorant Garamond', 'Segoe UI Symbol', 'Apple Symbols', 'Noto Sans Symbols', Georgia, serif;
+    --fonte-display: 'Cormorant Garamond', Georgia, serif;
     --fonte-corpo: 'Poppins', system-ui, sans-serif;
     --fonte-titulo: 'Playfair Display', Georgia, serif;
 
@@ -38,6 +49,7 @@
 
     --navbar-h: 68px;
     --sidebar-w: 300px;
+    --sidebar-colapsada: 80px;
     --ficha-w: 360px;
     --cal-w: 470px;
     --drawer-w: 70vw;
@@ -51,6 +63,7 @@
     --avatar-size: 42px;
     --hamb-size: 40px;
 
+    --secao-pt: 4.5rem;
     --secao-px: 1.3rem;
     --menu-gap: 1rem;
     --link-pad-y: 1.1rem;
@@ -61,6 +74,7 @@
     --nome-size: 0.85rem;
     --nome-ls: 1.5px;
     --romano-size: 1.35rem;
+    --ornamento-top: 2.5rem;
     --selo-pb: 1.5rem;
     --volume-pad: 1.2rem 1.3rem 1.8rem;
 
@@ -186,7 +200,6 @@ input, textarea, .ficha-email {
     border-radius: 50%;
     cursor: pointer;
     transition: box-shadow var(--transicao);
-    flex-shrink: 0;
 }
 
 @media (hover: hover) {
@@ -198,8 +211,6 @@ input, textarea, .ficha-email {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: 50%;
-    flex-shrink: 0;
 }
 
 .avatar-iniciais {
@@ -252,7 +263,7 @@ input, textarea, .ficha-email {
 .gaveta-overlay.ativa { opacity: 1; pointer-events: auto; }
 
 /* ==============================================
-   3. SIDEBAR ESQUERDA
+   3. SIDEBAR ESQUERDA (estrutura)
    ============================================== */
 .sidebar {
     position: fixed;
@@ -262,41 +273,38 @@ input, textarea, .ficha-email {
     z-index: 50;
     display: flex;
     flex-direction: column;
-    width: var(--sidebar-w);
     overflow: hidden;
     background: var(--sidebar-bg-2);
     border-right: 3px double var(--dourado);
     box-shadow: 4px 0 30px rgba(61, 15, 15, 0.35);
 }
 
-.sidebar-secao {
-    flex: 1 1 auto;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    align-content: flex-start;
-    padding: 1.5rem var(--secao-px) 1.5rem;
-    overflow-x: hidden;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-}
-
-.sidebar-secao::-webkit-scrollbar { display: none; }
-
-.sidebar-secao::before {
+.sidebar::before {
     content: '\2766';
-    display: block;
-    margin: 0 auto 1.2rem;
+    position: absolute;
+    top: var(--ornamento-top);
+    left: 50%;
+    z-index: 3;
+    transform: translateX(-50%);
     font-family: var(--fonte-display);
     font-size: 1.2rem;
     color: var(--dourado);
     opacity: 0.7;
-    text-align: center;
     pointer-events: none;
-    flex-shrink: 0;
 }
+
+.sidebar-secao {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    padding: var(--secao-pt) var(--secao-px) 0.5rem;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-width: none;
+}
+
+.sidebar-secao::-webkit-scrollbar { display: none; }
 
 .sidebar-titulo {
     min-height: 1.2rem;
@@ -310,7 +318,6 @@ input, textarea, .ficha-email {
     font-style: italic;
     letter-spacing: var(--titulo-ls);
     color: var(--dourado);
-    flex-shrink: 0;
 }
 
 .sidebar-filete {
@@ -318,7 +325,6 @@ input, textarea, .ficha-email {
     margin: 0 1rem 1.5rem;
     background: var(--dourado);
     opacity: 0.6;
-    flex-shrink: 0;
 }
 
 .sidebar-menu {
@@ -327,7 +333,6 @@ input, textarea, .ficha-email {
     align-items: stretch;
     gap: var(--menu-gap);
     width: 100%;
-    flex-shrink: 0;
 }
 
 .sidebar-link {
@@ -357,12 +362,6 @@ input, textarea, .ficha-email {
         background: rgba(184, 137, 74, 0.12);
         border-left-color: var(--dourado);
     }
-}
-
-.sidebar-link.ativo {
-    color: var(--dourado);
-    background: rgba(184, 137, 74, 0.12);
-    border-left-color: var(--dourado);
 }
 
 .sidebar-icone {
@@ -408,27 +407,19 @@ input, textarea, .ficha-email {
 }
 
 .sidebar-selo,
-.sidebar-volume {
-    width: 100%;
-    text-align: center;
-    flex: 0 0 auto;
-    position: static;
-    margin: 0;
-    padding: 0;
-}
+.sidebar-volume { margin-top: auto; flex-shrink: 0; }
+.sidebar-selo ~ .sidebar-volume { margin-top: 0; }
 
 .sidebar-selo {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    margin-top: auto;
-    padding-top: 1.2rem;
-    padding-bottom: 0.6rem;
+    width: 100%;
+    padding: 0 1rem var(--selo-pb);
     white-space: nowrap;
     color: var(--dourado);
     opacity: 0.75;
-    border-top: 1px solid rgba(184, 137, 74, 0.2);
 }
 
 .selo-texto {
@@ -446,8 +437,10 @@ input, textarea, .ficha-email {
     align-items: center;
     justify-content: center;
     gap: 0.4rem;
-    padding-top: 0.6rem;
-    padding-bottom: 0;
+    width: 100%;
+    padding: var(--volume-pad);
+    text-align: center;
+    border-top: 1px solid rgba(184, 137, 74, 0.25);
 }
 
 .volume-numero {
@@ -469,96 +462,7 @@ input, textarea, .ficha-email {
 }
 
 /* ==============================================
-   4. SUBMENU SANFONA
-   ============================================== */
-.sidebar-toggle {
-    width: 100%;
-    font-family: inherit;
-    cursor: pointer;
-}
-
-.sidebar-seta {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    margin-left: auto;
-    width: 14px;
-    height: 14px;
-    flex-shrink: 0;
-    color: var(--dourado);
-    opacity: 0.7;
-    transition: transform 0.3s ease;
-}
-
-.sidebar-seta svg {
-    display: block;
-    width: 100%;
-    height: 100%;
-}
-
-.sidebar-toggle[aria-expanded="true"] .sidebar-seta {
-    transform: rotate(180deg);
-}
-
-.sidebar-submenu {
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-    margin: 0.4rem 0 0.8rem 0;
-    padding-left: 3rem;
-    overflow: hidden;
-    flex-shrink: 0;
-    animation: submenuAbrir 0.25s ease;
-}
-
-@keyframes submenuAbrir {
-    from { opacity: 0; transform: translateY(-4px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-
-.sidebar-sublink {
-    position: relative;
-    display: block;
-    padding: 0.65rem 0.9rem 0.65rem 1.15rem;
-    font-family: var(--fonte-display);
-    font-size: 1.05rem;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-    text-decoration: none;
-    color: rgba(248, 242, 228, 0.82);
-    background: transparent;
-    border-left: 2px solid transparent;
-    border-radius: 2px;
-    transition: color 0.25s, background 0.25s, border-color 0.25s;
-}
-
-.sidebar-sublink::before {
-    content: '•';
-    position: absolute;
-    left: 0.35rem;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--dourado);
-    opacity: 0.75;
-    font-size: 1rem;
-    line-height: 1;
-    transition: opacity 0.25s;
-}
-
-@media (hover: hover) {
-    .sidebar-sublink:hover {
-        color: var(--dourado);
-        background: rgba(184, 137, 74, 0.12);
-        border-left-color: var(--dourado);
-    }
-    .sidebar-sublink:hover::before {
-        opacity: 1;
-    }
-}
-
-/* ==============================================
-   5. FICHA DO LEITOR (sidebar direita)
+   4. FICHA DO LEITOR (sidebar direita)
    ============================================== */
 .sidebar-direita {
     position: fixed;
@@ -647,12 +551,7 @@ input, textarea, .ficha-email {
     border-radius: 50%;
 }
 
-.ficha-foto img { 
-    width: 100%; 
-    height: 100%; 
-    object-fit: cover; 
-    border-radius: 50%;
-}
+.ficha-foto img { width: 100%; height: 100%; object-fit: cover; }
 
 .ficha-info {
     display: flex;
@@ -728,7 +627,7 @@ input, textarea, .ficha-email {
 }
 
 /* ==============================================
-   6. CONTAINERS EXPANSIVOS
+   5. CONTAINERS EXPANSIVOS
    ============================================== */
 .container-expansivel {
     position: relative;
@@ -747,7 +646,6 @@ input, textarea, .ficha-email {
     position: absolute;
     top: 0.4rem;
     right: 0.6rem;
-    font-family: var(--fonte-display);
     font-size: 0.85rem;
     color: var(--dourado);
     opacity: 0.6;
@@ -822,6 +720,48 @@ input, textarea, .ficha-email {
 }
 
 .btn-container:disabled { opacity: 0.6; cursor: wait; }
+
+.wrapper-olho-senha {
+    position: relative;
+    width: 100%;
+    margin-bottom: 0.4rem;
+}
+
+.wrapper-olho-senha input { margin-bottom: 0; padding-right: 2.2rem; }
+
+.btn-olho-senha {
+    position: absolute;
+    top: 50%;
+    right: 0.2rem;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    opacity: 0.5;
+    transform: translateY(-50%);
+    transition: opacity 0.2s ease;
+}
+
+@media (hover: hover) {
+    .btn-olho-senha:hover { opacity: 1; }
+}
+
+.btn-olho-senha svg {
+    display: block;
+    width: 14px;
+    height: 14px;
+    fill: var(--tinta-suave);
+}
+
+.btn-olho-senha .icone-olho-aberto { display: none; }
+.btn-olho-senha.mostrando .icone-olho-aberto { display: block; }
+.btn-olho-senha.mostrando .icone-olho-fechado { display: none; }
 
 #container-saiba-mais {
     padding: 1rem 1.1rem 1.15rem;
@@ -941,16 +881,16 @@ input, textarea, .ficha-email {
 .mensagem-sidebar.saindo   { opacity: 0; }
 
 /* ==============================================
-   7. CONTEÚDO PRINCIPAL E CALENDÁRIO
+   6. CONTEÚDO PRINCIPAL E CALENDÁRIO
    ============================================== */
-.estante-main {
+.dashboard-main {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: var(--main-gap);
     min-height: calc(100vh - var(--navbar-h));
     min-height: calc(100dvh - var(--navbar-h));
-    margin-left: var(--sidebar-w);
+    margin-left: var(--sidebar-colapsada);
     padding: var(--main-pad);
 }
 
@@ -1107,7 +1047,7 @@ input, textarea, .ficha-email {
 .calendario-dias span.dia-outro-mes { opacity: 0.25; }
 
 /* ==============================================
-   8. DESKTOP (>= 1367px)
+   7. DESKTOP (≥ 1367px)
    ============================================== */
 @media (min-width: 1367px) {
     :root {
@@ -1116,24 +1056,77 @@ input, textarea, .ficha-email {
         --logo-size: 1.9rem;
         --sair-pad: 0.55rem 1.3rem;
         --sair-size: 0.68rem;
+
+        --secao-pt: 5.5rem;
+        --secao-px: 1.4rem;
+        --menu-gap: 1.1rem;
+        --titulo-size: 1.05rem;
+        --nome-size: 0.88rem;
+        --nome-ls: 1.8px;
+
         --ficha-pad: 2.2rem 1.7rem 1.5rem;
         --foto-size: 76px;
+
         --cal-titulo-size: 1.5rem;
     }
 
     .sidebar {
-        display: flex;
-        flex-direction: column;
-        width: var(--sidebar-w);
+        width: var(--sidebar-colapsada);
         background: linear-gradient(180deg,
             var(--sidebar-bg-1) 0%,
             var(--sidebar-bg-2) 50%,
             var(--sidebar-bg-3) 100%);
+        transition: width 0.35s var(--ease);
     }
 
-    .estante-main { transition: margin 0.4s var(--ease); }
+    .sidebar:is(:hover, .expandida) { width: var(--sidebar-w); }
 
-    body.ficha-aberta .estante-main { margin-right: var(--ficha-w); }
+    .sidebar::before { transition: opacity 0.3s ease; }
+    .sidebar:is(:hover, .expandida)::before { opacity: 1; }
+
+    .sidebar::after {
+        content: '';
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        height: 3px;
+        border-top: 1px solid var(--dourado);
+        border-bottom: 1px solid var(--dourado);
+        opacity: 0.8;
+        pointer-events: none;
+    }
+
+    .sidebar-titulo,
+    .sidebar-selo,
+    .sidebar-volume { transition: opacity 0.2s ease; }
+
+    .sidebar:not(:hover):not(.expandida) :is(.sidebar-titulo, .sidebar-selo, .sidebar-volume) {
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s ease, visibility 0s linear 0.2s;
+    }
+
+    .sidebar:not(:hover):not(.expandida) .sidebar-nome { display: none; }
+
+    .sidebar:not(:hover):not(.expandida) .sidebar-link {
+        justify-content: center;
+        gap: 0;
+        padding-inline: 0;
+    }
+
+    .sidebar:not(:hover):not(.expandida) .sidebar-filete {
+        margin-inline: 0.3rem;
+        margin-bottom: 1.2rem;
+    }
+
+    .dashboard-main { transition: margin 0.4s var(--ease); }
+
+    body.ficha-aberta .dashboard-main { margin-right: var(--ficha-w); }
+
+    body.ficha-aberta .sidebar:is(:hover, .expandida) ~ .dashboard-main {
+        margin-left: var(--sidebar-w);
+    }
 }
 
 @media (min-width: 1441px) {
@@ -1149,6 +1142,9 @@ input, textarea, .ficha-email {
         --ficha-w: 400px;
         --cal-w: 540px;
 
+        --ornamento-top: 3rem;
+        --secao-pt: 6rem;
+        --secao-px: 1.5rem;
         --menu-gap: 1.2rem;
         --link-pad-y: 1.3rem;
         --link-pad-x: 1.1rem;
@@ -1172,9 +1168,12 @@ input, textarea, .ficha-email {
 }
 
 /* ==============================================
-   9. COMPACTO (<= 1366px) — mobile: gaveta
+   8. COMPACTO (≤ 1366px)
    ============================================== */
+
+/* ---------- 8.1 base: layout empilhado ---------- */
 @media (max-width: 1366px) {
+
     html, body {
         position: fixed;
         top: 0;
@@ -1197,9 +1196,8 @@ input, textarea, .ficha-email {
         width: var(--drawer-w);
         max-width: var(--drawer-max);
         height: var(--viewport-h);
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
+        overflow-x: hidden;
+        overflow-y: auto;
         -webkit-overflow-scrolling: touch;
         overscroll-behavior: none;
         scrollbar-width: none;
@@ -1216,17 +1214,9 @@ input, textarea, .ficha-email {
         transition: transform 0.4s var(--ease), visibility 0s;
     }
 
+    .sidebar-secao { flex: 0 0 auto; overflow: visible; }
     .sidebar-icone { display: none; }
     .sidebar-romano { display: inline-block; }
-
-    .sidebar-submenu {
-        padding-left: 2.5rem;
-    }
-
-    .sidebar-sublink {
-        font-size: 1.05rem;
-        padding: 0.7rem 0.9rem 0.7rem 1.15rem;
-    }
 
     .sidebar-direita {
         top: 0;
@@ -1240,7 +1230,7 @@ input, textarea, .ficha-email {
 
     body.campo-focado .sidebar-direita { padding-bottom: 50vh; }
 
-    .estante-main {
+    .dashboard-main {
         flex-direction: column;
         align-items: stretch;
         justify-content: flex-start;
@@ -1255,11 +1245,11 @@ input, textarea, .ficha-email {
         overscroll-behavior: contain;
     }
 
-    .estante-main,
+    .dashboard-main,
     .sidebar,
     .sidebar-direita { overflow-anchor: none; }
 
-    .estante-main > * { flex-shrink: 0; }
+    .dashboard-main > * { flex-shrink: 0; }
 
     .ilustracao-container {
         flex: 0 0 auto;
@@ -1288,7 +1278,7 @@ input, textarea, .ficha-email {
     }
 }
 
-/* ---------- 9.2 Layout em linha (celular deitado / tablet paisagem) ---------- */
+/* ---------- 8.2 layout em linha ---------- */
 @media (max-width: 1366px) {
     :root:where([data-layout="row"]) {
         --navbar-px: 1.8rem;
@@ -1302,7 +1292,7 @@ input, textarea, .ficha-email {
         box-shadow: -4px 0 12px rgba(26, 22, 20, 0.15);
     }
 
-    [data-layout="row"] .estante-main {
+    [data-layout="row"] .dashboard-main {
         flex-direction: row;
         align-items: flex-start;
         justify-content: center;
@@ -1310,7 +1300,7 @@ input, textarea, .ficha-email {
         padding: 0.9rem 1.2rem 0.9rem 1rem;
     }
 
-    [data-layout="row"] .estante-main > * { margin-block: auto; }
+    [data-layout="row"] .dashboard-main > * { margin-block: auto; }
 
     [data-layout="row"] .ilustracao-container {
         flex: 0 1 42%;
@@ -1334,7 +1324,7 @@ input, textarea, .ficha-email {
     }
 }
 
-/* ---------- 9.3 Celular em linha (paisagem) ---------- */
+/* ---------- 8.3 celular em linha (paisagem) ---------- */
 @media (max-width: 900px), (max-height: 500px) {
     :root:where([data-layout="row"]) {
         --navbar-h: 52px;
@@ -1352,7 +1342,7 @@ input, textarea, .ficha-email {
 
     [data-layout="row"] .btn-hamburger { font-size: 1rem; }
 
-    [data-layout="row"] .estante-main { gap: 0.5rem; padding: 0.5rem; }
+    [data-layout="row"] .dashboard-main { gap: 0.5rem; padding: 0.5rem; }
     [data-layout="row"] .ilustracao-container { flex-basis: 40%; max-width: 40%; }
     [data-layout="row"] .calendario-container { flex: 0 1 56%; max-width: 520px; margin-right: 0; }
 
@@ -1428,7 +1418,7 @@ input, textarea, .ficha-email {
     [data-layout="row"] .calendario-dias span.dia-atual { font-size: clamp(0.7rem, 2.3vh, 0.85rem); }
 }
 
-/* ---------- 9.4 Celular empilhado (em pé) ---------- */
+/* ---------- 8.4 celular empilhado (em pé) ---------- */
 @media (max-width: 767px) {
     :root:where(:not([data-layout="row"])) {
         --navbar-h: 56px;
@@ -1448,7 +1438,7 @@ input, textarea, .ficha-email {
     }
 
     html:not([data-layout="row"]) .btn-hamburger { font-size: 1.05rem; }
-    html:not([data-layout="row"]) .estante-main { gap: 0.8rem; padding: 0.8rem 1.2rem 2rem; }
+    html:not([data-layout="row"]) .dashboard-main { gap: 0.8rem; padding: 0.8rem 1.2rem 2rem; }
     html:not([data-layout="row"]) .ilustracao-container { max-width: 65%; margin-top: -0.5rem; }
 }
 
@@ -1464,6 +1454,7 @@ input, textarea, .ficha-email {
         --hamb-size: 32px;
         --drawer-w: 88vw;
         --drawer-max: 340px;
+        --secao-pt: 4rem;
         --secao-px: 1.1rem;
         --menu-gap: 1.1rem;
         --ficha-pad: 1.8rem 1.2rem 1.5rem;
@@ -1474,7 +1465,7 @@ input, textarea, .ficha-email {
     }
 
     html:not([data-layout="row"]) .btn-hamburger { font-size: 1rem; }
-    html:not([data-layout="row"]) .estante-main { gap: 0.6rem; padding: 0.6rem 1rem 2rem; }
+    html:not([data-layout="row"]) .dashboard-main { gap: 0.6rem; padding: 0.6rem 1rem 2rem; }
     html:not([data-layout="row"]) .ilustracao-container { max-width: 70%; }
 
     .ficha-saiba-num {
@@ -1494,14 +1485,19 @@ input, textarea, .ficha-email {
         --sair-size: 0.48rem;
         --avatar-size: 30px;
         --drawer-w: 90vw;
+        --secao-pt: 3.5rem;
+        --ornamento-top: 1.5rem;
         --cal-titulo-size: 1.05rem;
         --dia-size: 0.68rem;
     }
+
+    html:not([data-layout="row"]) .sidebar::before { font-size: 1rem; }
 }
 
-/* ---------- 9.5 Ajustes por altura ---------- */
+/* ---------- 8.5 ajustes por altura ---------- */
 @media (max-width: 1366px) and (max-height: 700px) {
     :root {
+        --secao-pt: 3.5rem;
         --volume-pad: 0.9rem 1rem 1.2rem;
     }
     .volume-numero { font-size: 0.82rem; }
@@ -1510,6 +1506,7 @@ input, textarea, .ficha-email {
 
 @media (max-width: 1366px) and (min-height: 851px) {
     :root {
+        --secao-pt: 5.5rem;
         --menu-gap: 1.2rem;
         --link-pad-y: 1.15rem;
         --volume-pad: 1.2rem 1.3rem 2rem;
@@ -1518,6 +1515,7 @@ input, textarea, .ficha-email {
 
 @media (max-width: 1366px) and (min-height: 1000px) {
     :root {
+        --secao-pt: 6rem;
         --menu-gap: 1.5rem;
         --link-pad-y: 1.3rem;
         --link-pad-x: 1.1rem;
@@ -1534,7 +1532,7 @@ html.redimensionando *::after {
 }
 
 /* ==============================================
-   10. ACESSIBILIDADE
+   9. ACESSIBILIDADE
    ============================================== */
 @media (prefers-reduced-motion: reduce) {
     .ilustracao-central { animation: none; }
