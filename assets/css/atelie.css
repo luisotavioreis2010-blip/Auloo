@@ -1,6 +1,6 @@
 @charset "UTF-8";
 /* ==============================================
-   ATELIE.CSS — v18 (Painel Sempre Aberto no Desktop)
+   ATELIE.CSS — v19 (Desktop a partir de 1025px)
    ============================================== */
 
 /* ==============================================
@@ -13,10 +13,8 @@
     padding: 3rem 1rem;
     display: flex;
     flex-direction: column;
-    align-items: center;
     justify-content: center;
-    /* Transição suave quando a tela muda de tamanho */
-    transition: margin-right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Sem margin fixa ou transforms. O flexbox vai centralizar sozinho. */
 }
 
 /* ==============================================
@@ -25,6 +23,7 @@
 .atelie-conteudo {
     width: 100%;
     max-width: 650px;
+    margin: 0 auto; /* Centraliza o card no espaço disponível */
     background: var(--papel-claro);
     border: 1px solid var(--dourado-fraco);
     border-radius: 8px;
@@ -146,7 +145,7 @@
     border: 1px dashed var(--dourado);
     padding: 3rem 2rem;
     text-align: center;
-    margin-top: 3rem;
+    margin: 3rem auto 0;
     max-width: 500px;
     box-shadow: 0 10px 30px rgba(26, 22, 20, 0.03);
 }
@@ -312,10 +311,11 @@
 .modal-fechar { background: transparent; border: none; font-size: 1.2rem; cursor: pointer; }
 
 /* ==============================================
-   9. RESPONSIVIDADE (Mobile e Tablet)
+   9. RESPONSIVIDADE (Mobile < 1024px)
    ============================================== */
-@media (max-width: 1366px) {
+@media (max-width: 1024px) {
     .atelie-main { margin-left: 0; padding: 2rem 1rem; }
+    .atelie-conteudo { max-width: 600px; }
 }
 
 @media (max-width: 768px) {
@@ -365,23 +365,23 @@
 }
 
 /* ==============================================
-   10. DESKTOP GRANDE (Painel Fixo e Sempre Aberto)
+   10. DESKTOP E NOTEBOOKS (>= 1025px)
    ============================================== */
-@media (min-width: 1367px) {
-    /* 1. Empurra o conteúdo para a esquerda reservando o espaço da gaveta */
+@media (min-width: 1025px) {
+    /* 1. O conteúdo principal ganha uma margem à direita do tamanho da gaveta */
     .atelie-main {
-        margin-right: 460px; 
-        padding-right: 0;
+        margin-right: 460px;
+        padding-right: 1rem; /* Um respiro extra */
     }
 
-    /* 2. Força a gaveta a ficar sempre aberta, ignorando o JS */
+    /* 2. A gaveta fica sempre visível */
     .atelie-gaveta {
         transform: translateX(0) !important;
         visibility: visible !important;
         box-shadow: -4px 0 20px rgba(26, 22, 20, 0.05);
     }
 
-    /* 3. Esconde o overlay, o botão de fechar e o botão de configurar */
+    /* 3. Esconde controles de modal */
     .gaveta-overlay-config { display: none !important; }
     .atelie-gaveta-fechar { display: none !important; }
     #btn-configurar-atelie { display: none !important; }
