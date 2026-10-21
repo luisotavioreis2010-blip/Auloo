@@ -1,6 +1,3 @@
-/* ==============================================
-   CANAL.JS — Lógica da Página do Canal
-   ============================================== */
 (function () {
     'use strict';
 
@@ -8,7 +5,6 @@
     let db = null;
     let usuarioLogado = null;
 
-    // Aguarda o Supabase carregar (evita erro de null)
     async function aguardarSupabase() {
         for (let i = 0; i < 30; i++) {
             if (window.supabaseClient) return window.supabaseClient;
@@ -21,7 +17,6 @@
         db = await aguardarSupabase();
         if (!db) return console.error('Supabase não carregado.');
 
-        // O layout.js já faz a checagem de sessão, mas garantimos aqui também
         const { data: { session } } = await db.auth.getSession();
         if (!session) {
             window.location.href = 'login.html';
@@ -30,10 +25,10 @@
         usuarioLogado = session.user;
 
         await verificarCanal();
+        configurarModal();
     }
 
     async function verificarCanal() {
-        // Busca se o usuário logado tem um canal no banco
         const { data: canal, error } = await db
             .from('channels')
             .select('*')
@@ -46,17 +41,13 @@
         }
 
         if (!canal) {
-            // Não tem canal: mostra a tela de criação
             $('canal-vazio').hidden = false;
             $('canal-conteudo').hidden = true;
             
-            // O botão que vai abrir o formulário de criação
             $('btn-criar-canal').addEventListener('click', () => {
-                // No próximo passo, vamos criar um modal aqui
-                alert('Aqui vai abrir o formulário para criar o canal!');
+                $('modal-criar-canal').hidden = false;
             });
         } else {
-            // Tem canal: mostra a estante dele
             $('canal-vazio').hidden = true;
             $('canal-conteudo').hidden = false;
             renderizarCanal(canal);
@@ -80,6 +71,51 @@
 
         $('btn-editar-canal').addEventListener('click', () => {
             alert('O formulário de edição será aberto aqui.');
+        });
+    }
+
+    function configurarModal() {
+        const modal = $('modal-criar-canal');
+        const btnFechar = $('btn-fechar-modal');
+        const form = $('form-criar-canal');
+
+        if (!modal) return;
+
+        btnFechar.addEventListener('click', () => modal.hidden = true);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) modal.hidden = true;
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = $('btn-salvar-canal');
+            const nome = $('input-nome-canal').value.trim();
+            const handle = $('input-handle-canal').value.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+            const bio = $('input-bio-canal').value.trim();
+
+            if (!nome || !handle) return alert('Nome e @usuario são obrigatórios.');
+
+            btn.disabled = true;
+            btn.textContent = 'Criando...';
+
+            const { data, error } = await db.from('channels').insert([{
+                owner_id: usuarioLogado.id,
+                name: nome,
+                handle: handle,
+                description: bio
+            }]).select().single();
+
+            if (error) {
+                btn.disabled = false;
+                btn.textContent = 'Criar Canal';
+                alert('Erro: O @usuario já pode estar em uso ou houve um erro no servidor.');
+                console.error(error);
+            } else {
+                modal.hidden = true;
+                $('canal-vazio').hidden = true;
+                $('canal-conteudo').hidden = false;
+                renderizarCanal(data);
+            }
         });
     }
 

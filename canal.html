@@ -16,7 +16,6 @@
 </head>
 <body>
 
-    <!-- NAVBAR -->
     <header class="navbar">
         <div class="navbar-left">
             <button class="btn-hamburger" id="btn-hamburger" type="button" aria-label="Abrir sumário" aria-expanded="false" aria-controls="sidebar">&#9776;</button>
@@ -32,7 +31,6 @@
 
     <div class="gaveta-overlay" id="gaveta-overlay" aria-hidden="true"></div>
 
-    <!-- SIDEBAR ESQUERDA -->
     <aside class="sidebar" id="sidebar" aria-label="Sumário">
         <div class="sidebar-secao">
             <h2 class="sidebar-titulo">Sumário</h2>
@@ -40,11 +38,11 @@
             <nav class="sidebar-menu">
                 <a href="estante.html" class="sidebar-link"><span class="sidebar-romano">I</span><span class="sidebar-nome">Início</span></a>
                 <a href="comunidade.html" class="sidebar-link"><span class="sidebar-romano">II</span><span class="sidebar-nome">Mural</span></a>
+                <a href="canal.html" class="sidebar-link" style="color: var(--dourado); border-left-color: var(--dourado);"><span class="sidebar-romano">III</span><span class="sidebar-nome">Meu Canal</span></a>
             </nav>
         </div>
     </aside>
 
-    <!-- FICHA DO ALUNO -->
     <aside class="sidebar-direita" id="sidebar-perfil" aria-label="Ficha do Aluno">
         <div class="ficha-header">
             <h2 class="ficha-titulo">Ficha do Aluno</h2>
@@ -57,18 +55,26 @@
                 <span class="ficha-email" id="sidebar-perfil-email">&nbsp;</span>
             </div>
         </div>
+        <div class="ficha-filete"></div>
+        <nav class="ficha-menu">
+            <a href="canal.html" class="ficha-item" style="text-decoration: none;">
+                <span class="ficha-romano">&#10022;</span>
+                <span class="ficha-texto">Meu Canal</span>
+            </a>
+            <button class="ficha-item" id="btn-saiba-mais" type="button">
+                <span class="ficha-romano">&#10033;</span>
+                <span class="ficha-texto">Configurações</span>
+            </button>
+        </nav>
     </aside>
 
-    <!-- CONTEÚDO DO CANAL -->
     <main class="canal-main">
-        <!-- Se o usuário não tiver canal, o JS mostra esta mensagem -->
         <div id="canal-vazio" class="canal-vazio" hidden>
             <h2>Você ainda não tem um Canal.</h2>
             <p>Crie seu espaço para começar a publicar no Auloo.</p>
             <button id="btn-criar-canal" class="btn-primario">Criar Meu Canal</button>
         </div>
 
-        <!-- Se o usuário tiver canal, o JS mostra isso -->
         <div id="canal-conteudo" class="canal-conteudo" hidden>
             <div class="canal-capa" id="canal-capa"></div>
             <div class="canal-header">
@@ -85,7 +91,35 @@
         </div>
     </main>
 
-    <!-- SCRIPTS -->
+    <!-- MODAL DE CRIAÇÃO -->
+    <div id="modal-criar-canal" class="modal-overlay" hidden>
+        <div class="modal-conteudo">
+            <header class="modal-header">
+                <h2>Forjar seu Canal</h2>
+                <button type="button" id="btn-fechar-modal" class="modal-fechar">&#10005;</button>
+            </header>
+            
+            <form id="form-criar-canal">
+                <div class="campo">
+                    <label for="input-nome-canal">Nome do Canal</label>
+                    <input type="text" id="input-nome-canal" placeholder="Ex: Matemática do João" required>
+                </div>
+                
+                <div class="campo">
+                    <label for="input-handle-canal">@ Usuário (único)</label>
+                    <input type="text" id="input-handle-canal" placeholder="Ex: joao-matematica" required>
+                </div>
+                
+                <div class="campo">
+                    <label for="input-bio-canal">Descrição (Bio)</label>
+                    <textarea id="input-bio-canal" placeholder="Amante de exatas e café..." rows="3"></textarea>
+                </div>
+
+                <button type="submit" class="btn-primario" id="btn-salvar-canal">Criar Canal</button>
+            </form>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script src="assets/js/config.js"></script>
     <script src="assets/js/auth.js"></script>

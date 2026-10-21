@@ -35,14 +35,12 @@
 
     <div class="gaveta-overlay" id="gaveta-overlay" aria-hidden="true"></div>
 
-    <!-- SIDEBAR ESQUERDA -->
     <aside class="sidebar" id="sidebar" aria-label="Sumário">
         <div class="sidebar-secao">
             <h2 class="sidebar-titulo">Sumário</h2>
             <div class="sidebar-filete"></div>
 
             <nav class="sidebar-menu">
-                <!-- Início -->
                 <a href="estante.html" class="sidebar-link" aria-label="Início">
                     <span class="sidebar-icone">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
@@ -51,7 +49,6 @@
                     <span class="sidebar-nome">Início</span>
                 </a>
 
-                <!-- Quizzes (Sanfona) -->
                 <div class="sidebar-grupo" data-grupo="quizzes">
                     <button type="button" class="sidebar-link sidebar-toggle" aria-expanded="false" aria-controls="submenu-quizzes">
                         <span class="sidebar-icone">
@@ -70,7 +67,6 @@
                     </ul>
                 </div>
 
-                <!-- Comunidade (Link para o Mural) -->
                 <a href="comunidade.html" class="sidebar-link" aria-label="Comunidade">
                     <span class="sidebar-icone">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -79,7 +75,6 @@
                     <span class="sidebar-nome">Comunidade</span>
                 </a>
 
-                <!-- Progresso -->
                 <a href="#" class="sidebar-link" aria-label="Progresso">
                     <span class="sidebar-icone">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
@@ -88,7 +83,6 @@
                     <span class="sidebar-nome">Progresso</span>
                 </a>
 
-                <!-- Configurações -->
                 <a href="#" class="sidebar-link" aria-label="Configurações">
                     <span class="sidebar-icone">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -111,7 +105,6 @@
         </div>
     </aside>
 
-    <!-- FICHA DO ALUNO (Sidebar Direita) -->
     <aside class="sidebar-direita" id="sidebar-perfil" aria-label="Ficha do Aluno">
         <div class="ficha-header">
             <h2 class="ficha-titulo">Ficha do Aluno</h2>
@@ -131,15 +124,22 @@
         <div class="ficha-filete"></div>
 
         <nav class="ficha-menu">
+            <!-- NOVO BOTÃO: MEU CANAL -->
+            <a href="canal.html" class="ficha-item" style="text-decoration: none;">
+                <span class="ficha-romano">&#10022;</span>
+                <span class="ficha-texto">Meu Canal</span>
+            </a>
+
             <button class="ficha-item" id="btn-editar-foto" type="button">
                 <span class="ficha-romano">&#10070;</span>
                 <span class="ficha-texto">Mudar Foto</span>
             </button>
+
             <button class="ficha-item" id="btn-editar-nome" type="button" aria-expanded="false" aria-controls="container-editar-nome">
                 <span class="ficha-romano">&#9998;</span>
                 <span class="ficha-texto">Editar Nome</span>
             </button>
-            <!-- Forms de edição -->
+
             <form id="container-editar-nome" class="container-expansivel" hidden novalidate>
                 <label for="input-novo-nome">Nome</label>
                 <input type="text" id="input-novo-nome" autocomplete="off" placeholder="Digite seu novo nome">
@@ -161,7 +161,6 @@
 
     <input type="file" id="input-foto" accept="image/jpeg,image/png,image/gif,image/webp" hidden aria-label="Upload de foto de perfil">
 
-    <!-- CONTEÚDO PRINCIPAL (Calendário e Ilustração) -->
     <main class="estante-main">
         <div class="ilustracao-container">
             <picture>

@@ -10,25 +10,21 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400;1,500&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     
-    <!-- CSS Global e da Estante (para Navbar e Sidebar) -->
     <link rel="stylesheet" href="assets/css/global.css">
     <link rel="stylesheet" href="assets/css/estante.css">
-    <!-- CSS do Mural -->
     <link rel="stylesheet" href="assets/css/comunidade.css">
 </head>
 <body class="mural-body">
 
-    <!-- SPRITES DE ÍCONES -->
     <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
         <symbol id="icone-olho-aberto" viewBox="0 0 16 16"><path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/><path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/></symbol>
         <symbol id="icone-olho-fechado" viewBox="0 0 16 16"><path d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7.028 7.028 0 0 0-2.79.588l.77.771A5.944 5.944 0 0 1 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.134 13.134 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755-.165.165-.337.328-.517.486l.708.709z"/><path d="M11.297 9.176a3.5 3.5 0 0 0-4.474-4.474l.823.823a2.5 2.5 0 0 1 2.829 2.829l.822.822zm-2.943 1.299.822.822a3.5 3.5 0 0 1-4.474-4.474l.823.823a2.5 2.5 0 0 0 2.829 2.829z"/><path d="M3.35 5.47c-.18.16-.353.322-.518.487A13.134 13.134 0 0 0 1.172 8l.195.288c.335.48.83 1.12 1.465 1.755C4.121 11.332 5.881 12.5 8 12.5c.716 0 1.39-.133 2.02-.36l.77.772A7.029 7.029 0 0 1 8 13.5C3 13.5 0 8 0 8s.939-1.721 2.641-3.238l.708.709zm10.296 8.884-12-12 .708-.708 12 12-.708.708z"/></symbol>
     </svg>
 
-    <!-- NAVBAR -->
     <header class="navbar">
         <div class="navbar-left">
             <button class="btn-hamburger" id="btn-hamburger" type="button" aria-label="Abrir sumário" aria-expanded="false" aria-controls="sidebar">&#9776;</button>
-            <span class="logo" translate="no">Auloo<span class="logo-dot">.</span></span>
+            <a href="estante.html" class="logo" translate="no" style="text-decoration: none;">Auloo<span class="logo-dot">.</span></a>
         </div>
         <div class="navbar-right">
             <button class="btn-sair" id="btn-sair" type="button" aria-label="Sair do sistema">Sair</button>
@@ -40,7 +36,6 @@
 
     <div class="gaveta-overlay" id="gaveta-overlay" aria-hidden="true"></div>
 
-    <!-- SIDEBAR ESQUERDA -->
     <aside class="sidebar" id="sidebar" aria-label="Sumário">
         <div class="sidebar-secao">
             <h2 class="sidebar-titulo">Sumário</h2>
@@ -103,7 +98,6 @@
         </div>
     </aside>
 
-    <!-- FICHA DO ALUNO (Sidebar Direita) -->
     <aside class="sidebar-direita" id="sidebar-perfil" aria-label="Ficha do Aluno">
         <div class="ficha-header">
             <h2 class="ficha-titulo">Ficha do Aluno</h2>
@@ -119,14 +113,19 @@
         </div>
         <div class="ficha-filete"></div>
         <nav class="ficha-menu">
-            <button class="ficha-item" id="btn-saiba-mais" type="button">
+            <!-- NOVO BOTÃO: MEU CANAL -->
+            <a href="canal.html" class="ficha-item" style="text-decoration: none;">
                 <span class="ficha-romano">&#10022;</span>
+                <span class="ficha-texto">Meu Canal</span>
+            </a>
+            
+            <button class="ficha-item" id="btn-saiba-mais" type="button">
+                <span class="ficha-romano">&#10033;</span>
                 <span class="ficha-texto">Configurações</span>
             </button>
         </nav>
     </aside>
 
-    <!-- CONTEÚDO DO MURAL -->
     <main class="estante-main main-mural">
         
         <div class="mural-topo">
@@ -135,7 +134,6 @@
                     <h1>O Mural</h1>
                     <p>Pensamentos, descobertas e desafios.</p>
                 </div>
-                <!-- Link para a página do editor -->
                 <a href="editor.html" class="btn-escrever" style="text-decoration: none;">❦ Escrever</a>
             </div>
 
@@ -154,7 +152,6 @@
         </div>
 
         <div class="feed">
-            <!-- Post 1 -->
             <article class="post">
                 <header class="post-header">
                     <div class="author-info">
@@ -183,7 +180,6 @@
                 </footer>
             </article>
 
-            <!-- Post 2 -->
             <article class="post">
                 <header class="post-header">
                     <div class="author-info">
@@ -212,7 +208,6 @@
         </div>
     </main>
 
-    <!-- SCRIPTS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script src="assets/js/config.js"></script>
     <script src="assets/js/auth.js"></script>
