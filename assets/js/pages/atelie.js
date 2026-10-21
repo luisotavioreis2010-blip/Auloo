@@ -73,7 +73,6 @@
         const fotoDoPerfil = document.querySelector('#perfil-usuario img.foto-perfil');
         const urlAvatar = atelie.avatar_url || (fotoDoPerfil ? fotoDoPerfil.src : null);
 
-        /* FIX: sem innerHTML — usa DOM */
         avatarContainer.textContent = '';
         if (urlAvatar) {
             const img = document.createElement('img');
@@ -156,7 +155,6 @@
 
             } catch (err) {
                 console.error(err);
-                /* FIX: mensagem mais específica se for conflito de handle */
                 const msg = (err && err.code === '23505')
                     ? 'Já existe um ateliê com esse nome. Tente outro.'
                     : 'Erro ao abrir o Ateliê. Tente novamente.';
@@ -178,6 +176,7 @@
         function abrirGaveta() {
             gaveta.classList.add('ativa');
             overlay.classList.add('ativa');
+            document.body.classList.add('atelie-gaveta-aberta');
 
             if (atelieAtual.cover_url) {
                 arrastavel.style.backgroundImage = `url('${atelieAtual.cover_url}')`;
@@ -191,6 +190,7 @@
         function fecharGaveta() {
             gaveta.classList.remove('ativa');
             overlay.classList.remove('ativa');
+            document.body.classList.remove('atelie-gaveta-aberta');
         }
 
         $('btn-configurar-atelie').addEventListener('click', abrirGaveta);
@@ -220,7 +220,6 @@
         btnUploadAvatar.addEventListener('click', () => inputAvatar.click());
         inputAvatar.addEventListener('change', () => {
             const f = inputAvatar.files[0];
-            /* FIX: se cancelar, reseta fileAvatar */
             if (!f) {
                 fileAvatar = null;
                 btnUploadAvatar.textContent = 'Escolher Imagem de Perfil';
@@ -235,11 +234,9 @@
             arrastavel.style.transform = `scale(${zoom})`;
         }
 
-        /* FIX: unifica mouse + toque com pointer events */
         container.addEventListener('pointerdown', (e) => {
             if (e.pointerType === 'touch' && e.isPrimary === false) return;
             if (e.touches && e.touches.length === 2) return;
-
             isDragging = true;
             container.setPointerCapture(e.pointerId);
             startX = e.clientX - (posX * container.offsetWidth / 100);
@@ -258,7 +255,6 @@
         container.addEventListener('pointerup', () => { isDragging = false; });
         container.addEventListener('pointercancel', () => { isDragging = false; });
 
-        /* Pinch to zoom (dois dedos) */
         container.addEventListener('touchstart', (e) => {
             if (e.touches.length === 2) {
                 isDragging = false;
@@ -333,7 +329,6 @@
                 atelieAtual = data;
                 renderizarAtelie(data);
 
-                /* FIX: reseta os arquivos após salvar */
                 fileAvatar = null;
                 fileCapa = null;
                 btnUploadAvatar.textContent = 'Escolher Imagem de Perfil';
