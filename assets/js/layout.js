@@ -1,5 +1,5 @@
 /* ==============================================
-   LAYOUT.JS — v8 (RENDERIZAÇÃO GARANTIDA)
+   LAYOUT.JS — v9 (Definitivo - Avatar e Layout)
    ============================================== */
 (function () {
     'use strict';
@@ -45,11 +45,12 @@
     }
 
     /* ==============================================
-       1. INJEÇÃO DE INTERFACE
+       1. INJEÇÃO DE INTERFACE (Navbar e Sidebars)
        ============================================== */
     function injetarInterface() {
         const pagina = getPaginaAtual();
         
+        // 1. Injetar Navbar
         const navbarHTML = `
             <header class="navbar">
                 <div class="navbar-left">
@@ -70,6 +71,7 @@
         `;
         document.body.insertAdjacentHTML('afterbegin', navbarHTML);
 
+        // 2. Injetar Sidebar Esquerda
         const sidebarHTML = `
             <aside class="sidebar" id="sidebar" aria-label="Sumário">
                 <div class="sidebar-secao">
@@ -96,6 +98,7 @@
         `;
         document.body.insertAdjacentHTML('beforeend', sidebarHTML);
 
+        // 3. Injetar Ficha do Aluno (Sidebar Direita)
         const fichaHTML = `
             <aside class="sidebar-direita" id="sidebar-perfil" aria-label="Ficha do Aluno">
                 <div class="ficha-header">
@@ -197,7 +200,7 @@
     }
 
     /* ==============================================
-       3. LÓGICA DO PERFIL (RENDERIZAÇÃO GARANTIDA)
+       3. LÓGICA DO PERFIL E UPLOAD
        ============================================== */
     function criarIniciais(nome) {
         const partes = (nome || 'Usuário').trim().split(/\s+/);
@@ -214,33 +217,23 @@
         // Limpa o container
         container.textContent = '';
         
-        // Log para debug
-        console.log(`🖼️ Renderizando avatar: ${nome} | URL: ${avatarUrl ? 'SIM' : 'NÃO'}`);
-        
-        // Se não tem URL, mostra as iniciais
         if (!avatarUrl || avatarUrl === 'null' || avatarUrl === 'undefined' || avatarUrl.trim() === '') { 
             container.appendChild(criarIniciais(nome)); 
             return; 
         }
         
-        // Cria a imagem
         const img = document.createElement('img');
         img.className = 'foto-perfil'; 
         img.alt = 'Foto de perfil'; 
         img.referrerPolicy = 'no-referrer';
         
-        // Se a imagem der erro, volta pras iniciais
         img.onerror = () => { 
-            console.warn('❌ Erro ao carregar imagem, voltando para iniciais');
             container.textContent = '';
             container.appendChild(criarIniciais(nome)); 
         };
         
-        // IMPORTANTE: Define o src ANTES de adicionar ao DOM
         img.src = avatarUrl; 
         container.appendChild(img);
-        
-        console.log(`✅ Avatar anexado ao DOM (${container.id})`);
     }
 
     function renderizarPerfil() {
@@ -264,10 +257,7 @@
 
         if (!error && data) {
             if (data.full_name) perfil.nome = data.full_name;
-            if (data.avatar_url) {
-                perfil.avatarUrl = data.avatar_url;
-                console.log('🔗 URL do avatar encontrada no banco:', data.avatar_url);
-            }
+            if (data.avatar_url) perfil.avatarUrl = data.avatar_url;
             renderizarPerfil(); 
         }
     }
@@ -362,13 +352,13 @@
         perfil.email = session.user.email || '';
         const meta = session.user.user_metadata || {};
         
+        // Pega os dados iniciais do Auth
         perfil.nome = meta.full_name || meta.name || perfil.email.split('@')[0];
         perfil.avatarUrl = meta.avatar_url || meta.picture || null;
         
-        // 1. Desenha com os dados do Auth
         renderizarPerfil();
 
-        // 2. Busca no banco e atualiza
+        // Vai no banco e busca os dados mais atualizados
         await buscarPerfilNoBanco(perfil.usuario.id);
     }
 
