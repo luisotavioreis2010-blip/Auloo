@@ -1,6 +1,6 @@
 @charset "UTF-8";
 /* ==============================================
-   ATELIE.CSS — v11 (Layout Premium e Responsivo)
+   ATELIE.CSS — v12 (Modo Deitado Compacto)
    ============================================== */
 
 /* ==============================================
@@ -440,61 +440,46 @@
 }
 
 /* ==============================================
-   CELULAR E TABLET DEITADO (Modo Horizontal)
+   CELULAR E TABLET DEITADO (Vertical e Compacto)
    ============================================== */
 @media (max-height: 550px) and (orientation: landscape) {
     .atelie-main {
         padding: 0.5rem;
         justify-content: center;
-        align-items: center;
     }
 
+    /* O Card diminui a altura geral */
     .atelie-conteudo {
-        max-width: 600px;
-        display: flex;
-        flex-direction: row;
-        align-items: stretch;
+        max-width: 420px; /* Card mais estreito */
     }
 
-    /* Capa na Esquerda */
+    /* Capa bem fininha */
     .atelie-capa-wrapper {
-        width: 180px;
-        height: auto;
-        border-bottom: none;
-        border-right: 2px solid var(--dourado);
-        flex-shrink: 0;
+        height: 100px;
     }
 
-    /* Header na Direita */
+    /* Header compacto mas mantendo o formato original (capa em cima) */
     .atelie-header {
-        flex-direction: column;
+        flex-direction: row;
         align-items: flex-start;
         text-align: left;
-        padding: 1.5rem;
-        gap: 0.2rem;
-        flex: 1;
-        justify-content: center;
+        padding: 0 1rem 1rem;
+        gap: 0.8rem;
     }
 
     .atelie-avatar { 
-        margin-top: 0; 
+        margin-top: -35px; 
         width: 70px; 
         height: 70px; 
-        margin-bottom: 0.5rem;
     }
     
+    .atelie-info { margin-top: 0.2rem; }
+    
     .atelie-nome { font-size: 1.4rem; }
-    .atelie-handle { font-size: 0.7rem; margin-bottom: 0.4rem; }
-    .atelie-bio { 
-        font-size: 0.85rem; 
-        display: -webkit-box; 
-        -webkit-line-clamp: 2; 
-        -webkit-box-orient: vertical; 
-        overflow: hidden; 
-        margin-bottom: 0.5rem;
-    }
+    .atelie-handle { font-size: 0.7rem; margin-bottom: 0.3rem; }
+    .atelie-bio { font-size: 0.85rem; line-height: 1.3; }
 
-    .atelie-acoes { margin-top: 0; }
+    .atelie-acoes { margin-top: 0.5rem; }
     
     .btn-primario { 
         padding: 0.4rem 1rem; 
@@ -502,12 +487,12 @@
         width: auto; 
     }
 
-    /* Gaveta lateral fica com o scroll normal, mas com menos espaçamento */
+    /* Gaveta compacta */
     .atelie-gaveta-corpo { padding: 1rem; gap: 0.8rem; }
     .campo { margin-bottom: 0.6rem; }
     .campo input, .campo textarea { padding: 0.5rem; font-size: 0.9rem; }
     
-    /* Força o preview da capa a aparecer */
+    /* Preview da capa visível */
     .capa-preview-container { 
         display: block !important; 
         height: 90px; 
