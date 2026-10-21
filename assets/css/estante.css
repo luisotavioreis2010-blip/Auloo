@@ -1,6 +1,6 @@
 ﻿@charset "UTF-8";
 /* ==============================================
-   ESTANTE.CSS — v11
+   ESTANTE.CSS — v10 (Original)
    ============================================== */
 
 /* ==============================================
@@ -197,8 +197,6 @@ input, textarea, .ficha-email {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: 50%;
-    flex-shrink: 0;
 }
 
 .avatar-iniciais {
@@ -415,7 +413,7 @@ input, textarea, .ficha-email {
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    margin-top: auto;
+    margin-top: 2rem;
     padding-top: 1.2rem;
     padding-bottom: 0.6rem;
     white-space: nowrap;
@@ -640,12 +638,7 @@ input, textarea, .ficha-email {
     border-radius: 50%;
 }
 
-.ficha-foto img { 
-    width: 100%; 
-    height: 100%; 
-    object-fit: cover; 
-    border-radius: 50%;
-}
+.ficha-foto img { width: 100%; height: 100%; object-fit: cover; }
 
 .ficha-info {
     display: flex;
@@ -815,6 +808,48 @@ input, textarea, .ficha-email {
 }
 
 .btn-container:disabled { opacity: 0.6; cursor: wait; }
+
+.wrapper-olho-senha {
+    position: relative;
+    width: 100%;
+    margin-bottom: 0.4rem;
+}
+
+.wrapper-olho-senha input { margin-bottom: 0; padding-right: 2.2rem; }
+
+.btn-olho-senha {
+    position: absolute;
+    top: 50%;
+    right: 0.2rem;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    opacity: 0.5;
+    transform: translateY(-50%);
+    transition: opacity 0.2s ease;
+}
+
+@media (hover: hover) {
+    .btn-olho-senha:hover { opacity: 1; }
+}
+
+.btn-olho-senha svg {
+    display: block;
+    width: 14px;
+    height: 14px;
+    fill: var(--tinta-suave);
+}
+
+.btn-olho-senha .icone-olho-aberto { display: none; }
+.btn-olho-senha.mostrando .icone-olho-aberto { display: block; }
+.btn-olho-senha.mostrando .icone-olho-fechado { display: none; }
 
 #container-saiba-mais {
     padding: 1rem 1.1rem 1.15rem;

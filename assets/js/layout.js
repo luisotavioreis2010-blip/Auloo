@@ -1,5 +1,5 @@
 /* ==============================================
-   LAYOUT.JS — v4 (Original com Lógica de Tela)
+   LAYOUT.JS — v5 (Funções Puras com Lógica de Tela)
    ============================================== */
 (function () {
     'use strict';
@@ -125,7 +125,7 @@
     }
 
     /* ==============================================
-       LÓGICA DE TELA (O Segredo do Layout Original)
+       LÓGICA DE TELA (data-layout="row")
        ============================================== */
     function sincronizarTela() {
         const raiz = document.documentElement;
