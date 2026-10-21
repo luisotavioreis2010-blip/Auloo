@@ -1,9 +1,6 @@
 ﻿@charset "UTF-8";
 /* ==============================================
-   ESTANTE.CSS — v11
-   Rodapé (selo + volume) rola junto com o conteúdo
-   quando o menu excede a altura da sidebar, mas fica
-   no FUNDO visual quando sobra espaço (margin-top: auto).
+   ESTANTE.CSS — v12
    ============================================== */
 
 /* ==============================================
@@ -195,11 +192,13 @@ input, textarea, .ficha-email {
     .perfil-usuario:hover { box-shadow: 0 0 0 3px var(--dourado-fraco); }
 }
 
+/* A CLASSE QUE ENCAIXA A FOTO PERFEITAMENTE */
 .foto-perfil {
     display: block;
     width: 100%;
     height: 100%;
     object-fit: cover;
+    border-radius: 50%;
 }
 
 .avatar-iniciais {
@@ -269,10 +268,6 @@ input, textarea, .ficha-email {
     box-shadow: 4px 0 30px rgba(61, 15, 15, 0.35);
 }
 
-/* Área de scroll — TUDO que está dentro rola junto.
-   align-content: flex-start empilha os filhos no TOPO (não estica).
-   O rodapé usa margin-top: auto para "cair" no fundo quando
-   sobra espaço, e rolar junto quando o menu é maior que a sidebar. */
 .sidebar-secao {
     flex: 1 1 auto;
     min-height: 0;
@@ -289,7 +284,6 @@ input, textarea, .ficha-email {
 
 .sidebar-secao::-webkit-scrollbar { display: none; }
 
-/* Ornamento ❦ — primeiro "filho" do scroll */
 .sidebar-secao::before {
     content: '\2766';
     display: block;
@@ -364,6 +358,12 @@ input, textarea, .ficha-email {
     }
 }
 
+.sidebar-link.ativo {
+    color: var(--dourado);
+    background: rgba(184, 137, 74, 0.12);
+    border-left-color: var(--dourado);
+}
+
 .sidebar-icone {
     display: inline-flex;
     align-items: center;
@@ -406,9 +406,7 @@ input, textarea, .ficha-email {
     white-space: nowrap;
 }
 
-/* RODAPÉ — rola junto quando o menu excede a sidebar,
-   mas "cai" para o fundo visual quando sobra espaço
-   (graças ao margin-top: auto no .sidebar-selo). */
+/* RODAPÉ — rola junto quando o menu excede a sidebar */
 .sidebar-selo,
 .sidebar-volume {
     width: 100%;
@@ -424,7 +422,7 @@ input, textarea, .ficha-email {
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    margin-top: auto;              /* ← empurra para o fundo se houver espaço */
+    margin-top: auto;
     padding-top: 1.2rem;
     padding-bottom: 0.6rem;
     white-space: nowrap;
@@ -649,7 +647,12 @@ input, textarea, .ficha-email {
     border-radius: 50%;
 }
 
-.ficha-foto img { width: 100%; height: 100%; object-fit: cover; }
+.ficha-foto img { 
+    width: 100%; 
+    height: 100%; 
+    object-fit: cover; 
+    border-radius: 50%;
+}
 
 .ficha-info {
     display: flex;
@@ -819,48 +822,6 @@ input, textarea, .ficha-email {
 }
 
 .btn-container:disabled { opacity: 0.6; cursor: wait; }
-
-.wrapper-olho-senha {
-    position: relative;
-    width: 100%;
-    margin-bottom: 0.4rem;
-}
-
-.wrapper-olho-senha input { margin-bottom: 0; padding-right: 2.2rem; }
-
-.btn-olho-senha {
-    position: absolute;
-    top: 50%;
-    right: 0.2rem;
-    z-index: 5;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 24px;
-    height: 24px;
-    padding: 0;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    opacity: 0.5;
-    transform: translateY(-50%);
-    transition: opacity 0.2s ease;
-}
-
-@media (hover: hover) {
-    .btn-olho-senha:hover { opacity: 1; }
-}
-
-.btn-olho-senha svg {
-    display: block;
-    width: 14px;
-    height: 14px;
-    fill: var(--tinta-suave);
-}
-
-.btn-olho-senha .icone-olho-aberto { display: none; }
-.btn-olho-senha.mostrando .icone-olho-aberto { display: block; }
-.btn-olho-senha.mostrando .icone-olho-fechado { display: none; }
 
 #container-saiba-mais {
     padding: 1rem 1.1rem 1.15rem;
@@ -1146,7 +1107,7 @@ input, textarea, .ficha-email {
 .calendario-dias span.dia-outro-mes { opacity: 0.25; }
 
 /* ==============================================
-   8. DESKTOP (≥ 1367px)
+   8. DESKTOP (>= 1367px)
    ============================================== */
 @media (min-width: 1367px) {
     :root {
@@ -1211,7 +1172,7 @@ input, textarea, .ficha-email {
 }
 
 /* ==============================================
-   9. COMPACTO (≤ 1366px) — mobile: gaveta
+   9. COMPACTO (<= 1366px) — mobile: gaveta
    ============================================== */
 @media (max-width: 1366px) {
     html, body {

@@ -1,5 +1,5 @@
 /* ==============================================
-   LAYOUT.JS — v5 (Completo e Auto-Injetável)
+   LAYOUT.JS — v7 (Código Limpo e Síncrono)
    ============================================== */
 (function () {
     'use strict';
@@ -16,8 +16,6 @@
     const BUCKET_AVATARES = 'avatars';
     const TAMANHO_MAX_FOTO = 5 * 1024 * 1024;
     const EXTENSOES_FOTO = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/gif': 'gif', 'image/webp': 'webp' };
-
-    const IDS_CONTAINERS = ['container-editar-nome', 'container-editar-senha', 'container-criar-senha', 'container-saiba-mais'];
 
     const MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
     const DIAS_SEMANA = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
@@ -47,12 +45,11 @@
     }
 
     /* ==============================================
-       1. INJEÇÃO DE INTERFACE (Navbar e Sidebars)
+       1. INJEÇÃO DE INTERFACE
        ============================================== */
     function injetarInterface() {
         const pagina = getPaginaAtual();
         
-        // 1. Injetar Navbar
         const navbarHTML = `
             <header class="navbar">
                 <div class="navbar-left">
@@ -73,7 +70,6 @@
         `;
         document.body.insertAdjacentHTML('afterbegin', navbarHTML);
 
-        // 2. Injetar Sidebar Esquerda
         const sidebarHTML = `
             <aside class="sidebar" id="sidebar" aria-label="Sumário">
                 <div class="sidebar-secao">
@@ -100,7 +96,6 @@
         `;
         document.body.insertAdjacentHTML('beforeend', sidebarHTML);
 
-        // 3. Injetar Ficha do Aluno (Sidebar Direita)
         const fichaHTML = `
             <aside class="sidebar-direita" id="sidebar-perfil" aria-label="Ficha do Aluno">
                 <div class="ficha-header">
@@ -202,7 +197,7 @@
     }
 
     /* ==============================================
-       3. LÓGICA DO PERFIL E UPLOAD
+       3. LÓGICA DO PERFIL (Limpa e Síncrona)
        ============================================== */
     function criarIniciais(nome) {
         const partes = (nome || 'Usuário').trim().split(/\s+/);
@@ -215,15 +210,26 @@
 
     function renderizarAvatar(container, avatarUrl, nome) {
         if (!container) return;
+        
+        // Limpa qualquer elemento anterior (seja texto ou img)
         container.textContent = '';
-        if (!avatarUrl || avatarUrl === 'null') { container.appendChild(criarIniciais(nome)); return; }
+        
+        if (!avatarUrl || avatarUrl === 'null' || avatarUrl === 'undefined') { 
+            container.appendChild(criarIniciais(nome)); 
+            return; 
+        }
         
         const img = document.createElement('img');
         img.className = 'foto-perfil'; 
         img.alt = 'Foto de perfil'; 
-        img.decoding = 'async'; 
         img.referrerPolicy = 'no-referrer';
-        img.onerror = () => { if (!img.parentNode) return; img.remove(); container.appendChild(criarIniciais(nome)); };
+        
+        // Fallback de segurança para as iniciais se a imagem quebrar
+        img.onerror = () => { 
+            container.textContent = '';
+            container.appendChild(criarIniciais(nome)); 
+        };
+        
         img.src = avatarUrl; 
         container.appendChild(img);
     }
@@ -237,9 +243,27 @@
         if (email) email.textContent = perfil.email;
     }
 
+    async function buscarPerfilNoBanco(usuarioId) {
+        const db = getDb();
+        if (!db) return;
+        
+        // Busca a foto mais atualizada na tabela 'profiles'
+        const { data, error } = await db
+            .from('profiles')
+            .select('full_name, avatar_url')
+            .eq('id', usuarioId)
+            .maybeSingle();
+
+        if (!error && data) {
+            if (data.full_name) perfil.nome = data.full_name;
+            if (data.avatar_url) perfil.avatarUrl = data.avatar_url;
+            renderizarPerfil(); // Atualiza a tela assim que os dados chegam do banco
+        }
+    }
+
     async function enviarFoto(arquivo) {
         const extensao = EXTENSOES_FOTO[arquivo.type];
-        if (!extensao) return alert('Formato não suportado! Use JPG, PNG, GIF ou WebP.');
+        if (!extensao) return alert('Formato não suportado!');
         if (arquivo.size > TAMANHO_MAX_FOTO) return alert('Imagem muito grande! Máximo 5MB.');
 
         const db = getDb();
@@ -251,26 +275,24 @@
         const usuarioId = perfil.usuario.id;
         const caminho = usuarioId + '/avatar_' + usuarioId + '_' + Date.now() + '.' + extensao;
 
-        // Upload para o Storage
         const { error: uploadError } = await db.storage
             .from(BUCKET_AVATARES)
             .upload(caminho, arquivo, { cacheControl: '3600', contentType: arquivo.type });
 
         if (uploadError) {
             console.error(uploadError);
-            alert('Erro ao enviar imagem. Verifique se o bucket "avatars" existe no Supabase.');
+            alert('Erro ao enviar imagem.');
             if (btn) btn.disabled = false;
             return;
         }
 
-        // Pega a URL pública
         const urlPublica = db.storage.from(BUCKET_AVATARES).getPublicUrl(caminho).data.publicUrl;
 
-        // Atualiza os metadados do Auth e a tabela de profiles
+        // Salva a URL no banco de dados e no Auth do usuário
         await db.auth.updateUser({ data: { avatar_url: urlPublica } });
         await db.from('profiles').upsert({ id: usuarioId, avatar_url: urlPublica, updated_at: new Date().toISOString() });
 
-        // Atualiza na tela na hora
+        // Atualiza o objeto local e redesenha na tela
         perfil.avatarUrl = urlPublica;
         renderizarPerfil();
         
@@ -330,14 +352,19 @@
         perfil.usuario = session.user;
         perfil.email = session.user.email || '';
         const meta = session.user.user_metadata || {};
+        
         perfil.nome = meta.full_name || meta.name || perfil.email.split('@')[0];
         perfil.avatarUrl = meta.avatar_url || meta.picture || null;
-
+        
+        // 1. Desenha o que veio do Auth (se tiver foto lá, já aparece)
         renderizarPerfil();
+
+        // 2. Vai no banco e busca a versão mais atualizada
+        await buscarPerfilNoBanco(perfil.usuario.id);
     }
 
     /* ==============================================
-       5. EVENTOS DO LAYOUT (Abrir/fechar menus)
+       5. EVENTOS DO LAYOUT
        ============================================== */
     function setupLayout() {
         const sidebar = $('sidebar');
@@ -369,14 +396,11 @@
         });
     }
 
-    /* ==============================================
-       INICIALIZAÇÃO
-       ============================================== */
     function iniciar() {
         injetarInterface();
         setupCalendario();
         setupLayout();
-        setupUploadFoto(); // Ativa o botão de Mudar Foto
+        setupUploadFoto();
         iniciarSessao();
     }
 
