@@ -1,5 +1,5 @@
 /* ==============================================
-   LAYOUT.JS — v11 (Restauração do Layout Original)
+   LAYOUT.JS — v12 (Completo e Funcional)
    ============================================== */
 (function () {
     'use strict';
