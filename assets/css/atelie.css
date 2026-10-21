@@ -1,7 +1,6 @@
 @charset "UTF-8";
 /* ==============================================
-   ATELIE.CSS — v15
-   Corrige: Glitch no tablet, centralização fluida
+   ATELIE.CSS — v16 (Sidebar Fixa no Desktop)
    ============================================== */
 
 /* ==============================================
@@ -16,7 +15,8 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    transition: padding-right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: margin-right 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                padding-right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ==============================================
@@ -31,7 +31,6 @@
     box-shadow: 0 15px 40px rgba(26, 22, 20, 0.08);
     overflow: hidden;
     animation: cardEntrar 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
-    /* Transição suave para quando move no desktop */
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -52,9 +51,7 @@
     border-bottom: 2px solid var(--dourado);
     cursor: grab;
 }
-
 .atelie-capa-wrapper:active { cursor: grabbing; }
-
 .atelie-capa-img {
     width: 100%;
     height: 100%;
@@ -63,7 +60,6 @@
     transition: transform 0.1s;
     pointer-events: none;
 }
-
 .atelie-capa-wrapper::after {
     content: '';
     position: absolute;
@@ -83,7 +79,6 @@
     padding: 0 2rem 2rem;
     position: relative;
 }
-
 .atelie-avatar {
     width: 100px;
     height: 100px;
@@ -99,16 +94,8 @@
     flex-shrink: 0;
     z-index: 2;
 }
-
-.atelie-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 50%;
-}
-
+.atelie-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
 .atelie-info { flex: 1; margin-top: 0.5rem; }
-
 .atelie-nome {
     font-family: var(--fonte-titulo);
     font-size: 2rem;
@@ -117,7 +104,6 @@
     margin-bottom: 0.1rem;
     line-height: 1.2;
 }
-
 .atelie-handle {
     font-family: var(--fonte-corpo);
     font-size: 0.8rem;
@@ -126,14 +112,12 @@
     display: block;
     margin-bottom: 0.8rem;
 }
-
 .atelie-bio {
     font-family: var(--fonte-display);
     font-size: 1.1rem;
     line-height: 1.4;
     color: var(--tinta-suave);
 }
-
 .atelie-acoes { margin-top: 0.8rem; }
 
 /* Botões Padrão */
@@ -168,19 +152,8 @@
     box-shadow: 0 10px 30px rgba(26, 22, 20, 0.03);
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.atelie-vazio h2 {
-    font-family: var(--fonte-titulo);
-    font-style: italic;
-    color: var(--vinho);
-    font-size: 1.8rem;
-    margin-bottom: 1rem;
-}
-.atelie-vazio p {
-    font-family: var(--fonte-display);
-    font-size: 1.1rem;
-    color: var(--tinta-suave);
-    margin-bottom: 1.5rem;
-}
+.atelie-vazio h2 { font-family: var(--fonte-titulo); font-style: italic; color: var(--vinho); font-size: 1.8rem; margin-bottom: 1rem; }
+.atelie-vazio p { font-family: var(--fonte-display); font-size: 1.1rem; color: var(--tinta-suave); margin-bottom: 1.5rem; }
 
 /* ==============================================
    6. GAVETA LATERAL (Configurações)
@@ -198,8 +171,7 @@
     box-shadow: -20px 0 40px rgba(26, 22, 20, 0.15);
     transform: translateX(100%);
     visibility: hidden;
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-                visibility 0s linear 0.4s;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s linear 0.4s;
     display: flex;
     flex-direction: column;
     overflow-y: auto;
@@ -207,15 +179,9 @@
     scrollbar-width: thin;
     scrollbar-color: var(--dourado-fraco) transparent;
 }
-
 .atelie-gaveta::-webkit-scrollbar { width: 6px; }
-.atelie-gaveta::-webkit-scrollbar-thumb {
-    background: var(--dourado-fraco);
-    border-radius: 3px;
-}
-.atelie-gaveta::-webkit-scrollbar-thumb:hover {
-    background: var(--dourado);
-}
+.atelie-gaveta::-webkit-scrollbar-thumb { background: var(--dourado-fraco); border-radius: 3px; }
+.atelie-gaveta::-webkit-scrollbar-thumb:hover { background: var(--dourado); }
 
 .atelie-gaveta.ativa {
     transform: translateX(0);
@@ -226,9 +192,7 @@
 .gaveta-overlay-config {
     position: fixed;
     top: var(--navbar-h, 68px);
-    left: 0;
-    right: 0;
-    bottom: 0;
+    left: 0; right: 0; bottom: 0;
     background: rgba(26, 22, 20, 0.55);
     -webkit-backdrop-filter: blur(2px);
     backdrop-filter: blur(2px);
@@ -237,10 +201,9 @@
     pointer-events: none;
     transition: opacity 0.3s ease;
 }
-
 .gaveta-overlay-config.ativa { opacity: 1; pointer-events: auto; }
 
-/* Cabeçalho */
+/* Cabeçalho da Gaveta */
 .atelie-gaveta-header {
     position: sticky;
     top: 0;
@@ -253,305 +216,116 @@
     background: var(--papel-claro);
     border-bottom: 1px solid var(--papel-sombra);
 }
-
 .atelie-gaveta-header::after {
     content: '';
     position: absolute;
-    left: 1.75rem;
-    right: 1.75rem;
-    bottom: -1px;
+    left: 1.75rem; right: 1.75rem; bottom: -1px;
     height: 1px;
     background: linear-gradient(90deg, transparent, var(--dourado), transparent);
     opacity: 0.6;
 }
-
 .atelie-gaveta-header h2 {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-family: var(--fonte-titulo);
-    font-size: 1.45rem;
-    font-style: italic;
-    color: var(--vinho);
-    margin: 0;
-    line-height: 1.15;
+    display: flex; align-items: center; gap: 0.5rem;
+    font-family: var(--fonte-titulo); font-size: 1.45rem;
+    font-style: italic; color: var(--vinho); margin: 0; line-height: 1.15;
 }
-
 .atelie-gaveta-header h2::before {
-    content: '❦';
-    font-family: var(--fonte-display);
-    font-size: 1rem;
-    color: var(--dourado);
-    font-style: normal;
-    line-height: 1;
+    content: '❦'; font-family: var(--fonte-display);
+    font-size: 1rem; color: var(--dourado); font-style: normal; line-height: 1;
 }
-
 .atelie-gaveta-fechar {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 34px;
-    height: 34px;
-    padding: 0;
-    font-size: 1rem;
-    color: var(--tinta-suave);
-    background: transparent;
-    border: 1px solid transparent;
-    border-radius: 50%;
-    cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 34px; height: 34px; padding: 0; font-size: 1rem;
+    color: var(--tinta-suave); background: transparent;
+    border: 1px solid transparent; border-radius: 50%; cursor: pointer;
     transition: color 0.25s, background 0.25s, border-color 0.25s;
 }
+.atelie-gaveta-fechar:hover { color: var(--vinho); background: var(--dourado-fraco); border-color: var(--dourado-fraco); }
 
-.atelie-gaveta-fechar:hover {
-    color: var(--vinho);
-    background: var(--dourado-fraco);
-    border-color: var(--dourado-fraco);
-}
-
-/* Corpo da gaveta */
+/* Corpo da Gaveta */
 .atelie-gaveta-corpo {
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
+    display: flex; flex-direction: column; gap: 1.25rem;
     padding: 1.5rem 1.75rem 2.5rem;
 }
 
 /* ==============================================
-   7. FORMULÁRIOS (com espaçamento corrigido)
+   7. FORMULÁRIOS
    ============================================== */
-.atelie-gaveta-corpo .campo { 
-    margin-bottom: 0.5rem;
-}
-
+.atelie-gaveta-corpo .campo { margin-bottom: 0.5rem; }
 .atelie-gaveta-corpo .campo label {
-    display: block;
-    font-family: var(--fonte-corpo);
-    font-size: 0.68rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1.2px;
-    color: var(--tinta-suave);
-    margin-bottom: 0.5rem;
+    display: block; font-family: var(--fonte-corpo); font-size: 0.68rem;
+    font-weight: 600; text-transform: uppercase; letter-spacing: 1.2px;
+    color: var(--tinta-suave); margin-bottom: 0.5rem;
 }
-
 .atelie-gaveta-corpo .campo input,
 .atelie-gaveta-corpo .campo textarea {
-    width: 100%;
-    padding: 0.75rem 0.9rem;
-    background: #fff;
-    border: 1px solid rgba(184, 137, 74, 0.35);
-    border-radius: 3px;
-    font-family: var(--fonte-display);
-    font-size: 1rem;
-    color: var(--tinta);
-    outline: none;
-    transition: border-color 0.25s, box-shadow 0.25s, background 0.25s;
+    width: 100%; padding: 0.75rem 0.9rem; background: #fff;
+    border: 1px solid rgba(184, 137, 74, 0.35); border-radius: 3px;
+    font-family: var(--fonte-display); font-size: 1rem; color: var(--tinta);
+    outline: none; transition: border-color 0.25s, box-shadow 0.25s, background 0.25s;
 }
-
 .atelie-gaveta-corpo .campo input:hover,
-.atelie-gaveta-corpo .campo textarea:hover {
-    border-color: rgba(184, 137, 74, 0.6);
-}
-
+.atelie-gaveta-corpo .campo textarea:hover { border-color: rgba(184, 137, 74, 0.6); }
 .atelie-gaveta-corpo .campo input:focus,
 .atelie-gaveta-corpo .campo textarea:focus {
-    border-color: var(--vinho);
-    box-shadow: 0 0 0 3px rgba(92, 26, 26, 0.08);
-    background: #fff;
+    border-color: var(--vinho); box-shadow: 0 0 0 3px rgba(92, 26, 26, 0.08); background: #fff;
 }
+.atelie-gaveta-corpo .campo textarea { resize: vertical; min-height: 84px; line-height: 1.5; }
 
-.atelie-gaveta-corpo .campo textarea {
-    resize: vertical;
-    min-height: 84px;
-    line-height: 1.5;
-}
-
-/* Campos de upload */
+/* Uploads e Preview */
 .campo-upload {
-    padding: 1.1rem 1rem;
-    background: rgba(184, 137, 74, 0.06);
-    border: 1px dashed rgba(184, 137, 74, 0.4);
-    border-radius: 4px;
-    margin-bottom: 0.5rem;
+    padding: 1.1rem 1rem; background: rgba(184, 137, 74, 0.06);
+    border: 1px dashed rgba(184, 137, 74, 0.4); border-radius: 4px; margin-bottom: 0.5rem;
 }
-
-.campo-upload label {
-    display: block;
-    font-family: var(--fonte-corpo);
-    font-size: 0.68rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1.3px;
-    color: var(--vinho);
-    margin-bottom: 0.7rem;
-}
-
-.campo-upload small {
-    display: block;
-    margin-bottom: 0.75rem;
-    font-family: var(--fonte-display);
-    font-size: 0.85rem;
-    font-style: italic;
-    color: var(--tinta-clara);
-    line-height: 1.4;
-}
-
-/* Preview da capa */
+.campo-upload label { display: block; font-family: var(--fonte-corpo); font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.3px; color: var(--vinho); margin-bottom: 0.7rem; }
+.campo-upload small { display: block; margin-bottom: 0.75rem; font-family: var(--fonte-display); font-size: 0.85rem; font-style: italic; color: var(--tinta-clara); line-height: 1.4; }
 .capa-preview-container {
-    position: relative;
-    width: 100%;
-    height: 170px;
-    margin-bottom: 0.75rem;
-    background: var(--papel-escuro);
-    border: 1px solid var(--dourado);
-    border-radius: 4px;
-    overflow: hidden;
-    cursor: grab;
-    touch-action: none;
-    box-shadow: inset 0 0 0 3px var(--papel-claro),
-                inset 0 0 0 4px rgba(184, 137, 74, 0.4);
+    position: relative; width: 100%; height: 170px; margin-bottom: 0.75rem;
+    background: var(--papel-escuro); border: 1px solid var(--dourado);
+    border-radius: 4px; overflow: hidden; cursor: grab; touch-action: none;
+    box-shadow: inset 0 0 0 3px var(--papel-claro), inset 0 0 0 4px rgba(184, 137, 74, 0.4);
 }
-
 .capa-preview-container:active { cursor: grabbing; }
-
 .capa-preview-container::after {
-    content: '✥ arraste e use a roda/pinça para ajustar';
-    position: absolute;
-    bottom: 0.4rem;
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 0.25rem 0.6rem;
-    font-family: var(--fonte-corpo);
-    font-size: 0.6rem;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: var(--papel-claro);
-    background: rgba(26, 22, 20, 0.55);
-    border-radius: 20px;
-    pointer-events: none;
-    white-space: nowrap;
-    opacity: 0;
-    transition: opacity 0.3s;
+    content: '✥ arraste e use a roda/pinça para ajustar'; position: absolute; bottom: 0.4rem; left: 50%;
+    transform: translateX(-50%); padding: 0.25rem 0.6rem; font-family: var(--fonte-corpo); font-size: 0.6rem;
+    letter-spacing: 1px; text-transform: uppercase; color: var(--papel-claro);
+    background: rgba(26, 22, 20, 0.55); border-radius: 20px; pointer-events: none; white-space: nowrap; opacity: 0; transition: opacity 0.3s;
 }
-
 .capa-preview-container:hover::after { opacity: 1; }
-
-.capa-preview-arrastavel {
-    width: 100%;
-    height: 100%;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    transform-origin: center center;
-    transition: transform 0.08s linear;
-}
-
-.campo-upload .btn-container {
-    width: 100%;
-    margin-top: 0;
-}
-
-.atelie-gaveta-corpo .btn-primario {
-    margin-top: 0.5rem;
-    padding: 0.85rem 1.5rem;
-    font-size: 0.72rem;
-    letter-spacing: 1.5px;
-}
-
-/* ==============================================
-   CENTRALIZAÇÃO DO CARD QUANDO A GAVETA ABRE
-   ============================================== */
-
-/* REGRA GERAL: Aplica apenas em telas GRANDES (Desktop).
-   No tablet e celular o card NÃO se move, a gaveta cobre ele. */
-@media (min-width: 1367px) {
-    body.atelie-gaveta-aberta .atelie-main {
-        padding-right: 460px; /* Reserva espaço na direita */
-    }
-    body.atelie-gaveta-aberta .atelie-conteudo,
-    body.atelie-gaveta-aberta .atelie-vazio {
-        transform: translateX(-230px); /* Desloca metade da gaveta para a esquerda */
-    }
-}
+.capa-preview-arrastavel { width: 100%; height: 100%; background-size: cover; background-position: center; background-repeat: no-repeat; transform-origin: center center; transition: transform 0.08s linear; }
+.campo-upload .btn-container { width: 100%; margin-top: 0; }
+.atelie-gaveta-corpo .btn-primario { margin-top: 0.5rem; padding: 0.85rem 1.5rem; font-size: 0.72rem; letter-spacing: 1.5px; }
 
 /* ==============================================
    8. MODAL DE CRIAÇÃO
    ============================================== */
 .modal-overlay {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(26, 22, 20, 0.8);
-    z-index: 999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 1rem;
-    backdrop-filter: blur(4px);
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(26, 22, 20, 0.8); z-index: 999; display: flex;
+    align-items: center; justify-content: center; padding: 1rem; backdrop-filter: blur(4px);
 }
-
 .modal-conteudo {
-    background: var(--papel-claro);
-    border: 1px solid var(--dourado);
-    border-top: 4px solid var(--vinho);
-    width: 100%;
-    max-width: 500px;
-    padding: 2.5rem;
-    border-radius: 4px;
-    max-height: 90vh;
-    overflow-y: auto;
+    background: var(--papel-claro); border: 1px solid var(--dourado); border-top: 4px solid var(--vinho);
+    width: 100%; max-width: 500px; padding: 2.5rem; border-radius: 4px; max-height: 90vh; overflow-y: auto;
 }
-
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-}
-
-.modal-header h2 {
-    font-family: var(--fonte-titulo);
-    font-size: 1.8rem;
-    font-style: italic;
-    color: var(--vinho);
-    margin: 0;
-}
-
-.modal-fechar {
-    background: transparent;
-    border: none;
-    font-size: 1.2rem;
-    cursor: pointer;
-}
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+.modal-header h2 { font-family: var(--fonte-titulo); font-size: 1.8rem; font-style: italic; color: var(--vinho); margin: 0; }
+.modal-fechar { background: transparent; border: none; font-size: 1.2rem; cursor: pointer; }
 
 /* ==============================================
    9. RESPONSIVIDADE (Mobile e Tablet)
    ============================================== */
 @media (max-width: 1366px) {
-    .atelie-main { 
-        margin-left: 0; 
-        padding: 2rem 1rem; 
-    }
-    
-    /* Força o card a ignorar qualquer transformação quando a gaveta abre */
+    .atelie-main { margin-left: 0; padding: 2rem 1rem; }
     body.atelie-gaveta-aberta .atelie-conteudo,
-    body.atelie-gaveta-aberta .atelie-vazio { 
-        transform: none !important; 
-    }
+    body.atelie-gaveta-aberta .atelie-vazio { transform: none !important; }
 }
 
 @media (max-width: 768px) {
-    .atelie-main {
-        padding: 1.5rem 1rem;
-        justify-content: flex-start;
-    }
+    .atelie-main { padding: 1.5rem 1rem; justify-content: flex-start; }
     .atelie-capa-wrapper { height: 160px; }
-    .atelie-header {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        padding: 0 1.2rem 1.5rem;
-        gap: 0.5rem;
-    }
+    .atelie-header { flex-direction: column; align-items: center; text-align: center; padding: 0 1.2rem 1.5rem; gap: 0.5rem; }
     .atelie-avatar { margin-top: -50px; margin-bottom: 0.5rem; }
     .atelie-info { margin-top: 0; }
     .atelie-nome { font-size: 1.8rem; }
@@ -559,11 +333,7 @@
     .atelie-acoes { margin-top: 0.8rem; width: 100%; display: flex; justify-content: center; }
     .btn-primario { width: 100%; max-width: 300px; }
 
-    .atelie-gaveta {
-        top: var(--navbar-h, 56px);
-        max-width: 100%;
-        border-left: none;
-    }
+    .atelie-gaveta { top: var(--navbar-h, 56px); max-width: 100%; border-left: none; }
     .atelie-gaveta-header { padding: 1.25rem 1.25rem 0.9rem; }
     .atelie-gaveta-header::after { left: 1.25rem; right: 1.25rem; }
     .atelie-gaveta-header h2 { font-size: 1.25rem; }
@@ -579,13 +349,7 @@
     .atelie-main { padding: 0.5rem; justify-content: center; }
     .atelie-conteudo { max-width: 420px; }
     .atelie-capa-wrapper { height: 100px; }
-    .atelie-header {
-        flex-direction: row;
-        align-items: flex-start;
-        text-align: left;
-        padding: 0 1rem 1rem;
-        gap: 0.8rem;
-    }
+    .atelie-header { flex-direction: row; align-items: flex-start; text-align: left; padding: 0 1rem 1rem; gap: 0.8rem; }
     .atelie-avatar { margin-top: -35px; width: 70px; height: 70px; }
     .atelie-info { margin-top: 0.2rem; }
     .atelie-nome { font-size: 1.4rem; }
@@ -594,14 +358,39 @@
     .atelie-acoes { margin-top: 0.5rem; }
     .btn-primario { padding: 0.4rem 1rem; font-size: 0.6rem; width: auto; }
 
-    /* Gaveta compacta */
     .atelie-gaveta { max-width: 420px; }
     .atelie-gaveta-header { padding: 0.75rem 1rem 0.6rem; }
     .atelie-gaveta-header h2 { font-size: 1.1rem; }
     .atelie-gaveta-corpo { padding: 0.9rem 1rem 1.5rem; gap: 0.85rem; }
     .atelie-gaveta-corpo .campo { margin-bottom: 0.2rem; }
-    .atelie-gaveta-corpo .campo input, 
-    .atelie-gaveta-corpo .campo textarea { padding: 0.5rem; font-size: 0.9rem; }
+    .atelie-gaveta-corpo .campo input, .atelie-gaveta-corpo .campo textarea { padding: 0.5rem; font-size: 0.9rem; }
     .capa-preview-container { display: block !important; height: 90px; }
     .campo-upload { padding: 0.7rem; margin-bottom: 0.2rem; }
+}
+
+/* ==============================================
+   10. DESKTOP GRANDE (Inspector Fixo)
+   ============================================== */
+@media (min-width: 1367px) {
+    /* 1. Abre o espaço para a barra na direita permanentemente */
+    .atelie-main {
+        margin-right: 460px; 
+        padding-right: 0;
+    }
+
+    /* 2. Força a gaveta a ficar sempre visível */
+    .atelie-gaveta {
+        transform: translateX(0) !important;
+        visibility: visible !important;
+        box-shadow: -4px 0 20px rgba(26, 22, 20, 0.05); /* Sombra mais suave */
+    }
+
+    /* 3. Esconde o overlay escuro (não precisa já que não é modal) */
+    .gaveta-overlay-config { display: none !important; }
+
+    /* 4. Esconde o "X" de fechar da gaveta (já que não fecha) */
+    .atelie-gaveta-fechar { display: none !important; }
+
+    /* 5. Esconde o botão "Configurar Ateliê" do card (já que já está aberto) */
+    #btn-configurar-atelie { display: none !important; }
 }
