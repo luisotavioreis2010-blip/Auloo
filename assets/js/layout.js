@@ -1,5 +1,5 @@
 /* ==============================================
-   LAYOUT.JS — v5 (Funções Puras com Lógica de Tela)
+   LAYOUT.JS — v14 (Funções Puras com Lógica de Tela)
    ============================================== */
 (function () {
     'use strict';
