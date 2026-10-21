@@ -1,5 +1,5 @@
 /* ==============================================
-   LAYOUT.JS — v4 (Auto-Injeção de Navbar/Sidebar)
+   LAYOUT.JS — v5 (Completo e Auto-Injetável)
    ============================================== */
 (function () {
     'use strict';
@@ -17,32 +17,38 @@
     const TAMANHO_MAX_FOTO = 5 * 1024 * 1024;
     const EXTENSOES_FOTO = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/gif': 'gif', 'image/webp': 'webp' };
 
-    const MENSAGEM_MS = 3000;
-    const MENSAGEM_SAIDA_MS = 500;
-
     const IDS_CONTAINERS = ['container-editar-nome', 'container-editar-senha', 'container-criar-senha', 'container-saiba-mais'];
-    const CAMPOS_SENHA = { 'container-editar-senha': ['input-senha-atual', 'input-senha-nova'], 'container-criar-senha': ['input-nova-senha-criar', 'input-confirmar-senha-criar'] };
 
     const MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
     const DIAS_SEMANA = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
 
     const perfil = { usuario: null, nome: 'Usuário', email: '', avatarUrl: null };
-    let perfilCarregadoId = null;
-    let perfilCarregandoId = null;
     let saindo = false;
-    let temporizadorMensagem = null;
 
     const $ = (id) => document.getElementById(id);
     const esperar = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-    function getDb() { return window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null); }
-    
+    function getDb() {
+        return window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
+    }
+
+    async function aguardarDb() {
+        for (let i = 0; i < SUPABASE_TENTATIVAS; i++) {
+            const db = getDb();
+            if (db) return db;
+            await esperar(SUPABASE_INTERVALO_MS);
+        }
+        return null;
+    }
+
     function getPaginaAtual() {
         const path = window.location.pathname;
         return path.substring(path.lastIndexOf('/') + 1) || 'estante.html';
     }
 
-    // --- INJEÇÃO DE HTML (O Segredo para a Sidebar ser igual em todos os lugares) ---
+    /* ==============================================
+       1. INJEÇÃO DE INTERFACE (Navbar e Sidebars)
+       ============================================== */
     function injetarInterface() {
         const pagina = getPaginaAtual();
         
@@ -137,7 +143,9 @@
         document.body.insertAdjacentHTML('beforeend', fichaHTML);
     }
 
-    // --- LÓGICA DO CALENDÁRIO ---
+    /* ==============================================
+       2. LÓGICA DO CALENDÁRIO
+       ============================================== */
     function setupCalendario() {
         const titulo = $('calendario-titulo');
         const subtitulo = $('calendario-subtitulo');
@@ -193,8 +201,10 @@
         desenhar();
     }
 
-    // --- LÓGICA DO PERFIL E SESSÃO ---
-    function criarIniciais(nome) { /* ... (mantém a mesma função de antes) ... */ 
+    /* ==============================================
+       3. LÓGICA DO PERFIL E UPLOAD
+       ============================================== */
+    function criarIniciais(nome) {
         const partes = (nome || 'Usuário').trim().split(/\s+/);
         const inicial = (texto) => (Array.from(texto)[0] || '').toUpperCase();
         const span = document.createElement('span');
@@ -207,20 +217,85 @@
         if (!container) return;
         container.textContent = '';
         if (!avatarUrl || avatarUrl === 'null') { container.appendChild(criarIniciais(nome)); return; }
+        
         const img = document.createElement('img');
-        img.className = 'foto-perfil'; img.alt = 'Foto de perfil'; img.decoding = 'async'; img.referrerPolicy = 'no-referrer';
+        img.className = 'foto-perfil'; 
+        img.alt = 'Foto de perfil'; 
+        img.decoding = 'async'; 
+        img.referrerPolicy = 'no-referrer';
         img.onerror = () => { if (!img.parentNode) return; img.remove(); container.appendChild(criarIniciais(nome)); };
-        img.src = avatarUrl; container.appendChild(img);
+        img.src = avatarUrl; 
+        container.appendChild(img);
     }
 
     function renderizarPerfil() {
         renderizarAvatar($('perfil-usuario'), perfil.avatarUrl, perfil.nome);
         renderizarAvatar($('sidebar-perfil-foto'), perfil.avatarUrl, perfil.nome);
-        const nome = $('sidebar-perfil-nome'); const email = $('sidebar-perfil-email');
-        if (nome) nome.textContent = perfil.nome; if (email) email.textContent = perfil.email;
+        const nome = $('sidebar-perfil-nome'); 
+        const email = $('sidebar-perfil-email');
+        if (nome) nome.textContent = perfil.nome; 
+        if (email) email.textContent = perfil.email;
     }
 
+    async function enviarFoto(arquivo) {
+        const extensao = EXTENSOES_FOTO[arquivo.type];
+        if (!extensao) return alert('Formato não suportado! Use JPG, PNG, GIF ou WebP.');
+        if (arquivo.size > TAMANHO_MAX_FOTO) return alert('Imagem muito grande! Máximo 5MB.');
+
+        const db = getDb();
+        if (!db || !perfil.usuario) return;
+
+        const btn = $('btn-editar-foto');
+        if (btn) btn.disabled = true;
+
+        const usuarioId = perfil.usuario.id;
+        const caminho = usuarioId + '/avatar_' + usuarioId + '_' + Date.now() + '.' + extensao;
+
+        // Upload para o Storage
+        const { error: uploadError } = await db.storage
+            .from(BUCKET_AVATARES)
+            .upload(caminho, arquivo, { cacheControl: '3600', contentType: arquivo.type });
+
+        if (uploadError) {
+            console.error(uploadError);
+            alert('Erro ao enviar imagem. Verifique se o bucket "avatars" existe no Supabase.');
+            if (btn) btn.disabled = false;
+            return;
+        }
+
+        // Pega a URL pública
+        const urlPublica = db.storage.from(BUCKET_AVATARES).getPublicUrl(caminho).data.publicUrl;
+
+        // Atualiza os metadados do Auth e a tabela de profiles
+        await db.auth.updateUser({ data: { avatar_url: urlPublica } });
+        await db.from('profiles').upsert({ id: usuarioId, avatar_url: urlPublica, updated_at: new Date().toISOString() });
+
+        // Atualiza na tela na hora
+        perfil.avatarUrl = urlPublica;
+        renderizarPerfil();
+        
+        if (btn) btn.disabled = false;
+    }
+
+    function setupUploadFoto() {
+        const btnEditarFoto = $('btn-editar-foto');
+        const inputFoto = $('input-foto');
+
+        if (btnEditarFoto && inputFoto) {
+            btnEditarFoto.addEventListener('click', () => inputFoto.click());
+            inputFoto.addEventListener('change', async () => {
+                const arquivo = inputFoto.files[0];
+                inputFoto.value = '';
+                if (arquivo) await enviarFoto(arquivo);
+            });
+        }
+    }
+
+    /* ==============================================
+       4. LOGOUT E SESSÃO
+       ============================================== */
     function irParaLogin() { window.location.href = PAGINA_LOGIN; }
+
     function limparArmazenamento() {
         try {
             CHAVES_LOGOUT.forEach((chave) => localStorage.removeItem(chave));
@@ -237,10 +312,33 @@
             try { await Promise.race([db.auth.signOut(), new Promise((resolve) => { temporizador = setTimeout(resolve, TIMEOUT_SIGNOUT_MS); })]); }
             catch (erro) { } finally { clearTimeout(temporizador); }
         }
-        limparArmazenamento(); irParaLogin();
+        limparArmazenamento(); 
+        irParaLogin();
     }
 
-    // --- EVENTOS E LAYOUT ---
+    async function iniciarSessao() {
+        const db = await aguardarDb();
+        if (!db) { irParaLogin(); return; }
+
+        db.auth.onAuthStateChange((evento, sessao) => {
+            if (evento === 'SIGNED_OUT' && !saindo) irParaLogin();
+        });
+
+        const { data: { session } } = await db.auth.getSession();
+        if (!session) { irParaLogin(); return; }
+
+        perfil.usuario = session.user;
+        perfil.email = session.user.email || '';
+        const meta = session.user.user_metadata || {};
+        perfil.nome = meta.full_name || meta.name || perfil.email.split('@')[0];
+        perfil.avatarUrl = meta.avatar_url || meta.picture || null;
+
+        renderizarPerfil();
+    }
+
+    /* ==============================================
+       5. EVENTOS DO LAYOUT (Abrir/fechar menus)
+       ============================================== */
     function setupLayout() {
         const sidebar = $('sidebar');
         const ficha = $('sidebar-perfil');
@@ -271,30 +369,14 @@
         });
     }
 
-    async function iniciarSessao() {
-        const db = getDb();
-        if (!db) { irParaLogin(); return; }
-
-        db.auth.onAuthStateChange((evento, sessao) => {
-            if (evento === 'SIGNED_OUT' && !saindo) irParaLogin();
-        });
-
-        const { data: { session } } = await db.auth.getSession();
-        if (!session) { irParaLogin(); return; }
-
-        perfil.usuario = session.user;
-        perfil.email = session.user.email || '';
-        const meta = session.user.user_metadata || {};
-        perfil.nome = meta.full_name || meta.name || perfil.email.split('@')[0];
-        perfil.avatarUrl = meta.avatar_url || meta.picture || null;
-
-        renderizarPerfil();
-    }
-
+    /* ==============================================
+       INICIALIZAÇÃO
+       ============================================== */
     function iniciar() {
-        injetarInterface(); // <--- Injeta Navbar e Sidebar em qualquer página
+        injetarInterface();
         setupCalendario();
         setupLayout();
+        setupUploadFoto(); // Ativa o botão de Mudar Foto
         iniciarSessao();
     }
 
