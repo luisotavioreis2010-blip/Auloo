@@ -1,6 +1,6 @@
 @charset "UTF-8";
 /* ==============================================
-   ATELIE.CSS — v20 (Sidebar Fixa no Desktop)
+   ATELIE.CSS — v21 (Sidebar Fixa no Desktop)
    ============================================== */
 
 /* ==============================================
@@ -313,7 +313,7 @@
 .modal-fechar { background: transparent; border: none; font-size: 1.2rem; cursor: pointer; }
 
 /* ==============================================
-   9. RESPONSIVIDADE (Mobile e Tablet)
+   9. RESPONSIVIDADE
    ============================================== */
 @media (max-width: 1366px) {
     .atelie-main { margin-left: 0; padding: 2rem 1rem; }
@@ -368,7 +368,7 @@
 }
 
 /* ==============================================
-   10. DESKTOP GRANDE (Painel Fixo e Sempre Aberto)
+   10. DESKTOP GRANDE (Painel Fixo)
    ============================================== */
 @media (min-width: 1367px) {
     .atelie-main {
@@ -384,5 +384,5 @@
 
     .gaveta-overlay-config { display: none !important; }
     .atelie-gaveta-fechar { display: none !important; }
-    #btn-configurar-atelie { display: none !important; }
+    /* Nota: Removemos o display: none do botão Configurar para que ele apareça na sidebar */
 }
