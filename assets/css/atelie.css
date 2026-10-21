@@ -1,9 +1,9 @@
 @charset "UTF-8";
 /* ==============================================
-   CANAL.CSS — Página Pública e Modal de Criação
+   ATELIE.CSS — Página do Ateliê e Modal
    ============================================== */
 
-.canal-main {
+.atelie-main {
     margin-left: var(--sidebar-w);
     min-height: calc(100vh - var(--navbar-h));
     background: var(--papel);
@@ -13,33 +13,34 @@
     align-items: center;
 }
 
-/* Estado Vazio (Usuário sem canal) */
-.canal-vazio {
+/* Estado Vazio (Usuário sem ateliê) */
+.atelie-vazio {
     background: var(--papel-claro);
     border: 1px dashed var(--dourado);
     padding: 4rem;
     text-align: center;
     margin-top: 5rem;
     box-shadow: 0 10px 30px rgba(26, 22, 20, 0.03);
+    max-width: 600px;
 }
-.canal-vazio h2 {
+.atelie-vazio h2 {
     font-family: var(--fonte-titulo);
     font-style: italic;
     color: var(--vinho);
     font-size: 2rem;
     margin-bottom: 1rem;
 }
-.canal-vazio p {
+.atelie-vazio p {
     font-family: var(--fonte-display);
     font-size: 1.2rem;
     color: var(--tinta-suave);
     margin-bottom: 2rem;
 }
 
-/* Conteúdo do Canal (Quando já existe) */
-.canal-conteudo {
+/* Conteúdo do Ateliê (Quando já existe) */
+.atelie-conteudo {
     width: 100%;
-    max-width: 900px;
+    max-width: 1000px;
     background: var(--papel-claro);
     border: 1px solid var(--dourado-fraco);
     border-radius: 4px;
@@ -47,7 +48,7 @@
     overflow: hidden;
 }
 
-.canal-capa {
+.atelie-capa {
     width: 100%;
     height: 250px;
     background-color: var(--papel-escuro);
@@ -56,7 +57,7 @@
     border-bottom: 2px solid var(--dourado);
 }
 
-.canal-header {
+.atelie-header {
     display: flex;
     align-items: flex-start;
     gap: 2rem;
@@ -64,7 +65,7 @@
     position: relative;
 }
 
-.canal-avatar {
+.atelie-avatar {
     width: 140px;
     height: 140px;
     border-radius: 50%;
@@ -77,12 +78,12 @@
     flex-shrink: 0;
 }
 
-.canal-info {
+.atelie-info {
     flex: 1;
     margin-top: 1rem;
 }
 
-.canal-nome {
+.atelie-nome {
     font-family: var(--fonte-titulo);
     font-size: 2.5rem;
     font-style: italic;
@@ -90,7 +91,7 @@
     margin-bottom: 0.2rem;
 }
 
-.canal-handle {
+.atelie-handle {
     font-family: var(--fonte-corpo);
     font-size: 0.9rem;
     color: var(--dourado);
@@ -99,17 +100,18 @@
     margin-bottom: 1rem;
 }
 
-.canal-bio {
+.atelie-bio {
     font-family: var(--fonte-display);
     font-size: 1.2rem;
     line-height: 1.5;
     color: var(--tinta-suave);
 }
 
-.canal-acoes {
+.atelie-acoes {
     margin-top: 1rem;
 }
 
+/* Botões */
 .btn-primario {
     background: var(--vinho);
     color: var(--papel);
@@ -132,9 +134,7 @@
     cursor: wait;
 }
 
-/* ==============================================
-   MODAL DE CRIAÇÃO
-   ============================================== */
+/* Modal */
 .modal-overlay {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
@@ -220,20 +220,20 @@
     border-color: var(--vinho);
 }
 
-#btn-salvar-canal {
+#btn-salvar-atelie {
     width: 100%;
     margin-top: 1rem;
 }
 
 /* Responsivo */
 @media (max-width: 1366px) {
-    .canal-main { margin-left: 0; padding: 2rem 1rem; }
+    .atelie-main { margin-left: 0; padding: 2rem 1rem; }
 }
 @media (max-width: 768px) {
-    .canal-header { flex-direction: column; align-items: center; text-align: center; padding: 0 1.5rem 2rem; }
-    .canal-avatar { margin-top: -60px; width: 120px; height: 120px; }
-    .canal-nome { font-size: 2rem; }
-    .canal-capa { height: 180px; }
-    .canal-vazio { padding: 2rem; }
+    .atelie-header { flex-direction: column; align-items: center; text-align: center; padding: 0 1.5rem 2rem; }
+    .atelie-avatar { margin-top: -60px; width: 120px; height: 120px; }
+    .atelie-nome { font-size: 2rem; }
+    .atelie-capa { height: 180px; }
+    .atelie-vazio { padding: 2rem; }
     .modal-conteudo { padding: 1.5rem; }
 }

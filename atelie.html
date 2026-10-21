@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#1A1614">
+    <title>Meu Ateliê | Auloo</title>
+    <link rel="icon" type="image/png" href="assets/img/logo/auloo-logo.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400;1,500&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="assets/css/global.css">
+    <link rel="stylesheet" href="assets/css/estante.css">
+    <link rel="stylesheet" href="assets/css/atelie.css">
+</head>
+<body>
+
+    <main class="atelie-main">
+        <div id="atelie-vazio" class="atelie-vazio" hidden>
+            <h2>Seu Ateliê está vazio.</h2>
+            <p>Este é o seu espaço de criação. Abra o seu Ateliê para começar a escrever, criar quizzes e publicar no Mural.</p>
+            <button id="btn-criar-atelie" class="btn-primario">Abrir Meu Ateliê</button>
+        </div>
+
+        <div id="atelie-conteudo" class="atelie-conteudo" hidden>
+            <div class="atelie-capa" id="atelie-capa"></div>
+            <div class="atelie-header">
+                <div class="atelie-avatar" id="atelie-avatar"></div>
+                <div class="atelie-info">
+                    <h1 class="atelie-nome" id="atelie-nome">Nome do Ateliê</h1>
+                    <span class="atelie-handle" id="atelie-handle">@handle</span>
+                    <p class="atelie-bio" id="atelie-bio">Bio do ateliê aqui.</p>
+                </div>
+                <div class="atelie-acoes">
+                    <button class="btn-primario" id="btn-configurar-atelie">Configurar Ateliê</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL DE CRIAÇÃO -->
+    <div id="modal-criar-atelie" class="modal-overlay" hidden>
+        <div class="modal-conteudo">
+            <header class="modal-header">
+                <h2>Forjar seu Ateliê</h2>
+                <button type="button" id="btn-fechar-modal" class="modal-fechar">&#10005;</button>
+            </header>
+            
+            <form id="form-criar-atelie">
+                <div class="campo">
+                    <label for="input-nome-atelie">Nome do Ateliê</label>
+                    <input type="text" id="input-nome-atelie" placeholder="Ex: O Ateliê do João" required>
+                </div>
+                
+                <div class="campo">
+                    <label for="input-handle-atelie">@ Usuário (único)</label>
+                    <input type="text" id="input-handle-atelie" placeholder="Ex: joao-matematica" required>
+                </div>
+                
+                <div class="campo">
+                    <label for="input-bio-atelie">Descrição (Bio)</label>
+                    <textarea id="input-bio-atelie" placeholder="Amante de exatas e café..." rows="3"></textarea>
+                </div>
+
+                <button type="submit" class="btn-primario" id="btn-salvar-atelie">Criar Ateliê</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script src="assets/js/lib/utils.js"></script>
+    <script src="assets/js/layout.js"></script>
+    <script src="assets/js/pages/atelie.js"></script>
+</body>
+</html>
