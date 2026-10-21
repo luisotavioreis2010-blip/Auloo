@@ -1,6 +1,5 @@
 /* ==============================================
-   LAYOUT.JS — v26
-   Corrige: guard DOM, logout fallback no editor
+   LAYOUT.JS — v27 (Remove Progresso e Comunidade)
    ============================================== */
 (function () {
     'use strict';
@@ -433,7 +432,6 @@
     }
 
     function setupPerfil() {
-        /* FIX: se não existir #btn-sair (ex.: editor), injeta um na navbar */
         let btnSair = $('btn-sair');
         if (!btnSair) {
             const navbarDir = document.querySelector('.navbar-right') ||
@@ -640,7 +638,21 @@
 
     if (document.body) sincronizarTela();
 
+    // ==============================================
+    // REMOVE LINKS "PROGRESSO" E "COMUNIDADE"
+    // ==============================================
+    function limparMenuLateral() {
+        const links = document.querySelectorAll('.sidebar-link');
+        links.forEach(link => {
+            const texto = link.textContent.trim().toLowerCase();
+            if (texto.includes('progresso') || texto.includes('comunidade')) {
+                link.remove();
+            }
+        });
+    }
+
     function iniciar() {
+        limparMenuLateral();
         setupTela();
         setupPerfil();
         setupLayout();
