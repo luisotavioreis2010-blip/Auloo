@@ -1,5 +1,5 @@
 /* ==============================================
-   LAYOUT.JS — v27 (Remove Progresso e Comunidade)
+   LAYOUT.JS — v29 (Limpeza Total + Ateliê na Sidebar)
    ============================================== */
 (function () {
     'use strict';
@@ -639,20 +639,49 @@
     if (document.body) sincronizarTela();
 
     // ==============================================
-    // REMOVE LINKS "PROGRESSO" E "COMUNIDADE"
+    // 11. LIMPEZA E REORGANIZAÇÃO DO MENU
     // ==============================================
-    function limparMenuLateral() {
+    function organizarMenu() {
+        // 1. Remove "Progresso", "Comunidade" e "Exercícios"
         const links = document.querySelectorAll('.sidebar-link');
         links.forEach(link => {
             const texto = link.textContent.trim().toLowerCase();
-            if (texto.includes('progresso') || texto.includes('comunidade')) {
+            if (texto.includes('progresso') || texto.includes('comunidade') || texto.includes('exercícios')) {
                 link.remove();
             }
         });
+
+        // 2. Move "Meu Ateliê" para a sidebar (se estiver na navbar)
+        const btnAtelieNavbar = document.querySelector('.navbar-right a[href="atelie.html"]');
+        if (btnAtelieNavbar) {
+            const sidebarMenu = document.querySelector('.sidebar-menu');
+            if (sidebarMenu) {
+                const novoLink = document.createElement('a');
+                novoLink.href = 'atelie.html';
+                novoLink.className = 'sidebar-link';
+                novoLink.setAttribute('aria-label', 'Meu Ateliê');
+                novoLink.innerHTML = `
+                    <span class="sidebar-icone">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+                    </span>
+                    <span class="sidebar-romano">IV</span>
+                    <span class="sidebar-nome">Meu Ateliê</span>
+                `;
+                // Adiciona após o item "O Mural"
+                const muralLink = Array.from(sidebarMenu.querySelectorAll('.sidebar-link')).find(l => l.textContent.includes('O Mural'));
+                if (muralLink) {
+                    muralLink.insertAdjacentElement('afterend', novoLink);
+                } else {
+                    sidebarMenu.appendChild(novoLink);
+                }
+            }
+            // Remove da navbar (redundância de segurança)
+            btnAtelieNavbar.remove();
+        }
     }
 
     function iniciar() {
-        limparMenuLateral();
+        organizarMenu();
         setupTela();
         setupPerfil();
         setupLayout();
