@@ -1,6 +1,6 @@
 @charset "UTF-8";
 /* ==============================================
-   ATELIE.CSS — v16 (Sidebar Fixa no Desktop)
+   ATELIE.CSS — v18 (Painel Sempre Aberto no Desktop)
    ============================================== */
 
 /* ==============================================
@@ -15,8 +15,8 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    transition: margin-right 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-                padding-right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Transição suave quando a tela muda de tamanho */
+    transition: margin-right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ==============================================
@@ -31,7 +31,6 @@
     box-shadow: 0 15px 40px rgba(26, 22, 20, 0.08);
     overflow: hidden;
     animation: cardEntrar 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @keyframes cardEntrar {
@@ -150,7 +149,6 @@
     margin-top: 3rem;
     max-width: 500px;
     box-shadow: 0 10px 30px rgba(26, 22, 20, 0.03);
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .atelie-vazio h2 { font-family: var(--fonte-titulo); font-style: italic; color: var(--vinho); font-size: 1.8rem; margin-bottom: 1rem; }
 .atelie-vazio p { font-family: var(--fonte-display); font-size: 1.1rem; color: var(--tinta-suave); margin-bottom: 1.5rem; }
@@ -318,8 +316,6 @@
    ============================================== */
 @media (max-width: 1366px) {
     .atelie-main { margin-left: 0; padding: 2rem 1rem; }
-    body.atelie-gaveta-aberta .atelie-conteudo,
-    body.atelie-gaveta-aberta .atelie-vazio { transform: none !important; }
 }
 
 @media (max-width: 768px) {
@@ -369,28 +365,24 @@
 }
 
 /* ==============================================
-   10. DESKTOP GRANDE (Inspector Fixo)
+   10. DESKTOP GRANDE (Painel Fixo e Sempre Aberto)
    ============================================== */
 @media (min-width: 1367px) {
-    /* 1. Abre o espaço para a barra na direita permanentemente */
+    /* 1. Empurra o conteúdo para a esquerda reservando o espaço da gaveta */
     .atelie-main {
         margin-right: 460px; 
         padding-right: 0;
     }
 
-    /* 2. Força a gaveta a ficar sempre visível */
+    /* 2. Força a gaveta a ficar sempre aberta, ignorando o JS */
     .atelie-gaveta {
         transform: translateX(0) !important;
         visibility: visible !important;
-        box-shadow: -4px 0 20px rgba(26, 22, 20, 0.05); /* Sombra mais suave */
+        box-shadow: -4px 0 20px rgba(26, 22, 20, 0.05);
     }
 
-    /* 3. Esconde o overlay escuro (não precisa já que não é modal) */
+    /* 3. Esconde o overlay, o botão de fechar e o botão de configurar */
     .gaveta-overlay-config { display: none !important; }
-
-    /* 4. Esconde o "X" de fechar da gaveta (já que não fecha) */
     .atelie-gaveta-fechar { display: none !important; }
-
-    /* 5. Esconde o botão "Configurar Ateliê" do card (já que já está aberto) */
     #btn-configurar-atelie { display: none !important; }
 }

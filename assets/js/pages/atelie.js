@@ -15,6 +15,9 @@
     let bgImageTemp = null;
     let pinchInicial = 0;
 
+    // Verifica se está no Desktop Grande (>= 1367px)
+    const isDesktop = () => window.matchMedia('(min-width: 1367px)').matches;
+
     async function aguardarSupabase() {
         for (let i = 0; i < 30; i++) {
             if (window.supabaseClient) return window.supabaseClient;
@@ -37,11 +40,12 @@
     }
 
     async function verificarAtelie() {
+        // No futuro, se houver mais de um, você pode usar .limit(1) ou buscar uma lista
         const { data: atelie, error } = await db
             .from('ateliers')
             .select('*')
             .eq('owner_id', usuarioLogado.id)
-            .maybeSingle();
+            .maybeSingle(); // Pega o primeiro (ou único)
 
         if (error) return console.error('Erro ao buscar ateliê:', error);
 
@@ -54,6 +58,11 @@
             $('atelie-conteudo').hidden = false;
             atelieAtual = atelie;
             renderizarAtelie(atelie);
+
+            // Se for Desktop, já abre a gaveta preenchida automaticamente!
+            if (isDesktop()) {
+                preencherPainel(atelie);
+            }
         }
     }
 
@@ -109,9 +118,20 @@
             zoom = parseFloat(cZoom);
             bgImageTemp = atelie.cover_url;
         }
+    }
 
+    function preencherPainel(atelie) {
         $('input-config-nome').value = atelie.name;
         $('input-config-bio').value = atelie.description || '';
+        const arrastavel = $('capa-preview-arrastavel');
+        const container = $('capa-preview-container');
+
+        if (atelie.cover_url) {
+            arrastavel.style.backgroundImage = `url('${atelie.cover_url}')`;
+            container.style.display = 'block';
+        } else {
+            container.style.display = 'none';
+        }
     }
 
     function configurarCriacao() {
@@ -153,6 +173,10 @@
                 atelieAtual = data;
                 renderizarAtelie(data);
 
+                if (isDesktop()) {
+                    preencherPainel(data);
+                }
+
             } catch (err) {
                 console.error(err);
                 const msg = (err && err.code === '23505')
@@ -173,21 +197,23 @@
         const inputCapa = $('input-config-capa');
         const btnUploadCapa = $('btn-upload-capa');
 
+        function atualizarTransformacao() {
+            arrastavel.style.backgroundPosition = `${posX}% ${posY}%`;
+            arrastavel.style.transform = `scale(${zoom})`;
+        }
+
+        // Abre a gaveta (apenas útil para mobile/tablet)
         function abrirGaveta() {
             gaveta.classList.add('ativa');
             overlay.classList.add('ativa');
             document.body.classList.add('atelie-gaveta-aberta');
-
-            if (atelieAtual.cover_url) {
-                arrastavel.style.backgroundImage = `url('${atelieAtual.cover_url}')`;
-                container.style.display = 'block';
-            } else {
-                container.style.display = 'none';
-            }
+            preencherPainel(atelieAtual);
             atualizarTransformacao();
         }
 
         function fecharGaveta() {
+            // Se estiver no desktop, não permite fechar
+            if (isDesktop()) return; 
             gaveta.classList.remove('ativa');
             overlay.classList.remove('ativa');
             document.body.classList.remove('atelie-gaveta-aberta');
@@ -229,11 +255,7 @@
             btnUploadAvatar.textContent = 'Avatar Selecionado ✓';
         });
 
-        function atualizarTransformacao() {
-            arrastavel.style.backgroundPosition = `${posX}% ${posY}%`;
-            arrastavel.style.transform = `scale(${zoom})`;
-        }
-
+        // Lógica de Drag & Pinch (Pointer/Touch)
         container.addEventListener('pointerdown', (e) => {
             if (e.pointerType === 'touch' && e.isPrimary === false) return;
             if (e.touches && e.touches.length === 2) return;
@@ -286,6 +308,7 @@
             atualizarTransformacao();
         }, { passive: false });
 
+        // Submissão do formulário
         $('form-config-atelie').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = $('btn-salvar-config');
@@ -334,6 +357,9 @@
                 btnUploadAvatar.textContent = 'Escolher Imagem de Perfil';
 
                 fecharGaveta();
+                
+                // Se estiver no desktop, apenas atualiza o painel visualmente (sem fechar)
+                if (isDesktop()) preencherPainel(data);
 
             } catch (err) {
                 console.error(err);
