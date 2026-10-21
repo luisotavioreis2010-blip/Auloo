@@ -1,6 +1,6 @@
 ﻿@charset "UTF-8";
 /* ==============================================
-   ESTANTE.CSS — v16 (Layout Original + Mobile Deitado)
+   ESTANTE.CSS — v1 (Layout Original Restaurado)
    ============================================== */
 
 /* ==============================================
@@ -192,6 +192,7 @@ input, textarea, .ficha-email {
     .perfil-usuario:hover { box-shadow: 0 0 0 3px var(--dourado-fraco); }
 }
 
+/* FOTO DE PERFIL CORRIGIDA */
 .foto-perfil {
     display: block;
     width: 100%;
@@ -1282,21 +1283,19 @@ input, textarea, .ficha-email {
 }
 
 /* ==============================================
-   10. CELULAR DEITADO (Correção da Ilustração Gigante)
+   10. CELULAR DEITADO (Correção)
    ============================================== */
 @media (max-height: 550px) and (orientation: landscape) {
-    /* O main vira uma coluna com scroll para caber tudo */
     .estante-main {
         gap: 1rem;
         padding: 1rem;
         align-items: center;
     }
 
-    /* A ilustração perde o flex: 1 e ganha uma altura máxima */
     .ilustracao-container {
         flex: 0 0 auto;
         max-width: 40%;
-        max-height: 180px; /* Limita a altura da imagem */
+        max-height: 180px;
         margin: 0 auto;
         order: 1;
     }
@@ -1307,7 +1306,6 @@ input, textarea, .ficha-email {
         object-fit: contain;
     }
 
-    /* O calendário fica compacto */
     .calendario-container {
         flex: 0 0 auto;
         max-width: 100%;
@@ -1322,40 +1320,6 @@ input, textarea, .ficha-email {
     .calendario-dias { padding: 0.5rem; gap: 1px; }
     .calendario-dias span { padding: 0.4rem 0; font-size: 0.7rem; }
     .dia-semana { font-size: 0.5rem; }
-}
-
-/* ---------- 10.1 Ajustes por altura ---------- */
-@media (max-width: 1366px) and (max-height: 700px) {
-    :root {
-        --volume-pad: 0.9rem 1rem 1.2rem;
-    }
-    .volume-numero { font-size: 0.82rem; }
-    .volume-ano { font-size: 0.45rem; }
-}
-
-@media (max-width: 1366px) and (min-height: 851px) {
-    :root {
-        --menu-gap: 1.2rem;
-        --link-pad-y: 1.15rem;
-        --volume-pad: 1.2rem 1.3rem 2rem;
-    }
-}
-
-@media (max-width: 1366px) and (min-height: 1000px) {
-    :root {
-        --menu-gap: 1.5rem;
-        --link-pad-y: 1.3rem;
-        --link-pad-x: 1.1rem;
-        --volume-pad: 1.2rem 1.3rem 2.5rem;
-    }
-}
-
-html.redimensionando,
-html.redimensionando *,
-html.redimensionando *::before,
-html.redimensionando *::after {
-    transition: none !important;
-    animation: none !important;
 }
 
 /* ==============================================
