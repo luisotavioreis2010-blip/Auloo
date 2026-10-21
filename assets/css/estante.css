@@ -1,17 +1,6 @@
 ﻿@charset "UTF-8";
 /* ==============================================
-   DASHBOARD.CSS — v20
-
-   Estrutura
-   1. Variáveis
-   2. Reset, base e navbar
-   3. Sidebar esquerda (estrutura)
-   4. Ficha do leitor (sidebar direita)
-   5. Containers expansivos (nome, senha, saiba mais)
-   6. Conteúdo principal e calendário
-   7. DESKTOP  (≥ 1367px)
-   8. COMPACTO (≤ 1366px)
-   9. Acessibilidade
+   ESTANTE.CSS — v21 (Sidebar Fixa no Desktop)
    ============================================== */
 
 /* ==============================================
@@ -49,7 +38,6 @@
 
     --navbar-h: 68px;
     --sidebar-w: 300px;
-    --sidebar-colapsada: 80px;
     --ficha-w: 360px;
     --cal-w: 470px;
     --drawer-w: 70vw;
@@ -263,7 +251,7 @@ input, textarea, .ficha-email {
 .gaveta-overlay.ativa { opacity: 1; pointer-events: auto; }
 
 /* ==============================================
-   3. SIDEBAR ESQUERDA (estrutura)
+   3. SIDEBAR ESQUERDA (Fixada no Desktop)
    ============================================== */
 .sidebar {
     position: fixed;
@@ -273,8 +261,9 @@ input, textarea, .ficha-email {
     z-index: 50;
     display: flex;
     flex-direction: column;
+    width: var(--sidebar-w);
     overflow: hidden;
-    background: var(--sidebar-bg-2);
+    background: linear-gradient(180deg, var(--sidebar-bg-1) 0%, var(--sidebar-bg-2) 50%, var(--sidebar-bg-3) 100%);
     border-right: 3px double var(--dourado);
     box-shadow: 4px 0 30px rgba(61, 15, 15, 0.35);
 }
@@ -890,7 +879,7 @@ input, textarea, .ficha-email {
     gap: var(--main-gap);
     min-height: calc(100vh - var(--navbar-h));
     min-height: calc(100dvh - var(--navbar-h));
-    margin-left: var(--sidebar-colapsada);
+    margin-left: var(--sidebar-w);
     padding: var(--main-pad);
 }
 
@@ -1047,7 +1036,7 @@ input, textarea, .ficha-email {
 .calendario-dias span.dia-outro-mes { opacity: 0.25; }
 
 /* ==============================================
-   7. DESKTOP (≥ 1367px)
+   7. DESKTOP (>= 1367px)
    ============================================== */
 @media (min-width: 1367px) {
     :root {
@@ -1070,63 +1059,14 @@ input, textarea, .ficha-email {
         --cal-titulo-size: 1.5rem;
     }
 
+    /* Sidebar Fixa */
     .sidebar {
-        width: var(--sidebar-colapsada);
-        background: linear-gradient(180deg,
-            var(--sidebar-bg-1) 0%,
-            var(--sidebar-bg-2) 50%,
-            var(--sidebar-bg-3) 100%);
-        transition: width 0.35s var(--ease);
-    }
-
-    .sidebar:is(:hover, .expandida) { width: var(--sidebar-w); }
-
-    .sidebar::before { transition: opacity 0.3s ease; }
-    .sidebar:is(:hover, .expandida)::before { opacity: 1; }
-
-    .sidebar::after {
-        content: '';
-        position: absolute;
-        right: 0;
-        bottom: 0;
-        left: 0;
-        height: 3px;
-        border-top: 1px solid var(--dourado);
-        border-bottom: 1px solid var(--dourado);
-        opacity: 0.8;
-        pointer-events: none;
-    }
-
-    .sidebar-titulo,
-    .sidebar-selo,
-    .sidebar-volume { transition: opacity 0.2s ease; }
-
-    .sidebar:not(:hover):not(.expandida) :is(.sidebar-titulo, .sidebar-selo, .sidebar-volume) {
-        opacity: 0;
-        visibility: hidden;
-        transition: opacity 0.2s ease, visibility 0s linear 0.2s;
-    }
-
-    .sidebar:not(:hover):not(.expandida) .sidebar-nome { display: none; }
-
-    .sidebar:not(:hover):not(.expandida) .sidebar-link {
-        justify-content: center;
-        gap: 0;
-        padding-inline: 0;
-    }
-
-    .sidebar:not(:hover):not(.expandida) .sidebar-filete {
-        margin-inline: 0.3rem;
-        margin-bottom: 1.2rem;
+        width: var(--sidebar-w);
     }
 
     .dashboard-main { transition: margin 0.4s var(--ease); }
 
     body.ficha-aberta .dashboard-main { margin-right: var(--ficha-w); }
-
-    body.ficha-aberta .sidebar:is(:hover, .expandida) ~ .dashboard-main {
-        margin-left: var(--sidebar-w);
-    }
 }
 
 @media (min-width: 1441px) {
@@ -1168,12 +1108,11 @@ input, textarea, .ficha-email {
 }
 
 /* ==============================================
-   8. COMPACTO (≤ 1366px)
+   8. COMPACTO (<= 1366px)
    ============================================== */
 
 /* ---------- 8.1 base: layout empilhado ---------- */
 @media (max-width: 1366px) {
-
     html, body {
         position: fixed;
         top: 0;

@@ -9,22 +9,19 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400;1,500&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-    
     <link rel="stylesheet" href="assets/css/global.css">
     <link rel="stylesheet" href="assets/css/estante.css">
     <link rel="stylesheet" href="assets/css/comunidade.css">
 </head>
 <body class="mural-body">
 
-    <main class="estante-main main-mural">
-        
+    <main class="main-mural">
         <div class="mural-topo">
             <div class="topo-cabecalho">
                 <div class="topo-titulo">
                     <h1>O Mural</h1>
                     <p>Pensamentos, descobertas e desafios.</p>
                 </div>
-                <!-- BOTÃO CORRIGIDO PARA O EDITOR -->
                 <a href="editor.html" class="btn-escrever" style="text-decoration: none;">❦ Escrever</a>
             </div>
 
@@ -43,7 +40,6 @@
         </div>
 
         <div class="feed">
-            <!-- MURAL VAZIO - O JavaScript vai popular isso com os posts reais -->
             <div class="mural-vazio" style="text-align: center; padding: 4rem 0; color: var(--tinta-clara);">
                 <p style="font-family: var(--fonte-display); font-size: 1.5rem; font-style: italic;">
                     O Mural está em silêncio... <br>
@@ -56,7 +52,6 @@
         </div>
     </main>
 
-    <!-- Scripts Obrigatórios -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script src="assets/js/config.js"></script>
     <script src="assets/js/auth.js"></script>
