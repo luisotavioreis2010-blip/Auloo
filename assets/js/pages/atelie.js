@@ -16,7 +16,28 @@
     let capaFr = null;     // enquadrador da capa do ateliê
 
     const MAX_MB = 5;
-    const isMobile = () => window.matchMedia('(max-width: 1024px)').matches;
+    // A gaveta é "permanente" (sempre visível ao lado) em telas >= 1367px,
+    // e também entre 1025 e 1366px enquanto você está na aba Redação.
+    // Nos demais casos ela é uma sobreposição que abre e fecha.
+    const gavetaPermanente = () =>
+        window.matchMedia('(min-width: 1367px)').matches ||
+        (window.matchMedia('(min-width: 1025px)').matches && document.body.classList.contains('atelie-modo-redacao'));
+
+    function abrirGaveta() {
+        if (gavetaPermanente()) return;
+        $('gaveta-config').classList.add('ativa');
+        $('overlay-config').classList.add('ativa');
+        document.body.classList.add('atelie-gaveta-aberta');
+        document.documentElement.classList.add('atelie-travado');   // trava a rolagem do fundo
+    }
+
+    function fecharGaveta(forcar) {
+        if (forcar !== true && gavetaPermanente()) return;
+        $('gaveta-config').classList.remove('ativa');
+        $('overlay-config').classList.remove('ativa');
+        document.body.classList.remove('atelie-gaveta-aberta');
+        document.documentElement.classList.remove('atelie-travado');
+    }
 
     // ==============================================
     // UTILITÁRIOS
@@ -160,7 +181,9 @@
         container.addEventListener('pointercancel', soltar);
 
         container.addEventListener('wheel', (e) => {
-            if (!est.pronto) return;
+            // Só dá zoom com Ctrl/⌘ (ou pinça do trackpad). Sem isso, a roda do mouse
+            // continua rolando a gaveta normalmente quando passa por cima da prévia.
+            if (!est.pronto || !(e.ctrlKey || e.metaKey)) return;
             e.preventDefault();
             definirZoom(est.zoom + (e.deltaY < 0 ? 0.1 : -0.1));
         }, { passive: false });
@@ -377,22 +400,14 @@
             }
         });
 
-        function abrirGaveta() {
-            gaveta.classList.add('ativa'); overlay.classList.add('ativa');
-            document.body.classList.add('atelie-gaveta-aberta');
-        }
-        function fecharGaveta() {
-            if (!isMobile()) return;
-            gaveta.classList.remove('ativa'); overlay.classList.remove('ativa');
-            document.body.classList.remove('atelie-gaveta-aberta');
-        }
-
-        $('btn-configurar-atelie').addEventListener('click', abrirGaveta);
+        $('btn-configurar-atelie').addEventListener('click', () => abrirGaveta());
         const btnOpcoesMobile = $('btn-opcoes-mobile');
-        if (btnOpcoesMobile) btnOpcoesMobile.addEventListener('click', abrirGaveta);
-        $('btn-fechar-config').addEventListener('click', fecharGaveta);
-        $('btn-fechar-config-redacao').addEventListener('click', fecharGaveta);
-        overlay.addEventListener('click', fecharGaveta);
+        if (btnOpcoesMobile) btnOpcoesMobile.addEventListener('click', () => abrirGaveta());
+        $('btn-fechar-config').addEventListener('click', () => fecharGaveta());
+        $('btn-fechar-config-redacao').addEventListener('click', () => fecharGaveta());
+        overlay.addEventListener('click', () => fecharGaveta());
+        // Ao redimensionar para um tamanho em que a gaveta vira fixa, solta a trava de rolagem
+        window.addEventListener('resize', () => { if (gavetaPermanente()) fecharGaveta(true); });
 
         // --- Upload do avatar ---
         const inputAvatar = $('input-config-avatar');
@@ -606,6 +621,8 @@
 
         botoes.forEach(btn => {
             btn.addEventListener('click', () => {
+                fecharGaveta(true);                    // fecha a gaveta e solta a trava de rolagem
+                window.scrollTo({ top: 0 });           // cada aba começa do topo
                 botoes.forEach(b => b.classList.remove('ativa'));
                 btn.classList.add('ativa');
                 const alvo = btn.getAttribute('data-aba');
@@ -1142,7 +1159,9 @@
                 iniciarArraste();
             }
             if (fantasma) { fantasma.style.left = e.clientX + 'px'; fantasma.style.top = e.clientY + 'px'; }
-            if (e.clientY < 90) window.scrollBy(0, -14);
+            // rolagem automática perto das bordas (descontando a navbar e a barra fixa do editor)
+            const navH = (document.querySelector('.navbar') || {}).offsetHeight || 68;
+            if (e.clientY < navH + 130) window.scrollBy(0, -14);
             else if (e.clientY > window.innerHeight - 90) window.scrollBy(0, 14);
             atualizarIndicador(e.clientX, e.clientY);
         });

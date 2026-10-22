@@ -5,9 +5,27 @@
 
 :root { --gaveta-w: 420px; }
 
-/* 0. RESET E SCROLL GLOBAL */
-html, body { overflow-x: hidden; }
-body.mural-body { overflow-y: auto !important; }
+/* 0. MODELO DE SCROLL
+   Quem rola é a JANELA (viewport). html e body NÃO podem virar contêineres
+   de scroll: se virarem, "position: sticky" para de funcionar e o conteúdo
+   rola por dentro do body de forma estranha. Por isso usamos overflow-x: clip
+   (corta o excesso lateral sem criar contêiner de scroll). */
+html {
+    height: auto !important;
+    overflow-x: hidden;           /* fallback para navegadores antigos */
+    overflow-x: clip;
+    overflow-y: auto !important;
+    scrollbar-gutter: stable;     /* evita o "pulo" quando a gaveta trava a rolagem */
+}
+body.mural-body {
+    height: auto !important;
+    min-height: 100vh;
+    overflow-x: hidden;
+    overflow-x: clip;
+    overflow-y: visible !important;
+}
+/* Gaveta aberta como sobreposição: trava a rolagem do fundo */
+html.atelie-travado { overflow: hidden !important; }
 
 /* 1. ESTRUTURA GERAL */
 .atelie-main {
@@ -139,7 +157,7 @@ body.mural-body { overflow-y: auto !important; }
 .editor-status svg { width: 14px; height: 14px; }
 
 /* ---------- Imagens no conteúdo ---------- */
-.editor-conteudo figure.img-bloco { position: relative; box-sizing: border-box; width: 55%; max-width: 100%; padding: 0; cursor: pointer; }
+.editor-conteudo figure.img-bloco { position: relative; box-sizing: border-box; width: 55%; max-width: 100%; padding: 0; cursor: pointer; scroll-margin-top: calc(var(--navbar-h, 68px) + 110px); }
 .img-bloco[data-align="center"] { clear: both; margin: 1.8rem auto; }
 .img-bloco[data-align="left"]   { float: left;  margin: 0.4rem 1.6rem 1rem 0; }
 .img-bloco[data-align="right"]  { float: right; margin: 0.4rem 0 1rem 1.6rem; }
@@ -244,6 +262,7 @@ body.img-arrastando .img-flutuante, body.img-arrastando .img-selecao { opacity: 
     display: flex; flex-direction: column; gap: 1.25rem;
     scrollbar-width: thin; scrollbar-color: var(--dourado-fraco) transparent;
 }
+.atelie-gaveta-corpo { overscroll-behavior: contain; }   /* não "vaza" a rolagem para a página */
 .atelie-gaveta-corpo::-webkit-scrollbar { width: 6px; }
 .atelie-gaveta-corpo::-webkit-scrollbar-thumb { background: var(--dourado-fraco); border-radius: 3px; }
 
@@ -302,9 +321,10 @@ body.img-arrastando .img-flutuante, body.img-arrastando .img-selecao { opacity: 
     box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.5);
 }
 .capa-preview-container:active { cursor: grabbing; }
+.avatar-preview-container, .capa-preview-container { user-select: none; -webkit-user-select: none; }
 .capa-preview-arrastavel { width: 100%; height: 100%; background-size: cover; background-position: 50% 50%; background-repeat: no-repeat; }
 .capa-preview-container::after {
-    content: 'Arraste para mover · role para dar zoom';
+    content: 'Arraste para enquadrar · zoom no controle abaixo';
     position: absolute; left: 0; right: 0; bottom: 0; padding: 0.4rem; text-align: center;
     font-family: var(--fonte-corpo); font-size: 0.58rem; letter-spacing: 0.5px; color: #fff;
     background: linear-gradient(transparent, rgba(26, 22, 20, 0.65)); opacity: 0; transition: opacity 0.25s; pointer-events: none;
@@ -424,8 +444,8 @@ body.img-arrastando .img-flutuante, body.img-arrastando .img-selecao { opacity: 
     .atelie-main { margin-left: 0; padding: 1rem; }
     #atelie-main.modo-redacao { padding: 1rem 0.75rem 3rem; }
     .editor-folha { padding: 2.5rem 1.75rem 2rem; border-left: 1px solid var(--papel-sombra); border-right: 1px solid var(--papel-sombra); }
-    .editor-topo-custom { border-radius: 10px 10px 0 0; top: 0; position: relative; }
-    .btn-mobile-only { display: inline-flex !important; margin-left: auto; background: var(--vinho) !important; color: #fff !important; border-color: var(--vinho) !important; }
+    .editor-topo-custom { border-radius: 10px 10px 0 0; }   /* continua fixa (sticky) no topo ao rolar */
+    .btn-mobile-only { display: inline-flex !important; background: var(--vinho) !important; color: #fff !important; border-color: var(--vinho) !important; }
 }
 
 @media (max-width: 768px) {
@@ -440,13 +460,16 @@ body.img-arrastando .img-flutuante, body.img-arrastando .img-selecao { opacity: 
     .redacao-intro h2 { font-size: 1.8rem; }
     .redacao-intro p { font-size: 1.1rem; }
     .ilustracao-redacao { max-width: 240px; }
-    .editor-topo-custom { flex-direction: column; align-items: stretch; gap: 1rem; padding: 1rem; }
-    .editor-toolbar { justify-content: flex-start; overflow-x: auto; padding-bottom: 0.5rem; flex: none; }
-    .editor-toolbar button { width: 38px; height: 38px; flex-shrink: 0; }
+    /* Barra compacta em UMA linha: [voltar] [ferramentas rolando de lado] [publicar] */
+    .editor-topo-custom { flex-wrap: nowrap; flex-direction: row; align-items: center; gap: 0.5rem; padding: 0.5rem 0.6rem; }
+    .btn-voltar-editor span { display: none; }
+    .editor-toolbar { flex: 1; min-width: 0; flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; scrollbar-width: none; }
+    .editor-toolbar::-webkit-scrollbar { display: none; }
+    .editor-toolbar button { width: 36px; height: 36px; flex-shrink: 0; }
     .editor-folha { padding: 2rem 1.1rem 1.5rem; }
     .editor-titulo { font-size: 2rem; }
     .editor-conteudo { font-size: 1.15rem; }
-    .btn-publicar { width: 100%; margin-top: 0.5rem; }
+    .btn-publicar { width: auto; margin-top: 0; padding: 0.5rem 1rem !important; flex-shrink: 0; }
     .gaveta-rodape, .atelie-gaveta-corpo, .atelie-gaveta-header { padding-left: 1.25rem; padding-right: 1.25rem; }
     .atelie-gaveta-header::after { left: 1.25rem; right: 1.25rem; }
 }
