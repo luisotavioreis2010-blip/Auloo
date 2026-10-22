@@ -18,39 +18,20 @@
 
     const MAX_MB = 5;
 
-    // ------------------------------------------------------------------
-    // Gaveta fixa (não é overlay) nestes contextos:
-    //   - telas >= 1367px (sempre)
-    //   - 1025–1366px no modo redação
-    // ------------------------------------------------------------------
     const gavetaPermanente = () =>
         window.matchMedia('(min-width: 1367px)').matches ||
         (window.matchMedia('(min-width: 1025px)').matches &&
             document.body.classList.contains('atelie-modo-redacao'));
 
     // ------------------------------------------------------------------
-    // Trava de scroll — método limpo:
-    // guarda o scrollY, aplica overflow:hidden no <html>. Restaura depois.
-    // Nada de position:fixed no <html> ou <body>.
+    // ABRIR / FECHAR GAVETA COM TRAVA DE SCROLL SEGURA
     // ------------------------------------------------------------------
     let scrollYGuardado = 0;
 
-    function travarScroll() {
-        scrollYGuardado = window.scrollY || window.pageYOffset || 0;
-        document.documentElement.classList.add('atelie-travado');
-    }
-
-    function destravarScroll() {
-        document.documentElement.classList.remove('atelie-travado');
-        // Restaura a posição exata — só quando o navegador realmente a perdeu
-        if (Math.abs((window.scrollY || 0) - scrollYGuardado) > 1) {
-            window.scrollTo(0, scrollYGuardado);
-        }
-    }
-
     function abrirGaveta() {
         if (gavetaPermanente()) return;
-        travarScroll();
+        scrollYGuardado = window.scrollY || window.pageYOffset || 0;
+        document.documentElement.classList.add('atelie-travado');
         $('gaveta-config').classList.add('ativa');
         $('overlay-config').classList.add('ativa');
         document.body.classList.add('atelie-gaveta-aberta');
@@ -61,11 +42,16 @@
         $('gaveta-config').classList.remove('ativa');
         $('overlay-config').classList.remove('ativa');
         document.body.classList.remove('atelie-gaveta-aberta');
-        destravarScroll();
+        document.documentElement.classList.remove('atelie-travado');
+        
+        // Restaura o scroll se o navegador tiver "pulado"
+        if (Math.abs((window.scrollY || 0) - scrollYGuardado) > 1) {
+            window.scrollTo(0, scrollYGuardado);
+        }
     }
 
     // ------------------------------------------------------------------
-    // Utilitários
+    // UTILITÁRIOS
     // ------------------------------------------------------------------
     async function aguardarSupabase() {
         for (let i = 0; i < 30; i++) {
@@ -140,7 +126,7 @@
     }
 
     // ------------------------------------------------------------------
-    // Enquadrador (avatar / capa)
+    // ENQUADRADOR
     // ------------------------------------------------------------------
     function criarEnquadrador({ container, camada, slider, linhaZoom, aoImagem, aoMudar }) {
         const est = { x: 50, y: 50, zoom: 1, nw: 0, nh: 0, pronto: false };
@@ -158,8 +144,7 @@
         }
 
         function medidas() {
-            const cw = container.clientWidth;
-            const ch = container.clientHeight;
+            const cw = container.clientWidth, ch = container.clientHeight;
             const s = Math.max(cw / est.nw, ch / est.nh);
             return {
                 s,
@@ -178,12 +163,8 @@
 
         function mover(dx, dy) {
             const m = medidas();
-            if (m.livreX > 0.5) {
-                est.x = limitar(x0 - (dx / (est.zoom * m.s)) / m.livreX * 100, 0, 100);
-            }
-            if (m.livreY > 0.5) {
-                est.y = limitar(y0 - (dy / (est.zoom * m.s)) / m.livreY * 100, 0, 100);
-            }
+            if (m.livreX > 0.5) est.x = limitar(x0 - (dx / (est.zoom * m.s)) / m.livreX * 100, 0, 100);
+            if (m.livreY > 0.5) est.y = limitar(y0 - (dy / (est.zoom * m.s)) / m.livreY * 100, 0, 100);
             aplicar();
             mudou();
         }
@@ -277,7 +258,7 @@
     }
 
     // ------------------------------------------------------------------
-    // Início
+    // INÍCIO
     // ------------------------------------------------------------------
     async function iniciar() {
         db = await aguardarSupabase();
@@ -323,7 +304,7 @@
     }
 
     // ------------------------------------------------------------------
-    // Canal — carregar e renderizar posts
+    // CANAL
     // ------------------------------------------------------------------
     async function carregarCanal() {
         const lista = $('canal-lista');
@@ -510,7 +491,7 @@
     }
 
     // ------------------------------------------------------------------
-    // Criação do ateliê
+    // CRIAÇÃO DO ATELIÊ
     // ------------------------------------------------------------------
     function configurarCriacao() {
         const modalCriar = $('modal-criar-atelie');
@@ -563,7 +544,7 @@
     }
 
     // ------------------------------------------------------------------
-    // Gaveta de configuração
+    // GAVETA DE CONFIGURAÇÃO
     // ------------------------------------------------------------------
     function configurarGavetaConfig() {
         avatarFr = criarEnquadrador({
@@ -605,7 +586,6 @@
             if (gavetaPermanente()) fecharGaveta(true);
         });
 
-        // --- Avatar ---
         const inputAvatar = $('input-config-avatar');
         $('btn-upload-avatar').addEventListener('click', () => inputAvatar.click());
         inputAvatar.addEventListener('change', () => {
@@ -621,7 +601,6 @@
             avatarEditado = true;
         });
 
-        // --- Capa do ateliê ---
         const inputCapa = $('input-config-capa');
         $('btn-upload-capa').addEventListener('click', () => inputCapa.click());
         inputCapa.addEventListener('change', () => {
@@ -632,7 +611,6 @@
             capaFr.carregar(URL.createObjectURL(file));
         });
 
-        // --- Capa do artigo ---
         const capaArtigoPreview = $('capa-artigo-preview');
         const capaArtigoArrastavel = $('capa-artigo-arrastavel');
         const inputCapaArtigo = $('input-capa-artigo');
@@ -756,7 +734,7 @@
     }
 
     // ------------------------------------------------------------------
-    // Dropdown de categoria
+    // DROPDOWN
     // ------------------------------------------------------------------
     function configurarDropdown() {
         const raiz = $('dropdown-categoria');
@@ -828,7 +806,7 @@
     }
 
     // ------------------------------------------------------------------
-    // Abas
+    // ABAS
     // ------------------------------------------------------------------
     function configurarAbas() {
         const botoes = document.querySelectorAll('.aba-btn');
@@ -892,7 +870,7 @@
     }
 
     // ------------------------------------------------------------------
-    // Editor de redação
+    // EDITOR DE REDAÇÃO
     // ------------------------------------------------------------------
     function configurarEditorEmbutido() {
         const editor = $('input-conteudo');
