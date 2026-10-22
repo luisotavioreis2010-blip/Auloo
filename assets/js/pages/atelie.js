@@ -151,6 +151,7 @@
                     owner_id: usuarioLogado.id, name: nome, handle: handleGerado, description: bio, cover_position: '50% 50%', cover_zoom: 1
                 }]).select().single();
                 if (error) throw error;
+                
                 modalCriar.hidden = true;
                 $('atelie-vazio').hidden = true;
                 $('atelie-conteudo').hidden = false;
@@ -318,22 +319,28 @@
     function configurarAbas() {
         const botoes = document.querySelectorAll('.aba-btn');
         const main = $('atelie-main');
+        const abaCanal = $('aba-canal');
+        const abaRedacao = $('aba-redacao');
         
+        if (!botoes.length) return;
+
         botoes.forEach(btn => {
             btn.addEventListener('click', () => {
+                // Remove ativa de todos os botões e seções
                 botoes.forEach(b => b.classList.remove('ativa'));
+                abaCanal.classList.remove('ativa');
+                abaRedacao.classList.remove('ativa');
+
+                // Ativa o botão clicado
                 btn.classList.add('ativa');
                 const alvo = btn.getAttribute('data-aba');
                 
-                main.classList.remove('modo-redacao');
-                $('aba-canal').classList.remove('ativa');
-                $('aba-redacao').classList.remove('ativa');
-
                 if (alvo === 'canal') {
-                    $('aba-canal').classList.add('ativa');
+                    abaCanal.classList.add('ativa');
+                    main.classList.remove('modo-redacao');
                 } else if (alvo === 'redacao') {
+                    abaRedacao.classList.add('ativa');
                     main.classList.add('modo-redacao');
-                    $('aba-redacao').classList.add('ativa');
                     $('redacao-intro').hidden = false;
                     $('redacao-editor').hidden = true;
                 }
@@ -351,9 +358,13 @@
                 $('input-conteudo').innerHTML = '<p>Comece a escrever sua história...</p>';
                 $('editor-capa').style.backgroundImage = '';
                 $('editor-capa').innerHTML = '<span>Adicionar Capa</span>';
+                arquivoCapaEditor = null;
                 $('redacao-editor').hidden = true;
                 $('redacao-intro').hidden = false;
-                document.querySelector('[data-aba="canal"]').click();
+                
+                // Volta para a aba do canal
+                const btnCanal = document.querySelector('.aba-btn[data-aba="canal"]');
+                if (btnCanal) btnCanal.click();
             }
         });
     }
@@ -404,7 +415,7 @@
             }
         });
 
-        // Capa do Editor (Agora com Upload Funcional)
+        // Capa do Editor
         const capaEl = $('editor-capa');
         const inputCapaEditor = document.createElement('input');
         inputCapaEditor.type = 'file'; inputCapaEditor.accept = 'image/*';
@@ -470,7 +481,9 @@
                 $('redacao-editor').hidden = true;
                 $('redacao-intro').hidden = false;
                 
-                document.querySelector('[data-aba="canal"]').click();
+                // Volta para a aba do canal
+                const btnCanal = document.querySelector('.aba-btn[data-aba="canal"]');
+                if (btnCanal) btnCanal.click();
 
             } catch (err) {
                 console.error(err);
