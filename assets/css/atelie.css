@@ -364,6 +364,26 @@ body.atelie-modo-redacao #atelie-main { margin-right: 0; }
     .redacao-editor .editor-titulo { font-size: 2rem; }
 }
 
+/* ==============================================
+   v28 — CORREÇÕES
+   ============================================== */
+/* display:flex anulava o atributo [hidden] */
+.redacao-intro[hidden], .redacao-editor[hidden], .atelie-abas[hidden],
+.atelie-vazio[hidden], .atelie-conteudo[hidden], .modal-overlay[hidden] { display: none !important; }
+
+/* Capa do artigo: sempre 16:9 */
+.redacao-editor .editor-capa { aspect-ratio: 16 / 9 !important; height: auto !important; max-height: none !important; width: 100% !important; }
+
+/* Gaveta de configuração: espaçamento (seletores por id para vencer outros CSS) */
+#form-config-atelie { display: flex !important; flex-direction: column !important; gap: 1.5rem !important; }
+#form-config-atelie .campo { display: flex !important; flex-direction: column !important; gap: 0.5rem !important; margin: 0 !important; }
+#form-config-atelie .campo label { margin: 0 !important; }
+#form-config-atelie .campo-upload { display: flex !important; flex-direction: column !important; gap: 0.75rem !important; margin: 0 !important; }
+#form-config-atelie .campo-upload label { margin: 0 !important; }
+#form-config-atelie .capa-preview-container { margin: 0 !important; }
+#form-config-atelie .btn-container { margin: 0 !important; width: 100%; }
+#form-config-atelie textarea { resize: vertical; min-height: 96px; }
+
 /* 5. GAVETA LATERAL E MODAL */
 .atelie-gaveta { position: fixed; top: var(--navbar-h, 68px); right: 0; bottom: 0; z-index: 250; width: 100%; max-width: 460px; background: var(--papel-claro); border-left: 3px double var(--dourado); box-shadow: -20px 0 40px rgba(26, 22, 20, 0.15); transform: translateX(100%); visibility: hidden; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s linear 0.4s; display: flex; flex-direction: column; overflow-y: auto; }
 .atelie-gaveta.ativa { transform: translateX(0); visibility: visible; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s; }
