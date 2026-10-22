@@ -12,7 +12,7 @@
     
     <link rel="stylesheet" href="assets/css/global.css">
     <link rel="stylesheet" href="assets/css/estante.css">
-    <link rel="stylesheet" href="assets/css/atelie.css?v=46">
+    <link rel="stylesheet" href="assets/css/atelie.css?v=47">
 </head>
 <body class="mural-body">
 
@@ -134,7 +134,8 @@
             </nav>
 
             <section id="aba-canal" class="aba-conteudo ativa">
-                <div class="canal-vazio">
+                <div id="canal-lista" class="canal-lista"></div>
+                <div class="canal-vazio" id="canal-vazio" hidden>
                     <p>O seu canal ainda não tem publicações.</p>
                 </div>
             </section>
@@ -190,7 +191,6 @@
                         </div>
                     </div>
 
-                    <!-- Caixa de seleção com alças de redimensionar -->
                     <div class="img-selecao" id="img-selecao" contenteditable="false" aria-hidden="true">
                         <span class="img-handle" data-h="nw"></span>
                         <span class="img-handle" data-h="ne"></span>
@@ -199,7 +199,6 @@
                         <span class="img-selecao-rotulo" id="img-selecao-rotulo"></span>
                     </div>
 
-                    <!-- Barra flutuante da imagem -->
                     <div class="img-flutuante" id="img-flutuante" contenteditable="false" role="toolbar" aria-label="Opções da imagem">
                         <button type="button" data-tam="p" title="Pequena">P</button>
                         <button type="button" data-tam="m" title="Média">M</button>
@@ -213,7 +212,6 @@
                         <button type="button" data-acao="remover" title="Remover imagem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg></button>
                     </div>
 
-                    <!-- Linha que mostra onde a imagem vai cair ao arrastar -->
                     <div class="img-indicador" id="img-indicador" hidden><span></span></div>
                 </div>
             </div>
@@ -234,9 +232,6 @@
         </div>
     </div>
 
-    <!-- ==============================================
-         GAVETA LATERAL (os dois painéis têm a mesma estrutura)
-         ============================================== -->
     <div class="gaveta-overlay-config" id="overlay-config"></div>
     <aside class="atelie-gaveta" id="gaveta-config">
 
@@ -409,7 +404,6 @@
         </div>
     </aside>
 
-    <!-- Menu de contexto das imagens (botão direito) -->
     <div class="img-menu" id="img-menu" role="menu" hidden>
         <div class="img-menu-titulo">Imagem</div>
         <button type="button" role="menuitem" data-alin="left">
@@ -460,6 +454,6 @@
     <script src="assets/js/auth.js"></script>
     <script src="assets/js/lib/utils.js"></script>
     <script src="assets/js/layout.js"></script>
-    <script src="assets/js/pages/atelie.js?v=46"></script>
+    <script src="assets/js/pages/atelie.js?v=47"></script>
 </body>
 </html>

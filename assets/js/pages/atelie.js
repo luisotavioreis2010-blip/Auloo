@@ -12,13 +12,11 @@
     let avatarImageUrl = null;
     let avatarEditado = false;
 
-    let avatarFr = null;   // enquadrador do avatar
-    let capaFr = null;     // enquadrador da capa do ateliê
+    let avatarFr = null;
+    let capaFr = null;
 
     const MAX_MB = 5;
-    // A gaveta é "permanente" (sempre visível ao lado) em telas >= 1367px,
-    // e também entre 1025 e 1366px enquanto você está na aba Redação.
-    // Nos demais casos ela é uma sobreposição que abre e fecha.
+
     const gavetaPermanente = () =>
         window.matchMedia('(min-width: 1367px)').matches ||
         (window.matchMedia('(min-width: 1025px)').matches && document.body.classList.contains('atelie-modo-redacao'));
@@ -28,7 +26,7 @@
         $('gaveta-config').classList.add('ativa');
         $('overlay-config').classList.add('ativa');
         document.body.classList.add('atelie-gaveta-aberta');
-        document.documentElement.classList.add('atelie-travado');   // trava a rolagem do fundo
+        document.documentElement.classList.add('atelie-travado');
     }
 
     function fecharGaveta(forcar) {
@@ -77,7 +75,6 @@
         }, 3200);
     }
 
-    // Troca o rótulo do botão sem apagar o ícone
     function estadoBotao(btn, ocupado, textoOcupado) {
         const alvo = btn.querySelector('.btn-rotulo') || btn;
         if (!btn.dataset.rotulo) btn.dataset.rotulo = alvo.textContent;
@@ -93,10 +90,23 @@
         return true;
     }
 
+    function escaparHtml(str) {
+        return String(str || '').replace(/[&<>"']/g, c => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[c]));
+    }
+
+    function formatarData(iso) {
+        if (!iso) return '';
+        try {
+            return new Date(iso).toLocaleDateString('pt-BR', {
+                day: '2-digit', month: 'short', year: 'numeric'
+            });
+        } catch { return ''; }
+    }
+
     // ==============================================
-    // ENQUADRADOR (arrastar + zoom) — usado no avatar e na capa
-    // Modelo: "cover" + posição em % + zoom. A posição define qual parte
-    // do espaço livre fica visível (igual ao object-position do CSS).
+    // ENQUADRADOR
     // ==============================================
     function criarEnquadrador({ container, camada, slider, linhaZoom, aoImagem, aoMudar }) {
         const est = { x: 50, y: 50, zoom: 1, nw: 0, nh: 0, pronto: false };
@@ -181,8 +191,6 @@
         container.addEventListener('pointercancel', soltar);
 
         container.addEventListener('wheel', (e) => {
-            // Só dá zoom com Ctrl/⌘ (ou pinça do trackpad). Sem isso, a roda do mouse
-            // continua rolando a gaveta normalmente quando passa por cima da prévia.
             if (!est.pronto || !(e.ctrlKey || e.metaKey)) return;
             e.preventDefault();
             definirZoom(est.zoom + (e.deltaY < 0 ? 0.1 : -0.1));
@@ -256,7 +264,115 @@
             atelieAtual = atelie;
             renderizarAtelie(atelie);
             preencherPainel(atelie);
+            await carregarCanal();
         }
+    }
+
+    // ==============================================
+    // CANAL — CARREGAR E RENDERIZAR POSTS
+    // ==============================================
+    async function carregarCanal() {
+        const lista = $('canal-lista');
+        const vazio = $('canal-vazio');
+        if (!lista) return;
+
+        lista.innerHTML = '<div class="canal-carregando">' +
+            '<div class="canal-skeleton"></div>'.repeat(2) + '</div>';
+        vazio.hidden = true;
+
+        const { data: posts, error } = await db
+            .from('posts')
+            .select('id, title, content, cover_url, category, created_at')
+            .eq('author_id', usuarioLogado.id)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('Erro ao carregar posts:', error);
+            lista.innerHTML = '';
+            vazio.hidden = false;
+            return;
+        }
+
+        lista.innerHTML = '';
+        if (!posts || posts.length === 0) {
+            vazio.hidden = false;
+            return;
+        }
+
+        renderizarPosts(posts);
+    }
+
+    function extrairTrecho(html) {
+        const div = document.createElement('div');
+        div.innerHTML = html || '';
+        div.querySelectorAll('figure, img, figcaption, style, script').forEach(el => el.remove());
+        const texto = (div.textContent || '').replace(/\s+/g, ' ').trim();
+        return texto.length > 220 ? texto.slice(0, 220).trim() + '…' : texto;
+    }
+
+    function renderizarPosts(posts) {
+        const lista = $('canal-lista');
+        lista.innerHTML = '';
+
+        posts.forEach(post => {
+            const card = document.createElement('article');
+            card.className = 'canal-post';
+            card.dataset.id = post.id;
+
+            const capaHtml = post.cover_url
+                ? '<div class="canal-post-capa"><img src="' + escaparHtml(post.cover_url) +
+                  '" alt="Capa do artigo" loading="lazy" referrerpolicy="no-referrer"></div>'
+                : '';
+
+            card.innerHTML = capaHtml +
+                '<div class="canal-post-corpo">' +
+                    '<div class="canal-post-meta">' +
+                        (post.category
+                            ? '<span class="canal-post-categoria">' + escaparHtml(post.category) + '</span>'
+                            : '') +
+                        '<span>' + escaparHtml(formatarData(post.created_at)) + '</span>' +
+                    '</div>' +
+                    '<h2 class="canal-post-titulo">' + escaparHtml(post.title || 'Sem título') + '</h2>' +
+                    '<div class="canal-post-trecho">' + escaparHtml(extrairTrecho(post.content)) + '</div>' +
+                    '<div class="canal-post-rodape">' +
+                        '<button type="button" class="canal-post-ler" data-ler="' + post.id + '">' +
+                            'Ler artigo' +
+                            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>' +
+                        '</button>' +
+                        '<div class="canal-post-acoes">' +
+                            '<button type="button" class="perigo" data-excluir="' + post.id + '" title="Excluir">' +
+                                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>' +
+                            '</button>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>';
+
+            lista.appendChild(card);
+        });
+
+        lista.querySelectorAll('[data-excluir]').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const id = btn.dataset.excluir;
+                if (!confirm('Excluir esta publicação? Essa ação não pode ser desfeita.')) return;
+                btn.disabled = true;
+                const { error } = await db.from('posts').delete().eq('id', id);
+                if (error) {
+                    console.error(error);
+                    avisar('Não foi possível excluir.', 'erro');
+                    btn.disabled = false;
+                    return;
+                }
+                avisar('Publicação excluída.');
+                await carregarCanal();
+            });
+        });
+
+        lista.querySelectorAll('[data-ler]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const id = btn.dataset.ler;
+                window.location.href = 'post.html?id=' + encodeURIComponent(id);
+            });
+        });
     }
 
     function renderizarAtelie(atelie) {
@@ -360,6 +476,7 @@
                 atelieAtual = data;
                 renderizarAtelie(data);
                 preencherPainel(data);
+                await carregarCanal();
             } catch (err) {
                 console.error(err);
                 alert('Erro ao abrir o Ateliê.');
@@ -373,7 +490,6 @@
     // GAVETA DE CONFIGURAÇÃO
     // ==============================================
     function configurarGavetaConfig() {
-        const gaveta = $('gaveta-config');
         const overlay = $('overlay-config');
 
         avatarFr = criarEnquadrador({
@@ -406,10 +522,8 @@
         $('btn-fechar-config').addEventListener('click', () => fecharGaveta());
         $('btn-fechar-config-redacao').addEventListener('click', () => fecharGaveta());
         overlay.addEventListener('click', () => fecharGaveta());
-        // Ao redimensionar para um tamanho em que a gaveta vira fixa, solta a trava de rolagem
         window.addEventListener('resize', () => { if (gavetaPermanente()) fecharGaveta(true); });
 
-        // --- Upload do avatar ---
         const inputAvatar = $('input-config-avatar');
         $('btn-upload-avatar').addEventListener('click', () => inputAvatar.click());
         inputAvatar.addEventListener('change', () => {
@@ -423,7 +537,6 @@
             avatarEditado = true;
         });
 
-        // --- Upload da capa ---
         const inputCapa = $('input-config-capa');
         $('btn-upload-capa').addEventListener('click', () => inputCapa.click());
         inputCapa.addEventListener('change', () => {
@@ -434,7 +547,6 @@
             capaFr.carregar(URL.createObjectURL(file));
         });
 
-        // --- Capa do artigo ---
         const capaArtigoPreview = $('capa-artigo-preview');
         const capaArtigoArrastavel = $('capa-artigo-arrastavel');
         const inputCapaArtigo = $('input-capa-artigo');
@@ -465,7 +577,6 @@
             }
         });
 
-        // --- Recorte do avatar (reproduz exatamente o que o usuário vê) ---
         async function gerarAvatarRecortado() {
             const src = fileAvatar ? URL.createObjectURL(fileAvatar) : avatarImageUrl;
             if (!src) return null;
@@ -495,7 +606,6 @@
             return new Promise((ok) => canvas.toBlob((b) => ok(b), 'image/jpeg', 0.92));
         }
 
-        // --- Salvar ---
         $('form-config-atelie').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = $('btn-salvar-config');
@@ -621,8 +731,8 @@
 
         botoes.forEach(btn => {
             btn.addEventListener('click', () => {
-                fecharGaveta(true);                    // fecha a gaveta e solta a trava de rolagem
-                window.scrollTo({ top: 0 });           // cada aba começa do topo
+                fecharGaveta(true);
+                window.scrollTo({ top: 0 });
                 botoes.forEach(b => b.classList.remove('ativa'));
                 btn.classList.add('ativa');
                 const alvo = btn.getAttribute('data-aba');
@@ -641,6 +751,7 @@
                     $('aba-canal').classList.add('ativa');
                     painelCanal.hidden = false;
                     painelCanal.classList.add('ativo');
+                    carregarCanal();
                 } else if (alvo === 'redacao') {
                     main.classList.add('modo-redacao');
                     document.body.classList.add('atelie-modo-redacao');
@@ -671,7 +782,7 @@
     }
 
     // ==============================================
-    // EDITOR DE REDAÇÃO (texto + imagens flexíveis)
+    // EDITOR DE REDAÇÃO
     // ==============================================
     function configurarEditorEmbutido() {
         const editor = $('input-conteudo');
@@ -686,15 +797,14 @@
         const TAMANHO_PADRAO = 'm';
         const BLOCOS = new Set(['P', 'H1', 'H2', 'H3', 'BLOCKQUOTE', 'UL', 'OL', 'FIGURE', 'DIV', 'PRE']);
 
-        let figura = null;        // imagem selecionada
+        let figura = null;
         let rangeSalvo = null;
-        let arraste = null;       // estado do arrastar-e-soltar
+        let arraste = null;
         let fantasma = null;
         let ignorarClique = false;
 
         document.execCommand('defaultParagraphSeparator', false, 'p');
 
-        // ---------- Contador / placeholder ----------
         function atualizarVazio() {
             const texto = editor.textContent.trim();
             const vazio = texto === '' && !editor.querySelector('img');
@@ -713,7 +823,6 @@
             if (sel.rangeCount && editor.contains(sel.anchorNode)) rangeSalvo = sel.getRangeAt(0).cloneRange();
         });
 
-        // ---------- Formatação de texto ----------
         document.querySelectorAll('.editor-toolbar button[data-cmd]').forEach(btn => {
             btn.addEventListener('mousedown', (e) => e.preventDefault());
             btn.addEventListener('click', (e) => {
@@ -735,7 +844,6 @@
 
         editor.addEventListener('dragstart', (e) => { if (e.target.tagName === 'IMG') e.preventDefault(); });
 
-        // ---------- Estrutura de blocos ----------
         function normalizarBlocos() {
             let atual = null;
             [...editor.childNodes].forEach(n => {
@@ -769,7 +877,6 @@
             s.addRange(r);
         }
 
-        // ---------- Criação / inserção de imagem ----------
         function criarFigura(url) {
             const fig = document.createElement('figure');
             fig.className = 'img-bloco';
@@ -861,7 +968,6 @@
             }
         });
 
-        // ---------- Tamanho e alinhamento ----------
         function definirTamanho(fig, chave) {
             fig.dataset.size = chave;
             fig.style.width = TAMANHOS[chave] + '%';
@@ -881,7 +987,6 @@
             fig.dataset.align = al;
         }
 
-        // ---------- Seleção, barra e caixa de alças ----------
         function atualizarEstados() {
             if (!figura) return;
             [barra, menu].forEach(c => {
@@ -945,7 +1050,6 @@
         window.addEventListener('scroll', () => { posicionar(); fecharMenu(); }, true);
         if ('ResizeObserver' in window) new ResizeObserver(() => posicionar()).observe(editor);
 
-        // ---------- Ações (barra e menu) ----------
         function removerFigura() {
             if (!figura) return;
             const f = figura;
@@ -985,7 +1089,6 @@
             executar(btn);
         });
 
-        // ---------- Menu de contexto (botão direito) ----------
         function abrirMenu(x, y) {
             atualizarEstados();
             menu.hidden = false;
@@ -1012,7 +1115,6 @@
         menu.addEventListener('contextmenu', (e) => e.preventDefault());
         document.addEventListener('pointerdown', (e) => { if (!menu.hidden && !menu.contains(e.target)) fecharMenu(); });
 
-        // ---------- Teclado ----------
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 if (!menu.hidden) { fecharMenu(); return; }
@@ -1028,7 +1130,6 @@
             removerFigura();
         });
 
-        // ---------- Redimensionar pelas alças ----------
         selecao.querySelectorAll('.img-handle').forEach(h => {
             h.addEventListener('pointerdown', (e) => {
                 if (!figura) return;
@@ -1066,7 +1167,6 @@
             });
         });
 
-        // ---------- Arrastar e soltar a imagem ----------
         function alvoDeSoltura(x, y) {
             const rect = editor.getBoundingClientRect();
             const filhos = [...editor.children].filter(c => c !== arraste.fig);
@@ -1159,7 +1259,6 @@
                 iniciarArraste();
             }
             if (fantasma) { fantasma.style.left = e.clientX + 'px'; fantasma.style.top = e.clientY + 'px'; }
-            // rolagem automática perto das bordas (descontando a navbar e a barra fixa do editor)
             const navH = (document.querySelector('.navbar') || {}).offsetHeight || 68;
             if (e.clientY < navH + 130) window.scrollBy(0, -14);
             else if (e.clientY > window.innerHeight - 90) window.scrollBy(0, 14);
@@ -1183,7 +1282,6 @@
         document.addEventListener('pointerup', soltarArraste);
         document.addEventListener('pointercancel', cancelarArraste);
 
-        // ---------- Reset e publicação ----------
         function resetarEditor() {
             $('input-titulo').value = '';
             editor.innerHTML = '';
@@ -1262,6 +1360,7 @@
                 avisar('Conteúdo publicado com sucesso no seu canal!');
                 resetarEditor();
                 document.querySelector('[data-aba="canal"]').click();
+                await carregarCanal();
             } catch (err) {
                 console.error(err);
                 avisar('Erro ao publicar.', 'erro');
