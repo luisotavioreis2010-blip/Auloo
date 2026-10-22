@@ -1,5 +1,5 @@
 /* ==============================================
-   LAYOUT.JS — v31 (Limpeza da Sidebar + Ateliê)
+   LAYOUT.JS — v32 (Sidebar Universal e Limpa)
    ============================================== */
 (function () {
     'use strict';
@@ -642,7 +642,7 @@
     // 11. LIMPEZA E REORGANIZAÇÃO DO MENU
     // ==============================================
     function organizarMenu() {
-        // 1. Remove "Progresso", "Comunidade" e "Exercícios"
+        // Remove itens indesejados do menu
         const links = document.querySelectorAll('.sidebar-link');
         links.forEach(link => {
             const texto = link.textContent.trim().toLowerCase();
@@ -651,36 +651,34 @@
             }
         });
 
-        // 2. Move "Meu Ateliê" para a sidebar
+        // Garante que o Ateliê esteja na Sidebar
         const btnAtelieNavbar = document.querySelector('.navbar-right a[href="atelie.html"]');
         if (btnAtelieNavbar) {
-            const sidebarMenu = document.querySelector('.sidebar-menu');
-            if (sidebarMenu) {
-                // Verifica se já não existe para não duplicar
-                const jaExiste = Array.from(sidebarMenu.querySelectorAll('a')).some(a => a.href.includes('atelie.html'));
-                if (!jaExiste) {
-                    const novoLink = document.createElement('a');
-                    novoLink.href = 'atelie.html';
-                    novoLink.className = 'sidebar-link';
-                    novoLink.setAttribute('aria-label', 'Meu Ateliê');
-                    novoLink.innerHTML = `
-                        <span class="sidebar-icone">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
-                        </span>
-                        <span class="sidebar-romano">IV</span>
-                        <span class="sidebar-nome">Meu Ateliê</span>
-                    `;
-                    // Adiciona após o item "O Mural"
-                    const muralLink = Array.from(sidebarMenu.querySelectorAll('.sidebar-link')).find(l => l.textContent.includes('O Mural'));
-                    if (muralLink) {
-                        muralLink.insertAdjacentElement('afterend', novoLink);
-                    } else {
-                        sidebarMenu.appendChild(novoLink);
-                    }
+            btnAtelieNavbar.remove(); // Remove da navbar
+        }
+        
+        const sidebarMenu = document.querySelector('.sidebar-menu');
+        if (sidebarMenu) {
+            const jaExiste = Array.from(sidebarMenu.querySelectorAll('a')).some(a => a.href.includes('atelie.html'));
+            if (!jaExiste) {
+                const novoLink = document.createElement('a');
+                novoLink.href = 'atelie.html';
+                novoLink.className = 'sidebar-link';
+                novoLink.setAttribute('aria-label', 'Meu Ateliê');
+                novoLink.innerHTML = `
+                    <span class="sidebar-icone">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+                    </span>
+                    <span class="sidebar-romano">IV</span>
+                    <span class="sidebar-nome">Meu Ateliê</span>
+                `;
+                const muralLink = Array.from(sidebarMenu.querySelectorAll('.sidebar-link')).find(l => l.textContent.includes('O Mural'));
+                if (muralLink) {
+                    muralLink.insertAdjacentElement('afterend', novoLink);
+                } else {
+                    sidebarMenu.appendChild(novoLink);
                 }
             }
-            // Remove da navbar
-            btnAtelieNavbar.remove();
         }
     }
 

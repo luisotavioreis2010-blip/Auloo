@@ -1,6 +1,6 @@
 @charset "UTF-8";
 /* ==============================================
-   ATELIE.CSS — v21 (Sidebar Fixa no Desktop)
+   ATELIE.CSS — v23 (Abas + Editor Embutido + Painel Fixo)
    ============================================== */
 
 /* ==============================================
@@ -14,7 +14,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    /* justify-content removido para manter alinhado ao topo */
     transition: margin-right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -30,7 +30,6 @@
     box-shadow: 0 15px 40px rgba(26, 22, 20, 0.08);
     overflow: hidden;
     animation: cardEntrar 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @keyframes cardEntrar {
@@ -149,13 +148,59 @@
     margin-top: 3rem;
     max-width: 500px;
     box-shadow: 0 10px 30px rgba(26, 22, 20, 0.03);
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .atelie-vazio h2 { font-family: var(--fonte-titulo); font-style: italic; color: var(--vinho); font-size: 1.8rem; margin-bottom: 1rem; }
 .atelie-vazio p { font-family: var(--fonte-display); font-size: 1.1rem; color: var(--tinta-suave); margin-bottom: 1.5rem; }
 
 /* ==============================================
-   6. GAVETA LATERAL (Configurações)
+   6. ABAS DO ATELIÊ (Canal / Redação)
+   ============================================== */
+.atelie-abas {
+    display: flex;
+    width: 100%;
+    max-width: 650px;
+    border-bottom: 1px solid var(--papel-sombra);
+    margin-bottom: 2rem;
+    gap: 1rem;
+}
+
+.aba-btn {
+    background: transparent;
+    border: none;
+    padding: 1rem 1.5rem;
+    font-family: var(--fonte-corpo);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--tinta-clara);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.aba-btn:hover { color: var(--vinho); }
+
+.aba-btn.ativa {
+    color: var(--vinho);
+    border-bottom-color: var(--vinho);
+}
+
+.aba-conteudo {
+    display: none;
+    width: 100%;
+    animation: fadeAba 0.4s ease;
+}
+
+.aba-conteudo.ativa { display: block; }
+
+@keyframes fadeAba {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ==============================================
+   7. GAVETA LATERAL (Configurações)
    ============================================== */
 .atelie-gaveta {
     position: fixed;
@@ -248,7 +293,7 @@
 }
 
 /* ==============================================
-   7. FORMULÁRIOS
+   8. FORMULÁRIOS DA GAVETA
    ============================================== */
 .atelie-gaveta-corpo .campo { margin-bottom: 0.5rem; }
 .atelie-gaveta-corpo .campo label {
@@ -297,7 +342,7 @@
 .atelie-gaveta-corpo .btn-primario { margin-top: 0.5rem; padding: 0.85rem 1.5rem; font-size: 0.72rem; letter-spacing: 1.5px; }
 
 /* ==============================================
-   8. MODAL DE CRIAÇÃO
+   9. MODAL DE CRIAÇÃO
    ============================================== */
 .modal-overlay {
     position: fixed; top: 0; left: 0; right: 0; bottom: 0;
@@ -313,16 +358,14 @@
 .modal-fechar { background: transparent; border: none; font-size: 1.2rem; cursor: pointer; }
 
 /* ==============================================
-   9. RESPONSIVIDADE
+   10. RESPONSIVIDADE (Mobile e Tablet)
    ============================================== */
 @media (max-width: 1366px) {
     .atelie-main { margin-left: 0; padding: 2rem 1rem; }
-    body.atelie-gaveta-aberta .atelie-conteudo,
-    body.atelie-gaveta-aberta .atelie-vazio { transform: none !important; }
 }
 
 @media (max-width: 768px) {
-    .atelie-main { padding: 1.5rem 1rem; justify-content: flex-start; }
+    .atelie-main { padding: 1.5rem 1rem; }
     .atelie-capa-wrapper { height: 160px; }
     .atelie-header { flex-direction: column; align-items: center; text-align: center; padding: 0 1.2rem 1.5rem; gap: 0.5rem; }
     .atelie-avatar { margin-top: -50px; margin-bottom: 0.5rem; }
@@ -339,13 +382,17 @@
     .atelie-gaveta-corpo { padding: 1.25rem 1.25rem 2rem; gap: 1.25rem; }
     .capa-preview-container { height: 140px; }
     .campo-upload { padding: 0.9rem 0.85rem; }
+
+    /* Ajustes das Abas no Mobile */
+    .atelie-abas { justify-content: center; }
+    .aba-btn { padding: 1rem; font-size: 0.7rem; }
 }
 
 /* ==============================================
    CELULAR E TABLET DEITADO (Modo Compacto)
    ============================================== */
 @media (max-height: 550px) and (orientation: landscape) {
-    .atelie-main { padding: 0.5rem; justify-content: center; }
+    .atelie-main { padding: 0.5rem; }
     .atelie-conteudo { max-width: 420px; }
     .atelie-capa-wrapper { height: 100px; }
     .atelie-header { flex-direction: row; align-items: flex-start; text-align: left; padding: 0 1rem 1rem; gap: 0.8rem; }
@@ -368,12 +415,12 @@
 }
 
 /* ==============================================
-   10. DESKTOP GRANDE (Painel Fixo)
+   11. DESKTOP GRANDE (Painel Fixo e Sempre Aberto)
    ============================================== */
 @media (min-width: 1367px) {
     .atelie-main {
         margin-right: 460px; 
-        padding-right: 0;
+        padding-right: 1rem;
     }
 
     .atelie-gaveta {
@@ -384,5 +431,7 @@
 
     .gaveta-overlay-config { display: none !important; }
     .atelie-gaveta-fechar { display: none !important; }
-    /* Nota: Removemos o display: none do botão Configurar para que ele apareça na sidebar */
+    
+    /* Esconde o botão configurar, já que o painel está sempre aberto */
+    #btn-configurar-atelie { display: none !important; }
 }

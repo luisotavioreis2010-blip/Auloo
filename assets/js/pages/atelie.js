@@ -7,6 +7,7 @@
     let atelieAtual = null;
     let fileAvatar = null;
     let fileCapa = null;
+    let fileImgEditor = null;
 
     let posX = 50, posY = 50;
     let zoom = 1;
@@ -15,7 +16,6 @@
     let bgImageTemp = null;
     let pinchInicial = 0;
 
-    // Verifica se está no Desktop Grande (>= 1367px)
     const isDesktop = () => window.matchMedia('(min-width: 1367px)').matches;
 
     async function aguardarSupabase() {
@@ -37,32 +37,33 @@
         await verificarAtelie();
         configurarCriacao();
         configurarGavetaConfig();
+        configurarAbas();
+        configurarEditorEmbutido();
     }
 
     async function verificarAtelie() {
-        // No futuro, se houver mais de um, você pode usar .limit(1) ou buscar uma lista
         const { data: atelie, error } = await db
             .from('ateliers')
             .select('*')
             .eq('owner_id', usuarioLogado.id)
-            .maybeSingle(); // Pega o primeiro (ou único)
+            .maybeSingle();
 
         if (error) return console.error('Erro ao buscar ateliê:', error);
 
         if (!atelie) {
             $('atelie-vazio').hidden = false;
             $('atelie-conteudo').hidden = true;
+            $('atelie-abas').hidden = true;
+            $('aba-conteudos-wrapper').hidden = true;
             $('btn-criar-atelie').addEventListener('click', () => $('modal-criar-atelie').hidden = false);
         } else {
             $('atelie-vazio').hidden = true;
             $('atelie-conteudo').hidden = false;
+            $('atelie-abas').hidden = false;
+            $('aba-conteudos-wrapper').hidden = false;
             atelieAtual = atelie;
             renderizarAtelie(atelie);
-
-            // Se for Desktop, já abre a gaveta preenchida automaticamente!
-            if (isDesktop()) {
-                preencherPainel(atelie);
-            }
+            if (isDesktop()) preencherPainel(atelie);
         }
     }
 
@@ -106,13 +107,10 @@
         if (atelie.cover_url) {
             const capaImg = $('atelie-capa-img');
             capaImg.src = atelie.cover_url;
-
             const cPos = atelie.cover_position || '50% 50%';
             const cZoom = atelie.cover_zoom || 1;
-
             capaImg.style.objectPosition = cPos;
             capaImg.style.transform = `scale(${cZoom})`;
-
             posX = parseFloat(cPos.split(' ')[0]) || 50;
             posY = parseFloat(cPos.split(' ')[1]) || 50;
             zoom = parseFloat(cZoom);
@@ -170,12 +168,11 @@
                 modalCriar.hidden = true;
                 $('atelie-vazio').hidden = true;
                 $('atelie-conteudo').hidden = false;
+                $('atelie-abas').hidden = false;
+                $('aba-conteudos-wrapper').hidden = false;
                 atelieAtual = data;
                 renderizarAtelie(data);
-
-                if (isDesktop()) {
-                    preencherPainel(data);
-                }
+                if (isDesktop()) preencherPainel(data);
 
             } catch (err) {
                 console.error(err);
@@ -197,22 +194,20 @@
         const inputCapa = $('input-config-capa');
         const btnUploadCapa = $('btn-upload-capa');
 
-        function atualizarTransformacao() {
-            arrastavel.style.backgroundPosition = `${posX}% ${posY}%`;
-            arrastavel.style.transform = `scale(${zoom})`;
-        }
-
-        // Abre a gaveta (apenas útil para mobile/tablet)
         function abrirGaveta() {
             gaveta.classList.add('ativa');
             overlay.classList.add('ativa');
             document.body.classList.add('atelie-gaveta-aberta');
-            preencherPainel(atelieAtual);
+            if (atelieAtual.cover_url) {
+                arrastavel.style.backgroundImage = `url('${atelieAtual.cover_url}')`;
+                container.style.display = 'block';
+            } else {
+                container.style.display = 'none';
+            }
             atualizarTransformacao();
         }
 
         function fecharGaveta() {
-            // Se estiver no desktop, não permite fechar
             if (isDesktop()) return; 
             gaveta.classList.remove('ativa');
             overlay.classList.remove('ativa');
@@ -228,7 +223,6 @@
             const file = inputCapa.files[0];
             if (!file) return;
             fileCapa = file;
-
             const reader = new FileReader();
             reader.onload = (e) => {
                 bgImageTemp = e.target.result;
@@ -255,7 +249,12 @@
             btnUploadAvatar.textContent = 'Avatar Selecionado ✓';
         });
 
-        // Lógica de Drag & Pinch (Pointer/Touch)
+        function atualizarTransformacao() {
+            arrastavel.style.backgroundPosition = `${posX}% ${posY}%`;
+            arrastavel.style.transform = `scale(${zoom})`;
+        }
+
+        // Lógica de Drag
         container.addEventListener('pointerdown', (e) => {
             if (e.pointerType === 'touch' && e.isPrimary === false) return;
             if (e.touches && e.touches.length === 2) return;
@@ -264,7 +263,6 @@
             startX = e.clientX - (posX * container.offsetWidth / 100);
             startY = e.clientY - (posY * container.offsetHeight / 100);
         });
-
         container.addEventListener('pointermove', (e) => {
             if (!isDragging) return;
             if (e.pointerType === 'touch' && e.touches && e.touches.length === 2) return;
@@ -273,10 +271,10 @@
             posY = Math.max(0, Math.min(100, (e.clientY - startY) / container.offsetHeight * 100));
             atualizarTransformacao();
         });
-
         container.addEventListener('pointerup', () => { isDragging = false; });
         container.addEventListener('pointercancel', () => { isDragging = false; });
 
+        // Pinch
         container.addEventListener('touchstart', (e) => {
             if (e.touches.length === 2) {
                 isDragging = false;
@@ -285,7 +283,6 @@
                 pinchInicial = Math.hypot(dx, dy);
             }
         }, { passive: true });
-
         container.addEventListener('touchmove', (e) => {
             if (e.touches.length === 2 && pinchInicial > 0) {
                 e.preventDefault();
@@ -298,7 +295,6 @@
                 atualizarTransformacao();
             }
         }, { passive: false });
-
         container.addEventListener('touchend', () => { pinchInicial = 0; });
 
         container.addEventListener('wheel', (e) => {
@@ -308,16 +304,14 @@
             atualizarTransformacao();
         }, { passive: false });
 
-        // Submissão do formulário
+        // Salvar Configurações
         $('form-config-atelie').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = $('btn-salvar-config');
             btn.disabled = true;
             btn.textContent = 'Salvando...';
-
             const nome = $('input-config-nome').value.trim();
             const bio = $('input-config-bio').value.trim();
-
             let newAvatarUrl = atelieAtual.avatar_url;
             let newCoverUrl = atelieAtual.cover_url;
 
@@ -328,45 +322,164 @@
                     if (up.error) throw up.error;
                     newAvatarUrl = db.storage.from('avatars').getPublicUrl(path).data.publicUrl;
                 }
-
                 if (fileCapa) {
                     const path = usuarioLogado.id + '/atelie-capa-' + Date.now() + '.jpg';
                     const up = await db.storage.from('avatars').upload(path, fileCapa);
                     if (up.error) throw up.error;
                     newCoverUrl = db.storage.from('avatars').getPublicUrl(path).data.publicUrl;
                 }
-
                 const cPos = `${posX.toFixed(0)}% ${posY.toFixed(0)}%`;
-
                 const { data, error } = await db.from('ateliers').update({
-                    name: nome,
-                    description: bio,
-                    avatar_url: newAvatarUrl,
-                    cover_url: newCoverUrl,
-                    cover_position: cPos,
-                    cover_zoom: zoom
+                    name: nome, description: bio, avatar_url: newAvatarUrl, cover_url: newCoverUrl, cover_position: cPos, cover_zoom: zoom
                 }).eq('id', atelieAtual.id).select().single();
 
                 if (error) throw error;
-
                 atelieAtual = data;
                 renderizarAtelie(data);
-
                 fileAvatar = null;
                 fileCapa = null;
                 btnUploadAvatar.textContent = 'Escolher Imagem de Perfil';
-
                 fecharGaveta();
-                
-                // Se estiver no desktop, apenas atualiza o painel visualmente (sem fechar)
                 if (isDesktop()) preencherPainel(data);
-
             } catch (err) {
                 console.error(err);
                 alert('Erro ao salvar as configurações.');
             } finally {
                 btn.disabled = false;
                 btn.textContent = 'Salvar Alterações';
+            }
+        });
+    }
+
+    // ==============================================
+    // ABAS E EDITOR EMBUTIDO
+    // ==============================================
+    function configurarAbas() {
+        const botoes = document.querySelectorAll('.aba-btn');
+        const conteudos = document.querySelectorAll('.aba-conteudo');
+
+        botoes.forEach(btn => {
+            btn.addEventListener('click', () => {
+                botoes.forEach(b => b.classList.remove('ativa'));
+                conteudos.forEach(c => c.classList.remove('ativa'));
+
+                btn.classList.add('ativa');
+                const alvo = btn.getAttribute('data-aba');
+                if (alvo === 'canal') $('aba-canal').classList.add('ativa');
+                if (alvo === 'redacao') $('aba-redacao').classList.add('ativa');
+            });
+        });
+
+        // Botão de iniciar a escrita
+        $('btn-iniciar-escrita').addEventListener('click', () => {
+            $('redacao-intro').hidden = true;
+            $('redacao-editor').hidden = false;
+        });
+
+        // Botão de cancelar
+        $('btn-cancelar-escrita').addEventListener('click', () => {
+            if (confirm('Tem certeza que deseja apagar o que escreveu?')) {
+                $('input-titulo').value = '';
+                $('input-conteudo').innerHTML = '<p>Comece a escrever sua história...</p>';
+                $('redacao-editor').hidden = true;
+                $('redacao-intro').hidden = false;
+            }
+        });
+    }
+
+    function configurarEditorEmbutido() {
+        const botoes = document.querySelectorAll('.editor-toolbar button[data-cmd]');
+        const editor = $('input-conteudo');
+
+        botoes.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const cmd = btn.getAttribute('data-cmd');
+                const value = btn.getAttribute('data-value') || null;
+                document.execCommand(cmd, false, value);
+                editor.focus();
+            });
+        });
+
+        const btnImg = $('btn-inserir-img');
+        const inputImg = $('input-img');
+
+        btnImg.addEventListener('click', (e) => {
+            e.preventDefault();
+            inputImg.click();
+        });
+
+        inputImg.addEventListener('change', async () => {
+            const file = inputImg.files[0];
+            inputImg.value = '';
+            if (!file) return;
+
+            btnImg.disabled = true;
+            const txtOriginal = btnImg.textContent;
+            btnImg.textContent = '⏳';
+
+            try {
+                const path = usuarioLogado.id + '/img_' + Date.now() + '.' + (file.type.split('/')[1] || 'jpg');
+                const up = await db.storage.from('avatars').upload(path, file);
+                if (up.error) throw up.error;
+                const url = db.storage.from('avatars').getPublicUrl(path).data.publicUrl;
+                document.execCommand('insertImage', false, url);
+            } catch (err) {
+                console.error(err);
+                alert('Erro ao inserir imagem.');
+            } finally {
+                btnImg.disabled = false;
+                btnImg.textContent = txtOriginal;
+            }
+        });
+
+        // Validação do placeholder
+        editor.addEventListener('focus', () => {
+            if (editor.textContent.trim() === 'Comece a escrever sua história...') {
+                editor.innerHTML = '';
+            }
+        }, { once: true });
+
+        // Publicar Post
+        $('btn-publicar-atelie').addEventListener('click', async () => {
+            const btn = $('btn-publicar-atelie');
+            const titulo = $('input-titulo').value.trim();
+            const htmlCru = editor.innerHTML;
+            const categoria = $('input-categoria').value;
+
+            if (!titulo) return alert('Adicione um título ao seu conteúdo.');
+            if (!htmlCru || htmlCru === '<p>Comece a escrever sua história...</p>' || editor.textContent.trim() === '') {
+                return alert('Escreva algo antes de publicar!');
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Publicando...';
+
+            try {
+                const { error } = await db.from('posts').insert([{
+                    author_id: usuarioLogado.id,
+                    title: titulo,
+                    content: htmlCru, // Idealmente usar um sanitizador no backend
+                    category: categoria
+                }]);
+
+                if (error) throw error;
+
+                alert('Conteúdo publicado com sucesso no seu canal!');
+                $('input-titulo').value = '';
+                editor.innerHTML = '<p>Comece a escrever sua história...</p>';
+                $('redacao-editor').hidden = true;
+                $('redacao-intro').hidden = false;
+
+                // Muda de volta para a aba do canal
+                document.querySelector('[data-aba="canal"]').click();
+
+            } catch (err) {
+                console.error(err);
+                alert('Erro ao publicar. Tente novamente.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Publicar no Canal';
             }
         });
     }
