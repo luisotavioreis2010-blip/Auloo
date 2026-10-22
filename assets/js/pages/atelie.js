@@ -7,7 +7,6 @@
     let atelieAtual = null;
     let fileAvatar = null;
     let fileCapa = null;
-    let fileImgEditor = null;
     let arquivoCapaEditor = null;
 
     let posX = 50, posY = 50;
@@ -324,10 +323,8 @@
             btn.addEventListener('click', () => {
                 botoes.forEach(b => b.classList.remove('ativa'));
                 btn.classList.add('ativa');
-                
                 const alvo = btn.getAttribute('data-aba');
                 
-                // Limpa classes de estado
                 main.classList.remove('modo-redacao');
                 $('aba-canal').classList.remove('ativa');
                 $('aba-redacao').classList.remove('ativa');
@@ -335,30 +332,27 @@
                 if (alvo === 'canal') {
                     $('aba-canal').classList.add('ativa');
                 } else if (alvo === 'redacao') {
-                    main.classList.add('modo-redacao'); // Ativa o layout de tela cheia
+                    main.classList.add('modo-redacao');
                     $('aba-redacao').classList.add('ativa');
-                    // Reseta a tela de introdução
                     $('redacao-intro').hidden = false;
                     $('redacao-editor').hidden = true;
                 }
             });
         });
 
-        // Botão iniciar escrita
         $('btn-iniciar-escrita').addEventListener('click', () => {
             $('redacao-intro').hidden = true;
             $('redacao-editor').hidden = false;
         });
 
-        // Botão cancelar escrita
         $('btn-cancelar-escrita').addEventListener('click', () => {
             if (confirm('Tem certeza que deseja apagar o que escreveu?')) {
                 $('input-titulo').value = '';
                 $('input-conteudo').innerHTML = '<p>Comece a escrever sua história...</p>';
+                $('editor-capa').style.backgroundImage = '';
+                $('editor-capa').innerHTML = '<span>Adicionar Capa</span>';
                 $('redacao-editor').hidden = true;
                 $('redacao-intro').hidden = false;
-                
-                // Volta para a aba principal
                 document.querySelector('[data-aba="canal"]').click();
             }
         });
@@ -410,13 +404,14 @@
             }
         });
 
-        // Capa do editor
+        // Capa do Editor (Agora com Upload Funcional)
         const capaEl = $('editor-capa');
-        const inputCapa = document.createElement('input');
-        inputCapa.type = 'file'; inputCapa.accept = 'image/*';
-        capaEl.addEventListener('click', () => inputCapa.click());
-        inputCapa.addEventListener('change', () => {
-            const file = inputCapa.files[0];
+        const inputCapaEditor = document.createElement('input');
+        inputCapaEditor.type = 'file'; inputCapaEditor.accept = 'image/*';
+        
+        capaEl.addEventListener('click', () => inputCapaEditor.click());
+        inputCapaEditor.addEventListener('change', () => {
+            const file = inputCapaEditor.files[0];
             if (!file) return;
             arquivoCapaEditor = file;
             const reader = new FileReader();
@@ -434,7 +429,7 @@
             }
         }, { once: true });
 
-        // Publicar
+        // Publicar Post
         $('btn-publicar-atelie').addEventListener('click', async () => {
             const btn = $('btn-publicar-atelie');
             const titulo = $('input-titulo').value.trim();
@@ -475,7 +470,6 @@
                 $('redacao-editor').hidden = true;
                 $('redacao-intro').hidden = false;
                 
-                // Volta para o canal
                 document.querySelector('[data-aba="canal"]').click();
 
             } catch (err) {
