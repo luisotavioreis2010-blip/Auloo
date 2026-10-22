@@ -12,7 +12,7 @@
     
     <link rel="stylesheet" href="assets/css/global.css">
     <link rel="stylesheet" href="assets/css/estante.css">
-    <link rel="stylesheet" href="assets/css/atelie.css?v=45">
+    <link rel="stylesheet" href="assets/css/atelie.css?v=46">
 </head>
 <body class="mural-body">
 
@@ -105,8 +105,8 @@
     <main class="atelie-main" id="atelie-main">
 
         <div id="atelie-vazio" class="atelie-vazio" hidden>
-            <h2>Seu Ateliê está vazio.</h2>
-            <p>Este é o seu espaço de criação. Abra o seu Ateliê para começar.</p>
+            <h2>Seu Ateliê ainda está em branco.</h2>
+            <p>Este é o seu espaço de criação. Crie o seu Ateliê para começar a publicar textos.</p>
             <button id="btn-criar-atelie" class="btn-primario" type="button">Abrir Meu Ateliê</button>
         </div>
 
@@ -134,8 +134,8 @@
             </nav>
 
             <section id="aba-canal" class="aba-conteudo ativa">
-                <div class="canal-vazio">
-                    <p>O seu canal ainda não tem publicações.</p>
+                <div id="feed-canal" class="canal-feed">
+                    <p class="canal-vazio">Seu ateliê ainda está em branco. Publique seu primeiro texto na aba <strong>Redação</strong> para começar.</p>
                 </div>
             </section>
         </div>
@@ -144,8 +144,8 @@
             
             <div id="redacao-intro" class="redacao-intro">
                 <img src="assets/img/ilustracoes/Thesis-bro.png" alt="Escrevendo" class="ilustracao-redacao">
-                <h2>A página em branco</h2>
-                <p>Toda grande obra começa com uma única palavra. Dê vida às suas ideias.</p>
+                <h2>Sua próxima publicação começa aqui</h2>
+                <p>Escreva, adicione imagens e compartilhe com o Mural quando estiver pronto.</p>
                 <button class="btn-primario" id="btn-iniciar-escrita" type="button">Começar a Escrever</button>
             </div>
 
@@ -168,7 +168,7 @@
                         <div class="editor-divisor"></div>
                         <button type="button" title="Inserir imagem" id="btn-inserir-img"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></button>
                         
-                        <button type="button" title="Opções do Artigo" id="btn-opcoes-mobile" class="btn-mobile-only">
+                        <button type="button" title="Opções do Artigo" id="btn-opcoes-mobile" class="btn-opcoes-mobile">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
                         </button>
                     </div>
@@ -190,7 +190,6 @@
                         </div>
                     </div>
 
-                    <!-- Caixa de seleção com alças de redimensionar -->
                     <div class="img-selecao" id="img-selecao" contenteditable="false" aria-hidden="true">
                         <span class="img-handle" data-h="nw"></span>
                         <span class="img-handle" data-h="ne"></span>
@@ -199,11 +198,10 @@
                         <span class="img-selecao-rotulo" id="img-selecao-rotulo"></span>
                     </div>
 
-                    <!-- Barra flutuante da imagem -->
                     <div class="img-flutuante" id="img-flutuante" contenteditable="false" role="toolbar" aria-label="Opções da imagem">
                         <button type="button" data-tam="p" title="Pequena">P</button>
                         <button type="button" data-tam="m" title="Média">M</button>
-                        <button type="button" data-tam="g" title="Grande (largura total)">G</button>
+                        <button type="button" data-tam="g" title="Grande">G</button>
                         <span class="sep"></span>
                         <button type="button" data-alin="left" title="Esquerda · texto ao redor"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="8" height="7" rx="1"/><path d="M14 5h7M14 9h7M3 15h18M3 19h18"/></svg></button>
                         <button type="button" data-alin="center" title="Centralizada"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="4" width="10" height="7" rx="1"/><path d="M3 15h18M3 19h18"/></svg></button>
@@ -213,7 +211,6 @@
                         <button type="button" data-acao="remover" title="Remover imagem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg></button>
                     </div>
 
-                    <!-- Linha que mostra onde a imagem vai cair ao arrastar -->
                     <div class="img-indicador" id="img-indicador" hidden><span></span></div>
                 </div>
             </div>
@@ -234,13 +231,10 @@
         </div>
     </div>
 
-    <!-- ==============================================
-         GAVETA LATERAL (os dois painéis têm a mesma estrutura)
-         ============================================== -->
+    <!-- GAVETA LATERAL INTELIGENTE -->
     <div class="gaveta-overlay-config" id="overlay-config"></div>
     <aside class="atelie-gaveta" id="gaveta-config">
 
-        <!-- Painel do Canal -->
         <div id="config-canal" class="config-painel ativo">
             <header class="atelie-gaveta-header">
                 <div class="gaveta-titulo-bloco">
@@ -274,7 +268,7 @@
                                 </div>
                             </div>
                             <div class="avatar-acoes">
-                                <p class="gaveta-dica">Arraste a imagem para enquadrar o rosto.</p>
+                                <p class="gaveta-dica">Arraste para centralizar o rosto. Use a barra para aproximar.</p>
                                 <button type="button" class="btn-container" id="btn-upload-avatar">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                                     Escolher imagem
@@ -307,6 +301,7 @@
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                             Escolher imagem de capa
                         </button>
+                        <button type="button" class="btn-remover-capa" id="btn-remover-capa" hidden>Remover capa</button>
                         <input type="file" id="input-config-capa" accept="image/*" hidden>
                     </section>
 
@@ -321,7 +316,6 @@
             </form>
         </div>
 
-        <!-- Painel da Redação -->
         <div id="config-redacao" class="config-painel" hidden>
             <header class="atelie-gaveta-header">
                 <div class="gaveta-titulo-bloco">
@@ -338,12 +332,17 @@
                         <h3 class="gaveta-secao-titulo"><span class="romano">I</span>Capa do artigo</h3>
                         <div id="capa-artigo-preview" class="capa-preview-container capa-preview-container--fixa" hidden>
                             <div id="capa-artigo-arrastavel" class="capa-preview-arrastavel"></div>
-                            <button type="button" class="capa-remover" id="btn-remover-capa-artigo" aria-label="Remover capa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+                        </div>
+                        <div class="gaveta-zoom" id="capa-artigo-zoom-linha" hidden>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/><path d="M8 11h6"/></svg>
+                            <input type="range" id="capa-artigo-zoom" min="1" max="3" step="0.01" value="1" aria-label="Zoom da capa do artigo">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/><path d="M8 11h6M11 8v6"/></svg>
                         </div>
                         <button type="button" class="btn-container" id="btn-upload-capa-artigo">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                             Escolher imagem de capa
                         </button>
+                        <button type="button" class="btn-remover-capa" id="btn-remover-capa-artigo" hidden>Remover capa</button>
                         <input type="file" id="input-capa-artigo" accept="image/*" hidden>
                     </section>
 
@@ -391,9 +390,9 @@
                     <section class="gaveta-secao">
                         <h3 class="gaveta-secao-titulo"><span class="romano">III</span>Dicas do editor</h3>
                         <ul class="gaveta-dicas">
-                            <li><span><strong>Clique</strong> numa imagem para mudar o tamanho pelas alças.</span></li>
-                            <li><span><strong>Arraste</strong> a imagem para mover. Solte na borda esquerda ou direita para o texto contornar.</span></li>
-                            <li><span><strong>Botão direito</strong> na imagem abre todas as opções.</span></li>
+                            <li><span><strong>Toque</strong> na imagem para ver as opções de tamanho e alinhamento.</span></li>
+                            <li><span><strong>Arraste</strong> a imagem para reposicionar no texto.</span></li>
+                            <li><span><strong>Solte</strong> na borda lateral para o texto contornar a imagem.</span></li>
                         </ul>
                     </section>
 
@@ -409,7 +408,6 @@
         </div>
     </aside>
 
-    <!-- Menu de contexto das imagens (botão direito) -->
     <div class="img-menu" id="img-menu" role="menu" hidden>
         <div class="img-menu-titulo">Imagem</div>
         <button type="button" role="menuitem" data-alin="left">
@@ -460,6 +458,6 @@
     <script src="assets/js/auth.js"></script>
     <script src="assets/js/lib/utils.js"></script>
     <script src="assets/js/layout.js"></script>
-    <script src="assets/js/pages/atelie.js?v=45"></script>
+    <script src="assets/js/pages/atelie.js?v=46"></script>
 </body>
 </html>

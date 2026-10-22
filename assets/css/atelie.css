@@ -1,11 +1,10 @@
 @charset "UTF-8";
 /* ==============================================
-   ATELIE.CSS — v45 (Gaveta refinada + Editor com imagens flexíveis)
+   ATELIE.CSS — v46 (Corrigido e consolidado)
    ============================================== */
 
 :root { --gaveta-w: 420px; }
 
-/* 0. RESET E SCROLL GLOBAL */
 html, body { overflow-x: hidden; }
 body.mural-body { overflow-y: auto !important; }
 
@@ -56,11 +55,19 @@ body.mural-body { overflow-y: auto !important; }
 .aba-conteudo { display: none; width: 100%; animation: fadeAba 0.4s ease; }
 .aba-conteudo.ativa { display: block; }
 @keyframes fadeAba { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-.canal-vazio { text-align: center; padding: 3rem 1rem; color: var(--tinta-clara); font-family: var(--fonte-display); font-size: 1.4rem; font-style: italic; }
+.canal-vazio { text-align: center; padding: 3rem 1rem; color: var(--tinta-clara); font-family: var(--fonte-display); font-size: 1.2rem; font-style: italic; }
+.canal-vazio strong { color: var(--vinho); font-style: normal; font-family: var(--fonte-corpo); font-size: 0.8rem; letter-spacing: 1px; }
 
-/* ==============================================
-   4. REDAÇÃO (TELA CHEIA)
-   ============================================== */
+/* Feed do canal (posts publicados) */
+.canal-feed { display: flex; flex-direction: column; gap: 1.5rem; width: 100%; }
+.canal-post { background: var(--papel-claro); border: 1px solid var(--dourado-fraco); border-radius: 8px; overflow: hidden; }
+.canal-post-cover { width: 100%; aspect-ratio: 16/9; background: var(--papel-escuro); display: block; object-fit: cover; }
+.canal-post-corpo { padding: 1.5rem; }
+.canal-post-categoria { font-family: var(--fonte-corpo); font-size: 0.62rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--dourado); margin-bottom: 0.5rem; }
+.canal-post-titulo { font-family: var(--fonte-titulo); font-size: 1.5rem; font-style: italic; color: var(--vinho); margin-bottom: 0.5rem; line-height: 1.2; }
+.canal-post-data { font-family: var(--fonte-corpo); font-size: 0.7rem; color: var(--tinta-clara); }
+
+/* 4. REDAÇÃO */
 #atelie-main.modo-redacao {
     justify-content: flex-start;
     padding: 2rem 1.5rem 5rem;
@@ -71,22 +78,20 @@ body.mural-body { overflow-y: auto !important; }
 #atelie-main.modo-redacao #wrapper-canal { display: none !important; }
 #atelie-main.modo-redacao .atelie-abas { display: none !important; }
 
-/* Intro (centralizada na vertical) */
 .redacao-intro { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 2rem 1rem; max-width: 600px; min-height: calc(100vh - var(--navbar-h, 68px) - 8rem); margin: 0 auto; animation: fadeAba 0.4s ease; }
 .ilustracao-redacao { max-width: 320px; margin-bottom: 2rem; filter: drop-shadow(0 20px 40px rgba(92, 26, 26, 0.1)); animation: flutuarIlustracao 6s ease-in-out infinite; }
 @keyframes flutuarIlustracao { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
 .redacao-intro h2 { font-family: var(--fonte-titulo); font-style: italic; color: var(--vinho); font-size: 2.2rem; margin-bottom: 1rem; }
 .redacao-intro p { font-family: var(--fonte-display); font-size: 1.2rem; color: var(--tinta-suave); margin-bottom: 2rem; line-height: 1.5; }
 
-/* Editor */
 .redacao-editor { width: 100%; max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; animation: fadeAba 0.4s ease; }
 
-.btn-mobile-only { display: none !important; }
+.btn-opcoes-mobile { display: none !important; }
 
 .editor-topo-custom {
     position: sticky;
     top: var(--navbar-h, 68px);
-    z-index: 20;
+    z-index: 90;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -110,7 +115,6 @@ body.mural-body { overflow-y: auto !important; }
 .editor-divisor { width: 1px; height: 18px; background: var(--papel-sombra); margin: 0 0.5rem; }
 .btn-publicar { padding: 0.55rem 1.6rem !important; font-size: 0.68rem !important; }
 
-/* Folha de papel centralizada */
 .editor-folha {
     position: relative; width: 100%; background: #fff;
     border: 1px solid var(--papel-sombra); border-top: none; border-radius: 0 0 10px 10px;
@@ -138,7 +142,7 @@ body.mural-body { overflow-y: auto !important; }
 .editor-status { clear: both; display: flex; align-items: center; justify-content: center; gap: 0.6rem; margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--papel-sombra); font-family: var(--fonte-corpo); font-size: 0.65rem; letter-spacing: 1px; text-transform: uppercase; color: var(--tinta-clara); }
 .editor-status svg { width: 14px; height: 14px; }
 
-/* ---------- Imagens no conteúdo ---------- */
+/* Imagens no editor */
 .editor-conteudo figure.img-bloco { position: relative; box-sizing: border-box; width: 55%; max-width: 100%; padding: 0; cursor: pointer; }
 .img-bloco[data-align="center"] { clear: both; margin: 1.8rem auto; }
 .img-bloco[data-align="left"]   { float: left;  margin: 0.4rem 1.6rem 1rem 0; }
@@ -148,7 +152,6 @@ body.mural-body { overflow-y: auto !important; }
 .img-bloco figcaption { margin-top: 0.5rem; text-align: center; font-family: var(--fonte-display); font-size: 1rem; line-height: 1.4; font-style: italic; color: var(--tinta-clara); outline: none; cursor: text; }
 .img-bloco figcaption:empty::before { content: attr(data-ph); opacity: 0.5; }
 
-/* Caixa de seleção com alças de redimensionar */
 .img-selecao { position: absolute; z-index: 14; display: none; pointer-events: none; border: 2px solid var(--dourado); border-radius: 6px; }
 .img-selecao.ativa { display: block; }
 .img-handle { position: absolute; width: 14px; height: 14px; background: #fff; border: 2px solid var(--dourado); border-radius: 50%; pointer-events: auto; touch-action: none; box-shadow: 0 2px 6px rgba(0,0,0,0.2); transition: transform 0.15s; }
@@ -162,7 +165,6 @@ body.mural-body { overflow-y: auto !important; }
 .img-selecao-rotulo { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); padding: 0.2rem 0.6rem; background: rgba(26,22,20,0.85); color: #fff; border-radius: 999px; font-family: var(--fonte-corpo); font-size: 0.65rem; letter-spacing: 0.5px; opacity: 0; transition: opacity 0.2s; }
 .img-selecao.redimensionando .img-selecao-rotulo { opacity: 1; }
 
-/* Barra flutuante da imagem */
 .img-flutuante { position: absolute; z-index: 15; display: none; align-items: center; gap: 0.15rem; padding: 0.3rem; background: #1A1614; border-radius: 10px; transform: translateX(-50%); box-shadow: 0 10px 26px rgba(0,0,0,0.3); }
 .img-flutuante.ativa { display: flex; }
 .img-flutuante button { width: 32px; height: 30px; display: inline-flex; align-items: center; justify-content: center; background: transparent; border: none; border-radius: 6px; color: #fff; cursor: pointer; font-family: var(--fonte-corpo); font-size: 0.7rem; font-weight: 600; transition: background 0.15s; }
@@ -172,7 +174,6 @@ body.mural-body { overflow-y: auto !important; }
 .img-flutuante button.grip { cursor: grab; touch-action: none; }
 .img-flutuante .sep { width: 1px; height: 16px; background: rgba(255,255,255,0.2); margin: 0 0.25rem; }
 
-/* Arrastar e soltar */
 .img-indicador { position: absolute; z-index: 16; height: 3px; border-radius: 3px; background: var(--dourado); box-shadow: 0 0 0 3px rgba(184,137,74,0.22); pointer-events: none; }
 .img-indicador[hidden] { display: none; }
 .img-indicador span { position: absolute; top: -28px; left: 0; padding: 0.15rem 0.55rem; background: #1A1614; color: #fff; border-radius: 999px; font-family: var(--fonte-corpo); font-size: 0.6rem; letter-spacing: 0.5px; white-space: nowrap; }
@@ -181,7 +182,6 @@ body.mural-body { overflow-y: auto !important; }
 body.img-arrastando, body.img-arrastando * { cursor: grabbing !important; user-select: none !important; }
 body.img-arrastando .img-flutuante, body.img-arrastando .img-selecao { opacity: 0; }
 
-/* Menu de contexto (botão direito) */
 .img-menu { position: fixed; z-index: 1100; min-width: 260px; padding: 0.4rem; background: var(--papel-claro); border: 1px solid rgba(184,137,74,0.4); border-radius: 12px; box-shadow: 0 18px 44px rgba(26,22,20,0.22); animation: menuEntrar 0.15s ease; }
 .img-menu[hidden] { display: none; }
 @keyframes menuEntrar { from { opacity: 0; transform: translateY(-4px) scale(0.98); } to { opacity: 1; transform: none; } }
@@ -201,17 +201,11 @@ body.img-arrastando .img-flutuante, body.img-arrastando .img-selecao { opacity: 
 .img-menu-seg button:hover { color: var(--vinho); }
 .img-menu-seg button.ativo { background: var(--vinho); color: #fff; }
 
-/* ==============================================
-   5. GAVETA LATERAL
-   ============================================== */
-
-/* ---------- Casca da gaveta (largura única para os dois painéis) ---------- */
+/* 5. GAVETA */
 .atelie-gaveta {
     position: fixed; top: var(--navbar-h, 68px); right: 0; bottom: 0; z-index: 250;
     width: min(100vw, var(--gaveta-w));
-    background:
-        linear-gradient(180deg, rgba(184, 137, 74, 0.06) 0%, transparent 220px),
-        var(--papel-claro);
+    background: linear-gradient(180deg, rgba(184, 137, 74, 0.06) 0%, transparent 220px), var(--papel-claro);
     border-left: 1px solid var(--papel-sombra);
     box-shadow: -10px 0 40px rgba(26, 22, 20, 0.08);
     transform: translateX(100%); visibility: hidden;
@@ -226,7 +220,6 @@ body.img-arrastando .img-flutuante, body.img-arrastando .img-selecao { opacity: 
 .config-painel { display: none; flex-direction: column; flex: 1; width: 100%; min-width: 0; min-height: 0; }
 .config-painel.ativo { display: flex; }
 
-/* ---------- Cabeçalho ---------- */
 .atelie-gaveta-header { position: relative; display: flex; justify-content: space-between; align-items: flex-start; padding: 1.75rem 1.75rem 1.25rem; flex-shrink: 0; }
 .atelie-gaveta-header::after { content: ''; position: absolute; left: 1.75rem; right: 1.75rem; bottom: 0; height: 1px; background: linear-gradient(90deg, var(--dourado), rgba(184, 137, 74, 0.15) 70%, transparent); }
 .gaveta-titulo-bloco { display: flex; flex-direction: column; gap: 0.3rem; }
@@ -236,7 +229,6 @@ body.img-arrastando .img-flutuante, body.img-arrastando .img-selecao { opacity: 
 .atelie-gaveta-fechar:hover { color: var(--vinho); border-color: var(--dourado-fraco); background: rgba(92, 26, 26, 0.05); }
 .atelie-gaveta-fechar svg { width: 16px; height: 16px; }
 
-/* ---------- Estrutura: corpo rolável + rodapé fixo ---------- */
 .gaveta-form { display: flex; flex-direction: column; flex: 1; min-height: 0; margin: 0; }
 .atelie-gaveta-corpo {
     flex: 1; min-height: 0; overflow-y: auto;
@@ -255,14 +247,12 @@ body.img-arrastando .img-flutuante, body.img-arrastando .img-selecao { opacity: 
     box-shadow: 0 -12px 28px rgba(26, 22, 20, 0.05);
 }
 
-/* ---------- Seções numeradas ---------- */
 .gaveta-secao { display: flex; flex-direction: column; gap: 1rem; padding: 1.25rem; background: #fff; border: 1px solid rgba(184, 137, 74, 0.25); border-radius: 10px; box-shadow: 0 2px 10px rgba(26, 22, 20, 0.03); }
 .gaveta-secao-titulo { display: flex; align-items: center; gap: 0.6rem; font-family: var(--fonte-corpo); font-size: 0.65rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--vinho); margin: 0; }
 .gaveta-secao-titulo .romano { font-family: var(--fonte-titulo); font-style: italic; font-size: 0.95rem; font-weight: 500; letter-spacing: 0; color: var(--dourado); min-width: 1.2rem; }
 .gaveta-secao-titulo::after { content: ''; flex: 1; height: 1px; background: rgba(184, 137, 74, 0.25); }
 .gaveta-dica { font-family: var(--fonte-display); font-size: 0.95rem; font-style: italic; color: var(--tinta-clara); line-height: 1.35; margin: 0; }
 
-/* ---------- Campos ---------- */
 .atelie-gaveta .campo { display: flex; flex-direction: column; gap: 0.4rem; }
 .atelie-gaveta .campo > label { font-family: var(--fonte-corpo); font-size: 0.62rem; font-weight: 700; text-transform: uppercase; color: var(--tinta-clara); letter-spacing: 0.8px; }
 #form-config-atelie .campo input, #form-config-atelie .campo textarea {
@@ -275,7 +265,6 @@ body.img-arrastando .img-flutuante, body.img-arrastando .img-selecao { opacity: 
 #form-config-atelie .campo input:focus, #form-config-atelie .campo textarea:focus { background: #fff; border-color: var(--vinho); box-shadow: 0 0 0 3px rgba(92, 26, 26, 0.07); }
 #form-config-atelie .campo textarea { resize: vertical; min-height: 88px; line-height: 1.4; }
 
-/* ---------- Avatar ---------- */
 .avatar-linha { display: flex; align-items: center; gap: 1.1rem; }
 .avatar-preview-container {
     width: 88px; height: 88px; border-radius: 50%; flex-shrink: 0;
@@ -289,12 +278,12 @@ body.img-arrastando .img-flutuante, body.img-arrastando .img-selecao { opacity: 
     background-size: cover; background-position: 50% 50%; background-repeat: no-repeat;
     display: flex; align-items: center; justify-content: center;
     color: var(--dourado); opacity: 0.8;
+    transform-origin: 50% 50%;
 }
 .avatar-preview-arrastavel.tem-imagem { opacity: 1; }
 .avatar-preview-arrastavel svg { width: 32px; height: 32px; }
 .avatar-acoes { display: flex; flex-direction: column; gap: 0.5rem; flex: 1; min-width: 0; }
 
-/* ---------- Capa ---------- */
 .capa-preview-container {
     position: relative; width: 100%; aspect-ratio: 65 / 24;
     background: var(--papel-escuro); border: 1px solid rgba(184, 137, 74, 0.4); border-radius: 8px;
@@ -302,9 +291,9 @@ body.img-arrastando .img-flutuante, body.img-arrastando .img-selecao { opacity: 
     box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.5);
 }
 .capa-preview-container:active { cursor: grabbing; }
-.capa-preview-arrastavel { width: 100%; height: 100%; background-size: cover; background-position: 50% 50%; background-repeat: no-repeat; }
+.capa-preview-arrastavel { width: 100%; height: 100%; background-size: cover; background-position: 50% 50%; background-repeat: no-repeat; transform-origin: 50% 50%; }
 .capa-preview-container::after {
-    content: 'Arraste para mover · role para dar zoom';
+    content: 'Arraste para mover · use a barra para o zoom';
     position: absolute; left: 0; right: 0; bottom: 0; padding: 0.4rem; text-align: center;
     font-family: var(--fonte-corpo); font-size: 0.58rem; letter-spacing: 0.5px; color: #fff;
     background: linear-gradient(transparent, rgba(26, 22, 20, 0.65)); opacity: 0; transition: opacity 0.25s; pointer-events: none;
@@ -312,12 +301,7 @@ body.img-arrastando .img-flutuante, body.img-arrastando .img-selecao { opacity: 
 .capa-preview-container:hover::after { opacity: 1; }
 .capa-preview-container--fixa { cursor: default; aspect-ratio: 16 / 9; }
 .capa-preview-container--fixa::after { display: none; }
-.capa-preview-container--fixa .capa-preview-arrastavel { background-size: cover; }
 .capa-preview-container[hidden], .capa-vazia[hidden], .gaveta-zoom[hidden] { display: none; }
-
-.capa-remover { position: absolute; top: 8px; right: 8px; z-index: 2; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; background: rgba(26, 22, 20, 0.7); color: #fff; border: none; border-radius: 50%; cursor: pointer; transition: background 0.2s; }
-.capa-remover:hover { background: var(--erro, #a63a3a); }
-.capa-remover svg { width: 14px; height: 14px; }
 
 .capa-vazia {
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.4rem;
@@ -327,14 +311,12 @@ body.img-arrastando .img-flutuante, body.img-arrastando .img-selecao { opacity: 
 }
 .capa-vazia svg { width: 26px; height: 26px; opacity: 0.8; }
 
-/* ---------- Slider de zoom ---------- */
 .gaveta-zoom { display: flex; align-items: center; gap: 0.7rem; color: var(--tinta-clara); }
 .gaveta-zoom svg { width: 15px; height: 15px; flex-shrink: 0; }
 .gaveta-zoom input[type="range"] { flex: 1; height: 4px; border-radius: 2px; background: linear-gradient(90deg, var(--dourado), rgba(184, 137, 74, 0.25)); outline: none; -webkit-appearance: none; appearance: none; cursor: pointer; }
 .gaveta-zoom input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #fff; border: 2px solid var(--dourado); box-shadow: 0 2px 6px rgba(0,0,0,0.18); }
 .gaveta-zoom input[type="range"]::-moz-range-thumb { width: 12px; height: 12px; border-radius: 50%; background: #fff; border: 2px solid var(--dourado); box-shadow: 0 2px 6px rgba(0,0,0,0.18); }
 
-/* ---------- Botões ---------- */
 .atelie-gaveta .btn-container {
     display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%;
     padding: 0.65rem 1rem; background: rgba(184, 137, 74, 0.08);
@@ -344,6 +326,10 @@ body.img-arrastando .img-flutuante, body.img-arrastando .img-selecao { opacity: 
 }
 .atelie-gaveta .btn-container svg { width: 14px; height: 14px; flex-shrink: 0; }
 .atelie-gaveta .btn-container:hover { background: var(--dourado); border-color: var(--dourado); color: #fff; }
+
+.btn-remover-capa { margin-top: 0.4rem; padding: 0.5rem 0.9rem; background: transparent; border: 1px solid rgba(166, 58, 58, 0.35); border-radius: 6px; color: var(--erro, #a63a3a); font-family: var(--fonte-corpo); font-size: 0.62rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; align-self: flex-start; }
+.btn-remover-capa:hover { background: rgba(166, 58, 58, 0.08); }
+.btn-remover-capa[hidden] { display: none; }
 
 .btn-gaveta {
     position: relative; display: flex; align-items: center; justify-content: center; gap: 0.65rem;
@@ -370,7 +356,6 @@ body.img-arrastando .img-flutuante, body.img-arrastando .img-selecao { opacity: 
 .btn-gaveta.carregando::before { content: ''; width: 16px; height: 16px; border: 2px solid rgba(255, 255, 255, 0.4); border-top-color: #fff; border-radius: 50%; animation: girar 0.7s linear infinite; }
 @keyframes girar { to { transform: rotate(360deg); } }
 
-/* ---------- Dropdown de categoria ---------- */
 .dropdown { position: relative; }
 .dropdown-gatilho { display: flex; align-items: center; gap: 0.75rem; width: 100%; padding: 0.6rem 0.8rem; background: var(--papel-claro); border: 1px solid rgba(184, 137, 74, 0.35); border-radius: 10px; cursor: pointer; text-align: left; font-family: var(--fonte-display); font-size: 1.08rem; color: var(--tinta); transition: border-color 0.2s, box-shadow 0.2s, background 0.2s; }
 .dropdown-gatilho:hover { border-color: var(--dourado); }
@@ -388,18 +373,15 @@ body.img-arrastando .img-flutuante, body.img-arrastando .img-selecao { opacity: 
 .dropdown-check { width: 15px; height: 15px; margin-left: auto; color: var(--vinho); opacity: 0; }
 .dropdown-lista li[aria-selected="true"] .dropdown-check { opacity: 1; }
 
-/* ---------- Dicas do editor ---------- */
 .gaveta-dicas { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.75rem; }
 .gaveta-dicas li { display: flex; gap: 0.7rem; align-items: flex-start; font-family: var(--fonte-display); font-size: 1rem; line-height: 1.35; color: var(--tinta-suave); }
 .gaveta-dicas li::before { content: '✦'; color: var(--dourado); font-size: 0.7rem; margin-top: 0.3rem; }
 .gaveta-dicas strong { color: var(--vinho); font-weight: 600; }
 
-/* ---------- Toast ---------- */
 .atelie-toast { position: fixed; left: 50%; bottom: 1.75rem; z-index: 1200; max-width: calc(100vw - 2rem); padding: 0.8rem 1.4rem; background: #1A1614; color: #fff; border-left: 3px solid var(--dourado); border-radius: 8px; font-family: var(--fonte-corpo); font-size: 0.78rem; letter-spacing: 0.3px; box-shadow: 0 14px 34px rgba(0,0,0,0.3); opacity: 0; transform: translate(-50%, 12px); transition: opacity 0.3s, transform 0.3s; }
 .atelie-toast.visivel { opacity: 1; transform: translate(-50%, 0); }
 .atelie-toast.erro { border-left-color: var(--erro, #a63a3a); }
 
-/* Modais */
 .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(26, 22, 20, 0.8); z-index: 999; display: flex; align-items: center; justify-content: center; padding: 1rem; backdrop-filter: blur(4px); }
 .modal-overlay[hidden] { display: none; }
 .modal-conteudo { background: var(--papel-claro); border: 1px solid var(--dourado); border-top: 4px solid var(--vinho); width: 100%; max-width: 500px; padding: 2.5rem; border-radius: 4px; }
@@ -408,16 +390,11 @@ body.img-arrastando .img-flutuante, body.img-arrastando .img-selecao { opacity: 
 .modal-fechar { background: transparent; border: none; cursor: pointer; color: var(--tinta-suave); }
 .modal-fechar svg { width: 18px; height: 18px; }
 
-/* ==============================================
-   RESPONSIVIDADE
-   ============================================== */
-
-@media (min-width: 1025px) and (max-width: 1366px) {
+/* RESPONSIVIDADE */
+@media (max-width: 1366px) {
     .atelie-main { margin-left: 0; padding: 2rem 1rem; }
-    #atelie-main.modo-redacao { margin-right: var(--gaveta-w); padding: 1.5rem 1rem 3rem; }
-    body.atelie-modo-redacao .atelie-gaveta { transform: translateX(0) !important; visibility: visible !important; }
-    body.atelie-modo-redacao .gaveta-overlay-config { display: none !important; }
-    body.atelie-modo-redacao .atelie-gaveta-fechar { display: none !important; }
+    #atelie-main.modo-redacao { margin-right: 0; padding: 1.5rem 1rem 3rem; }
+    .btn-opcoes-mobile { display: inline-flex !important; background: var(--vinho) !important; color: #fff !important; border-color: var(--vinho) !important; }
 }
 
 @media (max-width: 1024px) {
@@ -425,7 +402,7 @@ body.img-arrastando .img-flutuante, body.img-arrastando .img-selecao { opacity: 
     #atelie-main.modo-redacao { padding: 1rem 0.75rem 3rem; }
     .editor-folha { padding: 2.5rem 1.75rem 2rem; border-left: 1px solid var(--papel-sombra); border-right: 1px solid var(--papel-sombra); }
     .editor-topo-custom { border-radius: 10px 10px 0 0; top: 0; position: relative; }
-    .btn-mobile-only { display: inline-flex !important; margin-left: auto; background: var(--vinho) !important; color: #fff !important; border-color: var(--vinho) !important; }
+    .atelie-gaveta { max-width: 100vw; }
 }
 
 @media (max-width: 768px) {

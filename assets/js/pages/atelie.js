@@ -12,15 +12,13 @@
     let avatarImageUrl = null;
     let avatarEditado = false;
 
-    let avatarFr = null;   // enquadrador do avatar
-    let capaFr = null;     // enquadrador da capa do ateliê
+    let avatarFr = null;
+    let capaFr = null;
+    let capaArtigoFr = null;
 
     const MAX_MB = 5;
-    const isMobile = () => window.matchMedia('(max-width: 1024px)').matches;
+    const isMobile = () => window.matchMedia('(max-width: 1366px)').matches;
 
-    // ==============================================
-    // UTILITÁRIOS
-    // ==============================================
     async function aguardarSupabase() {
         for (let i = 0; i < 30; i++) {
             if (window.supabaseClient) return window.supabaseClient;
@@ -56,7 +54,6 @@
         }, 3200);
     }
 
-    // Troca o rótulo do botão sem apagar o ícone
     function estadoBotao(btn, ocupado, textoOcupado) {
         const alvo = btn.querySelector('.btn-rotulo') || btn;
         if (!btn.dataset.rotulo) btn.dataset.rotulo = alvo.textContent;
@@ -73,11 +70,9 @@
     }
 
     // ==============================================
-    // ENQUADRADOR (arrastar + zoom) — usado no avatar e na capa
-    // Modelo: "cover" + posição em % + zoom. A posição define qual parte
-    // do espaço livre fica visível (igual ao object-position do CSS).
+    // ENQUADRADOR (arrastar + zoom) — usado no avatar e nas capas
     // ==============================================
-    function criarEnquadrador({ container, camada, slider, linhaZoom, aoImagem, aoMudar }) {
+    function criarEnquadrador({ container, camada, slider, linhaZoom, aoImagem, aoMudar, proporcao }) {
         const est = { x: 50, y: 50, zoom: 1, nw: 0, nh: 0, pronto: false };
         const ponteiros = new Map();
         let ix = 0, iy = 0, x0 = 50, y0 = 50, dist0 = 0, zoom0 = 1;
@@ -93,7 +88,8 @@
         }
 
         function medidas() {
-            const cw = container.clientWidth, ch = container.clientHeight;
+            const rect = container.getBoundingClientRect();
+            const cw = rect.width, ch = rect.height;
             const s = Math.max(cw / est.nw, ch / est.nh);
             return {
                 s,
@@ -189,7 +185,9 @@
                 if (aoImagem) aoImagem(false);
             },
             estado: () => ({ x: est.x, y: est.y, zoom: est.zoom }),
-            temImagem: () => est.pronto
+            temImagem: () => est.pronto,
+            temEnquadramento: () => est.pronto && (est.x !== 50 || est.y !== 50 || est.zoom !== 1),
+            urlAtual: () => camada.style.backgroundImage.replace(/^url\(["']?/, '').replace(/["']?\)$/, '')
         };
     }
 
@@ -233,6 +231,7 @@
             atelieAtual = atelie;
             renderizarAtelie(atelie);
             preencherPainel(atelie);
+            carregarFeedCanal(atelie);
         }
     }
 
@@ -251,6 +250,11 @@
             img.src = urlAvatar;
             img.alt = 'Avatar do ateliê';
             img.referrerPolicy = 'no-referrer';
+            const [apx, apy] = parsePos(atelie.avatar_position || '50% 50%');
+            const apz = parseFloat(atelie.avatar_zoom) || 1;
+            img.style.objectPosition = apx + '% ' + apy + '%';
+            img.style.transformOrigin = apx + '% ' + apy + '%';
+            img.style.transform = 'scale(' + apz + ')';
             img.onerror = function () {
                 img.remove();
                 const span = document.createElement('span');
@@ -287,21 +291,91 @@
             if (atelie.cover_url) {
                 const [x, y] = parsePos(atelie.cover_position);
                 capaFr.carregar(atelie.cover_url, { x, y, zoom: parseFloat(atelie.cover_zoom) || 1 });
+                $('btn-remover-capa').hidden = false;
             } else {
                 capaFr.limpar();
+                $('btn-remover-capa').hidden = true;
             }
         }
 
         if (avatarFr) {
             if (atelie.avatar_url) {
                 avatarImageUrl = atelie.avatar_url;
-                avatarFr.carregar(atelie.avatar_url);
+                const [ax, ay] = parsePos(atelie.avatar_position || '50% 50%');
+                avatarFr.carregar(atelie.avatar_url, { x: ax, y: ay, zoom: parseFloat(atelie.avatar_zoom) || 1 });
             } else {
                 avatarImageUrl = null;
                 avatarFr.limpar();
             }
         }
         avatarEditado = false;
+    }
+
+    async function carregarFeedCanal(atelie) {
+        const feed = $('feed-canal');
+        if (!feed) return;
+
+        const { data: posts, error } = await db
+            .from('posts')
+            .select('id, title, cover_url, cover_position, cover_zoom, category, created_at')
+            .eq('author_id', usuarioLogado.id)
+            .order('created_at', { ascending: false })
+            .limit(12);
+
+        if (error) { console.error(error); return; }
+
+        if (!posts || posts.length === 0) {
+            feed.innerHTML = '<p class="canal-vazio">Seu ateliê ainda está em branco. Publique seu primeiro texto na aba <strong>Redação</strong> para começar.</p>';
+            return;
+        }
+
+        const frag = document.createDocumentFragment();
+        posts.forEach((p) => {
+            const artigo = document.createElement('article');
+            artigo.className = 'canal-post';
+
+            if (p.cover_url) {
+                const img = document.createElement('img');
+                img.className = 'canal-post-cover';
+                img.loading = 'lazy';
+                img.referrerPolicy = 'no-referrer';
+                img.src = p.cover_url;
+                const [cx, cy] = parsePos(p.cover_position);
+                const cz = parseFloat(p.cover_zoom) || 1;
+                img.style.objectPosition = cx + '% ' + cy + '%';
+                img.style.transformOrigin = cx + '% ' + cy + '%';
+                img.style.transform = 'scale(' + cz + ')';
+                artigo.appendChild(img);
+            }
+
+            const corpo = document.createElement('div');
+            corpo.className = 'canal-post-corpo';
+
+            if (p.category) {
+                const cat = document.createElement('div');
+                cat.className = 'canal-post-categoria';
+                cat.textContent = p.category;
+                corpo.appendChild(cat);
+            }
+
+            const titulo = document.createElement('h3');
+            titulo.className = 'canal-post-titulo';
+            titulo.textContent = p.title;
+            corpo.appendChild(titulo);
+
+            const data = document.createElement('span');
+            data.className = 'canal-post-data';
+            try {
+                data.textContent = new Date(p.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+            } catch (_) { data.textContent = ''; }
+            corpo.appendChild(data);
+
+            artigo.appendChild(corpo);
+            frag.appendChild(artigo);
+        });
+
+        feed.innerHTML = '';
+        feed.appendChild(frag);
     }
 
     // ==============================================
@@ -318,7 +392,7 @@
             const btn = $('btn-salvar-atelie');
             const nome = $('input-nome-atelie').value.trim();
             const bio = $('input-bio-atelie').value.trim();
-            if (!nome) return alert('O Nome do Ateliê é obrigatório.');
+            if (!nome) return avisar('O Nome do Ateliê é obrigatório.', 'erro');
             btn.disabled = true;
             btn.textContent = 'Abrindo...';
 
@@ -339,7 +413,7 @@
                 preencherPainel(data);
             } catch (err) {
                 console.error(err);
-                alert('Erro ao abrir o Ateliê.');
+                avisar('Não foi possível abrir o Ateliê. Tente novamente.', 'erro');
                 btn.disabled = false;
                 btn.textContent = 'Criar Ateliê';
             }
@@ -374,6 +448,18 @@
             aoImagem: (tem) => {
                 $('capa-preview-container').hidden = !tem;
                 $('capa-vazia').hidden = tem;
+                $('btn-remover-capa').hidden = !tem;
+            }
+        });
+
+        capaArtigoFr = criarEnquadrador({
+            container: $('capa-artigo-preview'),
+            camada: $('capa-artigo-arrastavel'),
+            slider: $('capa-artigo-zoom'),
+            linhaZoom: $('capa-artigo-zoom-linha'),
+            aoImagem: (tem) => {
+                $('capa-artigo-preview').hidden = !tem;
+                $('btn-remover-capa-artigo').hidden = !tem;
             }
         });
 
@@ -394,7 +480,6 @@
         $('btn-fechar-config-redacao').addEventListener('click', fecharGaveta);
         overlay.addEventListener('click', fecharGaveta);
 
-        // --- Upload do avatar ---
         const inputAvatar = $('input-config-avatar');
         $('btn-upload-avatar').addEventListener('click', () => inputAvatar.click());
         inputAvatar.addEventListener('change', () => {
@@ -408,7 +493,6 @@
             avatarEditado = true;
         });
 
-        // --- Upload da capa ---
         const inputCapa = $('input-config-capa');
         $('btn-upload-capa').addEventListener('click', () => inputCapa.click());
         inputCapa.addEventListener('change', () => {
@@ -419,9 +503,12 @@
             capaFr.carregar(URL.createObjectURL(file));
         });
 
-        // --- Capa do artigo ---
-        const capaArtigoPreview = $('capa-artigo-preview');
-        const capaArtigoArrastavel = $('capa-artigo-arrastavel');
+        $('btn-remover-capa').addEventListener('click', () => {
+            fileCapa = null;
+            capaFr.limpar();
+            atelieAtual.cover_url = null;
+        });
+
         const inputCapaArtigo = $('input-capa-artigo');
         $('btn-upload-capa-artigo').addEventListener('click', () => inputCapaArtigo.click());
         inputCapaArtigo.addEventListener('change', () => {
@@ -429,17 +516,11 @@
             inputCapaArtigo.value = '';
             if (!validarImagem(file)) return;
             arquivoCapaEditor = file;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                capaArtigoArrastavel.style.backgroundImage = 'url("' + e.target.result + '")';
-                capaArtigoPreview.hidden = false;
-            };
-            reader.readAsDataURL(file);
+            capaArtigoFr.carregar(URL.createObjectURL(file));
         });
         $('btn-remover-capa-artigo').addEventListener('click', () => {
             arquivoCapaEditor = null;
-            capaArtigoArrastavel.style.backgroundImage = '';
-            capaArtigoPreview.hidden = true;
+            capaArtigoFr.limpar();
         });
 
         $('btn-descartar-rascunho').addEventListener('click', () => {
@@ -450,7 +531,6 @@
             }
         });
 
-        // --- Recorte do avatar (reproduz exatamente o que o usuário vê) ---
         async function gerarAvatarRecortado() {
             const src = fileAvatar ? URL.createObjectURL(fileAvatar) : avatarImageUrl;
             if (!src) return null;
@@ -464,7 +544,8 @@
             if (fileAvatar) URL.revokeObjectURL(src);
 
             const est = avatarFr.estado();
-            const cs = $('avatar-preview-container').clientWidth || 88;
+            const rect = $('avatar-preview-container').getBoundingClientRect();
+            const cs = rect.width || 88;
             const s = Math.max(cs / img.naturalWidth, cs / img.naturalHeight);
             const lado = cs / (est.zoom * s);
             const sx = est.x / 100 * Math.max(0, img.naturalWidth - lado);
@@ -480,7 +561,6 @@
             return new Promise((ok) => canvas.toBlob((b) => ok(b), 'image/jpeg', 0.92));
         }
 
-        // --- Salvar ---
         $('form-config-atelie').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = $('btn-salvar-config');
@@ -511,16 +591,21 @@
                     newCoverUrl = db.storage.from('avatars').getPublicUrl(path).data.publicUrl;
                 }
 
+                const a = avatarFr.estado();
                 const c = capaFr.estado();
-                const { data, error } = await db.from('ateliers').update({
+                const update = {
                     name: nome,
                     description: bio,
                     avatar_url: newAvatarUrl,
                     cover_url: newCoverUrl,
                     cover_position: c.x.toFixed(1) + '% ' + c.y.toFixed(1) + '%',
-                    cover_zoom: Number(c.zoom.toFixed(2))
-                }).eq('id', atelieAtual.id).select().single();
+                    cover_zoom: Number(c.zoom.toFixed(2)),
+                    avatar_position: a.x.toFixed(1) + '% ' + a.y.toFixed(1) + '%',
+                    avatar_zoom: Number(a.zoom.toFixed(2))
+                };
+                if (!newCoverUrl) { update.cover_position = '50% 50%'; update.cover_zoom = 1; }
 
+                const { data, error } = await db.from('ateliers').update(update).eq('id', atelieAtual.id).select().single();
                 if (error) throw error;
 
                 atelieAtual = data;
@@ -595,7 +680,7 @@
     }
 
     // ==============================================
-    // ABAS & CONFIG DINÂMICA
+    // ABAS
     // ==============================================
     function configurarAbas() {
         const botoes = document.querySelectorAll('.aba-btn');
@@ -630,7 +715,6 @@
                     $('aba-redacao').classList.add('ativa');
                     painelRedacao.hidden = false;
                     painelRedacao.classList.add('ativo');
-
                     $('redacao-intro').hidden = true;
                     $('redacao-editor').hidden = false;
                 }
@@ -654,7 +738,7 @@
     }
 
     // ==============================================
-    // EDITOR DE REDAÇÃO (texto + imagens flexíveis)
+    // EDITOR
     // ==============================================
     function configurarEditorEmbutido() {
         const editor = $('input-conteudo');
@@ -669,20 +753,29 @@
         const TAMANHO_PADRAO = 'm';
         const BLOCOS = new Set(['P', 'H1', 'H2', 'H3', 'BLOCKQUOTE', 'UL', 'OL', 'FIGURE', 'DIV', 'PRE']);
 
-        let figura = null;        // imagem selecionada
+        let figura = null;
         let rangeSalvo = null;
-        let arraste = null;       // estado do arrastar-e-soltar
+        let arraste = null;
         let fantasma = null;
         let ignorarClique = false;
 
         document.execCommand('defaultParagraphSeparator', false, 'p');
 
-        // ---------- Contador / placeholder ----------
+        function normalizarBlocos() {
+            let atual = null;
+            [...editor.childNodes].forEach(n => {
+                if (n.nodeType === 1 && BLOCOS.has(n.tagName)) { atual = null; return; }
+                if (n.nodeType === 3 && !n.textContent.trim() && !atual) { n.remove(); return; }
+                if (!atual) { atual = document.createElement('p'); n.before(atual); }
+                atual.appendChild(n);
+            });
+        }
+        normalizarBlocos();
+
         function atualizarVazio() {
             const texto = editor.textContent.trim();
             const vazio = texto === '' && !editor.querySelector('img');
             editor.dataset.vazio = vazio ? 'true' : 'false';
-
             const palavras = texto ? texto.split(/\s+/).length : 0;
             const minutos = palavras === 0 ? 0 : Math.max(1, Math.round(palavras / 200));
             $('contador-palavras').textContent = palavras + (palavras === 1 ? ' palavra' : ' palavras');
@@ -696,7 +789,6 @@
             if (sel.rangeCount && editor.contains(sel.anchorNode)) rangeSalvo = sel.getRangeAt(0).cloneRange();
         });
 
-        // ---------- Formatação de texto ----------
         document.querySelectorAll('.editor-toolbar button[data-cmd]').forEach(btn => {
             btn.addEventListener('mousedown', (e) => e.preventDefault());
             btn.addEventListener('click', (e) => {
@@ -717,17 +809,6 @@
         });
 
         editor.addEventListener('dragstart', (e) => { if (e.target.tagName === 'IMG') e.preventDefault(); });
-
-        // ---------- Estrutura de blocos ----------
-        function normalizarBlocos() {
-            let atual = null;
-            [...editor.childNodes].forEach(n => {
-                if (n.nodeType === 1 && BLOCOS.has(n.tagName)) { atual = null; return; }
-                if (n.nodeType === 3 && !n.textContent.trim() && !atual) { n.remove(); return; }
-                if (!atual) { atual = document.createElement('p'); n.before(atual); }
-                atual.appendChild(n);
-            });
-        }
 
         function blocoTopo(no) {
             while (no && no.parentNode !== editor) no = no.parentNode;
@@ -752,7 +833,6 @@
             s.addRange(r);
         }
 
-        // ---------- Criação / inserção de imagem ----------
         function criarFigura(url) {
             const fig = document.createElement('figure');
             fig.className = 'img-bloco';
@@ -844,7 +924,6 @@
             }
         });
 
-        // ---------- Tamanho e alinhamento ----------
         function definirTamanho(fig, chave) {
             fig.dataset.size = chave;
             fig.style.width = TAMANHOS[chave] + '%';
@@ -864,7 +943,6 @@
             fig.dataset.align = al;
         }
 
-        // ---------- Seleção, barra e caixa de alças ----------
         function atualizarEstados() {
             if (!figura) return;
             [barra, menu].forEach(c => {
@@ -928,7 +1006,6 @@
         window.addEventListener('scroll', () => { posicionar(); fecharMenu(); }, true);
         if ('ResizeObserver' in window) new ResizeObserver(() => posicionar()).observe(editor);
 
-        // ---------- Ações (barra e menu) ----------
         function removerFigura() {
             if (!figura) return;
             const f = figura;
@@ -968,7 +1045,6 @@
             executar(btn);
         });
 
-        // ---------- Menu de contexto (botão direito) ----------
         function abrirMenu(x, y) {
             atualizarEstados();
             menu.hidden = false;
@@ -995,7 +1071,6 @@
         menu.addEventListener('contextmenu', (e) => e.preventDefault());
         document.addEventListener('pointerdown', (e) => { if (!menu.hidden && !menu.contains(e.target)) fecharMenu(); });
 
-        // ---------- Teclado ----------
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 if (!menu.hidden) { fecharMenu(); return; }
@@ -1011,7 +1086,6 @@
             removerFigura();
         });
 
-        // ---------- Redimensionar pelas alças ----------
         selecao.querySelectorAll('.img-handle').forEach(h => {
             h.addEventListener('pointerdown', (e) => {
                 if (!figura) return;
@@ -1049,7 +1123,6 @@
             });
         });
 
-        // ---------- Arrastar e soltar a imagem ----------
         function alvoDeSoltura(x, y) {
             const rect = editor.getBoundingClientRect();
             const filhos = [...editor.children].filter(c => c !== arraste.fig);
@@ -1071,7 +1144,6 @@
             const info = alvoDeSoltura(x, y);
             arraste.info = info;
             if (!info.alvo) { indicador.hidden = true; return; }
-
             const r = info.alvo.getBoundingClientRect();
             const er = editor.getBoundingClientRect();
             const p = folha.getBoundingClientRect();
@@ -1080,7 +1152,6 @@
             const topo = (info.depois ? r.bottom : r.top) - oy;
             const larg = info.zona === 'center' ? er.width : er.width * 0.42;
             const esq = info.zona === 'right' ? er.right - larg : er.left;
-
             indicador.style.top = topo + 'px';
             indicador.style.left = (esq - ox) + 'px';
             indicador.style.width = larg + 'px';
@@ -1095,7 +1166,6 @@
             ignorarClique = true;
             document.body.classList.add('img-arrastando');
             arraste.fig.classList.add('arrastando');
-
             fantasma = document.createElement('div');
             fantasma.className = 'img-fantasma';
             const im = document.createElement('img');
@@ -1164,7 +1234,6 @@
         document.addEventListener('pointerup', soltarArraste);
         document.addEventListener('pointercancel', cancelarArraste);
 
-        // ---------- Reset e publicação ----------
         function resetarEditor() {
             $('input-titulo').value = '';
             editor.innerHTML = '';
@@ -1172,11 +1241,7 @@
             arquivoCapaEditor = null;
             rangeSalvo = null;
             atualizarVazio();
-
-            const prev = $('capa-artigo-preview');
-            const arr = $('capa-artigo-arrastavel');
-            if (prev) prev.hidden = true;
-            if (arr) arr.style.backgroundImage = '';
+            if (capaArtigoFr) capaArtigoFr.limpar();
         }
         window.__resetarEditorAtelie = resetarEditor;
 
@@ -1196,7 +1261,7 @@
                 const al = f.dataset.align || 'center';
                 let estilo = 'box-sizing:border-box;width:' + larg + ';max-width:100%;';
                 if (al === 'left') { estilo += 'float:left;margin:0.4rem 1.6rem 1rem 0;'; temFlutuante = true; }
-                else if (al === 'right') { estilo += 'float:right;margin:0.4rem 0 1rem 1.6rem;'; temFlutuante = true; }
+                else if (al === 'right') { estilo += 'float:right;margin:0 0 1rem 1.6rem;'; temFlutuante = true; }
                 else estilo += 'clear:both;margin:2rem auto;';
                 f.setAttribute('style', estilo);
                 const img = f.querySelector('img');
@@ -1225,24 +1290,40 @@
             btn.disabled = true; btn.textContent = 'Publicando...';
             try {
                 let capaUrl = null;
+                let coverPos = '50% 50%';
+                let coverZoom = 1;
                 if (arquivoCapaEditor) {
                     const path = usuarioLogado.id + '/capa_post_' + Date.now() + '.jpg';
                     const up = await db.storage.from('avatars').upload(path, arquivoCapaEditor, { contentType: arquivoCapaEditor.type });
                     if (!up.error) capaUrl = db.storage.from('avatars').getPublicUrl(path).data.publicUrl;
+                    const c = capaArtigoFr ? capaArtigoFr.estado() : { x: 50, y: 50, zoom: 1 };
+                    coverPos = c.x.toFixed(1) + '% ' + c.y.toFixed(1) + '%';
+                    coverZoom = Number(c.zoom.toFixed(2));
                 }
 
-                const { error } = await db.from('posts').insert([{
+                const payload = {
                     author_id: usuarioLogado.id,
                     title: titulo,
                     content: htmlParaPublicar(),
                     cover_url: capaUrl,
+                    cover_position: coverPos,
+                    cover_zoom: coverZoom,
                     category: categoria
-                }]);
+                };
+
+                let { error } = await db.from('posts').insert([payload]);
+                if (error && String(error.message).indexOf('cover_position') !== -1) {
+                    delete payload.cover_position; delete payload.cover_zoom;
+                    const r = await db.from('posts').insert([payload]);
+                    error = r.error;
+                }
                 if (error) throw error;
 
-                avisar('Conteúdo publicado com sucesso no seu canal!');
+                avisar('Conteúdo publicado no seu canal e no Mural.');
                 resetarEditor();
                 document.querySelector('[data-aba="canal"]').click();
+                const { data: a } = await db.from('ateliers').select('*').eq('id', atelieAtual.id).single();
+                if (a) carregarFeedCanal(a);
             } catch (err) {
                 console.error(err);
                 avisar('Erro ao publicar.', 'erro');
