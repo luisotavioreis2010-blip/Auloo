@@ -1,7 +1,11 @@
 @charset "UTF-8";
 /* ==============================================
-   ATELIE.CSS — v34 (Layout Robusto + Scroll Corrigido)
+   ATELIE.CSS — v35 (Scroll Liberado + Mobile Clean)
    ============================================== */
+
+/* 0. RESET E SCROLL GLOBAL */
+html, body { overflow-x: hidden; }
+body.mural-body { overflow-y: auto !important; }
 
 /* 1. ESTRUTURA GERAL */
 .atelie-main {
@@ -45,7 +49,7 @@
 .atelie-vazio p { font-family: var(--fonte-display); font-size: 1.1rem; color: var(--tinta-suave); margin-bottom: 1.5rem; }
 
 .atelie-abas { display: flex; width: 100%; border-bottom: 1px solid var(--papel-sombra); margin-bottom: 2rem; gap: 1rem; }
-.aba-btn { background: transparent; border: none; padding: 1rem 1.5rem; font-family: var(--fonte-corpo); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; color: var(--tinta-clara); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.3s ease; }
+.aba-btn { background: transparent; border: none; padding: 1rem 1.5rem; font-family: var(--fonte-corpo); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; color: var(--tinta-clara); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.3s ease; flex: 1; text-align: center; }
 .aba-btn:hover { color: var(--vinho); }
 .aba-btn.ativa { color: var(--vinho); border-bottom-color: var(--vinho); }
 .aba-conteudo { display: none; width: 100%; animation: fadeAba 0.4s ease; }
@@ -67,6 +71,9 @@
 
 /* Editor */
 .redacao-editor { width: 100%; max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; animation: fadeAba 0.4s ease; }
+
+/* Botão Mobile Only */
+.btn-mobile-only { display: none !important; }
 
 /* Topo do Editor */
 .editor-topo-custom {
@@ -122,7 +129,6 @@
 .img-bloco figcaption { margin-top: 0.5rem; text-align: center; font-family: var(--fonte-display); font-style: italic; color: var(--tinta-clara); outline: none; }
 .img-bloco figcaption:empty::before { content: attr(data-ph); opacity: 0.5; }
 
-/* Mini-barra flutuante */
 .img-flutuante { position: absolute; z-index: 15; display: none; align-items: center; gap: 0.2rem; padding: 0.3rem; background: #1A1614; border-radius: 8px; transform: translateX(-50%); box-shadow: 0 8px 22px rgba(0,0,0,0.3); }
 .img-flutuante.ativa { display: flex; }
 .img-flutuante button { width: 32px; height: 30px; background: transparent; border: none; border-radius: 4px; color: #fff; cursor: pointer; font-family: var(--fonte-corpo); font-size: 0.7rem; font-weight: 600; }
@@ -131,13 +137,12 @@
 .img-flutuante button svg { width: 16px; height: 16px; margin: 0 auto; }
 .img-flutuante .sep { width: 1px; height: 16px; background: rgba(255,255,255,0.2); margin: 0 0.2rem; }
 
-/* 5. GAVETA LATERAL (Configurações) */
+/* 5. GAVETA LATERAL */
 .atelie-gaveta { position: fixed; top: var(--navbar-h, 68px); right: 0; bottom: 0; z-index: 250; width: 100%; max-width: 460px; background: var(--papel-claro); border-left: 3px double var(--dourado); box-shadow: -20px 0 40px rgba(26, 22, 20, 0.15); transform: translateX(100%); visibility: hidden; transition: transform 0.4s ease, visibility 0s 0.4s; display: flex; flex-direction: column; overflow-y: auto; }
 .atelie-gaveta.ativa { transform: translateX(0); visibility: visible; transition: transform 0.4s ease, visibility 0s; }
 .gaveta-overlay-config { position: fixed; top: var(--navbar-h, 68px); left: 0; right: 0; bottom: 0; background: rgba(26, 22, 20, 0.55); backdrop-filter: blur(2px); z-index: 240; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
 .gaveta-overlay-config.ativa { opacity: 1; pointer-events: auto; }
 
-/* Painéis da Gaveta */
 .config-painel { display: none; flex-direction: column; height: 100%; }
 .config-painel.ativo { display: flex; }
 
@@ -164,7 +169,6 @@
 #form-config-atelie .btn-container:hover { background: var(--dourado); color: var(--papel-claro); }
 #form-config-atelie #btn-salvar-config { padding: 0.85rem 1.5rem; width: 100%; }
 
-/* Config Redação */
 #config-redacao .campo-upload { display: flex; flex-direction: column; gap: 0.75rem; padding: 1.1rem 1rem; background: rgba(184, 137, 74, 0.06); border: 1px dashed rgba(184, 137, 74, 0.4); border-radius: 4px; }
 #config-redacao .campo-upload label { font-family: var(--fonte-corpo); font-size: 0.68rem; font-weight: 700; text-transform: uppercase; color: var(--vinho); }
 #config-redacao .capa-preview-container { width: 100%; height: auto; aspect-ratio: 16/9; background: var(--papel-escuro); border: 1px solid var(--dourado); border-radius: 4px; overflow: hidden; cursor: grab; }
@@ -175,7 +179,6 @@
 #config-redacao .campo { display: flex; flex-direction: column; gap: 0.5rem; }
 #config-redacao .campo label { font-family: var(--fonte-corpo); font-size: 0.68rem; font-weight: 600; text-transform: uppercase; color: var(--tinta-suave); }
 
-/* Select */
 .select-custom { width: 100%; padding: 0.75rem 0.9rem; background: #fff; border: 1px solid rgba(184, 137, 74, 0.35); border-radius: 4px; font-family: var(--fonte-display); font-size: 1rem; color: var(--tinta); outline: none; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%233D3528' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.9rem center; }
 .select-custom:focus { border-color: var(--vinho); box-shadow: 0 0 0 3px rgba(92, 26, 26, 0.08); }
 
@@ -189,56 +192,58 @@
 .modal-fechar svg { width: 18px; height: 18px; }
 
 /* ==============================================
-   RESPONSIVIDADE (Correções de Layout)
+   RESPONSIVIDADE
    ============================================== */
 
-/* NOTEBOOK (1025px a 1366px) */
+/* Notebook (1025px a 1366px) */
 @media (min-width: 1025px) and (max-width: 1366px) {
     .atelie-main { margin-left: 0; padding: 2rem 1rem; }
     
-    /* Painel fixo na redação também em notebook */
     #atelie-main.modo-redacao { margin-right: 420px; padding: 1rem 1rem 3rem; }
     .atelie-gaveta { max-width: 420px; width: 100%; border-left: 3px double var(--dourado); border-top: none; }
     body.atelie-modo-redacao .atelie-gaveta { transform: translateX(0) !important; visibility: visible !important; }
     body.atelie-modo-redacao .gaveta-overlay-config { display: none !important; }
     body.atelie-modo-redacao .atelie-gaveta-fechar { display: none !important; }
+    
     .editor-corpo { padding: 0 2rem; }
     .editor-topo-custom { border-radius: 8px 8px 0 0; }
 }
 
-/* TABLET (769px a 1024px) */
+/* Tablet e Celular (< 1024px) */
 @media (max-width: 1024px) {
-    .atelie-main { margin-left: 0; padding: 2rem 1rem; }
-    #atelie-main.modo-redacao { padding: 1rem 0 3rem; }
+    .atelie-main { margin-left: 0; padding: 1rem; }
+    #atelie-main.modo-redacao { padding: 1rem 1rem 3rem; }
+    
     .atelie-gaveta { max-width: 100%; border-left: none; }
-    .editor-folha { border-radius: 0; border-left: none; border-right: none; }
-    .editor-topo-custom { border-radius: 0; border-left: none; border-right: none; top: 0; position: relative; }
-    .editor-topo-custom .editor-toolbar { justify-content: flex-start; overflow-x: auto; }
-    .editor-corpo { padding: 0 2rem; }
+    .editor-folha { border-radius: 8px; border-left: 1px solid var(--papel-sombra); border-right: 1px solid var(--papel-sombra); }
+    .editor-topo-custom { border-radius: 8px 8px 0 0; top: 0; position: relative; display: flex; flex-wrap: wrap; }
+    
+    .btn-mobile-only { display: inline-flex !important; margin-left: auto; background: var(--vinho) !important; color: #fff !important; border-color: var(--vinho) !important; }
 }
 
-/* CELULAR (até 768px) */
 @media (max-width: 768px) {
-    .atelie-main { padding: 1rem; }
     .atelie-capa-wrapper { height: 160px; }
     .atelie-header { flex-direction: column; align-items: center; text-align: center; padding: 0 1rem 1.5rem; gap: 0.5rem; }
     .atelie-avatar { margin-top: -50px; margin-bottom: 0.5rem; }
     .atelie-nome { font-size: 1.8rem; }
     .atelie-acoes { margin-top: 0.8rem; width: 100%; display: flex; justify-content: center; }
     .btn-primario { width: 100%; max-width: 300px; }
-    .atelie-abas { justify-content: center; }
-    .aba-btn { padding: 1rem; font-size: 0.7rem; }
+    .atelie-abas { justify-content: center; gap: 0.5rem; }
+    .aba-btn { padding: 1rem 0.5rem; font-size: 0.65rem; }
     
     .redacao-intro h2 { font-size: 1.8rem; }
     .redacao-intro p { font-size: 1.1rem; }
     .ilustracao-redacao { max-width: 240px; }
     
     .editor-topo-custom { flex-direction: column; align-items: stretch; gap: 1rem; padding: 1rem; }
-    .editor-toolbar { justify-content: center; }
+    .editor-toolbar { justify-content: flex-start; overflow-x: auto; padding-bottom: 0.5rem; }
+    .editor-toolbar button { width: 38px; height: 38px; flex-shrink: 0; }
     .editor-corpo { padding: 0 1.2rem; }
-    .editor-titulo { font-size: 2.2rem; }
+    .editor-titulo { font-size: 2rem; }
     .editor-conteudo { font-size: 1.15rem; }
     .editor-status { justify-content: center; }
+    
+    .btn-publicar { width: 100%; margin-top: 0.5rem; }
 }
 
 /* ==============================================
@@ -252,7 +257,6 @@
     .atelie-gaveta-fechar { display: none !important; }
     #btn-configurar-atelie { display: none !important; }
     
-    /* No modo redação, mantém a gaveta fixa e ajusta o layout */
     body.atelie-modo-redacao .atelie-main { margin-right: 460px; padding: 1.5rem 1rem 4rem; }
     body.atelie-modo-redacao .atelie-gaveta { transform: translateX(0) !important; visibility: visible !important; }
     body.atelie-modo-redacao .gaveta-overlay-config { display: none !important; }

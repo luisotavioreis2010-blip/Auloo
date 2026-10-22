@@ -185,7 +185,6 @@
         const inputCapa = $('input-config-capa');
         const btnUploadCapa = $('btn-upload-capa');
 
-        // Controles da Gaveta de Redação
         const capaArtigoPreview = $('capa-artigo-preview');
         const capaArtigoArrastavel = $('capa-artigo-arrastavel');
         const inputCapaArtigo = $('input-capa-artigo');
@@ -198,12 +197,17 @@
         }
 
         function fecharGaveta() {
-            if (isDesktop() || isNotebook()) return;
+            if (!isMobile()) return;
             gaveta.classList.remove('ativa'); overlay.classList.remove('ativa');
             document.body.classList.remove('atelie-gaveta-aberta');
         }
 
+        // Botões de abrir
         $('btn-configurar-atelie').addEventListener('click', abrirGaveta);
+        const btnOpcoesMobile = $('btn-opcoes-mobile');
+        if (btnOpcoesMobile) btnOpcoesMobile.addEventListener('click', abrirGaveta);
+
+        // Botões de fechar
         $('btn-fechar-config').addEventListener('click', fecharGaveta);
         $('btn-fechar-config-redacao').addEventListener('click', fecharGaveta);
         overlay.addEventListener('click', fecharGaveta);
