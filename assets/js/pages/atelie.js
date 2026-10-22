@@ -16,6 +16,9 @@
     let bgImageTemp = null;
     let pinchInicial = 0;
 
+    const ICONE_CHECK = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:6px"><path d="M20 6 9 17l-5-5"/></svg>';
+    const TEXTO_BTN_AVATAR = 'Escolher Imagem de Perfil';
+
     const isDesktop = () => window.matchMedia('(min-width: 1367px)').matches;
 
     async function aguardarSupabase() {
@@ -151,7 +154,6 @@
                     owner_id: usuarioLogado.id, name: nome, handle: handleGerado, description: bio, cover_position: '50% 50%', cover_zoom: 1
                 }]).select().single();
                 if (error) throw error;
-                
                 modalCriar.hidden = true;
                 $('atelie-vazio').hidden = true;
                 $('atelie-conteudo').hidden = false;
@@ -163,7 +165,7 @@
                 console.error(err);
                 alert('Erro ao abrir o Ateliê.');
                 btn.disabled = false;
-                btn.textContent = 'Abrir Ateliê';
+                btn.textContent = 'Criar Ateliê';
             }
         });
     }
@@ -187,7 +189,7 @@
         }
 
         function fecharGaveta() {
-            if (isDesktop()) return; 
+            if (isDesktop()) return;
             gaveta.classList.remove('ativa'); overlay.classList.remove('ativa');
             document.body.classList.remove('atelie-gaveta-aberta');
         }
@@ -218,8 +220,9 @@
         btnUploadAvatar.addEventListener('click', () => inputAvatar.click());
         inputAvatar.addEventListener('change', () => {
             const f = inputAvatar.files[0];
-            if (!f) { fileAvatar = null; btnUploadAvatar.textContent = 'Escolher Imagem de Perfil'; return; }
-            fileAvatar = f; btnUploadAvatar.textContent = 'Avatar Selecionado ✓';
+            if (!f) { fileAvatar = null; btnUploadAvatar.textContent = TEXTO_BTN_AVATAR; return; }
+            fileAvatar = f;
+            btnUploadAvatar.innerHTML = ICONE_CHECK + 'Avatar selecionado';
         });
 
         function atualizarTransformacao() {
@@ -302,7 +305,7 @@
 
                 if (error) throw error;
                 atelieAtual = data; renderizarAtelie(data);
-                fileAvatar = null; fileCapa = null; btnUploadAvatar.textContent = 'Escolher Imagem de Perfil';
+                fileAvatar = null; fileCapa = null; btnUploadAvatar.textContent = TEXTO_BTN_AVATAR;
                 fecharGaveta();
                 if (isDesktop()) preencherPainel(data);
             } catch (err) {
@@ -314,33 +317,29 @@
     }
 
     // ==============================================
-    // ABAS E EDITOR
+    // ABAS
     // ==============================================
     function configurarAbas() {
         const botoes = document.querySelectorAll('.aba-btn');
         const main = $('atelie-main');
-        const abaCanal = $('aba-canal');
-        const abaRedacao = $('aba-redacao');
-        
-        if (!botoes.length) return;
 
         botoes.forEach(btn => {
             btn.addEventListener('click', () => {
-                // Remove ativa de todos os botões e seções
                 botoes.forEach(b => b.classList.remove('ativa'));
-                abaCanal.classList.remove('ativa');
-                abaRedacao.classList.remove('ativa');
-
-                // Ativa o botão clicado
                 btn.classList.add('ativa');
                 const alvo = btn.getAttribute('data-aba');
-                
+
+                main.classList.remove('modo-redacao');
+                document.body.classList.remove('atelie-modo-redacao');
+                $('aba-canal').classList.remove('ativa');
+                $('aba-redacao').classList.remove('ativa');
+
                 if (alvo === 'canal') {
-                    abaCanal.classList.add('ativa');
-                    main.classList.remove('modo-redacao');
+                    $('aba-canal').classList.add('ativa');
                 } else if (alvo === 'redacao') {
-                    abaRedacao.classList.add('ativa');
                     main.classList.add('modo-redacao');
+                    document.body.classList.add('atelie-modo-redacao');
+                    $('aba-redacao').classList.add('ativa');
                     $('redacao-intro').hidden = false;
                     $('redacao-editor').hidden = true;
                 }
@@ -350,110 +349,235 @@
         $('btn-iniciar-escrita').addEventListener('click', () => {
             $('redacao-intro').hidden = true;
             $('redacao-editor').hidden = false;
+            $('input-titulo').focus();
         });
 
         $('btn-cancelar-escrita').addEventListener('click', () => {
-            if (confirm('Tem certeza que deseja apagar o que escreveu?')) {
-                $('input-titulo').value = '';
-                $('input-conteudo').innerHTML = '<p>Comece a escrever sua história...</p>';
-                $('editor-capa').style.backgroundImage = '';
-                $('editor-capa').innerHTML = '<span>Adicionar Capa</span>';
-                arquivoCapaEditor = null;
-                $('redacao-editor').hidden = true;
-                $('redacao-intro').hidden = false;
-                
-                // Volta para a aba do canal
-                const btnCanal = document.querySelector('.aba-btn[data-aba="canal"]');
-                if (btnCanal) btnCanal.click();
+            const editor = $('input-conteudo');
+            const temConteudo = $('input-titulo').value.trim() || editor.textContent.trim() || editor.querySelector('img');
+            if (!temConteudo || confirm('Tem certeza que deseja apagar o que escreveu?')) {
+                if (window.__resetarEditorAtelie) window.__resetarEditorAtelie();
+                document.querySelector('[data-aba="canal"]').click();
             }
         });
     }
 
+    // ==============================================
+    // EDITOR DE REDAÇÃO
+    // ==============================================
     function configurarEditorEmbutido() {
-        const botoes = document.querySelectorAll('.editor-toolbar button[data-cmd]');
         const editor = $('input-conteudo');
+        const folha = $('editor-folha');
+        const barraImg = $('img-flutuante');
+        const capaEl = $('editor-capa');
+        const capaHtmlOriginal = capaEl.innerHTML;
+        const TAMANHO_PADRAO = 'm';   // p = pequena, m = média, g = grande
+        const MAX_MB = 5;
+        let figuraSelecionada = null;
+        let rangeSalvo = null;
 
-        botoes.forEach(btn => {
+        document.execCommand('defaultParagraphSeparator', false, 'p');
+
+        // ----- placeholder (CSS) + contador -----
+        function atualizarVazio() {
+            const texto = editor.textContent.trim();
+            const vazio = texto === '' && !editor.querySelector('img');
+            editor.dataset.vazio = vazio ? 'true' : 'false';
+
+            const palavras = texto ? texto.split(/\s+/).length : 0;
+            const minutos = palavras === 0 ? 0 : Math.max(1, Math.round(palavras / 200));
+            $('contador-palavras').textContent = palavras + (palavras === 1 ? ' palavra' : ' palavras');
+            $('tempo-leitura').textContent = minutos + ' min de leitura';
+        }
+        editor.addEventListener('input', atualizarVazio);
+        atualizarVazio();
+
+        // ----- guarda cursor (o seletor de arquivo tira o foco) -----
+        document.addEventListener('selectionchange', () => {
+            const sel = window.getSelection();
+            if (sel.rangeCount && editor.contains(sel.anchorNode)) rangeSalvo = sel.getRangeAt(0).cloneRange();
+        });
+
+        // ----- botões de formatação -----
+        document.querySelectorAll('.editor-toolbar button[data-cmd]').forEach(btn => {
+            btn.addEventListener('mousedown', (e) => e.preventDefault());
             btn.addEventListener('click', (e) => {
                 e.preventDefault();
                 const cmd = btn.getAttribute('data-cmd');
-                const value = btn.getAttribute('data-value') || null;
-                document.execCommand(cmd, false, value);
+                let value = btn.getAttribute('data-value') || null;
+                if (cmd === 'formatBlock' && document.queryCommandValue('formatBlock').toLowerCase() === value) value = 'p';
                 editor.focus();
+                document.execCommand(cmd, false, value);
+                atualizarVazio();
             });
         });
+
+        // ----- colar como texto limpo -----
+        editor.addEventListener('paste', (e) => {
+            e.preventDefault();
+            const texto = (e.clipboardData || window.clipboardData).getData('text/plain');
+            document.execCommand('insertText', false, texto);
+        });
+
+        // ----- imagens padronizadas -----
+        function escapeAttr(s) { return String(s).replace(/"/g, '&quot;'); }
+
+        function inserirFigura(url) {
+            const html =
+                '<figure class="img-bloco" data-size="' + TAMANHO_PADRAO + '" contenteditable="false">' +
+                    '<img src="' + escapeAttr(url) + '" alt="" loading="lazy">' +
+                    '<figcaption contenteditable="true" data-ph="Adicionar legenda (opcional)"></figcaption>' +
+                '</figure><p><br></p>';
+
+            editor.focus();
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            if (rangeSalvo) {
+                sel.addRange(rangeSalvo);
+            } else {
+                const r = document.createRange();
+                r.selectNodeContents(editor); r.collapse(false);
+                sel.addRange(r);
+            }
+            document.execCommand('insertHTML', false, html);
+            atualizarVazio();
+        }
 
         const btnImg = $('btn-inserir-img');
         const inputImg = $('input-img');
 
-        btnImg.addEventListener('click', (e) => {
-            e.preventDefault();
-            inputImg.click();
-        });
+        btnImg.addEventListener('mousedown', (e) => e.preventDefault());
+        btnImg.addEventListener('click', (e) => { e.preventDefault(); inputImg.click(); });
 
         inputImg.addEventListener('change', async () => {
             const file = inputImg.files[0];
             inputImg.value = '';
             if (!file) return;
+            if (!/^image\/(jpeg|png|webp|gif)$/.test(file.type)) return alert('Use uma imagem JPG, PNG, WEBP ou GIF.');
+            if (file.size > MAX_MB * 1024 * 1024) return alert('A imagem deve ter no máximo ' + MAX_MB + ' MB.');
 
+            btnImg.classList.add('carregando');
             btnImg.disabled = true;
-            const txtOriginal = btnImg.textContent;
-            btnImg.textContent = '⏳';
-
             try {
-                const path = usuarioLogado.id + '/img_' + Date.now() + '.' + (file.type.split('/')[1] || 'jpg');
+                const ext = file.type.split('/')[1] || 'jpg';
+                const path = usuarioLogado.id + '/img_' + Date.now() + '.' + ext;
                 const up = await db.storage.from('avatars').upload(path, file);
                 if (up.error) throw up.error;
                 const url = db.storage.from('avatars').getPublicUrl(path).data.publicUrl;
-                document.execCommand('insertImage', false, url);
+                inserirFigura(url);
             } catch (err) {
                 console.error(err);
                 alert('Erro ao inserir imagem.');
             } finally {
+                btnImg.classList.remove('carregando');
                 btnImg.disabled = false;
-                btnImg.textContent = txtOriginal;
             }
         });
 
-        // Capa do Editor
-        const capaEl = $('editor-capa');
+        // ----- seleção / tamanho / remoção -----
+        function posicionarBarra() {
+            if (!figuraSelecionada) return;
+            const f = figuraSelecionada.getBoundingClientRect();
+            const p = folha.getBoundingClientRect();
+            barraImg.style.left = (f.left - p.left + f.width / 2) + 'px';
+            barraImg.style.top = (f.top - p.top - 46) + 'px';
+        }
+
+        function selecionarFigura(fig) {
+            if (figuraSelecionada) figuraSelecionada.classList.remove('selecionada');
+            figuraSelecionada = fig;
+            if (!fig) { barraImg.classList.remove('ativa'); return; }
+            fig.classList.add('selecionada');
+            barraImg.querySelectorAll('[data-tam]').forEach(b =>
+                b.classList.toggle('ativo', b.getAttribute('data-tam') === fig.getAttribute('data-size')));
+            barraImg.classList.add('ativa');
+            posicionarBarra();
+        }
+
+        editor.addEventListener('click', (e) => {
+            selecionarFigura(e.target.closest('figure.img-bloco'));
+        });
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#input-conteudo') && !e.target.closest('#img-flutuante')) selecionarFigura(null);
+        });
+        window.addEventListener('resize', posicionarBarra);
+        window.addEventListener('scroll', posicionarBarra, true);
+
+        barraImg.addEventListener('mousedown', (e) => e.preventDefault());
+        barraImg.addEventListener('click', (e) => {
+            const btn = e.target.closest('button');
+            if (!btn || !figuraSelecionada) return;
+            if (btn.dataset.tam) {
+                figuraSelecionada.setAttribute('data-size', btn.dataset.tam);
+                selecionarFigura(figuraSelecionada);
+            } else if (btn.dataset.acao === 'remover') {
+                figuraSelecionada.remove();
+                selecionarFigura(null);
+                atualizarVazio();
+            }
+        });
+
+        // ----- capa do artigo -----
         const inputCapaEditor = document.createElement('input');
-        inputCapaEditor.type = 'file'; inputCapaEditor.accept = 'image/*';
-        
+        inputCapaEditor.type = 'file';
+        inputCapaEditor.accept = 'image/*';
+
         capaEl.addEventListener('click', () => inputCapaEditor.click());
+        capaEl.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); inputCapaEditor.click(); }
+        });
         inputCapaEditor.addEventListener('change', () => {
             const file = inputCapaEditor.files[0];
+            inputCapaEditor.value = '';
             if (!file) return;
             arquivoCapaEditor = file;
             const reader = new FileReader();
             reader.onload = (e) => {
-                capaEl.style.backgroundImage = `url('${e.target.result}')`;
+                capaEl.style.backgroundImage = "url('" + e.target.result + "')";
+                capaEl.style.borderStyle = 'solid';
                 capaEl.innerHTML = '';
             };
             reader.readAsDataURL(file);
         });
 
-        // Limpar placeholder
-        editor.addEventListener('focus', () => {
-            if (editor.textContent.trim() === 'Comece a escrever sua história...') {
-                editor.innerHTML = '';
-            }
-        }, { once: true });
+        // ----- reset -----
+        function resetarEditor() {
+            $('input-titulo').value = '';
+            editor.innerHTML = '';
+            selecionarFigura(null);
+            capaEl.style.backgroundImage = '';
+            capaEl.style.borderStyle = '';
+            capaEl.innerHTML = capaHtmlOriginal;
+            arquivoCapaEditor = null;
+            rangeSalvo = null;
+            atualizarVazio();
+            $('redacao-editor').hidden = true;
+            $('redacao-intro').hidden = false;
+        }
+        window.__resetarEditorAtelie = resetarEditor;
 
-        // Publicar Post
+        // ----- HTML limpo para salvar -----
+        function htmlParaPublicar() {
+            const clone = editor.cloneNode(true);
+            clone.querySelectorAll('.selecionada').forEach(el => el.classList.remove('selecionada'));
+            clone.querySelectorAll('figcaption').forEach(fc => {
+                if (!fc.textContent.trim()) fc.remove();
+                else { fc.removeAttribute('contenteditable'); fc.removeAttribute('data-ph'); }
+            });
+            clone.querySelectorAll('figure').forEach(f => f.removeAttribute('contenteditable'));
+            return clone.innerHTML.trim();
+        }
+
+        // ----- publicar -----
         $('btn-publicar-atelie').addEventListener('click', async () => {
             const btn = $('btn-publicar-atelie');
             const titulo = $('input-titulo').value.trim();
-            const htmlCru = editor.innerHTML;
             const categoria = $('input-categoria').value;
 
             if (!titulo) return alert('Adicione um título ao seu conteúdo.');
-            if (!htmlCru || htmlCru === '<p>Comece a escrever sua história...</p>' || editor.textContent.trim() === '') {
-                return alert('Escreva algo antes de publicar!');
-            }
+            if (editor.textContent.trim() === '' && !editor.querySelector('img')) return alert('Escreva algo antes de publicar!');
 
             btn.disabled = true; btn.textContent = 'Publicando...';
-
             try {
                 let capaUrl = null;
                 if (arquivoCapaEditor) {
@@ -465,26 +589,15 @@
                 const { error } = await db.from('posts').insert([{
                     author_id: usuarioLogado.id,
                     title: titulo,
-                    content: htmlCru,
+                    content: htmlParaPublicar(),
                     cover_url: capaUrl,
                     category: categoria
                 }]);
-
                 if (error) throw error;
 
                 alert('Conteúdo publicado com sucesso no seu canal!');
-                $('input-titulo').value = '';
-                editor.innerHTML = '<p>Comece a escrever sua história...</p>';
-                capaEl.style.backgroundImage = '';
-                capaEl.innerHTML = '<span>Adicionar Capa</span>';
-                arquivoCapaEditor = null;
-                $('redacao-editor').hidden = true;
-                $('redacao-intro').hidden = false;
-                
-                // Volta para a aba do canal
-                const btnCanal = document.querySelector('.aba-btn[data-aba="canal"]');
-                if (btnCanal) btnCanal.click();
-
+                resetarEditor();
+                document.querySelector('[data-aba="canal"]').click();
             } catch (err) {
                 console.error(err);
                 alert('Erro ao publicar.');
