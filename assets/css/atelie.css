@@ -1,32 +1,46 @@
 @charset "UTF-8";
 /* ==============================================================
-   ATELIE.CSS — v53
-   Base: v50 (todos os recursos preservados)
-   Correções: scroll desktop/mobile estável + rodapé ancorado
+   ATELIE.CSS — v54
+   Correções:
+   - Modelo de scroll: html/body com altura natural, lock via
+     position:fixed + top:-scrollY (iOS-safe)
+   - Gaveta ≥1367px: sticky no fluxo (rodapé rola com a página)
+   - Gaveta ≤1366px: drawer com action bar fixo no fundo
+   - Limpeza de will-change, clamp na largura da gaveta
    ============================================================== */
 
 :root {
-    --gaveta-w: 420px;
+    --gaveta-w: clamp(360px, 32vw, 440px);
 }
 
 /* ==============================================================
-   0. MODELO DE SCROLL — apenas o <html> rola
+   0. MODELO DE SCROLL — o documento rola naturalmente
    ============================================================== */
 html {
-    height: 100%;
-    overflow-x: hidden;
-    scrollbar-gutter: stable;
-    -webkit-overflow-scrolling: touch;
-}
-body.mural-body {
+    /* Sem height: 100% — o html cresce com o conteúdo */
     min-height: 100%;
+    overflow-x: hidden;
+    /* NÃO usar overflow-y: hidden aqui; o lock é feito no body */
+    scrollbar-gutter: stable;
+}
+
+body.mural-body {
+    /* min-height baseada na viewport dinâmica (mobile-safe) */
+    min-height: 100dvh;
     display: flex;
     flex-direction: column;
     overflow-x: hidden;
-    -webkit-overflow-scrolling: touch;
+    /* background do body para evitar flash branco */
+    background: var(--papel);
 }
-/* Trava scroll do fundo só quando a gaveta está aberta */
-html.atelie-travado {
+
+/* Lock de scroll via position: fixed + top negativo (iOS-safe) */
+body.atelie-travado {
+    position: fixed;
+    top: var(--atelie-scroll-lock-top, 0);
+    left: 0;
+    right: 0;
+    width: 100%;
     overflow: hidden;
 }
 
@@ -35,7 +49,7 @@ html.atelie-travado {
    ============================================================== */
 .atelie-main {
     margin-left: var(--sidebar-w);
-    min-height: 100vh;
+    /* Sem min-height: 100vh — o conteúdo define a altura */
     flex: 1;
     background: var(--papel);
     padding: 3rem 1rem;
@@ -43,6 +57,7 @@ html.atelie-travado {
     flex-direction: column;
     align-items: center;
     transition: margin 0.4s ease;
+    /* Reserva espaço para a gaveta permanente em telas grandes */
 }
 
 .wrapper-canal {
@@ -381,7 +396,7 @@ html.atelie-travado {
     width: 100%;
 }
 .canal-skeleton {
-    height: 220px;
+    min-height: 260px;
     border-radius: 10px;
     background: linear-gradient(90deg, var(--papel-sombra) 25%, var(--papel-claro) 50%, var(--papel-sombra) 75%);
     background-size: 200% 100%;
@@ -413,7 +428,7 @@ html.atelie-travado {
     text-align: center;
     padding: 2rem 1rem;
     max-width: 600px;
-    min-height: calc(100vh - var(--navbar-h, 68px) - 8rem);
+    min-height: calc(100dvh - var(--navbar-h, 68px) - 8rem);
     margin: 0 auto;
     animation: fadeAba 0.4s ease;
 }
@@ -624,7 +639,7 @@ html.atelie-travado {
 }
 .editor-status svg { width: 14px; height: 14px; }
 
-/* ---------- IMAGENS NO CONTEÚDO (todos os recursos preservados) ---------- */
+/* ---------- IMAGENS NO CONTEÚDO ---------- */
 .editor-conteudo figure.img-bloco {
     position: relative;
     box-sizing: border-box;
@@ -899,31 +914,60 @@ body.img-arrastando .img-selecao { opacity: 0; }
 .img-menu-seg button.ativo { background: var(--vinho); color: #fff; }
 
 /* ==============================================================
-   6. GAVETA LATERAL — estrutura rígida (correção principal)
+   6. GAVETA LATERAL
    ============================================================== */
+
+/* Estrutura base (vale para drawer mobile e coluna desktop) */
 .atelie-gaveta {
-    position: fixed;
-    top: var(--navbar-h, 68px);
-    right: 0;
-    bottom: 0;
-    z-index: 250;
-    width: min(100vw, var(--gaveta-w));
     background:
         linear-gradient(180deg, rgba(184, 137, 74, 0.06) 0%, transparent 220px),
         var(--papel-claro);
     border-left: 1px solid var(--papel-sombra);
-    box-shadow: -10px 0 40px rgba(26, 22, 20, 0.08);
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    transform: translateX(100%);
-    visibility: hidden;
-    transition: transform 0.4s ease, visibility 0s 0.4s;
 }
-.atelie-gaveta.ativa {
-    transform: translateX(0);
-    visibility: visible;
-    transition: transform 0.4s ease, visibility 0s;
+
+/* --- Drawer (≤ 1366px): fixed, com action bar fixo no fundo --- */
+@media (max-width: 1366px) {
+    .atelie-gaveta {
+        position: fixed;
+        top: var(--navbar-h, 68px);
+        right: 0;
+        bottom: 0;
+        z-index: 250;
+        width: min(100vw, var(--gaveta-w));
+        box-shadow: -10px 0 40px rgba(26, 22, 20, 0.08);
+        transform: translateX(100%);
+        visibility: hidden;
+        will-change: transform;
+        transition: transform 0.4s ease, visibility 0s 0.4s;
+    }
+    .atelie-gaveta.ativa {
+        transform: translateX(0);
+        visibility: visible;
+        transition: transform 0.4s ease, visibility 0s;
+        will-change: auto;
+    }
+}
+
+/* --- Coluna permanente (≥ 1367px): sticky no fluxo --- */
+@media (min-width: 1367px) {
+    .atelie-gaveta {
+        position: sticky;
+        top: 0;
+        align-self: flex-start;
+        width: var(--gaveta-w);
+        height: 100vh;
+        max-height: 100dvh;
+        flex-shrink: 0;
+        box-shadow: none;
+        /* Sem transform: participa do fluxo normalmente */
+    }
+    /* Em ≥1367px, o rodapé da gaveta acompanha o conteúdo (não é fixed) */
+    .atelie-gaveta .gaveta-rodape {
+        position: static;
+    }
 }
 
 .gaveta-overlay-config {
@@ -937,6 +981,9 @@ body.img-arrastando .img-selecao { opacity: 0; }
     transition: opacity 0.3s ease;
 }
 .gaveta-overlay-config.ativa { opacity: 1; pointer-events: auto; }
+@media (min-width: 1367px) {
+    .gaveta-overlay-config { display: none; }
+}
 
 .config-painel {
     display: none;
@@ -954,6 +1001,7 @@ body.img-arrastando .img-selecao { opacity: 0; }
     align-items: flex-start;
     padding: 1.75rem 1.75rem 1.25rem;
     flex-shrink: 0;
+    background: var(--papel-claro);
 }
 .atelie-gaveta-header::after {
     content: '';
@@ -1026,6 +1074,8 @@ body.img-arrastando .img-selecao { opacity: 0; }
     border-radius: 3px;
 }
 
+/* Rodapé: em drawer é action bar fixa no fundo;
+   em coluna sticky (≥1367px) flui com o conteúdo. */
 .gaveta-rodape {
     flex-shrink: 0;
     padding: 1.25rem 1.75rem calc(1.25rem + env(safe-area-inset-bottom, 0px));
@@ -1538,21 +1588,29 @@ body.img-arrastando .img-selecao { opacity: 0; }
 /* ==============================================================
    10. RESPONSIVIDADE
    ============================================================== */
+
+/* Desktop grande: main divide espaço com a gaveta sticky */
 @media (min-width: 1367px) {
-    .atelie-main {
-        margin-right: var(--gaveta-w);
-        padding-right: 1rem;
+    body.mural-body {
+        /* A gaveta é sticky no fluxo; o main fica ao lado */
+        flex-direction: row;
+        align-items: flex-start;
     }
+    .atelie-main {
+        margin-right: 0;
+        margin-left: var(--sidebar-w);
+        padding-right: 1rem;
+        flex: 1;
+        min-width: 0;
+    }
+    /* Sidebar esquerda continua fixed; gaveta é a última coluna do body */
     .atelie-gaveta {
-        transform: translateX(0);
-        visibility: visible;
-        box-shadow: none;
+        margin-top: 0;
     }
     .gaveta-overlay-config { display: none; }
     .atelie-gaveta-fechar { display: none; }
     #btn-configurar-atelie { display: none; }
     body.atelie-modo-redacao .atelie-main {
-        margin-right: var(--gaveta-w);
         padding: 2rem 1rem 4rem;
     }
 }
@@ -1560,15 +1618,8 @@ body.img-arrastando .img-selecao { opacity: 0; }
 @media (min-width: 1025px) and (max-width: 1366px) {
     .atelie-main { margin-left: 0; padding: 2rem 1rem; }
     #atelie-main.modo-redacao {
-        margin-right: var(--gaveta-w);
         padding: 1.5rem 1rem 3rem;
     }
-    body.atelie-modo-redacao .atelie-gaveta {
-        transform: translateX(0);
-        visibility: visible;
-    }
-    body.atelie-modo-redacao .gaveta-overlay-config,
-    body.atelie-modo-redacao .atelie-gaveta-fechar { display: none; }
 }
 
 @media (max-width: 1024px) {

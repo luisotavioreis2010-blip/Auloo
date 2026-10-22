@@ -16,19 +16,29 @@
     let capaFr = null;
 
     const MAX_MB = 5;
+    const NAVBAR_H = () => {
+        const nav = document.querySelector('.navbar');
+        return (nav && nav.offsetHeight) || 68;
+    };
 
     const gavetaPermanente = () =>
-        window.matchMedia('(min-width: 1367px)').matches ||
-        (window.matchMedia('(min-width: 1025px)').matches &&
-            document.body.classList.contains('atelie-modo-redacao'));
+        window.matchMedia('(min-width: 1367px)').matches;
 
-    // --- CONTROLE DE SCROLL (estável em desktop e mobile) ---
+    // ============================================================
+    // CONTROLE DE SCROLL — lock via position:fixed + top:-scrollY
+    // (única técnica confiável no iOS Safari)
+    // ============================================================
     let scrollYGuardado = 0;
+    let gavetaAberta = false;
 
     function abrirGaveta() {
-        if (gavetaPermanente()) return;
+        if (gavetaPermanente() || gavetaAberta) return;
+        gavetaAberta = true;
         scrollYGuardado = window.scrollY || window.pageYOffset || 0;
-        document.documentElement.classList.add('atelie-travado');
+        document.documentElement.style.setProperty(
+            '--atelie-scroll-lock-top', `-${scrollYGuardado}px`
+        );
+        document.body.classList.add('atelie-travado');
         $('gaveta-config').classList.add('ativa');
         $('overlay-config').classList.add('ativa');
         document.body.classList.add('atelie-gaveta-aberta');
@@ -36,16 +46,31 @@
 
     function fecharGaveta(forcar) {
         if (forcar !== true && gavetaPermanente()) return;
+        if (!gavetaAberta) return;
+        gavetaAberta = false;
         $('gaveta-config').classList.remove('ativa');
         $('overlay-config').classList.remove('ativa');
         document.body.classList.remove('atelie-gaveta-aberta');
-        document.documentElement.classList.remove('atelie-travado');
-        if (Math.abs((window.scrollY || 0) - scrollYGuardado) > 1) {
-            window.scrollTo(0, scrollYGuardado);
-        }
+        document.body.classList.remove('atelie-travado');
+        document.documentElement.style.removeProperty('--atelie-scroll-lock-top');
+        // Restaura a posição de scroll exata
+        window.scrollTo(0, scrollYGuardado);
     }
 
-    // --- UTILITÁRIOS ---
+    // Limpa estado zumbi da gaveta (blobs não commitados)
+    function limparEstadoGavetaNaoSalvo() {
+        if (avatarImageUrl && avatarImageUrl.indexOf('blob:') === 0) {
+            URL.revokeObjectURL(avatarImageUrl);
+        }
+        avatarImageUrl = null;
+        fileAvatar = null;
+        fileCapa = null;
+        avatarEditado = false;
+    }
+
+    // ============================================================
+    // UTILITÁRIOS
+    // ============================================================
     async function aguardarSupabase() {
         for (let i = 0; i < 30; i++) {
             if (window.supabaseClient) return window.supabaseClient;
@@ -81,6 +106,55 @@
         }, 3200);
     }
 
+    // Modal próprio de confirmação (substitui confirm() nativo)
+    function confirmar(mensagem, opcoes) {
+        return new Promise((resolve) => {
+            const opts = Object.assign({
+                titulo: 'Confirmar',
+                confirmar: 'Confirmar',
+                cancelar: 'Cancelar',
+                perigo: false,
+            }, opcoes || {});
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.setAttribute('role', 'dialog');
+            overlay.setAttribute('aria-modal', 'true');
+            overlay.innerHTML =
+                '<div class="modal-conteudo" style="max-width:420px;">' +
+                    '<header class="modal-header">' +
+                        '<h2>' + opts.titulo + '</h2>' +
+                    '</header>' +
+                    '<p style="font-family:var(--fonte-display);font-size:1.1rem;' +
+                       'color:var(--tinta-suave);margin-bottom:1.5rem;line-height:1.5;">' +
+                       mensagem +
+                    '</p>' +
+                    '<div style="display:flex;gap:0.75rem;justify-content:flex-end;flex-wrap:wrap;">' +
+                        '<button type="button" class="btn-primario" data-cancelar ' +
+                            'style="background:transparent;color:var(--tinta-suave);border-color:var(--papel-sombra);">' +
+                            opts.cancelar + '</button>' +
+                        '<button type="button" class="btn-primario" data-confirmar' +
+                            (opts.perigo ? ' style="background:var(--erro,#a63a3a);border-color:var(--erro,#a63a3a);"' : '') +
+                            '>' + opts.confirmar + '</button>' +
+                    '</div>' +
+                '</div>';
+            document.body.appendChild(overlay);
+            const fechar = (valor) => {
+                overlay.remove();
+                document.removeEventListener('keydown', onKey);
+                resolve(valor);
+            };
+            const onKey = (e) => {
+                if (e.key === 'Escape') fechar(false);
+                if (e.key === 'Enter') fechar(true);
+            };
+            overlay.querySelector('[data-confirmar]').addEventListener('click', () => fechar(true));
+            overlay.querySelector('[data-cancelar]').addEventListener('click', () => fechar(false));
+            overlay.addEventListener('click', (e) => { if (e.target === overlay) fechar(false); });
+            document.addEventListener('keydown', onKey);
+            setTimeout(() => overlay.querySelector('[data-confirmar]').focus(), 50);
+        });
+    }
+
     function estadoBotao(btn, ocupado, textoOcupado) {
         const alvo = btn.querySelector('.btn-rotulo') || btn;
         if (!btn.dataset.rotulo) btn.dataset.rotulo = alvo.textContent;
@@ -111,7 +185,9 @@
         } catch { return ''; }
     }
 
-    // --- ENQUADRADOR (avatar/capa) ---
+    // ============================================================
+    // ENQUADRADOR (avatar/capa)
+    // ============================================================
     function criarEnquadrador({ container, camada, slider, linhaZoom, aoImagem, aoMudar }) {
         const est = { x: 50, y: 50, zoom: 1, nw: 0, nh: 0, pronto: false };
         const ponteiros = new Map();
@@ -207,24 +283,32 @@
         };
     }
 
-    // --- INÍCIO ---
+    // ============================================================
+    // INÍCIO
+    // ============================================================
     async function iniciar() {
-        db = await aguardarSupabase();
-        if (!db) return console.error('Supabase não carregado.');
-        const { data: { session } } = await db.auth.getSession();
-        if (!session) return (window.location.href = 'login.html');
-        usuarioLogado = session.user;
+        try {
+            db = await aguardarSupabase();
+            if (!db) { console.error('Supabase não carregado.'); return; }
+            const { data: { session } } = await db.auth.getSession();
+            if (!session) return (window.location.href = 'login.html');
+            usuarioLogado = session.user;
 
-        configurarGavetaConfig();
-        configurarDropdown();
-        await verificarAtelie();
-        configurarCriacao();
-        configurarAbas();
-        configurarEditorEmbutido();
+            configurarGavetaConfig();
+            configurarDropdown();
+            await verificarAtelie();
+            configurarCriacao();
+            configurarAbas();
+            configurarEditorEmbutido();
+        } catch (err) {
+            console.error('Erro ao iniciar ateliê:', err);
+            avisar('Não foi possível carregar o ateliê. Recarregue a página.', 'erro');
+        }
     }
 
     async function verificarAtelie() {
-        const { data: atelie, error } = await db.from('ateliers').select('*').eq('owner_id', usuarioLogado.id).maybeSingle();
+        const { data: atelie, error } = await db.from('ateliers')
+            .select('*').eq('owner_id', usuarioLogado.id).maybeSingle();
         if (error) return console.error('Erro ao buscar ateliê:', error);
 
         if (!atelie) {
@@ -243,7 +327,9 @@
         }
     }
 
-    // --- CANAL ---
+    // ============================================================
+    // CANAL
+    // ============================================================
     async function carregarCanal() {
         const lista = $('canal-lista'), vazio = $('canal-vazio');
         if (!lista) return;
@@ -265,10 +351,10 @@
             const capa = post.cover_url
                 ? '<div class="canal-post-capa"><img src="' + escaparHtml(post.cover_url) + '" loading="lazy" referrerpolicy="no-referrer"></div>'
                 : '';
-            const div = document.createElement('div');
-            div.innerHTML = post.content || '';
-            div.querySelectorAll('figure, img, figcaption, style, script').forEach(el => el.remove());
-            const texto = (div.textContent || '').replace(/\s+/g, ' ').trim();
+            // Extrai trecho com DOMParser (mais seguro que innerHTML)
+            const doc = new DOMParser().parseFromString(post.content || '', 'text/html');
+            doc.querySelectorAll('figure, img, figcaption, style, script').forEach(el => el.remove());
+            const texto = (doc.body.textContent || '').replace(/\s+/g, ' ').trim();
             const trecho = texto.length > 220 ? texto.slice(0, 220).trim() + '…' : texto;
 
             card.innerHTML = capa +
@@ -294,7 +380,10 @@
         });
 
         lista.querySelectorAll('[data-excluir]').forEach(btn => btn.addEventListener('click', async () => {
-            if (!confirm('Excluir esta publicação?')) return;
+            const ok = await confirmar('Excluir esta publicação? Esta ação não pode ser desfeita.', {
+                titulo: 'Excluir publicação', confirmar: 'Excluir', perigo: true
+            });
+            if (!ok) return;
             const { error } = await db.from('posts').delete().eq('id', btn.dataset.excluir);
             if (error) return avisar('Não foi possível excluir.', 'erro');
             avisar('Publicação excluída.');
@@ -368,7 +457,9 @@
         avatarEditado = false;
     }
 
-    // --- CRIAÇÃO ---
+    // ============================================================
+    // CRIAÇÃO
+    // ============================================================
     function configurarCriacao() {
         const modal = $('modal-criar-atelie');
         if (!modal) return;
@@ -380,7 +471,7 @@
             const btn = $('btn-salvar-atelie');
             const nome = $('input-nome-atelie').value.trim();
             const bio = $('input-bio-atelie').value.trim();
-            if (!nome) return alert('O Nome do Ateliê é obrigatório.');
+            if (!nome) return avisar('O Nome do Ateliê é obrigatório.', 'erro');
             btn.disabled = true; btn.textContent = 'Abrindo...';
             try {
                 const { data: handleGerado, error: errHandle } = await db.rpc('gerar_handle_unico');
@@ -400,13 +491,15 @@
                 await carregarCanal();
             } catch (err) {
                 console.error(err);
-                alert('Erro ao abrir o Ateliê.');
+                avisar('Erro ao abrir o Ateliê.', 'erro');
                 btn.disabled = false; btn.textContent = 'Criar Ateliê';
             }
         });
     }
 
-    // --- GAVETA DE CONFIGURAÇÃO ---
+    // ============================================================
+    // GAVETA DE CONFIGURAÇÃO
+    // ============================================================
     function configurarGavetaConfig() {
         avatarFr = criarEnquadrador({
             container: $('avatar-preview-container'),
@@ -434,10 +527,15 @@
         $('btn-configurar-atelie').addEventListener('click', () => abrirGaveta());
         const btnOpcoesMobile = $('btn-opcoes-mobile');
         if (btnOpcoesMobile) btnOpcoesMobile.addEventListener('click', () => abrirGaveta());
-        $('btn-fechar-config').addEventListener('click', () => fecharGaveta());
+        $('btn-fechar-config').addEventListener('click', () => { limparEstadoGavetaNaoSalvo(); fecharGaveta(); });
         $('btn-fechar-config-redacao').addEventListener('click', () => fecharGaveta());
-        $('overlay-config').addEventListener('click', () => fecharGaveta());
-        window.addEventListener('resize', () => { if (gavetaPermanente()) fecharGaveta(true); });
+        $('overlay-config').addEventListener('click', () => { limparEstadoGavetaNaoSalvo(); fecharGaveta(); });
+
+        // Em ≥1367px a gaveta é sticky no fluxo (não é drawer)
+        // Apenas fechamos se sair do breakpoint para evitar estado inconsistente
+        window.addEventListener('resize', () => {
+            if (gavetaPermanente() && gavetaAberta) fecharGaveta(true);
+        });
 
         const inputAvatar = $('input-config-avatar');
         $('btn-upload-avatar').addEventListener('click', () => inputAvatar.click());
@@ -445,7 +543,9 @@
             const file = inputAvatar.files[0];
             inputAvatar.value = '';
             if (!validarImagem(file)) return;
-            if (fileAvatar && avatarImageUrl && avatarImageUrl.indexOf('blob:') === 0) URL.revokeObjectURL(avatarImageUrl);
+            if (avatarImageUrl && avatarImageUrl.indexOf('blob:') === 0) {
+                URL.revokeObjectURL(avatarImageUrl);
+            }
             fileAvatar = file;
             avatarImageUrl = URL.createObjectURL(file);
             avatarFr.carregar(avatarImageUrl);
@@ -484,12 +584,14 @@
             capaArtigoPreview.hidden = true;
         });
 
-        $('btn-descartar-rascunho').addEventListener('click', () => {
-            if (confirm('Tem certeza que deseja descartar este rascunho?')) {
-                if (window.__resetarEditorAtelie) window.__resetarEditorAtelie();
-                document.querySelector('[data-aba="canal"]').click();
-                fecharGaveta();
-            }
+        $('btn-descartar-rascunho').addEventListener('click', async () => {
+            const ok = await confirmar('Tem certeza que deseja descartar este rascunho?', {
+                titulo: 'Descartar rascunho', confirmar: 'Descartar', perigo: true
+            });
+            if (!ok) return;
+            if (window.__resetarEditorAtelie) window.__resetarEditorAtelie();
+            document.querySelector('[data-aba="canal"]').click();
+            fecharGaveta();
         });
 
         async function gerarAvatarRecortado() {
@@ -527,6 +629,7 @@
             estadoBotao(btn, true, 'Salvando...');
             const nome = $('input-config-nome').value.trim();
             const bio = $('input-config-bio').value.trim();
+            if (!nome) { estadoBotao(btn, false); return avisar('O nome do ateliê é obrigatório.', 'erro'); }
             let newAvatarUrl = atelieAtual.avatar_url;
             let newCoverUrl = atelieAtual.cover_url;
             try {
@@ -570,7 +673,9 @@
         });
     }
 
-    // --- DROPDOWN ---
+    // ============================================================
+    // DROPDOWN
+    // ============================================================
     function configurarDropdown() {
         const raiz = $('dropdown-categoria');
         if (!raiz) return;
@@ -618,7 +723,9 @@
         document.addEventListener('pointerdown', (e) => { if (!raiz.contains(e.target)) fechar(); });
     }
 
-    // --- ABAS ---
+    // ============================================================
+    // ABAS
+    // ============================================================
     function configurarAbas() {
         const botoes = document.querySelectorAll('.aba-btn');
         const main = $('atelie-main');
@@ -628,6 +735,8 @@
         botoes.forEach(btn => {
             btn.addEventListener('click', () => {
                 fecharGaveta(true);
+                // Ao trocar de aba, limpa seleção de imagem e menus abertos
+                if (window.__limparSelecaoEditor) window.__limparSelecaoEditor();
                 window.scrollTo({ top: 0 });
                 botoes.forEach(b => b.classList.remove('ativa'));
                 btn.classList.add('ativa');
@@ -665,17 +774,24 @@
             $('input-titulo').focus();
         });
 
-        $('btn-cancelar-escrita').addEventListener('click', () => {
+        $('btn-cancelar-escrita').addEventListener('click', async () => {
             const editor = $('input-conteudo');
-            const temConteudo = $('input-titulo').value.trim() || editor.textContent.trim() || editor.querySelector('img');
-            if (!temConteudo || confirm('Tem certeza que deseja apagar o que escreveu?')) {
-                if (window.__resetarEditorAtelie) window.__resetarEditorAtelie();
-                document.querySelector('[data-aba="canal"]').click();
+            const temConteudo = $('input-titulo').value.trim() ||
+                editor.textContent.trim() || editor.querySelector('img');
+            if (temConteudo) {
+                const ok = await confirmar('Tem certeza que deseja apagar o que escreveu?', {
+                    titulo: 'Descartar escrita', confirmar: 'Descartar', perigo: true
+                });
+                if (!ok) return;
             }
+            if (window.__resetarEditorAtelie) window.__resetarEditorAtelie();
+            document.querySelector('[data-aba="canal"]').click();
         });
     }
 
-    // --- EDITOR DE REDAÇÃO (todos os recursos) ---
+    // ============================================================
+    // EDITOR DE REDAÇÃO
+    // ============================================================
     function configurarEditorEmbutido() {
         const editor = $('input-conteudo');
         const folha = $('editor-folha');
@@ -694,6 +810,8 @@
         let arraste = null;
         let fantasma = null;
         let ignorarClique = false;
+        let longPressTimer = null;
+        let longPressIniciado = false;
 
         document.execCommand('defaultParagraphSeparator', false, 'p');
 
@@ -711,7 +829,9 @@
 
         document.addEventListener('selectionchange', () => {
             const sel = window.getSelection();
-            if (sel.rangeCount && editor.contains(sel.anchorNode)) rangeSalvo = sel.getRangeAt(0).cloneRange();
+            if (sel.rangeCount && editor.contains(sel.anchorNode)) {
+                rangeSalvo = sel.getRangeAt(0).cloneRange();
+            }
         });
 
         document.querySelectorAll('.editor-toolbar button[data-cmd]').forEach(btn => {
@@ -783,7 +903,11 @@
         function inserirBloco(fig) {
             let no = null, off = 0;
             if (rangeSalvo && editor.contains(rangeSalvo.startContainer)) {
-                no = rangeSalvo.startContainer; off = rangeSalvo.startOffset;
+                // Valida se o range ainda é coerente com o DOM atual
+                try {
+                    no = rangeSalvo.startContainer; off = rangeSalvo.startOffset;
+                    if (no.nodeType === 3 && !no.parentNode) { no = null; off = 0; }
+                } catch (_) { no = null; off = 0; }
             }
             normalizarBlocos();
             const topo = no && editor.contains(no) ? blocoTopo(no) : null;
@@ -815,14 +939,21 @@
 
         const btnImg = $('btn-inserir-img');
         const inputImg = $('input-img');
+        let uploadEmAndamento = false;
         btnImg.addEventListener('mousedown', (e) => e.preventDefault());
-        btnImg.addEventListener('click', (e) => { e.preventDefault(); inputImg.click(); });
+        btnImg.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (uploadEmAndamento) return;
+            inputImg.click();
+        });
         inputImg.addEventListener('change', async () => {
+            if (uploadEmAndamento) return;
             const file = inputImg.files[0];
             inputImg.value = '';
             if (!file) return;
             if (!/^image\/(jpeg|png|webp|gif)$/.test(file.type)) return avisar('Use uma imagem JPG, PNG, WEBP ou GIF.', 'erro');
             if (file.size > MAX_MB * 1024 * 1024) return avisar('A imagem deve ter no máximo ' + MAX_MB + ' MB.', 'erro');
+            uploadEmAndamento = true;
             btnImg.classList.add('carregando'); btnImg.disabled = true;
             try {
                 const ext = file.type.split('/')[1] || 'jpg';
@@ -835,6 +966,7 @@
                 console.error(err);
                 avisar('Erro ao inserir imagem.', 'erro');
             } finally {
+                uploadEmAndamento = false;
                 btnImg.classList.remove('carregando');
                 btnImg.disabled = false;
             }
@@ -899,6 +1031,8 @@
             selecao.classList.add('ativa');
             posicionar();
         }
+        // API pública para limpar seleção ao trocar de aba
+        window.__limparSelecaoEditor = () => selecionarFigura(null);
 
         editor.addEventListener('click', (e) => {
             if (ignorarClique) return;
@@ -1084,12 +1218,34 @@
             arraste = null;
         }
 
+        // Mouse: arraste direto pela imagem
         editor.addEventListener('pointerdown', (e) => {
-            if (e.button !== 0 || e.pointerType === 'touch') return;
+            if (e.button !== 0) return;
             const img = e.target.closest('figure.img-bloco > img');
             if (!img) return;
-            arraste = { fig: img.parentElement, x: e.clientX, y: e.clientY, ativo: false, info: null };
+            if (e.pointerType === 'mouse') {
+                arraste = { fig: img.parentElement, x: e.clientX, y: e.clientY, ativo: false, info: null };
+            } else {
+                // Touch: exige long-press (500ms) para iniciar arraste
+                longPressIniciado = false;
+                const fig = img.parentElement;
+                longPressTimer = setTimeout(() => {
+                    longPressIniciado = true;
+                    arraste = { fig, x: e.clientX, y: e.clientY, ativo: false, info: null };
+                    iniciarArraste();
+                    if (fantasma) { fantasma.style.left = e.clientX + 'px'; fantasma.style.top = e.clientY + 'px'; }
+                    atualizarIndicador(e.clientX, e.clientY);
+                    if (navigator.vibrate) navigator.vibrate(15);
+                }, 500);
+            }
         });
+        const cancelarLongPress = () => {
+            if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+        };
+        editor.addEventListener('pointermove', cancelarLongPress);
+        editor.addEventListener('pointerup', cancelarLongPress);
+        editor.addEventListener('pointercancel', cancelarLongPress);
+
         barra.addEventListener('pointerdown', (e) => {
             const grip = e.target.closest('.grip');
             if (!grip || !figura) return;
@@ -1106,7 +1262,7 @@
                 iniciarArraste();
             }
             if (fantasma) { fantasma.style.left = e.clientX + 'px'; fantasma.style.top = e.clientY + 'px'; }
-            const navH = (document.querySelector('.navbar') || {}).offsetHeight || 68;
+            const navH = NAVBAR_H();
             if (e.clientY < navH + 130) window.scrollBy(0, -14);
             else if (e.clientY > window.innerHeight - 90) window.scrollBy(0, 14);
             atualizarIndicador(e.clientX, e.clientY);
@@ -1178,6 +1334,7 @@
             const categoria = $('input-categoria-artigo').value;
             if (!titulo) return avisar('Adicione um título ao seu conteúdo.', 'erro');
             if (editor.textContent.trim() === '' && !editor.querySelector('img')) return avisar('Escreva algo antes de publicar!', 'erro');
+            if (btn.disabled) return;
             btn.disabled = true; btn.textContent = 'Publicando...';
             try {
                 let capaUrl = null;
