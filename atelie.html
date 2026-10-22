@@ -12,7 +12,7 @@
     
     <link rel="stylesheet" href="assets/css/global.css">
     <link rel="stylesheet" href="assets/css/estante.css">
-    <link rel="stylesheet" href="assets/css/atelie.css?v=40">
+    <link rel="stylesheet" href="assets/css/atelie.css?v=42">
 </head>
 <body class="mural-body">
 
@@ -215,11 +215,10 @@
         </div>
     </div>
 
-    <!-- GAVETA LATERAL (Estilo Ficha do Aluno) -->
+    <!-- GAVETA LATERAL (Estilo Ficha) -->
     <div class="gaveta-overlay-config" id="overlay-config"></div>
     <aside class="atelie-gaveta" id="gaveta-config">
         
-        <!-- Painel do Canal -->
         <div id="config-canal" class="config-painel ativo">
             <header class="atelie-gaveta-header">
                 <h2>Configurações do Ateliê</h2>
@@ -227,7 +226,6 @@
             </header>
             
             <div class="atelie-gaveta-corpo">
-                <!-- Avatar (Estilo Ficha) -->
                 <div class="ficha-perfil-config">
                     <div class="ficha-foto" id="avatar-preview-container">
                         <div class="avatar-preview-arrastavel" id="avatar-preview-arrastavel">
@@ -243,34 +241,33 @@
 
                 <div class="ficha-filete"></div>
 
-                <!-- Nome e Bio -->
-                <div class="campo-linha">
-                    <label>Nome do Ateliê</label>
-                    <input type="text" id="input-config-nome" class="input-ficha" placeholder="Digite o nome" required>
-                </div>
-                
-                <div class="campo-linha">
-                    <label>Descrição (Bio)</label>
-                    <textarea id="input-config-bio" class="input-ficha" rows="3" placeholder="Fale um pouco sobre você"></textarea>
-                </div>
-
-                <div class="ficha-filete"></div>
-
-                <!-- Capa -->
-                <div class="campo-linha">
-                    <label>Capa do Ateliê</label>
-                    <button type="button" class="btn-texto" id="btn-upload-capa">Alterar Capa</button>
-                    <div id="capa-preview-container" class="capa-preview-container" style="display: none; margin-top: 0.5rem;">
-                        <div id="capa-preview-arrastavel" class="capa-preview-arrastavel"></div>
+                <form id="form-config-atelie">
+                    <div class="campo-linha">
+                        <label>Nome do Ateliê</label>
+                        <input type="text" id="input-config-nome" class="input-ficha" placeholder="Digite o nome" required>
                     </div>
-                    <input type="file" id="input-config-capa" accept="image/*" hidden>
-                </div>
+                    
+                    <div class="campo-linha">
+                        <label>Descrição (Bio)</label>
+                        <textarea id="input-config-bio" class="input-ficha" rows="3" placeholder="Fale um pouco sobre você"></textarea>
+                    </div>
 
-                <button type="submit" class="btn-primario btn-salvar-config" id="btn-salvar-config">Salvar Alterações</button>
+                    <div class="ficha-filete"></div>
+
+                    <div class="campo-linha">
+                        <label>Capa do Ateliê</label>
+                        <button type="button" class="btn-texto" id="btn-upload-capa">Alterar Capa</button>
+                        <div id="capa-preview-container" class="capa-preview-container" style="display: none; margin-top: 0.5rem;">
+                            <div id="capa-preview-arrastavel" class="capa-preview-arrastavel"></div>
+                        </div>
+                        <input type="file" id="input-config-capa" accept="image/*" hidden>
+                    </div>
+
+                    <button type="submit" class="btn-salvar-config" id="btn-salvar-config">Salvar Alterações</button>
+                </form>
             </div>
         </div>
 
-        <!-- Painel da Redação -->
         <div id="config-redacao" class="config-painel" hidden>
             <header class="atelie-gaveta-header">
                 <h2>Opções do Artigo</h2>
@@ -314,6 +311,6 @@
     <script src="assets/js/auth.js"></script>
     <script src="assets/js/lib/utils.js"></script>
     <script src="assets/js/layout.js"></script>
-    <script src="assets/js/pages/atelie.js?v=40"></script>
+    <script src="assets/js/pages/atelie.js?v=42"></script>
 </body>
 </html>

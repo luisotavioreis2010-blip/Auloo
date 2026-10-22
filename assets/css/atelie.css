@@ -1,6 +1,6 @@
 @charset "UTF-8";
 /* ==============================================
-   ATELIE.CSS — v41 (Gaveta Minimalista - Ficha)
+   ATELIE.CSS — v42 (Gaveta Ficha Clean)
    ============================================== */
 
 /* 0. RESET E SCROLL GLOBAL */
@@ -181,7 +181,7 @@ body.mural-body { overflow-y: auto !important; }
     flex: 1; overflow-y: auto; 
 }
 
-/* Filete divisório (igual à ficha) */
+/* Filete divisório */
 .ficha-filete {
     height: 1px;
     background: rgba(184, 137, 74, 0.15);
@@ -235,7 +235,7 @@ body.mural-body { overflow-y: auto !important; }
     line-height: 1.2;
 }
 
-/* Botões de texto (estilo link) */
+/* Botões de texto */
 .btn-texto {
     background: transparent;
     border: none;
@@ -254,7 +254,7 @@ body.mural-body { overflow-y: auto !important; }
 .btn-texto.perigo { color: var(--erro); }
 .btn-texto.perigo:hover { color: #8a2a22; }
 
-/* Campos de linha (Label + Input) */
+/* Campos de linha */
 .campo-linha {
     display: flex;
     flex-direction: column;
@@ -318,7 +318,6 @@ textarea.input-ficha {
     background-position: center;
     transform-origin: center;
 }
-/* Placeholder na capa quando vazia */
 .capa-preview-container:empty::before {
     content: 'Adicionar Capa';
     font-family: var(--fonte-corpo);
@@ -337,6 +336,9 @@ textarea.input-ficha {
     background: var(--vinho);
     color: var(--papel);
     border: none;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: background 0.2s;
 }
 .btn-salvar-config:hover { background: var(--dourado); }
 

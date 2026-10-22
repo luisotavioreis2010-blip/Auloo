@@ -133,9 +133,11 @@
         const arrastavel = $('capa-preview-arrastavel');
         const container = $('capa-preview-container');
         const avatarArrastavel = $('avatar-preview-arrastavel');
+        const nomeDisplay = $('nome-display-config');
 
         if (inputNome) inputNome.value = atelie.name || '';
         if (inputBio) inputBio.value = atelie.description || '';
+        if (nomeDisplay) nomeDisplay.textContent = atelie.name || 'Seu Ateliê';
 
         if (atelie.cover_url && arrastavel && container) {
             arrastavel.style.backgroundImage = `url('${atelie.cover_url}')`;
@@ -144,11 +146,10 @@
             container.style.display = 'none';
         }
 
-        // Preenche o preview do avatar
         if (atelie.avatar_url && avatarArrastavel) {
             avatarImageUrl = atelie.avatar_url;
             avatarArrastavel.style.backgroundImage = `url('${atelie.avatar_url}')`;
-            avatarArrastavel.innerHTML = ''; // Remove o SVG placeholder
+            avatarArrastavel.innerHTML = '';
         }
     }
 
@@ -195,19 +196,16 @@
         const gaveta = $('gaveta-config');
         const overlay = $('overlay-config');
         
-        // Capa do Ateliê
         const container = $('capa-preview-container');
         const arrastavel = $('capa-preview-arrastavel');
         const inputCapa = $('input-config-capa');
         const btnUploadCapa = $('btn-upload-capa');
 
-        // Avatar do Ateliê
         const avatarContainer = $('avatar-preview-container');
         const avatarArrastavel = $('avatar-preview-arrastavel');
         const inputAvatar = $('input-config-avatar');
         const btnUploadAvatar = $('btn-upload-avatar');
 
-        // Config Redação
         const capaArtigoPreview = $('capa-artigo-preview');
         const capaArtigoArrastavel = $('capa-artigo-arrastavel');
         const inputCapaArtigo = $('input-capa-artigo');
@@ -233,6 +231,47 @@
         $('btn-fechar-config-redacao').addEventListener('click', fecharGaveta);
         overlay.addEventListener('click', fecharGaveta);
 
+        // --- UPLOAD DO AVATAR ---
+        btnUploadAvatar.addEventListener('click', () => inputAvatar.click());
+        inputAvatar.addEventListener('change', () => {
+            const file = inputAvatar.files[0];
+            if (!file) return;
+            fileAvatar = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                avatarImageUrl = e.target.result;
+                avatarArrastavel.style.backgroundImage = `url('${avatarImageUrl}')`;
+                avatarArrastavel.innerHTML = '';
+                avatarPosX = 50; avatarPosY = 50; avatarZoom = 1;
+                atualizarTransformacaoAvatar();
+            };
+            reader.readAsDataURL(file);
+            inputAvatar.value = '';
+        });
+
+        function atualizarTransformacaoAvatar() {
+            avatarArrastavel.style.backgroundPosition = `${avatarPosX}% ${avatarPosY}%`;
+            avatarArrastavel.style.backgroundSize = `${avatarZoom * 100}%`;
+        }
+
+        // --- DRAG DO AVATAR ---
+        avatarContainer.addEventListener('pointerdown', (e) => {
+            if (!avatarImageUrl) return;
+            if (e.pointerType === 'touch' && e.isPrimary === false) return;
+            isDraggingAvatar = true; avatarContainer.setPointerCapture(e.pointerId);
+            startAvatarX = e.clientX - (avatarPosX * avatarContainer.offsetWidth / 100);
+            startAvatarY = e.clientY - (avatarPosY * avatarContainer.offsetHeight / 100);
+        });
+        avatarContainer.addEventListener('pointermove', (e) => {
+            if (!isDraggingAvatar) return;
+            e.preventDefault();
+            avatarPosX = Math.max(0, Math.min(100, (e.clientX - startAvatarX) / avatarContainer.offsetWidth * 100));
+            avatarPosY = Math.max(0, Math.min(100, (e.clientY - startAvatarY) / avatarContainer.offsetHeight * 100));
+            atualizarTransformacaoAvatar();
+        });
+        avatarContainer.addEventListener('pointerup', () => { isDraggingAvatar = false; });
+        avatarContainer.addEventListener('pointercancel', () => { isDraggingAvatar = false; });
+
         // --- UPLOAD DA CAPA DO ATELIÊ ---
         btnUploadCapa.addEventListener('click', () => inputCapa.click());
         inputCapa.addEventListener('change', () => {
@@ -254,29 +293,6 @@
         function atualizarTransformacaoCapa() {
             arrastavel.style.backgroundPosition = `${posX}% ${posY}%`;
             arrastavel.style.transform = `scale(${zoom})`;
-        }
-
-        // --- UPLOAD DO AVATAR ---
-        btnUploadAvatar.addEventListener('click', () => inputAvatar.click());
-        inputAvatar.addEventListener('change', () => {
-            const file = inputAvatar.files[0];
-            if (!file) return;
-            fileAvatar = file;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                avatarImageUrl = e.target.result;
-                avatarArrastavel.style.backgroundImage = `url('${avatarImageUrl}')`;
-                avatarArrastavel.innerHTML = ''; // Remove o SVG placeholder
-                avatarPosX = 50; avatarPosY = 50; avatarZoom = 1;
-                atualizarTransformacaoAvatar();
-            };
-            reader.readAsDataURL(file);
-            inputAvatar.value = '';
-        });
-
-        function atualizarTransformacaoAvatar() {
-            avatarArrastavel.style.backgroundPosition = `${avatarPosX}% ${avatarPosY}%`;
-            avatarArrastavel.style.backgroundSize = `${avatarZoom * 100}%`;
         }
 
         // --- DRAG & ZOOM DA CAPA ---
@@ -326,25 +342,7 @@
             atualizarTransformacaoCapa();
         }, { passive: false });
 
-        // --- DRAG & ZOOM DO AVATAR ---
-        avatarContainer.addEventListener('pointerdown', (e) => {
-            if (!avatarImageUrl) return;
-            if (e.pointerType === 'touch' && e.isPrimary === false) return;
-            isDraggingAvatar = true; avatarContainer.setPointerCapture(e.pointerId);
-            startAvatarX = e.clientX - (avatarPosX * avatarContainer.offsetWidth / 100);
-            startAvatarY = e.clientY - (avatarPosY * avatarContainer.offsetHeight / 100);
-        });
-        avatarContainer.addEventListener('pointermove', (e) => {
-            if (!isDraggingAvatar) return;
-            e.preventDefault();
-            avatarPosX = Math.max(0, Math.min(100, (e.clientX - startAvatarX) / avatarContainer.offsetWidth * 100));
-            avatarPosY = Math.max(0, Math.min(100, (e.clientY - startAvatarY) / avatarContainer.offsetHeight * 100));
-            atualizarTransformacaoAvatar();
-        });
-        avatarContainer.addEventListener('pointerup', () => { isDraggingAvatar = false; });
-        avatarContainer.addEventListener('pointercancel', () => { isDraggingAvatar = false; });
-
-        // --- CONFIG REDAÇÃO ---
+        // --- CAPA DO ARTIGO ---
         btnUploadCapaArtigo.addEventListener('click', () => inputCapaArtigo.click());
         inputCapaArtigo.addEventListener('change', () => {
             const file = inputCapaArtigo.files[0];
@@ -379,7 +377,6 @@
             let newCoverUrl = atelieAtual.cover_url;
 
             try {
-                // Upload do Avatar
                 if (fileAvatar) {
                     const path = usuarioLogado.id + '/atelie-avatar-' + Date.now() + '.jpg';
                     const up = await db.storage.from('avatars').upload(path, fileAvatar);
@@ -387,7 +384,6 @@
                     newAvatarUrl = db.storage.from('avatars').getPublicUrl(path).data.publicUrl;
                 }
 
-                // Upload da Capa
                 if (fileCapa) {
                     const path = usuarioLogado.id + '/atelie-capa-' + Date.now() + '.jpg';
                     const up = await db.storage.from('avatars').upload(path, fileCapa);
@@ -397,7 +393,6 @@
 
                 const cPos = `${posX.toFixed(0)}% ${posY.toFixed(0)}%`;
                 
-                // Atualiza no Banco
                 const { data, error } = await db.from('ateliers').update({
                     name: nome,
                     description: bio,
@@ -414,7 +409,6 @@
                 
                 fileAvatar = null;
                 fileCapa = null;
-                btnUploadAvatar.textContent = TEXTO_BTN_AVATAR;
                 
                 fecharGaveta();
                 preencherPainel(data);
