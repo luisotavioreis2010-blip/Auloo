@@ -1,6 +1,6 @@
 @charset "UTF-8";
 /* ==============================================
-   ATELIE.CSS — v25 (Layout Profissional de Redação)
+   ATELIE.CSS — v26 (Layout Premium de Redação)
    ============================================== */
 
 /* 1. ESTRUTURA GERAL */
@@ -66,7 +66,7 @@
 #atelie-main.modo-redacao .atelie-abas { display: none !important; }
 
 /* ==============================================
-   REDAÇÃO - INTRO E ILUSTRAÇÃO
+   REDAÇÃO - INTRO
    ============================================== */
 .redacao-intro {
     display: flex;
@@ -112,31 +112,32 @@
    ============================================== */
 .redacao-editor {
     width: 100%;
-    max-width: 900px;
+    max-width: 950px; /* Mais largo para parecer uma folha A4 */
     margin: 0 auto;
     display: flex;
     flex-direction: column;
     align-items: center;
     animation: fadeAba 0.4s ease;
+    padding-bottom: 4rem;
 }
 
-/* Barra de Ferramentas (Topo) */
+/* Barra de Ferramentas (Topo Flutuante) */
 .editor-topo-custom {
     width: 100%;
-    background: var(--papel-claro);
+    background: rgba(248, 242, 228, 0.95); /* Papel claro com transparência */
+    backdrop-filter: blur(8px);
     border: 1px solid var(--papel-sombra);
-    border-bottom: none;
-    border-radius: 6px 6px 0 0;
-    padding: 0.8rem 1.5rem;
+    border-radius: 8px 8px 0 0;
+    padding: 0.8rem 2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
     gap: 1rem;
-    box-shadow: 0 -4px 10px rgba(0,0,0,0.02);
     position: sticky;
-    top: 0;
-    z-index: 10;
+    top: 1rem; /* Flutua um pouco abaixo da navbar */
+    z-index: 100;
+    box-shadow: 0 10px 30px rgba(26, 22, 20, 0.05);
 }
 
 .btn-voltar-editor {
@@ -150,75 +151,107 @@
     text-transform: uppercase;
     letter-spacing: 1px;
     transition: color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 .btn-voltar-editor:hover { color: var(--vinho); }
 
-/* A Folha */
+/* A Folha de Papel Real */
 .editor-folha {
     width: 100%;
-    background: var(--papel-claro);
+    background: #FFFFFF; /* Papel branco puro para parecer digitação real */
     border: 1px solid var(--papel-sombra);
-    border-radius: 0 0 6px 6px;
-    padding: 3rem;
+    border-radius: 0 0 8px 8px;
+    padding: 4rem 5rem; /* Respiro grande (estilo Medium/Notion) */
     box-shadow: 0 20px 50px rgba(26, 22, 20, 0.08);
+    min-height: 80vh;
 }
 
-/* Capa 16:9 */
+/* A Capa no Tamanho Correto (Desktop) */
 .editor-capa {
     width: 100%;
-    aspect-ratio: 16 / 9; /* <-- Proporção Desktop */
-    background: var(--papel-escuro);
+    height: 280px; /* Altura fixa elegante */
+    background: linear-gradient(135deg, var(--papel-escuro) 0%, #D9C4A0 100%);
     border: 2px dashed var(--dourado);
-    border-radius: 4px;
+    border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--tinta-clara);
+    color: var(--tinta-suave);
     font-family: var(--fonte-corpo);
-    font-size: 0.8rem;
+    font-size: 0.85rem;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
     cursor: pointer;
-    margin-bottom: 2rem;
+    margin-bottom: 3rem;
     background-size: cover;
     background-position: center;
-    transition: background-color 0.2s;
+    transition: all 0.3s ease;
 }
-.editor-capa:hover { background-color: var(--papel); }
+.editor-capa:hover {
+    background: linear-gradient(135deg, var(--papel) 0%, #E5D9C0 100%);
+    border-color: var(--vinho);
+    color: var(--vinho);
+}
 
-/* Título */
+/* Meta (Categoria) */
+.editor-meta {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(184, 137, 74, 0.2);
+}
+
+.editor-categoria {
+    background: transparent;
+    border: none;
+    font-family: var(--fonte-corpo);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--dourado);
+    cursor: pointer;
+    outline: none;
+}
+
+/* Título Imponente */
 .editor-titulo {
     width: 100%;
     background: transparent;
     border: none;
     outline: none;
     font-family: var(--fonte-titulo);
-    font-size: 3rem;
+    font-size: 3.5rem; /* Título maior */
     font-style: italic;
     color: var(--vinho);
     margin-bottom: 2rem;
     line-height: 1.1;
 }
-.editor-titulo::placeholder { color: rgba(92, 26, 26, 0.3); }
+.editor-titulo::placeholder { color: rgba(92, 26, 26, 0.2); }
 
 /* Conteúdo */
 .editor-conteudo {
     min-height: 400px;
     outline: none;
     font-family: var(--fonte-display);
-    font-size: 1.35rem;
+    font-size: 1.4rem;
     line-height: 1.8;
     color: var(--tinta-suave);
 }
 .editor-conteudo:empty::before { content: 'Comece a escrever...'; color: var(--tinta-clara); font-style: italic; }
 
-/* Estilos do editor (H2, blockquote, img) */
-.editor-conteudo h2 { font-family: var(--fonte-titulo); color: var(--vinho); margin: 2rem 0 1rem; font-style: italic; }
-.editor-conteudo blockquote { border-left: 3px solid var(--dourado); padding-left: 1.5rem; margin: 1.5rem 0; font-style: italic; color: var(--tinta-clara); }
-.editor-conteudo img { max-width: 100%; border-radius: 4px; margin: 1.5rem 0; }
+/* Estilos internos do conteúdo */
+.editor-conteudo h2 { font-family: var(--fonte-titulo); color: var(--vinho); margin: 2.5rem 0 1rem; font-style: italic; font-size: 2rem; }
+.editor-conteudo blockquote { border-left: 3px solid var(--dourado); padding-left: 1.5rem; margin: 2rem 0; font-style: italic; color: var(--tinta-clara); font-size: 1.5rem; }
+.editor-conteudo img { max-width: 100%; border-radius: 4px; margin: 2rem 0; }
 
 
-/* 5. GAVETA LATERAL E MODAL (Mantidos) */
+/* 5. GAVETA LATERAL E MODAL */
 .atelie-gaveta { position: fixed; top: var(--navbar-h, 68px); right: 0; bottom: 0; z-index: 250; width: 100%; max-width: 460px; background: var(--papel-claro); border-left: 3px double var(--dourado); box-shadow: -20px 0 40px rgba(26, 22, 20, 0.15); transform: translateX(100%); visibility: hidden; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s linear 0.4s; display: flex; flex-direction: column; overflow-y: auto; }
 .atelie-gaveta.ativa { transform: translateX(0); visibility: visible; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s; }
 .gaveta-overlay-config { position: fixed; top: var(--navbar-h, 68px); left: 0; right: 0; bottom: 0; background: rgba(26, 22, 20, 0.55); backdrop-filter: blur(2px); z-index: 240; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
@@ -265,9 +298,10 @@
     .redacao-intro p { font-size: 1.1rem; }
     .ilustracao-redacao { max-width: 240px; }
     
-    .editor-topo-custom { flex-direction: column; align-items: stretch; gap: 1rem; padding: 1rem; }
+    .editor-topo-custom { flex-direction: column; align-items: stretch; gap: 1rem; padding: 1rem; top: 0; border-radius: 0; }
     .editor-toolbar { justify-content: center; }
-    .editor-folha { padding: 1.5rem; }
+    .editor-folha { padding: 1.5rem; border-radius: 0; }
+    .editor-capa { height: 200px; margin-bottom: 2rem; }
     .editor-titulo { font-size: 2.2rem; }
     .editor-conteudo { font-size: 1.15rem; }
 }
