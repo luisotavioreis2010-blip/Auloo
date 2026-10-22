@@ -2,6 +2,7 @@
     'use strict';
 
     const $ = (id) => document.getElementById(id);
+
     let db = null;
     let usuarioLogado = null;
     let atelieAtual = null;
@@ -17,47 +18,55 @@
 
     const MAX_MB = 5;
 
+    // ------------------------------------------------------------------
+    // Gaveta fixa (não é overlay) nestes contextos:
+    //   - telas >= 1367px (sempre)
+    //   - 1025–1366px no modo redação
+    // ------------------------------------------------------------------
     const gavetaPermanente = () =>
         window.matchMedia('(min-width: 1367px)').matches ||
         (window.matchMedia('(min-width: 1025px)').matches &&
             document.body.classList.contains('atelie-modo-redacao'));
 
-    // ==============================================
-    // ABRIR / FECHAR GAVETA (compatível com iOS)
-    // ==============================================
+    // ------------------------------------------------------------------
+    // Trava de scroll — método limpo:
+    // guarda o scrollY, aplica overflow:hidden no <html>. Restaura depois.
+    // Nada de position:fixed no <html> ou <body>.
+    // ------------------------------------------------------------------
+    let scrollYGuardado = 0;
+
+    function travarScroll() {
+        scrollYGuardado = window.scrollY || window.pageYOffset || 0;
+        document.documentElement.classList.add('atelie-travado');
+    }
+
+    function destravarScroll() {
+        document.documentElement.classList.remove('atelie-travado');
+        // Restaura a posição exata — só quando o navegador realmente a perdeu
+        if (Math.abs((window.scrollY || 0) - scrollYGuardado) > 1) {
+            window.scrollTo(0, scrollYGuardado);
+        }
+    }
+
     function abrirGaveta() {
         if (gavetaPermanente()) return;
-
-        const y = window.scrollY || window.pageYOffset || 0;
-        document.documentElement.style.setProperty('--scroll-lock-top', `-${y}px`);
-
+        travarScroll();
         $('gaveta-config').classList.add('ativa');
         $('overlay-config').classList.add('ativa');
         document.body.classList.add('atelie-gaveta-aberta');
-        document.documentElement.classList.add('atelie-travado');
-        document.body.style.top = `-${y}px`;
     }
 
     function fecharGaveta(forcar) {
         if (forcar !== true && gavetaPermanente()) return;
-
         $('gaveta-config').classList.remove('ativa');
         $('overlay-config').classList.remove('ativa');
         document.body.classList.remove('atelie-gaveta-aberta');
-        document.documentElement.classList.remove('atelie-travado');
-
-        const y = parseInt(
-            document.documentElement.style.getPropertyValue('--scroll-lock-top') || '0',
-            10
-        );
-        document.documentElement.style.removeProperty('--scroll-lock-top');
-        document.body.style.top = '';
-        window.scrollTo(0, Math.abs(y));
+        destravarScroll();
     }
 
-    // ==============================================
-    // UTILITÁRIOS
-    // ==============================================
+    // ------------------------------------------------------------------
+    // Utilitários
+    // ------------------------------------------------------------------
     async function aguardarSupabase() {
         for (let i = 0; i < 30; i++) {
             if (window.supabaseClient) return window.supabaseClient;
@@ -116,11 +125,8 @@
 
     function escaparHtml(str) {
         return String(str || '').replace(/[&<>"']/g, c => ({
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#39;'
+            '&': '&amp;', '<': '&lt;', '>': '&gt;',
+            '"': '&quot;', "'": '&#39;'
         }[c]));
     }
 
@@ -128,16 +134,14 @@
         if (!iso) return '';
         try {
             return new Date(iso).toLocaleDateString('pt-BR', {
-                day: '2-digit',
-                month: 'short',
-                year: 'numeric'
+                day: '2-digit', month: 'short', year: 'numeric'
             });
         } catch { return ''; }
     }
 
-    // ==============================================
-    // ENQUADRADOR (avatar/capa)
-    // ==============================================
+    // ------------------------------------------------------------------
+    // Enquadrador (avatar / capa)
+    // ------------------------------------------------------------------
     function criarEnquadrador({ container, camada, slider, linhaZoom, aoImagem, aoMudar }) {
         const est = { x: 50, y: 50, zoom: 1, nw: 0, nh: 0, pronto: false };
         const ponteiros = new Map();
@@ -154,7 +158,8 @@
         }
 
         function medidas() {
-            const cw = container.clientWidth, ch = container.clientHeight;
+            const cw = container.clientWidth;
+            const ch = container.clientHeight;
             const s = Math.max(cw / est.nw, ch / est.nh);
             return {
                 s,
@@ -260,9 +265,7 @@
             },
             limpar() {
                 est.pronto = false;
-                est.x = 50;
-                est.y = 50;
-                est.zoom = 1;
+                est.x = 50; est.y = 50; est.zoom = 1;
                 camada.style.backgroundImage = '';
                 aplicar();
                 if (linhaZoom) linhaZoom.hidden = true;
@@ -273,15 +276,15 @@
         };
     }
 
-    // ==============================================
-    // INÍCIO
-    // ==============================================
+    // ------------------------------------------------------------------
+    // Início
+    // ------------------------------------------------------------------
     async function iniciar() {
         db = await aguardarSupabase();
         if (!db) return console.error('Supabase não carregado.');
 
         const { data: { session } } = await db.auth.getSession();
-        if (!session) return window.location.href = 'login.html';
+        if (!session) return (window.location.href = 'login.html');
         usuarioLogado = session.user;
 
         configurarGavetaConfig();
@@ -319,9 +322,9 @@
         }
     }
 
-    // ==============================================
-    // CANAL — CARREGAR E RENDERIZAR POSTS
-    // ==============================================
+    // ------------------------------------------------------------------
+    // Canal — carregar e renderizar posts
+    // ------------------------------------------------------------------
     async function carregarCanal() {
         const lista = $('canal-lista');
         const vazio = $('canal-vazio');
@@ -506,13 +509,14 @@
         avatarEditado = false;
     }
 
-    // ==============================================
-    // CRIAÇÃO DO ATELIÊ
-    // ==============================================
+    // ------------------------------------------------------------------
+    // Criação do ateliê
+    // ------------------------------------------------------------------
     function configurarCriacao() {
         const modalCriar = $('modal-criar-atelie');
         if (!modalCriar) return;
-        $('btn-fechar-modal').addEventListener('click', () => modalCriar.hidden = true);
+
+        $('btn-fechar-modal').addEventListener('click', () => (modalCriar.hidden = true));
         modalCriar.addEventListener('click', (e) => {
             if (e.target === modalCriar) modalCriar.hidden = true;
         });
@@ -530,6 +534,7 @@
                 const { data: handleGerado, error: errHandle } =
                     await db.rpc('gerar_handle_unico');
                 if (errHandle) throw errHandle;
+
                 const { data, error } = await db.from('ateliers').insert([{
                     owner_id: usuarioLogado.id,
                     name: nome,
@@ -557,12 +562,10 @@
         });
     }
 
-    // ==============================================
-    // GAVETA DE CONFIGURAÇÃO
-    // ==============================================
+    // ------------------------------------------------------------------
+    // Gaveta de configuração
+    // ------------------------------------------------------------------
     function configurarGavetaConfig() {
-        const overlay = $('overlay-config');
-
         avatarFr = criarEnquadrador({
             container: $('avatar-preview-container'),
             camada: $('avatar-preview-arrastavel'),
@@ -597,12 +600,12 @@
         }
         $('btn-fechar-config').addEventListener('click', () => fecharGaveta());
         $('btn-fechar-config-redacao').addEventListener('click', () => fecharGaveta());
-        overlay.addEventListener('click', () => fecharGaveta());
+        $('overlay-config').addEventListener('click', () => fecharGaveta());
         window.addEventListener('resize', () => {
             if (gavetaPermanente()) fecharGaveta(true);
         });
 
-        // --- Upload do avatar ---
+        // --- Avatar ---
         const inputAvatar = $('input-config-avatar');
         $('btn-upload-avatar').addEventListener('click', () => inputAvatar.click());
         inputAvatar.addEventListener('change', () => {
@@ -618,7 +621,7 @@
             avatarEditado = true;
         });
 
-        // --- Upload da capa ---
+        // --- Capa do ateliê ---
         const inputCapa = $('input-config-capa');
         $('btn-upload-capa').addEventListener('click', () => inputCapa.click());
         inputCapa.addEventListener('change', () => {
@@ -641,8 +644,7 @@
             arquivoCapaEditor = file;
             const reader = new FileReader();
             reader.onload = (e) => {
-                capaArtigoArrastavel.style.backgroundImage =
-                    'url("' + e.target.result + '")';
+                capaArtigoArrastavel.style.backgroundImage = 'url("' + e.target.result + '")';
                 capaArtigoPreview.hidden = false;
             };
             reader.readAsDataURL(file);
@@ -688,9 +690,7 @@
             ctx.fillStyle = '#fff';
             ctx.fillRect(0, 0, SAIDA, SAIDA);
             ctx.drawImage(img, sx, sy, lado, lado, 0, 0, SAIDA, SAIDA);
-            return new Promise((ok) =>
-                canvas.toBlob((b) => ok(b), 'image/jpeg', 0.92)
-            );
+            return new Promise((ok) => canvas.toBlob((b) => ok(b), 'image/jpeg', 0.92));
         }
 
         $('form-config-atelie').addEventListener('submit', async (e) => {
@@ -709,30 +709,22 @@
                     try { blob = await gerarAvatarRecortado(); } catch (_) { blob = null; }
                     const corpo = blob || fileAvatar;
                     if (corpo) {
-                        const path = usuarioLogado.id +
-                            '/atelie-avatar-' + Date.now() + '.jpg';
-                        const up = await db.storage
-                            .from('avatars')
-                            .upload(path, corpo, {
-                                contentType: blob ? 'image/jpeg' : corpo.type
-                            });
+                        const path = usuarioLogado.id + '/atelie-avatar-' + Date.now() + '.jpg';
+                        const up = await db.storage.from('avatars').upload(path, corpo, {
+                            contentType: blob ? 'image/jpeg' : corpo.type
+                        });
                         if (up.error) throw up.error;
-                        newAvatarUrl = db.storage
-                            .from('avatars')
-                            .getPublicUrl(path).data.publicUrl;
+                        newAvatarUrl = db.storage.from('avatars').getPublicUrl(path).data.publicUrl;
                     }
                 }
 
                 if (fileCapa) {
-                    const path = usuarioLogado.id +
-                        '/atelie-capa-' + Date.now() + '.jpg';
-                    const up = await db.storage
-                        .from('avatars')
-                        .upload(path, fileCapa, { contentType: fileCapa.type });
+                    const path = usuarioLogado.id + '/atelie-capa-' + Date.now() + '.jpg';
+                    const up = await db.storage.from('avatars').upload(path, fileCapa, {
+                        contentType: fileCapa.type
+                    });
                     if (up.error) throw up.error;
-                    newCoverUrl = db.storage
-                        .from('avatars')
-                        .getPublicUrl(path).data.publicUrl;
+                    newCoverUrl = db.storage.from('avatars').getPublicUrl(path).data.publicUrl;
                 }
 
                 const c = capaFr.estado();
@@ -763,9 +755,9 @@
         });
     }
 
-    // ==============================================
-    // DROPDOWN DE CATEGORIA
-    // ==============================================
+    // ------------------------------------------------------------------
+    // Dropdown de categoria
+    // ------------------------------------------------------------------
     function configurarDropdown() {
         const raiz = $('dropdown-categoria');
         if (!raiz) return;
@@ -788,9 +780,9 @@
             if (devolverFoco) gatilho.focus();
         }
         function escolher(li) {
-            itens.forEach(i => i.setAttribute(
-                'aria-selected', i === li ? 'true' : 'false'
-            ));
+            itens.forEach(i =>
+                i.setAttribute('aria-selected', i === li ? 'true' : 'false')
+            );
             campo.value = li.dataset.valor;
             valorEl.textContent = li.dataset.valor;
             iconeEl.innerHTML = li.querySelector('.dropdown-icone').innerHTML;
@@ -835,13 +827,12 @@
         });
     }
 
-    // ==============================================
-    // ABAS
-    // ==============================================
+    // ------------------------------------------------------------------
+    // Abas
+    // ------------------------------------------------------------------
     function configurarAbas() {
         const botoes = document.querySelectorAll('.aba-btn');
         const main = $('atelie-main');
-
         const painelCanal = $('config-canal');
         const painelRedacao = $('config-redacao');
 
@@ -874,7 +865,6 @@
                     $('aba-redacao').classList.add('ativa');
                     painelRedacao.hidden = false;
                     painelRedacao.classList.add('ativo');
-
                     $('redacao-intro').hidden = true;
                     $('redacao-editor').hidden = false;
                 }
@@ -889,7 +879,8 @@
 
         $('btn-cancelar-escrita').addEventListener('click', () => {
             const editor = $('input-conteudo');
-            const temConteudo = $('input-titulo').value.trim() ||
+            const temConteudo =
+                $('input-titulo').value.trim() ||
                 editor.textContent.trim() ||
                 editor.querySelector('img');
             if (!temConteudo ||
@@ -900,9 +891,9 @@
         });
     }
 
-    // ==============================================
-    // EDITOR DE REDAÇÃO
-    // ==============================================
+    // ------------------------------------------------------------------
+    // Editor de redação
+    // ------------------------------------------------------------------
     function configurarEditorEmbutido() {
         const editor = $('input-conteudo');
         const folha = $('editor-folha');
@@ -915,8 +906,8 @@
         const TAMANHOS = { p: 30, m: 55, g: 100 };
         const TAMANHO_PADRAO = 'm';
         const BLOCOS = new Set([
-            'P', 'H1', 'H2', 'H3', 'BLOCKQUOTE', 'UL', 'OL',
-            'FIGURE', 'DIV', 'PRE'
+            'P', 'H1', 'H2', 'H3', 'BLOCKQUOTE',
+            'UL', 'OL', 'FIGURE', 'DIV', 'PRE'
         ]);
 
         let figura = null;
@@ -933,9 +924,7 @@
             editor.dataset.vazio = vazio ? 'true' : 'false';
 
             const palavras = texto ? texto.split(/\s+/).length : 0;
-            const minutos = palavras === 0
-                ? 0
-                : Math.max(1, Math.round(palavras / 200));
+            const minutos = palavras === 0 ? 0 : Math.max(1, Math.round(palavras / 200));
             $('contador-palavras').textContent =
                 palavras + (palavras === 1 ? ' palavra' : ' palavras');
             $('tempo-leitura').textContent = minutos + ' min de leitura';
@@ -1130,9 +1119,8 @@
         }
 
         function definirLarguraLivre(fig, pct) {
-            const preset = Object.keys(TAMANHOS).find(
-                k => Math.abs(TAMANHOS[k] - pct) < 1.5
-            );
+            const preset = Object.keys(TAMANHOS)
+                .find(k => Math.abs(TAMANHOS[k] - pct) < 1.5);
             fig.dataset.size = preset || 'c';
             fig.style.width = (preset ? TAMANHOS[preset] : pct).toFixed(1) + '%';
             if (pct >= 99) fig.dataset.align = 'center';
@@ -1238,7 +1226,8 @@
                 ? figura.previousElementSibling
                 : figura.nextElementSibling;
             if (!alvo) return;
-            if (dir < 0) alvo.before(figura); else alvo.after(figura);
+            if (dir < 0) alvo.before(figura);
+            else alvo.after(figura);
             garantirParagrafoFinal();
             figura.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
         }
@@ -1270,7 +1259,8 @@
         function abrirMenu(x, y) {
             atualizarEstados();
             menu.hidden = false;
-            const w = menu.offsetWidth, h = menu.offsetHeight;
+            const w = menu.offsetWidth;
+            const h = menu.offsetHeight;
             menu.style.left = Math.max(8, Math.min(x, window.innerWidth - w - 8)) + 'px';
             menu.style.top = Math.max(8, Math.min(y, window.innerHeight - h - 8)) + 'px';
         }
@@ -1439,10 +1429,8 @@
             if (!img) return;
             arraste = {
                 fig: img.parentElement,
-                x: e.clientX,
-                y: e.clientY,
-                ativo: false,
-                info: null
+                x: e.clientX, y: e.clientY,
+                ativo: false, info: null
             };
         });
 
@@ -1452,10 +1440,8 @@
             e.preventDefault();
             arraste = {
                 fig: figura,
-                x: e.clientX,
-                y: e.clientY,
-                ativo: false,
-                info: null
+                x: e.clientX, y: e.clientY,
+                ativo: false, info: null
             };
             iniciarArraste();
             if (fantasma) {
@@ -1582,17 +1568,14 @@
             try {
                 let capaUrl = null;
                 if (arquivoCapaEditor) {
-                    const path = usuarioLogado.id +
-                        '/capa_post_' + Date.now() + '.jpg';
-                    const up = await db.storage
-                        .from('avatars')
-                        .upload(path, arquivoCapaEditor, {
-                            contentType: arquivoCapaEditor.type
-                        });
+                    const path = usuarioLogado.id + '/capa_post_' + Date.now() + '.jpg';
+                    const up = await db.storage.from('avatars').upload(
+                        path,
+                        arquivoCapaEditor,
+                        { contentType: arquivoCapaEditor.type }
+                    );
                     if (!up.error) {
-                        capaUrl = db.storage
-                            .from('avatars')
-                            .getPublicUrl(path).data.publicUrl;
+                        capaUrl = db.storage.from('avatars').getPublicUrl(path).data.publicUrl;
                     }
                 }
 

@@ -1,45 +1,43 @@
 @charset "UTF-8";
-/* ==============================================
-   ATELIE.CSS — v48
-   (Scroll mobile corrigido + botões redesenhados + canal com posts)
-   ============================================== */
+/* ==============================================================
+   ATELIE.CSS — v49
+   Reescrita limpa. Modelo de scroll único: quem rola é o <html>.
+   Gaveta = flex column (header / corpo rolável / rodapé fixo).
+   ============================================================== */
 
-:root { --gaveta-w: 420px; }
+:root {
+    --gaveta-w: 420px;
+}
 
-/* ==============================================
-   0. MODELO DE SCROLL — CORRIGIDO PARA MOBILE
-   ============================================== */
+/* --------------------------------------------------------------
+   1. MODELO DE SCROLL
+   Regra de ouro: só `html` rola. Nada de fixed em html/body.
+   -------------------------------------------------------------- */
 html {
-    height: auto !important;
     overflow-x: hidden;
-    overflow-x: clip;
-    overflow-y: auto !important;
+    overflow-y: auto;
+    height: 100%;
     scrollbar-gutter: stable;
     -webkit-overflow-scrolling: touch;
 }
 
 body.mural-body {
-    height: auto !important;
-    min-height: 100vh;
+    min-height: 100%;
     overflow-x: hidden;
-    overflow-x: clip;
-    overflow-y: visible !important;
+    overflow-y: visible;
     -webkit-overflow-scrolling: touch;
-    touch-action: pan-y;
 }
 
-/* Trava de rolagem do fundo quando a gaveta abre (compatível com iOS) */
+/* Trava de rolagem do fundo quando a gaveta abre.
+   Usamos apenas overflow:hidden — sem position:fixed, sem top:-Ypx.
+   A posição do scroll é guardada e restaurada pelo JS. */
 html.atelie-travado {
-    overflow: hidden !important;
-    position: fixed;
-    width: 100%;
-    top: var(--scroll-lock-top, 0);
+    overflow: hidden;
 }
-html.atelie-travado body { overflow: hidden !important; }
 
-/* ==============================================
-   1. ESTRUTURA GERAL
-   ============================================== */
+/* --------------------------------------------------------------
+   2. LAYOUT PRINCIPAL
+   -------------------------------------------------------------- */
 .atelie-main {
     margin-left: var(--sidebar-w);
     min-height: calc(100vh - var(--navbar-h));
@@ -59,9 +57,9 @@ html.atelie-travado body { overflow: hidden !important; }
     align-items: center;
 }
 
-/* ==============================================
-   2. CARD DO ATELIÊ
-   ============================================== */
+/* --------------------------------------------------------------
+   3. CARD DO ATELIÊ
+   -------------------------------------------------------------- */
 .atelie-conteudo {
     width: 100%;
     background: var(--papel-claro);
@@ -72,9 +70,10 @@ html.atelie-travado body { overflow: hidden !important; }
     margin-bottom: 2rem;
     animation: cardEntrar 0.5s ease both;
 }
+
 @keyframes cardEntrar {
     from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
 .atelie-capa-wrapper {
@@ -85,17 +84,19 @@ html.atelie-travado body { overflow: hidden !important; }
     background: var(--papel-escuro);
     border-bottom: 2px solid var(--dourado);
 }
+
 .atelie-capa-img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transform-origin: center center;
+    transform-origin: center;
     pointer-events: none;
 }
+
 .atelie-capa-wrapper::after {
     content: '';
     position: absolute;
-    bottom: 0; left: 0; right: 0;
+    inset: auto 0 0 0;
     height: 50px;
     background: linear-gradient(transparent, rgba(26, 22, 20, 0.5));
     pointer-events: none;
@@ -108,13 +109,14 @@ html.atelie-travado body { overflow: hidden !important; }
     padding: 0 2rem 2rem;
     position: relative;
 }
+
 .atelie-avatar {
     width: 100px;
     height: 100px;
     border-radius: 50%;
     background: var(--vinho);
     border: 4px solid var(--papel-claro);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     margin-top: -50px;
     overflow: hidden;
     display: flex;
@@ -123,13 +125,16 @@ html.atelie-travado body { overflow: hidden !important; }
     flex-shrink: 0;
     z-index: 2;
 }
+
 .atelie-avatar img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     border-radius: 50%;
 }
+
 .atelie-info { flex: 1; margin-top: 0.5rem; }
+
 .atelie-nome {
     font-family: var(--fonte-titulo);
     font-size: 2rem;
@@ -138,6 +143,7 @@ html.atelie-travado body { overflow: hidden !important; }
     margin-bottom: 0.1rem;
     line-height: 1.2;
 }
+
 .atelie-handle {
     font-family: var(--fonte-corpo);
     font-size: 0.8rem;
@@ -146,12 +152,14 @@ html.atelie-travado body { overflow: hidden !important; }
     display: block;
     margin-bottom: 0.8rem;
 }
+
 .atelie-bio {
     font-family: var(--fonte-display);
     font-size: 1.1rem;
     line-height: 1.4;
     color: var(--tinta-suave);
 }
+
 .atelie-acoes { margin-top: 0.8rem; }
 
 .btn-primario {
@@ -165,19 +173,16 @@ html.atelie-travado body { overflow: hidden !important; }
     text-transform: uppercase;
     letter-spacing: 1px;
     cursor: pointer;
-    transition: all 0.3s;
+    transition: background 0.3s, border-color 0.3s;
     border-radius: 2px;
     white-space: nowrap;
 }
-.btn-primario:hover {
-    background: var(--dourado);
-    border-color: var(--dourado);
-}
+.btn-primario:hover { background: var(--dourado); border-color: var(--dourado); }
 .btn-primario:disabled { opacity: 0.6; cursor: wait; }
 
-/* ==============================================
-   3. ESTADO VAZIO E ABAS
-   ============================================== */
+/* --------------------------------------------------------------
+   4. ESTADO VAZIO E ABAS
+   -------------------------------------------------------------- */
 .atelie-vazio {
     background: var(--papel-claro);
     border: 1px dashed var(--dourado);
@@ -219,15 +224,13 @@ html.atelie-travado body { overflow: hidden !important; }
     color: var(--tinta-clara);
     cursor: pointer;
     border-bottom: 2px solid transparent;
-    transition: all 0.3s ease;
+    transition: color 0.3s, border-color 0.3s;
     flex: 1;
     text-align: center;
 }
 .aba-btn:hover { color: var(--vinho); }
-.aba-btn.ativa {
-    color: var(--vinho);
-    border-bottom-color: var(--vinho);
-}
+.aba-btn.ativa { color: var(--vinho); border-bottom-color: var(--vinho); }
+
 .aba-conteudo {
     display: none;
     width: 100%;
@@ -236,8 +239,9 @@ html.atelie-travado body { overflow: hidden !important; }
 .aba-conteudo.ativa { display: block; }
 @keyframes fadeAba {
     from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    to   { opacity: 1; transform: translateY(0); }
 }
+
 .canal-vazio {
     text-align: center;
     padding: 3rem 1rem;
@@ -247,9 +251,9 @@ html.atelie-travado body { overflow: hidden !important; }
     font-style: italic;
 }
 
-/* ==============================================
-   3B. CANAL — LISTA DE PUBLICAÇÕES
-   ============================================== */
+/* --------------------------------------------------------------
+   5. CANAL — LISTA DE PUBLICAÇÕES
+   -------------------------------------------------------------- */
 .canal-lista {
     display: flex;
     flex-direction: column;
@@ -370,12 +374,10 @@ html.atelie-travado body { overflow: hidden !important; }
 .canal-post-ler:hover { gap: 0.7rem; color: var(--dourado); }
 .canal-post-ler svg { width: 14px; height: 14px; }
 
-.canal-post-acoes {
-    display: inline-flex;
-    gap: 0.4rem;
-}
+.canal-post-acoes { display: inline-flex; gap: 0.4rem; }
 .canal-post-acoes button {
-    width: 30px; height: 30px;
+    width: 30px;
+    height: 30px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -384,7 +386,7 @@ html.atelie-travado body { overflow: hidden !important; }
     border-radius: 6px;
     color: var(--tinta-clara);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: color 0.2s, border-color 0.2s, background 0.2s;
 }
 .canal-post-acoes button:hover {
     color: var(--vinho);
@@ -417,18 +419,13 @@ html.atelie-travado body { overflow: hidden !important; }
     animation: shimmer 1.4s infinite;
 }
 @keyframes shimmer {
-    0% { background-position: 200% 0; }
+    0%   { background-position: 200% 0; }
     100% { background-position: -200% 0; }
 }
 
-@media (max-width: 768px) {
-    .canal-post-titulo { font-size: 1.35rem; }
-    .canal-post-corpo { padding: 1.1rem 1.2rem 1.2rem; }
-}
-
-/* ==============================================
-   4. REDAÇÃO (TELA CHEIA)
-   ============================================== */
+/* --------------------------------------------------------------
+   6. REDAÇÃO — TELA CHEIA
+   -------------------------------------------------------------- */
 #atelie-main.modo-redacao {
     justify-content: flex-start;
     padding: 2rem 1.5rem 5rem;
@@ -436,8 +433,8 @@ html.atelie-travado body { overflow: hidden !important; }
         radial-gradient(900px 380px at 50% -80px, rgba(184, 137, 74, 0.14), transparent 70%),
         var(--papel-escuro);
 }
-#atelie-main.modo-redacao #wrapper-canal { display: none !important; }
-#atelie-main.modo-redacao .atelie-abas { display: none !important; }
+#atelie-main.modo-redacao #wrapper-canal { display: none; }
+#atelie-main.modo-redacao .atelie-abas { display: none; }
 
 .redacao-intro {
     display: flex;
@@ -459,7 +456,7 @@ html.atelie-travado body { overflow: hidden !important; }
 }
 @keyframes flutuarIlustracao {
     0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-15px); }
+    50%      { transform: translateY(-15px); }
 }
 .redacao-intro h2 {
     font-family: var(--fonte-titulo);
@@ -485,7 +482,7 @@ html.atelie-travado body { overflow: hidden !important; }
     animation: fadeAba 0.4s ease;
 }
 
-.btn-mobile-only { display: none !important; }
+.btn-mobile-only { display: none; }
 
 .editor-topo-custom {
     position: sticky;
@@ -540,22 +537,24 @@ html.atelie-travado body { overflow: hidden !important; }
     border-radius: 6px;
     color: var(--tinta-suave);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background 0.2s, color 0.2s;
 }
 .editor-toolbar button:hover {
     background: rgba(92, 26, 26, 0.07);
     color: var(--vinho);
 }
 .editor-toolbar button svg { width: 18px; height: 18px; }
+
 .editor-divisor {
     width: 1px;
     height: 18px;
     background: var(--papel-sombra);
     margin: 0 0.5rem;
 }
+
 .btn-publicar {
-    padding: 0.55rem 1.6rem !important;
-    font-size: 0.68rem !important;
+    padding: 0.55rem 1.6rem;
+    font-size: 0.68rem;
 }
 
 .editor-folha {
@@ -568,7 +567,10 @@ html.atelie-travado body { overflow: hidden !important; }
     box-shadow: 0 24px 60px rgba(26, 22, 20, 0.09);
     padding: 3.5rem 3rem 2.5rem;
 }
-.editor-corpo { max-width: 720px; margin: 0 auto; }
+.editor-corpo {
+    max-width: 720px;
+    margin: 0 auto;
+}
 
 .editor-titulo {
     display: block;
@@ -601,7 +603,7 @@ html.atelie-travado body { overflow: hidden !important; }
     height: 1px;
 }
 .editor-ornamento::before { background: linear-gradient(90deg, transparent, var(--dourado)); }
-.editor-ornamento::after { background: linear-gradient(270deg, transparent, var(--dourado)); }
+.editor-ornamento::after  { background: linear-gradient(270deg, transparent, var(--dourado)); }
 .editor-ornamento span { font-size: 0.8rem; line-height: 1; }
 
 .editor-conteudo {
@@ -618,7 +620,8 @@ html.atelie-travado body { overflow: hidden !important; }
 .editor-conteudo[data-vazio="true"]::before {
     content: attr(data-placeholder);
     position: absolute;
-    left: 0; top: 0;
+    top: 0;
+    left: 0;
     pointer-events: none;
     color: var(--tinta-clara);
     font-style: italic;
@@ -671,16 +674,18 @@ html.atelie-travado body { overflow: hidden !important; }
 .img-bloco[data-align="center"] { clear: both; margin: 1.8rem auto; }
 .img-bloco[data-align="left"]   { float: left;  margin: 0.4rem 1.6rem 1rem 0; }
 .img-bloco[data-align="right"]  { float: right; margin: 0.4rem 0 1rem 1.6rem; }
+
 .img-bloco img {
     display: block;
     width: 100%;
     height: auto;
     border-radius: 6px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
     user-select: none;
     -webkit-user-drag: none;
 }
 .img-bloco.arrastando { opacity: 0.35; }
+
 .img-bloco figcaption {
     margin-top: 0.5rem;
     text-align: center;
@@ -706,32 +711,37 @@ html.atelie-travado body { overflow: hidden !important; }
     border-radius: 6px;
 }
 .img-selecao.ativa { display: block; }
+
 .img-handle {
     position: absolute;
-    width: 14px; height: 14px;
+    width: 14px;
+    height: 14px;
     background: #fff;
     border: 2px solid var(--dourado);
     border-radius: 50%;
     pointer-events: auto;
     touch-action: none;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    transition: transform 0.15s;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    transition: transform 0.15s, background 0.15s;
 }
 .img-handle:hover { transform: scale(1.25); background: var(--dourado); }
-.img-handle[data-h="nw"] { top: -8px; left: -8px; cursor: nwse-resize; }
-.img-handle[data-h="ne"] { top: -8px; right: -8px; cursor: nesw-resize; }
-.img-handle[data-h="sw"] { bottom: -8px; left: -8px; cursor: nesw-resize; }
+.img-handle[data-h="nw"] { top: -8px;    left: -8px;  cursor: nwse-resize; }
+.img-handle[data-h="ne"] { top: -8px;    right: -8px; cursor: nesw-resize; }
+.img-handle[data-h="sw"] { bottom: -8px; left: -8px;  cursor: nesw-resize; }
 .img-handle[data-h="se"] { bottom: -8px; right: -8px; cursor: nwse-resize; }
+
 .img-selecao[data-align="left"]  .img-handle[data-h="nw"],
 .img-selecao[data-align="left"]  .img-handle[data-h="sw"] { display: none; }
 .img-selecao[data-align="right"] .img-handle[data-h="ne"],
 .img-selecao[data-align="right"] .img-handle[data-h="se"] { display: none; }
+
 .img-selecao-rotulo {
     position: absolute;
-    left: 50%; bottom: 10px;
+    left: 50%;
+    bottom: 10px;
     transform: translateX(-50%);
     padding: 0.2rem 0.6rem;
-    background: rgba(26,22,20,0.85);
+    background: rgba(26, 22, 20, 0.85);
     color: #fff;
     border-radius: 999px;
     font-family: var(--fonte-corpo);
@@ -749,14 +759,15 @@ html.atelie-travado body { overflow: hidden !important; }
     align-items: center;
     gap: 0.15rem;
     padding: 0.3rem;
-    background: #1A1614;
+    background: #1a1614;
     border-radius: 10px;
     transform: translateX(-50%);
-    box-shadow: 0 10px 26px rgba(0,0,0,0.3);
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.3);
 }
 .img-flutuante.ativa { display: flex; }
 .img-flutuante button {
-    width: 32px; height: 30px;
+    width: 32px;
+    height: 30px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -770,14 +781,14 @@ html.atelie-travado body { overflow: hidden !important; }
     font-weight: 600;
     transition: background 0.15s;
 }
-.img-flutuante button:hover { background: rgba(255,255,255,0.15); }
-.img-flutuante button.ativo { background: var(--dourado); color: #1A1614; }
+.img-flutuante button:hover { background: rgba(255, 255, 255, 0.15); }
+.img-flutuante button.ativo { background: var(--dourado); color: #1a1614; }
 .img-flutuante button svg { width: 16px; height: 16px; }
 .img-flutuante button.grip { cursor: grab; touch-action: none; }
 .img-flutuante .sep {
     width: 1px;
     height: 16px;
-    background: rgba(255,255,255,0.2);
+    background: rgba(255, 255, 255, 0.2);
     margin: 0 0.25rem;
 }
 
@@ -787,15 +798,16 @@ html.atelie-travado body { overflow: hidden !important; }
     height: 3px;
     border-radius: 3px;
     background: var(--dourado);
-    box-shadow: 0 0 0 3px rgba(184,137,74,0.22);
+    box-shadow: 0 0 0 3px rgba(184, 137, 74, 0.22);
     pointer-events: none;
 }
 .img-indicador[hidden] { display: none; }
 .img-indicador span {
     position: absolute;
-    top: -28px; left: 0;
+    top: -28px;
+    left: 0;
     padding: 0.15rem 0.55rem;
-    background: #1A1614;
+    background: #1a1614;
     color: #fff;
     border-radius: 999px;
     font-family: var(--fonte-corpo);
@@ -803,6 +815,7 @@ html.atelie-travado body { overflow: hidden !important; }
     letter-spacing: 0.5px;
     white-space: nowrap;
 }
+
 .img-fantasma {
     position: fixed;
     z-index: 1000;
@@ -811,10 +824,11 @@ html.atelie-travado body { overflow: hidden !important; }
     opacity: 0.88;
     border-radius: 6px;
     overflow: hidden;
-    box-shadow: 0 16px 36px rgba(0,0,0,0.3);
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.3);
     transform: translate(-50%, -50%) rotate(-2deg);
 }
 .img-fantasma img { display: block; width: 100%; height: auto; }
+
 body.img-arrastando,
 body.img-arrastando * {
     cursor: grabbing !important;
@@ -829,15 +843,15 @@ body.img-arrastando .img-selecao { opacity: 0; }
     min-width: 260px;
     padding: 0.4rem;
     background: var(--papel-claro);
-    border: 1px solid rgba(184,137,74,0.4);
+    border: 1px solid rgba(184, 137, 74, 0.4);
     border-radius: 12px;
-    box-shadow: 0 18px 44px rgba(26,22,20,0.22);
+    box-shadow: 0 18px 44px rgba(26, 22, 20, 0.22);
     animation: menuEntrar 0.15s ease;
 }
 .img-menu[hidden] { display: none; }
 @keyframes menuEntrar {
     from { opacity: 0; transform: translateY(-4px) scale(0.98); }
-    to { opacity: 1; transform: none; }
+    to   { opacity: 1; transform: none; }
 }
 .img-menu-titulo {
     padding: 0.4rem 0.7rem 0.3rem;
@@ -865,7 +879,8 @@ body.img-arrastando .img-selecao { opacity: 0; }
     transition: background 0.15s, color 0.15s;
 }
 .img-menu > button svg {
-    width: 17px; height: 17px;
+    width: 17px;
+    height: 17px;
     flex-shrink: 0;
     color: var(--dourado);
 }
@@ -877,20 +892,20 @@ body.img-arrastando .img-selecao { opacity: 0; }
     color: var(--tinta-clara);
 }
 .img-menu > button:hover {
-    background: rgba(92,26,26,0.07);
+    background: rgba(92, 26, 26, 0.07);
     color: var(--vinho);
 }
 .img-menu > button.ativo {
     color: var(--vinho);
-    background: rgba(184,137,74,0.14);
+    background: rgba(184, 137, 74, 0.14);
 }
 .img-menu > button.perigo,
 .img-menu > button.perigo svg { color: var(--erro, #a63a3a); }
-.img-menu > button.perigo:hover { background: rgba(166,58,58,0.1); }
+.img-menu > button.perigo:hover { background: rgba(166, 58, 58, 0.1); }
 .img-menu-sep {
     height: 1px;
     margin: 0.35rem 0.5rem;
-    background: rgba(184,137,74,0.25);
+    background: rgba(184, 137, 74, 0.25);
 }
 .img-menu-linha {
     display: flex;
@@ -907,7 +922,7 @@ body.img-arrastando .img-selecao { opacity: 0; }
 .img-menu-seg {
     display: inline-flex;
     padding: 3px;
-    background: rgba(184,137,74,0.12);
+    background: rgba(184, 137, 74, 0.12);
     border-radius: 8px;
 }
 .img-menu-seg button {
@@ -922,7 +937,7 @@ body.img-arrastando .img-selecao { opacity: 0; }
     font-size: 0.68rem;
     font-weight: 600;
     color: var(--tinta-suave);
-    transition: all 0.15s;
+    transition: color 0.15s, background 0.15s;
 }
 .img-menu-seg button:hover { color: var(--vinho); }
 .img-menu-seg button.ativo {
@@ -930,9 +945,12 @@ body.img-arrastando .img-selecao { opacity: 0; }
     color: #fff;
 }
 
-/* ==============================================
-   5. GAVETA LATERAL — CORRIGIDA PARA MOBILE
-   ============================================== */
+/* --------------------------------------------------------------
+   7. GAVETA LATERAL — modelo flex puro
+   header (fixo) / corpo (rolável) / rodapé (fixo)
+   NÃO usamos overflow:hidden na gaveta para não bloquear o scroll
+   interno do iOS. O corte é feito pelo position + border-radius.
+   -------------------------------------------------------------- */
 .atelie-gaveta {
     position: fixed;
     top: var(--navbar-h, 68px);
@@ -950,11 +968,6 @@ body.img-arrastando .img-selecao { opacity: 0; }
     transition: transform 0.4s ease, visibility 0s 0.4s;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
-    height: calc(100dvh - var(--navbar-h, 68px));
-    max-height: calc(100dvh - var(--navbar-h, 68px));
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
 }
 .atelie-gaveta.ativa {
     transform: translateX(0);
@@ -964,15 +977,13 @@ body.img-arrastando .img-selecao { opacity: 0; }
 
 .gaveta-overlay-config {
     position: fixed;
-    top: var(--navbar-h, 68px);
-    left: 0; right: 0; bottom: 0;
+    inset: var(--navbar-h, 68px) 0 0 0;
     background: rgba(26, 22, 20, 0.4);
     backdrop-filter: blur(2px);
     z-index: 240;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.3s ease;
-    touch-action: none;
 }
 .gaveta-overlay-config.ativa {
     opacity: 1;
@@ -983,8 +994,6 @@ body.img-arrastando .img-selecao { opacity: 0; }
     display: none;
     flex-direction: column;
     flex: 1;
-    width: 100%;
-    min-width: 0;
     min-height: 0;
     overflow: hidden;
 }
@@ -1001,7 +1010,9 @@ body.img-arrastando .img-selecao { opacity: 0; }
 .atelie-gaveta-header::after {
     content: '';
     position: absolute;
-    left: 1.75rem; right: 1.75rem; bottom: 0;
+    left: 1.75rem;
+    right: 1.75rem;
+    bottom: 0;
     height: 1px;
     background: linear-gradient(90deg, var(--dourado), rgba(184, 137, 74, 0.15) 70%, transparent);
 }
@@ -1027,7 +1038,8 @@ body.img-arrastando .img-selecao { opacity: 0; }
     margin: 0;
 }
 .atelie-gaveta-fechar {
-    width: 32px; height: 32px;
+    width: 32px;
+    height: 32px;
     color: var(--tinta-suave);
     background: transparent;
     border: 1px solid transparent;
@@ -1036,7 +1048,7 @@ body.img-arrastando .img-selecao { opacity: 0; }
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s;
+    transition: color 0.2s, border-color 0.2s, background 0.2s;
 }
 .atelie-gaveta-fechar:hover {
     color: var(--vinho);
@@ -1051,18 +1063,16 @@ body.img-arrastando .img-selecao { opacity: 0; }
     flex: 1;
     min-height: 0;
     margin: 0;
-    overflow: hidden;
 }
 
 .atelie-gaveta-corpo {
-    flex: 1 1 auto;
+    flex: 1;
     min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
-    touch-action: pan-y;
-    padding: 1.5rem 1.75rem 1.5rem;
+    padding: 1.5rem 1.75rem;
     display: flex;
     flex-direction: column;
     gap: 1.25rem;
@@ -1083,6 +1093,7 @@ body.img-arrastando .img-selecao { opacity: 0; }
     box-shadow: 0 -12px 28px rgba(26, 22, 20, 0.05);
 }
 
+/* ---------- Seções numeradas ---------- */
 .gaveta-secao {
     display: flex;
     flex-direction: column;
@@ -1129,6 +1140,7 @@ body.img-arrastando .img-selecao { opacity: 0; }
     margin: 0;
 }
 
+/* ---------- Campos ---------- */
 .atelie-gaveta .campo {
     display: flex;
     flex-direction: column;
@@ -1169,13 +1181,15 @@ body.img-arrastando .img-selecao { opacity: 0; }
     line-height: 1.4;
 }
 
+/* ---------- Avatar ---------- */
 .avatar-linha {
     display: flex;
     align-items: center;
     gap: 1.1rem;
 }
 .avatar-preview-container {
-    width: 88px; height: 88px;
+    width: 88px;
+    height: 88px;
     border-radius: 50%;
     flex-shrink: 0;
     background: var(--papel-escuro);
@@ -1188,7 +1202,8 @@ body.img-arrastando .img-selecao { opacity: 0; }
 }
 .avatar-preview-container:active { cursor: grabbing; }
 .avatar-preview-arrastavel {
-    width: 100%; height: 100%;
+    width: 100%;
+    height: 100%;
     background-size: cover;
     background-position: 50% 50%;
     background-repeat: no-repeat;
@@ -1208,6 +1223,7 @@ body.img-arrastando .img-selecao { opacity: 0; }
     min-width: 0;
 }
 
+/* ---------- Capa ---------- */
 .capa-preview-container {
     position: relative;
     width: 100%;
@@ -1222,12 +1238,10 @@ body.img-arrastando .img-selecao { opacity: 0; }
 }
 .capa-preview-container:active { cursor: grabbing; }
 .avatar-preview-container,
-.capa-preview-container {
-    user-select: none;
-    -webkit-user-select: none;
-}
+.capa-preview-container { user-select: none; -webkit-user-select: none; }
 .capa-preview-arrastavel {
-    width: 100%; height: 100%;
+    width: 100%;
+    height: 100%;
     background-size: cover;
     background-position: 50% 50%;
     background-repeat: no-repeat;
@@ -1235,7 +1249,7 @@ body.img-arrastando .img-selecao { opacity: 0; }
 .capa-preview-container::after {
     content: 'Arraste para enquadrar · zoom no controle abaixo';
     position: absolute;
-    left: 0; right: 0; bottom: 0;
+    inset: auto 0 0 0;
     padding: 0.4rem;
     text-align: center;
     font-family: var(--fonte-corpo);
@@ -1257,9 +1271,11 @@ body.img-arrastando .img-selecao { opacity: 0; }
 
 .capa-remover {
     position: absolute;
-    top: 8px; right: 8px;
+    top: 8px;
+    right: 8px;
     z-index: 2;
-    width: 28px; height: 28px;
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1291,6 +1307,7 @@ body.img-arrastando .img-selecao { opacity: 0; }
 }
 .capa-vazia svg { width: 26px; height: 26px; opacity: 0.8; }
 
+/* ---------- Slider de zoom ---------- */
 .gaveta-zoom {
     display: flex;
     align-items: center;
@@ -1310,20 +1327,23 @@ body.img-arrastando .img-selecao { opacity: 0; }
 }
 .gaveta-zoom input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
-    width: 16px; height: 16px;
+    width: 16px;
+    height: 16px;
     border-radius: 50%;
     background: #fff;
     border: 2px solid var(--dourado);
-    box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
 }
 .gaveta-zoom input[type="range"]::-moz-range-thumb {
-    width: 12px; height: 12px;
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
     background: #fff;
     border: 2px solid var(--dourado);
-    box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
 }
 
+/* ---------- Botão container (upload) ---------- */
 .atelie-gaveta .btn-container {
     display: inline-flex;
     align-items: center;
@@ -1341,7 +1361,7 @@ body.img-arrastando .img-selecao { opacity: 0; }
     letter-spacing: 1px;
     text-transform: uppercase;
     cursor: pointer;
-    transition: all 0.25s;
+    transition: background 0.25s, border-color 0.25s, color 0.25s;
 }
 .atelie-gaveta .btn-container svg { width: 14px; height: 14px; flex-shrink: 0; }
 .atelie-gaveta .btn-container:hover {
@@ -1350,9 +1370,9 @@ body.img-arrastando .img-selecao { opacity: 0; }
     color: #fff;
 }
 
-/* ==============================================
-   BOTÕES DA GAVETA — REDESENHADOS (v48)
-   ============================================== */
+/* --------------------------------------------------------------
+   8. BOTÕES DA GAVETA — aparência redesenhada
+   -------------------------------------------------------------- */
 .btn-gaveta {
     position: relative;
     display: flex;
@@ -1369,27 +1389,22 @@ body.img-arrastando .img-selecao { opacity: 0; }
     letter-spacing: 2px;
     text-transform: uppercase;
     cursor: pointer;
-    overflow: hidden;
-    isolation: isolate;
     transition:
-        transform 0.18s ease,
+        transform 0.15s ease,
         box-shadow 0.3s ease,
         background-color 0.3s ease,
         color 0.3s ease,
         border-color 0.3s ease;
 }
-
 .btn-gaveta svg {
     width: 18px;
     height: 18px;
     flex-shrink: 0;
     transition: transform 0.3s ease;
 }
-
-.btn-gaveta:active { transform: translateY(1px) scale(0.99); }
+.btn-gaveta:active { transform: translateY(1px); }
 .btn-gaveta:disabled { cursor: wait; opacity: 0.75; }
 
-/* PRIMÁRIO — "Salvar alterações" */
 .btn-gaveta--primario {
     color: #fff;
     background: var(--vinho);
@@ -1414,12 +1429,10 @@ body.img-arrastando .img-selecao { opacity: 0; }
 }
 .btn-gaveta--primario:hover:not(:disabled) svg { transform: scale(1.12); }
 
-/* PERIGO — "Descartar rascunho" */
 .btn-gaveta--perigo {
     color: var(--erro, #a63a3a);
     background: rgba(166, 58, 58, 0.04);
     border: 1.5px dashed rgba(166, 58, 58, 0.55);
-    box-shadow: none;
 }
 .btn-gaveta--perigo:hover:not(:disabled) {
     color: #fff;
@@ -1439,11 +1452,11 @@ body.img-arrastando .img-selecao { opacity: 0; }
 }
 .btn-gaveta--perigo:hover:not(:disabled) svg { transform: rotate(-8deg); }
 
-/* Spinner */
 .btn-gaveta.carregando .btn-icone { display: none; }
 .btn-gaveta.carregando::before {
     content: '';
-    width: 16px; height: 16px;
+    width: 16px;
+    height: 16px;
     border: 2px solid rgba(255, 255, 255, 0.4);
     border-top-color: #fff;
     border-radius: 50%;
@@ -1451,14 +1464,9 @@ body.img-arrastando .img-selecao { opacity: 0; }
 }
 @keyframes girar { to { transform: rotate(360deg); } }
 
-@media (max-width: 768px) {
-    .btn-gaveta {
-        min-height: 60px;
-        font-size: 0.82rem;
-    }
-}
-
-/* ---------- Dropdown de categoria ---------- */
+/* --------------------------------------------------------------
+   9. DROPDOWN DE CATEGORIA
+   -------------------------------------------------------------- */
 .dropdown { position: relative; }
 .dropdown-gatilho {
     display: flex;
@@ -1488,7 +1496,8 @@ body.img-arrastando .img-selecao { opacity: 0; }
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 32px; height: 32px;
+    width: 32px;
+    height: 32px;
     flex-shrink: 0;
     border-radius: 9px;
     background: rgba(184, 137, 74, 0.14);
@@ -1497,7 +1506,8 @@ body.img-arrastando .img-selecao { opacity: 0; }
 .dropdown-icone svg { width: 17px; height: 17px; }
 .dropdown-valor { flex: 1; }
 .dropdown-seta {
-    width: 14px; height: 14px;
+    width: 14px;
+    height: 14px;
     color: var(--tinta-suave);
     transition: transform 0.25s;
 }
@@ -1539,13 +1549,15 @@ body.img-arrastando .img-selecao { opacity: 0; }
     background: rgba(184, 137, 74, 0.12);
 }
 .dropdown-check {
-    width: 15px; height: 15px;
+    width: 15px;
+    height: 15px;
     margin-left: auto;
     color: var(--vinho);
     opacity: 0;
 }
 .dropdown-lista li[aria-selected="true"] .dropdown-check { opacity: 1; }
 
+/* ---------- Dicas do editor ---------- */
 .gaveta-dicas {
     list-style: none;
     margin: 0;
@@ -1571,20 +1583,24 @@ body.img-arrastando .img-selecao { opacity: 0; }
 }
 .gaveta-dicas strong { color: var(--vinho); font-weight: 600; }
 
+/* --------------------------------------------------------------
+   10. TOAST E MODAIS
+   -------------------------------------------------------------- */
 .atelie-toast {
     position: fixed;
-    left: 50%; bottom: 1.75rem;
+    left: 50%;
+    bottom: 1.75rem;
     z-index: 1200;
     max-width: calc(100vw - 2rem);
     padding: 0.8rem 1.4rem;
-    background: #1A1614;
+    background: #1a1614;
     color: #fff;
     border-left: 3px solid var(--dourado);
     border-radius: 8px;
     font-family: var(--fonte-corpo);
     font-size: 0.78rem;
     letter-spacing: 0.3px;
-    box-shadow: 0 14px 34px rgba(0,0,0,0.3);
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.3);
     opacity: 0;
     transform: translate(-50%, 12px);
     transition: opacity 0.3s, transform 0.3s;
@@ -1594,7 +1610,7 @@ body.img-arrastando .img-selecao { opacity: 0; }
 
 .modal-overlay {
     position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
+    inset: 0;
     background: rgba(26, 22, 20, 0.8);
     z-index: 999;
     display: flex;
@@ -1634,22 +1650,31 @@ body.img-arrastando .img-selecao { opacity: 0; }
 }
 .modal-fechar svg { width: 18px; height: 18px; }
 
-/* ==============================================
-   RESPONSIVIDADE
-   ============================================== */
+/* --------------------------------------------------------------
+   11. RESPONSIVIDADE
+   -------------------------------------------------------------- */
 
-@media (max-width: 768px) {
-    /* Gaveta: usar dvh para respeitar a barra de endereço do Safari */
-    .atelie-gaveta {
-        height: calc(100dvh - var(--navbar-h, 68px));
-        max-height: calc(100dvh - var(--navbar-h, 68px));
-        top: var(--navbar-h, 68px);
+/* Telas grandes com gaveta fixa ao lado */
+@media (min-width: 1367px) {
+    .atelie-main {
+        margin-right: var(--gaveta-w);
+        padding-right: 1rem;
     }
-    .atelie-gaveta-corpo {
-        padding-bottom: calc(6rem + env(safe-area-inset-bottom, 0px));
+    .atelie-gaveta {
+        transform: translateX(0);
+        visibility: visible;
+        box-shadow: none;
+    }
+    .gaveta-overlay-config { display: none; }
+    .atelie-gaveta-fechar { display: none; }
+    #btn-configurar-atelie { display: none; }
+    body.atelie-modo-redacao .atelie-main {
+        margin-right: var(--gaveta-w);
+        padding: 2rem 1rem 4rem;
     }
 }
 
+/* Telas médias — gaveta fixa apenas em modo redação */
 @media (min-width: 1025px) and (max-width: 1366px) {
     .atelie-main { margin-left: 0; padding: 2rem 1rem; }
     #atelie-main.modo-redacao {
@@ -1657,13 +1682,14 @@ body.img-arrastando .img-selecao { opacity: 0; }
         padding: 1.5rem 1rem 3rem;
     }
     body.atelie-modo-redacao .atelie-gaveta {
-        transform: translateX(0) !important;
-        visibility: visible !important;
+        transform: translateX(0);
+        visibility: visible;
     }
-    body.atelie-modo-redacao .gaveta-overlay-config { display: none !important; }
-    body.atelie-modo-redacao .atelie-gaveta-fechar { display: none !important; }
+    body.atelie-modo-redacao .gaveta-overlay-config,
+    body.atelie-modo-redacao .atelie-gaveta-fechar { display: none; }
 }
 
+/* Tablets e celulares */
 @media (max-width: 1024px) {
     .atelie-main { margin-left: 0; padding: 1rem; }
     #atelie-main.modo-redacao { padding: 1rem 0.75rem 3rem; }
@@ -1672,12 +1698,11 @@ body.img-arrastando .img-selecao { opacity: 0; }
         border-left: 1px solid var(--papel-sombra);
         border-right: 1px solid var(--papel-sombra);
     }
-    .editor-topo-custom { border-radius: 10px 10px 0 0; }
     .btn-mobile-only {
-        display: inline-flex !important;
-        background: var(--vinho) !important;
-        color: #fff !important;
-        border-color: var(--vinho) !important;
+        display: inline-flex;
+        background: var(--vinho);
+        color: #fff;
+        border-color: var(--vinho);
     }
 }
 
@@ -1704,13 +1729,15 @@ body.img-arrastando .img-selecao { opacity: 0; }
     .btn-primario { width: 100%; max-width: 300px; }
     .atelie-abas { justify-content: center; gap: 0.5rem; }
     .aba-btn { padding: 1rem 0.5rem; font-size: 0.65rem; }
+    .canal-post-titulo { font-size: 1.35rem; }
+    .canal-post-corpo { padding: 1.1rem 1.2rem 1.2rem; }
+
     .redacao-intro h2 { font-size: 1.8rem; }
     .redacao-intro p { font-size: 1.1rem; }
     .ilustracao-redacao { max-width: 240px; }
+
     .editor-topo-custom {
         flex-wrap: nowrap;
-        flex-direction: row;
-        align-items: center;
         gap: 0.5rem;
         padding: 0.5rem 0.6rem;
     }
@@ -1724,19 +1751,16 @@ body.img-arrastando .img-selecao { opacity: 0; }
         scrollbar-width: none;
     }
     .editor-toolbar::-webkit-scrollbar { display: none; }
-    .editor-toolbar button {
-        width: 36px; height: 36px;
-        flex-shrink: 0;
-    }
+    .editor-toolbar button { width: 36px; height: 36px; flex-shrink: 0; }
     .editor-folha { padding: 2rem 1.1rem 1.5rem; }
     .editor-titulo { font-size: 2rem; }
     .editor-conteudo { font-size: 1.15rem; }
     .btn-publicar {
         width: auto;
-        margin-top: 0;
-        padding: 0.5rem 1rem !important;
+        padding: 0.5rem 1rem;
         flex-shrink: 0;
     }
+
     .gaveta-rodape,
     .atelie-gaveta-corpo,
     .atelie-gaveta-header {
@@ -1747,6 +1771,12 @@ body.img-arrastando .img-selecao { opacity: 0; }
         left: 1.25rem;
         right: 1.25rem;
     }
+    /* No mobile a gaveta ocupa toda a altura abaixo da navbar e
+       o rodapé fica visível — o corpo central rola.
+       O overscroll-behavior evita que o scroll "vaze" para o body. */
+    .atelie-gaveta-corpo {
+        overscroll-behavior-y: contain;
+    }
 }
 
 @media (max-width: 520px) {
@@ -1756,30 +1786,4 @@ body.img-arrastando .img-selecao { opacity: 0; }
         clear: both;
         margin: 1.5rem auto;
     }
-}
-
-@media (min-width: 1367px) {
-    .atelie-main {
-        margin-right: var(--gaveta-w);
-        padding-right: 1rem;
-    }
-    .atelie-gaveta {
-        transform: translateX(0) !important;
-        visibility: visible !important;
-        box-shadow: none;
-        border-left: 1px solid var(--papel-sombra);
-    }
-    .gaveta-overlay-config { display: none !important; }
-    .atelie-gaveta-fechar { display: none !important; }
-    #btn-configurar-atelie { display: none !important; }
-    body.atelie-modo-redacao .atelie-main {
-        margin-right: var(--gaveta-w);
-        padding: 2rem 1rem 4rem;
-    }
-    body.atelie-modo-redacao .atelie-gaveta {
-        transform: translateX(0) !important;
-        visibility: visible !important;
-    }
-    body.atelie-modo-redacao .gaveta-overlay-config { display: none !important; }
-    body.atelie-modo-redacao .atelie-gaveta-fechar { display: none !important; }
 }
