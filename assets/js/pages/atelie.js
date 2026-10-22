@@ -183,11 +183,16 @@
         const inputCapa = $('input-config-capa');
         const btnUploadCapa = $('btn-upload-capa');
 
+        // Controles da Gaveta de Redação
+        const capaArtigoPreview = $('capa-artigo-preview');
+        const capaArtigoArrastavel = $('capa-artigo-arrastavel');
+        const inputCapaArtigo = $('input-capa-artigo');
+        const btnUploadCapaArtigo = $('btn-upload-capa-artigo');
+        const btnDescartar = $('btn-descartar-rascunho');
+
         function abrirGaveta() {
             gaveta.classList.add('ativa'); overlay.classList.add('ativa');
             document.body.classList.add('atelie-gaveta-aberta');
-            preencherPainel(atelieAtual);
-            atualizarTransformacao();
         }
 
         function fecharGaveta() {
@@ -198,8 +203,10 @@
 
         $('btn-configurar-atelie').addEventListener('click', abrirGaveta);
         $('btn-fechar-config').addEventListener('click', fecharGaveta);
+        $('btn-fechar-config-redacao').addEventListener('click', fecharGaveta);
         overlay.addEventListener('click', fecharGaveta);
 
+        // Controles da Capa do Ateliê
         btnUploadCapa.addEventListener('click', () => inputCapa.click());
         inputCapa.addEventListener('change', () => {
             const file = inputCapa.files[0];
@@ -232,6 +239,30 @@
             arrastavel.style.transform = `scale(${zoom})`;
         }
 
+        // Controles da Capa do Artigo
+        btnUploadCapaArtigo.addEventListener('click', () => inputCapaArtigo.click());
+        inputCapaArtigo.addEventListener('change', () => {
+            const file = inputCapaArtigo.files[0];
+            if (!file) return;
+            arquivoCapaEditor = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                capaArtigoArrastavel.style.backgroundImage = `url('${e.target.result}')`;
+                capaArtigoPreview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+            inputCapaArtigo.value = '';
+        });
+
+        btnDescartar.addEventListener('click', () => {
+            if (confirm('Tem certeza que deseja descartar este rascunho?')) {
+                if (window.__resetarEditorAtelie) window.__resetarEditorAtelie();
+                document.querySelector('[data-aba="canal"]').click();
+                fecharGaveta();
+            }
+        });
+
+        // --- Drag & Zoom do Ateliê (Mantido) ---
         container.addEventListener('pointerdown', (e) => {
             if (e.pointerType === 'touch' && e.isPrimary === false) return;
             if (e.touches && e.touches.length === 2) return;
@@ -319,11 +350,15 @@
     }
 
     // ==============================================
-    // ABAS
+    // ABAS & CONFIG DINÂMICA
     // ==============================================
     function configurarAbas() {
         const botoes = document.querySelectorAll('.aba-btn');
         const main = $('atelie-main');
+        
+        // Painéis da Gaveta
+        const painelCanal = $('config-canal');
+        const painelRedacao = $('config-redacao');
 
         botoes.forEach(btn => {
             btn.addEventListener('click', () => {
@@ -336,12 +371,23 @@
                 $('aba-canal').classList.remove('ativa');
                 $('aba-redacao').classList.remove('ativa');
 
+                // Alterna os painéis da gaveta direita
+                painelCanal.classList.remove('ativo');
+                painelRedacao.classList.remove('ativo');
+                painelCanal.hidden = true;
+                painelRedacao.hidden = true;
+
                 if (alvo === 'canal') {
                     $('aba-canal').classList.add('ativa');
+                    painelCanal.hidden = false;
+                    painelCanal.classList.add('ativo');
                 } else if (alvo === 'redacao') {
                     main.classList.add('modo-redacao');
                     document.body.classList.add('atelie-modo-redacao');
                     $('aba-redacao').classList.add('ativa');
+                    painelRedacao.hidden = false;
+                    painelRedacao.classList.add('ativo');
+                    
                     $('redacao-intro').hidden = true;
                     $('redacao-editor').hidden = false;
                 }
@@ -371,8 +417,8 @@
         const editor = $('input-conteudo');
         const folha = $('editor-folha');
         const barraImg = $('img-flutuante');
-        const capaEl = $('editor-capa');
-        const capaHtmlOriginal = capaEl.innerHTML;
+        const capaEl = $('editor-capa'); // (Mesmo não estando mais visível no topo, mantemos a referência para o JS não quebrar)
+        const capaHtmlOriginal = capaEl ? capaEl.innerHTML : '';
         const TAMANHO_PADRAO = 'm';
         const MAX_MB = 5;
         let figuraSelecionada = null;
@@ -513,38 +559,24 @@
             }
         });
 
-        const inputCapaEditor = document.createElement('input');
-        inputCapaEditor.type = 'file';
-        inputCapaEditor.accept = 'image/*';
-
-        capaEl.addEventListener('click', () => inputCapaEditor.click());
-        capaEl.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); inputCapaEditor.click(); }
-        });
-        inputCapaEditor.addEventListener('change', () => {
-            const file = inputCapaEditor.files[0];
-            inputCapaEditor.value = '';
-            if (!file) return;
-            arquivoCapaEditor = file;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                capaEl.style.backgroundImage = "url('" + e.target.result + "')";
-                capaEl.style.borderStyle = 'solid';
-                capaEl.innerHTML = '';
-            };
-            reader.readAsDataURL(file);
-        });
-
         function resetarEditor() {
             $('input-titulo').value = '';
             editor.innerHTML = '';
             selecionarFigura(null);
-            capaEl.style.backgroundImage = '';
-            capaEl.style.borderStyle = '';
-            capaEl.innerHTML = capaHtmlOriginal;
+            if (capaEl) {
+                capaEl.style.backgroundImage = '';
+                capaEl.style.borderStyle = '';
+                capaEl.innerHTML = capaHtmlOriginal;
+            }
             arquivoCapaEditor = null;
             rangeSalvo = null;
             atualizarVazio();
+            
+            // Reseta a capa no painel de configuração também
+            const capaArtigoPreview = $('capa-artigo-preview');
+            const capaArtigoArrastavel = $('capa-artigo-arrastavel');
+            if (capaArtigoPreview) capaArtigoPreview.style.display = 'none';
+            if (capaArtigoArrastavel) capaArtigoArrastavel.style.backgroundImage = '';
         }
         window.__resetarEditorAtelie = resetarEditor;
 
@@ -562,6 +594,7 @@
         $('btn-publicar-atelie').addEventListener('click', async () => {
             const btn = $('btn-publicar-atelie');
             const titulo = $('input-titulo').value.trim();
+            const categoria = $('input-categoria-artigo').value;
 
             if (!titulo) return alert('Adicione um título ao seu conteúdo.');
             if (editor.textContent.trim() === '' && !editor.querySelector('img')) return alert('Escreva algo antes de publicar!');
@@ -580,7 +613,7 @@
                     title: titulo,
                     content: htmlParaPublicar(),
                     cover_url: capaUrl,
-                    category: 'Artigo' // Fixo agora, já que é só texto
+                    category: categoria
                 }]);
                 if (error) throw error;
 

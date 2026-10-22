@@ -12,7 +12,7 @@
     
     <link rel="stylesheet" href="assets/css/global.css">
     <link rel="stylesheet" href="assets/css/estante.css">
-    <link rel="stylesheet" href="assets/css/atelie.css?v=30">
+    <link rel="stylesheet" href="assets/css/atelie.css?v=33">
 </head>
 <body class="mural-body">
 
@@ -36,7 +36,6 @@
 
     <div class="gaveta-overlay" id="gaveta-overlay" aria-hidden="true"></div>
 
-    <!-- SIDEBAR ESQUERDA -->
     <aside class="sidebar" id="sidebar" aria-label="Sumário">
         <div class="sidebar-secao">
             <h2 class="sidebar-titulo">Sumário</h2>
@@ -76,7 +75,6 @@
         </div>
     </aside>
 
-    <!-- FICHA DO ALUNO -->
     <aside class="sidebar-direita" id="sidebar-perfil" aria-label="Ficha do Aluno">
         <div class="ficha-header"><h2 class="ficha-titulo">Ficha do Aluno</h2><button class="ficha-fechar" id="ficha-fechar" type="button" aria-label="Fechar ficha">&#10005;</button></div>
         <div class="ficha-filete"></div>
@@ -104,7 +102,6 @@
 
     <input type="file" id="input-foto" accept="image/jpeg,image/png,image/gif,image/webp" hidden aria-label="Upload de foto de perfil">
 
-    <!-- CONTEÚDO PRINCIPAL -->
     <main class="atelie-main" id="atelie-main">
 
         <div id="atelie-vazio" class="atelie-vazio" hidden>
@@ -177,12 +174,6 @@
                 </div>
 
                 <div class="editor-folha" id="editor-folha">
-                    <div class="editor-capa" id="editor-capa" role="button" tabindex="0" title="Clique para adicionar uma capa">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
-                        <span class="capa-titulo">Adicionar imagem de capa</span>
-                        <span class="capa-dica">Proporção 16:9 · 1280 × 720 px</span>
-                    </div>
-
                     <div class="editor-corpo">
                         <input type="text" class="editor-titulo" id="input-titulo" placeholder="Título do seu texto..." maxlength="120">
                         <div class="editor-conteudo" id="input-conteudo" contenteditable="true" data-placeholder="Comece a escrever..." data-vazio="true"></div>
@@ -207,7 +198,7 @@
         </section>
     </main>
 
-    <!-- MODAL DE CRIAÇÃO -->
+    <!-- MODAL DE CRIAÇÃO DO ATELIÊ -->
     <div id="modal-criar-atelie" class="modal-overlay" hidden>
         <div class="modal-conteudo">
             <header class="modal-header">
@@ -222,30 +213,63 @@
         </div>
     </div>
 
-    <!-- GAVETA DE CONFIGURAÇÃO -->
+    <!-- GAVETA LATERAL INTELIGENTE -->
     <div class="gaveta-overlay-config" id="overlay-config"></div>
     <aside class="atelie-gaveta" id="gaveta-config">
-        <header class="atelie-gaveta-header">
-            <h2>Configurar Ateliê</h2>
-            <button type="button" class="atelie-gaveta-fechar" id="btn-fechar-config" aria-label="Fechar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
-        </header>
-        <div class="atelie-gaveta-corpo">
-            <form id="form-config-atelie">
-                <div class="campo"><label for="input-config-nome">Nome do Ateliê</label><input type="text" id="input-config-nome" required></div>
-                <div class="campo"><label for="input-config-bio">Descrição (Bio)</label><textarea id="input-config-bio" rows="3"></textarea></div>
+        
+        <!-- Configurações do Ateliê -->
+        <div id="config-canal" class="config-painel ativo">
+            <header class="atelie-gaveta-header">
+                <h2>Configurar Ateliê</h2>
+                <button type="button" class="atelie-gaveta-fechar" id="btn-fechar-config" aria-label="Fechar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+            </header>
+            <div class="atelie-gaveta-corpo">
+                <form id="form-config-atelie">
+                    <div class="campo"><label for="input-config-nome">Nome do Ateliê</label><input type="text" id="input-config-nome" required></div>
+                    <div class="campo"><label for="input-config-bio">Descrição (Bio)</label><textarea id="input-config-bio" rows="3"></textarea></div>
+                    <div class="campo-upload">
+                        <label>Avatar do Ateliê</label>
+                        <button type="button" class="btn-container" id="btn-upload-avatar">Escolher Imagem de Perfil</button>
+                        <input type="file" id="input-config-avatar" accept="image/*" hidden>
+                    </div>
+                    <div class="campo-upload">
+                        <label>Capa do Ateliê</label>
+                        <div id="capa-preview-container" class="capa-preview-container" style="display: none;"><div id="capa-preview-arrastavel" class="capa-preview-arrastavel"></div></div>
+                        <button type="button" class="btn-container" id="btn-upload-capa" style="margin-top: 0.5rem;">Escolher Nova Imagem de Capa</button>
+                        <input type="file" id="input-config-capa" accept="image/*" hidden>
+                    </div>
+                    <button type="submit" class="btn-primario" id="btn-salvar-config" style="width: 100%; margin-top: 1rem;">Salvar Alterações</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Configurações do Artigo (Redação) -->
+        <div id="config-redacao" class="config-painel" hidden>
+            <header class="atelie-gaveta-header">
+                <h2>Opções do Artigo</h2>
+                <button type="button" class="atelie-gaveta-fechar" id="btn-fechar-config-redacao" aria-label="Fechar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+            </header>
+            <div class="atelie-gaveta-corpo">
                 <div class="campo-upload">
-                    <label>Avatar do Ateliê</label>
-                    <button type="button" class="btn-container" id="btn-upload-avatar">Escolher Imagem de Perfil</button>
-                    <input type="file" id="input-config-avatar" accept="image/*" hidden>
+                    <label>Imagem de Capa do Artigo</label>
+                    <div id="capa-artigo-preview" class="capa-preview-container" style="display: none; aspect-ratio: 16/9;">
+                        <div id="capa-artigo-arrastavel" class="capa-preview-arrastavel"></div>
+                    </div>
+                    <button type="button" class="btn-container" id="btn-upload-capa-artigo">Escolher Imagem de Capa</button>
+                    <input type="file" id="input-capa-artigo" accept="image/*" hidden>
                 </div>
-                <div class="campo-upload">
-                    <label>Capa do Ateliê</label>
-                    <div id="capa-preview-container" class="capa-preview-container" style="display: none;"><div id="capa-preview-arrastavel" class="capa-preview-arrastavel"></div></div>
-                    <button type="button" class="btn-container" id="btn-upload-capa" style="margin-top: 0.5rem;">Escolher Nova Imagem de Capa</button>
-                    <input type="file" id="input-config-capa" accept="image/*" hidden>
+                <div class="campo">
+                    <label>Categoria</label>
+                    <select id="input-categoria-artigo" class="select-custom">
+                        <option value="Matemática">Matemática</option>
+                        <option value="Ciências">Ciências</option>
+                        <option value="Redação & Literatura">Redação & Literatura</option>
+                        <option value="História & Geografia">História & Geografia</option>
+                        <option value="Dicas de Estudo">Dicas de Estudo</option>
+                    </select>
                 </div>
-                <button type="submit" class="btn-primario" id="btn-salvar-config" style="width: 100%; margin-top: 1rem;">Salvar Alterações</button>
-            </form>
+                <button type="button" class="btn-primario" id="btn-descartar-rascunho" style="width: 100%; background: transparent; color: var(--erro); border: 1px solid var(--erro); margin-top: 1rem;">Descartar Rascunho</button>
+            </div>
         </div>
     </aside>
 
@@ -256,6 +280,6 @@
     <script src="assets/js/auth.js"></script>
     <script src="assets/js/lib/utils.js"></script>
     <script src="assets/js/layout.js"></script>
-    <script src="assets/js/pages/atelie.js?v=30"></script>
+    <script src="assets/js/pages/atelie.js?v=33"></script>
 </body>
 </html>
