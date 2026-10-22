@@ -535,19 +535,7 @@
             reader.readAsDataURL(file);
         });
 
-        function definirCategoria(cat) {
-            $('input-categoria').value = cat;
-            document.querySelectorAll('.seg-btn').forEach(b => {
-                const ativo = b.dataset.cat === cat;
-                b.classList.toggle('ativo', ativo);
-                b.setAttribute('aria-checked', ativo ? 'true' : 'false');
-            });
-        }
-        document.querySelectorAll('.seg-btn').forEach(b =>
-            b.addEventListener('click', () => definirCategoria(b.dataset.cat)));
-
         function resetarEditor() {
-            definirCategoria('Artigo');
             $('input-titulo').value = '';
             editor.innerHTML = '';
             selecionarFigura(null);
@@ -574,7 +562,6 @@
         $('btn-publicar-atelie').addEventListener('click', async () => {
             const btn = $('btn-publicar-atelie');
             const titulo = $('input-titulo').value.trim();
-            const categoria = $('input-categoria').value;
 
             if (!titulo) return alert('Adicione um título ao seu conteúdo.');
             if (editor.textContent.trim() === '' && !editor.querySelector('img')) return alert('Escreva algo antes de publicar!');
@@ -593,7 +580,7 @@
                     title: titulo,
                     content: htmlParaPublicar(),
                     cover_url: capaUrl,
-                    category: categoria
+                    category: 'Artigo' // Fixo agora, já que é só texto
                 }]);
                 if (error) throw error;
 
