@@ -12,7 +12,7 @@
     
     <link rel="stylesheet" href="assets/css/global.css">
     <link rel="stylesheet" href="assets/css/estante.css">
-    <link rel="stylesheet" href="assets/css/atelie.css?v=42">
+    <link rel="stylesheet" href="assets/css/atelie.css?v=40">
 </head>
 <body class="mural-body">
 
@@ -215,80 +215,61 @@
         </div>
     </div>
 
-    <!-- GAVETA LATERAL (Estilo Ficha) -->
+    <!-- GAVETA LATERAL INTELIGENTE -->
     <div class="gaveta-overlay-config" id="overlay-config"></div>
     <aside class="atelie-gaveta" id="gaveta-config">
         
+        <!-- Painel do Canal -->
         <div id="config-canal" class="config-painel ativo">
             <header class="atelie-gaveta-header">
-                <h2>Configurações do Ateliê</h2>
+                <h2>Configurar Ateliê</h2>
                 <button type="button" class="atelie-gaveta-fechar" id="btn-fechar-config" aria-label="Fechar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
             </header>
-            
             <div class="atelie-gaveta-corpo">
-                <div class="ficha-perfil-config">
-                    <div class="ficha-foto" id="avatar-preview-container">
-                        <div class="avatar-preview-arrastavel" id="avatar-preview-arrastavel">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <form id="form-config-atelie">
+                    <div class="campo"><label for="input-config-nome">Nome do Ateliê</label><input type="text" id="input-config-nome" required></div>
+                    <div class="campo"><label for="input-config-bio">Descrição (Bio)</label><textarea id="input-config-bio" rows="3"></textarea></div>
+                    
+                    <div class="campo-upload">
+                        <label>Avatar do Ateliê</label>
+                        <div id="avatar-preview-container" class="avatar-preview-container">
+                            <div id="avatar-preview-arrastavel" class="avatar-preview-arrastavel">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            </div>
                         </div>
-                    </div>
-                    <div class="ficha-info">
-                        <span class="ficha-nome" id="nome-display-config">Seu Ateliê</span>
-                        <button type="button" class="btn-texto" id="btn-upload-avatar">Mudar Foto</button>
+                        <button type="button" class="btn-container" id="btn-upload-avatar">Escolher Imagem de Perfil</button>
                         <input type="file" id="input-config-avatar" accept="image/*" hidden>
                     </div>
-                </div>
 
-                <div class="ficha-filete"></div>
-
-                <form id="form-config-atelie">
-                    <div class="campo-linha">
-                        <label>Nome do Ateliê</label>
-                        <input type="text" id="input-config-nome" class="input-ficha" placeholder="Digite o nome" required>
-                    </div>
-                    
-                    <div class="campo-linha">
-                        <label>Descrição (Bio)</label>
-                        <textarea id="input-config-bio" class="input-ficha" rows="3" placeholder="Fale um pouco sobre você"></textarea>
-                    </div>
-
-                    <div class="ficha-filete"></div>
-
-                    <div class="campo-linha">
+                    <div class="campo-upload">
                         <label>Capa do Ateliê</label>
-                        <button type="button" class="btn-texto" id="btn-upload-capa">Alterar Capa</button>
-                        <div id="capa-preview-container" class="capa-preview-container" style="display: none; margin-top: 0.5rem;">
-                            <div id="capa-preview-arrastavel" class="capa-preview-arrastavel"></div>
-                        </div>
+                        <div id="capa-preview-container" class="capa-preview-container" style="display: none;"><div id="capa-preview-arrastavel" class="capa-preview-arrastavel"></div></div>
+                        <button type="button" class="btn-container" id="btn-upload-capa" style="margin-top: 0.5rem;">Escolher Nova Imagem de Capa</button>
                         <input type="file" id="input-config-capa" accept="image/*" hidden>
                     </div>
-
-                    <button type="submit" class="btn-salvar-config" id="btn-salvar-config">Salvar Alterações</button>
+                    <button type="submit" class="btn-primario" id="btn-salvar-config" style="width: 100%; margin-top: 1rem;">Salvar Alterações</button>
                 </form>
             </div>
         </div>
 
+        <!-- Painel da Redação -->
         <div id="config-redacao" class="config-painel" hidden>
             <header class="atelie-gaveta-header">
                 <h2>Opções do Artigo</h2>
                 <button type="button" class="atelie-gaveta-fechar" id="btn-fechar-config-redacao" aria-label="Fechar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
             </header>
-            
             <div class="atelie-gaveta-corpo">
-                <div class="campo-linha">
-                    <label>Imagem de Capa</label>
-                    <button type="button" class="btn-texto" id="btn-upload-capa-artigo">Escolher Imagem</button>
-                    <div id="capa-artigo-preview" class="capa-preview-container" style="display: none; aspect-ratio: 16/9; margin-top: 0.5rem;">
+                <div class="campo-upload">
+                    <label>Imagem de Capa do Artigo</label>
+                    <div id="capa-artigo-preview" class="capa-preview-container" style="display: none; aspect-ratio: 16/9;">
                         <div id="capa-artigo-arrastavel" class="capa-preview-arrastavel"></div>
                     </div>
+                    <button type="button" class="btn-container" id="btn-upload-capa-artigo">Escolher Imagem de Capa</button>
                     <input type="file" id="input-capa-artigo" accept="image/*" hidden>
                 </div>
-
-                <div class="ficha-filete"></div>
-
-                <div class="campo-linha">
+                <div class="campo">
                     <label>Categoria</label>
-                    <select id="input-categoria-artigo" class="input-ficha select-custom">
+                    <select id="input-categoria-artigo" class="select-custom">
                         <option value="Matemática">Matemática</option>
                         <option value="Ciências">Ciências</option>
                         <option value="Redação & Literatura">Redação & Literatura</option>
@@ -296,10 +277,7 @@
                         <option value="Dicas de Estudo">Dicas de Estudo</option>
                     </select>
                 </div>
-
-                <div class="ficha-filete"></div>
-
-                <button type="button" class="btn-texto perigo" id="btn-descartar-rascunho">Descartar Rascunho</button>
+                <button type="button" class="btn-primario" id="btn-descartar-rascunho" style="width: 100%; background: transparent; color: var(--erro); border: 1px solid var(--erro); margin-top: 1rem;">Descartar Rascunho</button>
             </div>
         </div>
     </aside>
@@ -311,6 +289,6 @@
     <script src="assets/js/auth.js"></script>
     <script src="assets/js/lib/utils.js"></script>
     <script src="assets/js/layout.js"></script>
-    <script src="assets/js/pages/atelie.js?v=42"></script>
+    <script src="assets/js/pages/atelie.js?v=40"></script>
 </body>
 </html>

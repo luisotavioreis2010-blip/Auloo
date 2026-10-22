@@ -133,11 +133,9 @@
         const arrastavel = $('capa-preview-arrastavel');
         const container = $('capa-preview-container');
         const avatarArrastavel = $('avatar-preview-arrastavel');
-        const nomeDisplay = $('nome-display-config');
 
         if (inputNome) inputNome.value = atelie.name || '';
         if (inputBio) inputBio.value = atelie.description || '';
-        if (nomeDisplay) nomeDisplay.textContent = atelie.name || 'Seu Ateliê';
 
         if (atelie.cover_url && arrastavel && container) {
             arrastavel.style.backgroundImage = `url('${atelie.cover_url}')`;
