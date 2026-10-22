@@ -9,8 +9,14 @@
     let fileCapa = null;
     let arquivoCapaEditor = null;
 
-    let posX = 50, posY = 50;
-    let zoom = 1;
+    // Estado do Avatar
+    let avatarPosX = 50, avatarPosY = 50, avatarZoom = 1;
+    let isDraggingAvatar = false;
+    let startAvatarX, startAvatarY;
+    let avatarImageUrl = null;
+
+    // Estado da Capa
+    let posX = 50, posY = 50, zoom = 1;
     let isDragging = false;
     let startX, startY;
     let bgImageTemp = null;
@@ -126,6 +132,7 @@
         const inputBio = $('input-config-bio');
         const arrastavel = $('capa-preview-arrastavel');
         const container = $('capa-preview-container');
+        const avatarArrastavel = $('avatar-preview-arrastavel');
 
         if (inputNome) inputNome.value = atelie.name || '';
         if (inputBio) inputBio.value = atelie.description || '';
@@ -135,6 +142,13 @@
             container.style.display = 'block';
         } else if (container) {
             container.style.display = 'none';
+        }
+
+        // Preenche o preview do avatar
+        if (atelie.avatar_url && avatarArrastavel) {
+            avatarImageUrl = atelie.avatar_url;
+            avatarArrastavel.style.backgroundImage = `url('${atelie.avatar_url}')`;
+            avatarArrastavel.innerHTML = ''; // Remove o SVG placeholder
         }
     }
 
@@ -180,11 +194,20 @@
     function configurarGavetaConfig() {
         const gaveta = $('gaveta-config');
         const overlay = $('overlay-config');
+        
+        // Capa do Ateliê
         const container = $('capa-preview-container');
         const arrastavel = $('capa-preview-arrastavel');
         const inputCapa = $('input-config-capa');
         const btnUploadCapa = $('btn-upload-capa');
 
+        // Avatar do Ateliê
+        const avatarContainer = $('avatar-preview-container');
+        const avatarArrastavel = $('avatar-preview-arrastavel');
+        const inputAvatar = $('input-config-avatar');
+        const btnUploadAvatar = $('btn-upload-avatar');
+
+        // Config Redação
         const capaArtigoPreview = $('capa-artigo-preview');
         const capaArtigoArrastavel = $('capa-artigo-arrastavel');
         const inputCapaArtigo = $('input-capa-artigo');
@@ -202,17 +225,15 @@
             document.body.classList.remove('atelie-gaveta-aberta');
         }
 
-        // Botões de abrir
         $('btn-configurar-atelie').addEventListener('click', abrirGaveta);
         const btnOpcoesMobile = $('btn-opcoes-mobile');
         if (btnOpcoesMobile) btnOpcoesMobile.addEventListener('click', abrirGaveta);
 
-        // Botões de fechar
         $('btn-fechar-config').addEventListener('click', fecharGaveta);
         $('btn-fechar-config-redacao').addEventListener('click', fecharGaveta);
         overlay.addEventListener('click', fecharGaveta);
 
-        // Controles da Capa do Ateliê
+        // --- UPLOAD DA CAPA DO ATELIÊ ---
         btnUploadCapa.addEventListener('click', () => inputCapa.click());
         inputCapa.addEventListener('change', () => {
             const file = inputCapa.files[0];
@@ -224,28 +245,106 @@
                 arrastavel.style.backgroundImage = `url('${bgImageTemp}')`;
                 container.style.display = 'block';
                 posX = 50; posY = 50; zoom = 1;
-                atualizarTransformacao();
+                atualizarTransformacaoCapa();
             };
             reader.readAsDataURL(file);
             inputCapa.value = '';
         });
 
-        const btnUploadAvatar = $('btn-upload-avatar');
-        const inputAvatar = $('input-config-avatar');
-        btnUploadAvatar.addEventListener('click', () => inputAvatar.click());
-        inputAvatar.addEventListener('change', () => {
-            const f = inputAvatar.files[0];
-            if (!f) { fileAvatar = null; btnUploadAvatar.textContent = TEXTO_BTN_AVATAR; return; }
-            fileAvatar = f;
-            btnUploadAvatar.innerHTML = ICONE_CHECK + 'Avatar selecionado';
-        });
-
-        function atualizarTransformacao() {
+        function atualizarTransformacaoCapa() {
             arrastavel.style.backgroundPosition = `${posX}% ${posY}%`;
             arrastavel.style.transform = `scale(${zoom})`;
         }
 
-        // Controles da Capa do Artigo
+        // --- UPLOAD DO AVATAR ---
+        btnUploadAvatar.addEventListener('click', () => inputAvatar.click());
+        inputAvatar.addEventListener('change', () => {
+            const file = inputAvatar.files[0];
+            if (!file) return;
+            fileAvatar = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                avatarImageUrl = e.target.result;
+                avatarArrastavel.style.backgroundImage = `url('${avatarImageUrl}')`;
+                avatarArrastavel.innerHTML = ''; // Remove o SVG placeholder
+                avatarPosX = 50; avatarPosY = 50; avatarZoom = 1;
+                atualizarTransformacaoAvatar();
+            };
+            reader.readAsDataURL(file);
+            inputAvatar.value = '';
+        });
+
+        function atualizarTransformacaoAvatar() {
+            avatarArrastavel.style.backgroundPosition = `${avatarPosX}% ${avatarPosY}%`;
+            avatarArrastavel.style.backgroundSize = `${avatarZoom * 100}%`;
+        }
+
+        // --- DRAG & ZOOM DA CAPA ---
+        container.addEventListener('pointerdown', (e) => {
+            if (e.pointerType === 'touch' && e.isPrimary === false) return;
+            if (e.touches && e.touches.length === 2) return;
+            isDragging = true; container.setPointerCapture(e.pointerId);
+            startX = e.clientX - (posX * container.offsetWidth / 100);
+            startY = e.clientY - (posY * container.offsetHeight / 100);
+        });
+        container.addEventListener('pointermove', (e) => {
+            if (!isDragging) return;
+            if (e.pointerType === 'touch' && e.touches && e.touches.length === 2) return;
+            e.preventDefault();
+            posX = Math.max(0, Math.min(100, (e.clientX - startX) / container.offsetWidth * 100));
+            posY = Math.max(0, Math.min(100, (e.clientY - startY) / container.offsetHeight * 100));
+            atualizarTransformacaoCapa();
+        });
+        container.addEventListener('pointerup', () => { isDragging = false; });
+        container.addEventListener('pointercancel', () => { isDragging = false; });
+
+        container.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) {
+                isDragging = false;
+                const dx = e.touches[0].clientX - e.touches[1].clientX;
+                const dy = e.touches[0].clientY - e.touches[1].clientY;
+                pinchInicial = Math.hypot(dx, dy);
+            }
+        }, { passive: true });
+        container.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 2 && pinchInicial > 0) {
+                e.preventDefault();
+                const dx = e.touches[0].clientX - e.touches[1].clientX;
+                const dy = e.touches[0].clientY - e.touches[1].clientY;
+                const dist = Math.hypot(dx, dy);
+                const fator = dist / pinchInicial;
+                pinchInicial = dist;
+                zoom = Math.max(1, Math.min(3, zoom * fator));
+                atualizarTransformacaoCapa();
+            }
+        }, { passive: false });
+        container.addEventListener('touchend', () => { pinchInicial = 0; });
+        container.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            if (e.deltaY < 0) zoom += 0.1; else zoom -= 0.1;
+            zoom = Math.max(1, Math.min(3, zoom));
+            atualizarTransformacaoCapa();
+        }, { passive: false });
+
+        // --- DRAG & ZOOM DO AVATAR ---
+        avatarContainer.addEventListener('pointerdown', (e) => {
+            if (!avatarImageUrl) return;
+            if (e.pointerType === 'touch' && e.isPrimary === false) return;
+            isDraggingAvatar = true; avatarContainer.setPointerCapture(e.pointerId);
+            startAvatarX = e.clientX - (avatarPosX * avatarContainer.offsetWidth / 100);
+            startAvatarY = e.clientY - (avatarPosY * avatarContainer.offsetHeight / 100);
+        });
+        avatarContainer.addEventListener('pointermove', (e) => {
+            if (!isDraggingAvatar) return;
+            e.preventDefault();
+            avatarPosX = Math.max(0, Math.min(100, (e.clientX - startAvatarX) / avatarContainer.offsetWidth * 100));
+            avatarPosY = Math.max(0, Math.min(100, (e.clientY - startAvatarY) / avatarContainer.offsetHeight * 100));
+            atualizarTransformacaoAvatar();
+        });
+        avatarContainer.addEventListener('pointerup', () => { isDraggingAvatar = false; });
+        avatarContainer.addEventListener('pointercancel', () => { isDraggingAvatar = false; });
+
+        // --- CONFIG REDAÇÃO ---
         btnUploadCapaArtigo.addEventListener('click', () => inputCapaArtigo.click());
         inputCapaArtigo.addEventListener('change', () => {
             const file = inputCapaArtigo.files[0];
@@ -268,83 +367,55 @@
             }
         });
 
-        // Drag & Zoom do Ateliê
-        container.addEventListener('pointerdown', (e) => {
-            if (e.pointerType === 'touch' && e.isPrimary === false) return;
-            if (e.touches && e.touches.length === 2) return;
-            isDragging = true; container.setPointerCapture(e.pointerId);
-            startX = e.clientX - (posX * container.offsetWidth / 100);
-            startY = e.clientY - (posY * container.offsetHeight / 100);
-        });
-        container.addEventListener('pointermove', (e) => {
-            if (!isDragging) return;
-            if (e.pointerType === 'touch' && e.touches && e.touches.length === 2) return;
-            e.preventDefault();
-            posX = Math.max(0, Math.min(100, (e.clientX - startX) / container.offsetWidth * 100));
-            posY = Math.max(0, Math.min(100, (e.clientY - startY) / container.offsetHeight * 100));
-            atualizarTransformacao();
-        });
-        container.addEventListener('pointerup', () => { isDragging = false; });
-        container.addEventListener('pointercancel', () => { isDragging = false; });
-
-        container.addEventListener('touchstart', (e) => {
-            if (e.touches.length === 2) {
-                isDragging = false;
-                const dx = e.touches[0].clientX - e.touches[1].clientX;
-                const dy = e.touches[0].clientY - e.touches[1].clientY;
-                pinchInicial = Math.hypot(dx, dy);
-            }
-        }, { passive: true });
-        container.addEventListener('touchmove', (e) => {
-            if (e.touches.length === 2 && pinchInicial > 0) {
-                e.preventDefault();
-                const dx = e.touches[0].clientX - e.touches[1].clientX;
-                const dy = e.touches[0].clientY - e.touches[1].clientY;
-                const dist = Math.hypot(dx, dy);
-                const fator = dist / pinchInicial;
-                pinchInicial = dist;
-                zoom = Math.max(1, Math.min(3, zoom * fator));
-                atualizarTransformacao();
-            }
-        }, { passive: false });
-        container.addEventListener('touchend', () => { pinchInicial = 0; });
-        container.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            if (e.deltaY < 0) zoom += 0.1; else zoom -= 0.1;
-            zoom = Math.max(1, Math.min(3, zoom));
-            atualizarTransformacao();
-        }, { passive: false });
-
+        // --- SALVAR CONFIGURAÇÕES ---
         $('form-config-atelie').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = $('btn-salvar-config');
             btn.disabled = true; btn.textContent = 'Salvando...';
             const nome = $('input-config-nome').value.trim();
             const bio = $('input-config-bio').value.trim();
+            
             let newAvatarUrl = atelieAtual.avatar_url;
             let newCoverUrl = atelieAtual.cover_url;
 
             try {
+                // Upload do Avatar
                 if (fileAvatar) {
                     const path = usuarioLogado.id + '/atelie-avatar-' + Date.now() + '.jpg';
                     const up = await db.storage.from('avatars').upload(path, fileAvatar);
                     if (up.error) throw up.error;
                     newAvatarUrl = db.storage.from('avatars').getPublicUrl(path).data.publicUrl;
                 }
+
+                // Upload da Capa
                 if (fileCapa) {
                     const path = usuarioLogado.id + '/atelie-capa-' + Date.now() + '.jpg';
                     const up = await db.storage.from('avatars').upload(path, fileCapa);
                     if (up.error) throw up.error;
                     newCoverUrl = db.storage.from('avatars').getPublicUrl(path).data.publicUrl;
                 }
+
                 const cPos = `${posX.toFixed(0)}% ${posY.toFixed(0)}%`;
+                
+                // Atualiza no Banco
                 const { data, error } = await db.from('ateliers').update({
-                    name: nome, description: bio, avatar_url: newAvatarUrl, cover_url: newCoverUrl, cover_position: cPos, cover_zoom: zoom
+                    name: nome,
+                    description: bio,
+                    avatar_url: newAvatarUrl,
+                    cover_url: newCoverUrl,
+                    cover_position: cPos,
+                    cover_zoom: zoom
                 }).eq('id', atelieAtual.id).select().single();
 
                 if (error) throw error;
-                atelieAtual = data; renderizarAtelie(data);
-                fileAvatar = null; fileCapa = null; btnUploadAvatar.textContent = TEXTO_BTN_AVATAR;
+                
+                atelieAtual = data;
+                renderizarAtelie(data);
+                
+                fileAvatar = null;
+                fileCapa = null;
+                btnUploadAvatar.textContent = TEXTO_BTN_AVATAR;
+                
                 fecharGaveta();
                 preencherPainel(data);
             } catch (err) {
