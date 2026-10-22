@@ -13,8 +13,7 @@
     <link rel="stylesheet" href="assets/css/global.css">
     <link rel="stylesheet" href="assets/css/estante.css">
     <link rel="stylesheet" href="assets/css/editor.css">
-    <!-- atelie.css vem por último: já contém o layout novo da Redação -->
-    <link rel="stylesheet" href="assets/css/atelie.css?v=28">
+    <link rel="stylesheet" href="assets/css/atelie.css?v=29">
 </head>
 <body class="mural-body">
 
@@ -38,7 +37,6 @@
 
     <div class="gaveta-overlay" id="gaveta-overlay" aria-hidden="true"></div>
 
-    <!-- SIDEBAR -->
     <aside class="sidebar" id="sidebar" aria-label="Sumário">
         <div class="sidebar-secao">
             <h2 class="sidebar-titulo">Sumário</h2>
@@ -78,7 +76,6 @@
         </div>
     </aside>
 
-    <!-- FICHA DO ALUNO -->
     <aside class="sidebar-direita" id="sidebar-perfil" aria-label="Ficha do Aluno">
         <div class="ficha-header"><h2 class="ficha-titulo">Ficha do Aluno</h2><button class="ficha-fechar" id="ficha-fechar" type="button" aria-label="Fechar ficha">&#10005;</button></div>
         <div class="ficha-filete"></div>
@@ -106,10 +103,8 @@
 
     <input type="file" id="input-foto" accept="image/jpeg,image/png,image/gif,image/webp" hidden aria-label="Upload de foto de perfil">
 
-    <!-- CONTEÚDO PRINCIPAL -->
     <main class="atelie-main" id="atelie-main">
 
-        <!-- ESTADO VAZIO -->
         <div id="atelie-vazio" class="atelie-vazio" hidden>
             <h2>Seu Ateliê está vazio.</h2>
             <p>Este é o seu espaço de criação. Abra o seu Ateliê para começar.</p>
@@ -117,7 +112,6 @@
         </div>
 
         <div id="wrapper-canal" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
-            <!-- CARD DO ATELIÊ -->
             <div id="atelie-conteudo" class="atelie-conteudo" hidden style="margin-bottom: 2rem;">
                 <div class="atelie-capa-wrapper">
                     <img id="atelie-capa-img" class="atelie-capa-img" src="" alt="Capa do Ateliê">
@@ -135,13 +129,11 @@
                 </div>
             </div>
 
-            <!-- ABAS -->
             <nav class="atelie-abas" id="atelie-abas" hidden>
                 <button class="aba-btn ativa" data-aba="canal" type="button">Meu Canal</button>
                 <button class="aba-btn" data-aba="redacao" type="button">Redação</button>
             </nav>
 
-            <!-- FEED DO CANAL -->
             <section id="aba-canal" class="aba-conteudo ativa">
                 <div style="text-align: center; padding: 3rem 1rem; color: var(--tinta-clara);">
                     <p style="font-family: var(--fonte-display); font-size: 1.4rem; font-style: italic;">O seu canal ainda não tem publicações.</p>
@@ -149,10 +141,7 @@
             </section>
         </div>
 
-        <!-- ABA REDAÇÃO -->
         <section id="aba-redacao" class="aba-conteudo">
-
-            <!-- Tela inicial -->
             <div id="redacao-intro" class="redacao-intro">
                 <img src="assets/img/ilustracoes/Thesis-bro.png" alt="Escrevendo uma tese" class="ilustracao-redacao">
                 <h2>A página em branco</h2>
@@ -160,9 +149,7 @@
                 <button class="btn-primario" id="btn-iniciar-escrita" type="button">Começar a Escrever</button>
             </div>
 
-            <!-- Editor -->
             <div id="redacao-editor" class="redacao-editor" hidden>
-
                 <div class="editor-topo-custom">
                     <button type="button" id="btn-cancelar-escrita" class="btn-voltar-editor" aria-label="Voltar">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
@@ -179,9 +166,7 @@
                         <button type="button" title="Sublinhado" aria-label="Sublinhado" data-cmd="underline">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v7a6 6 0 0 0 12 0V3"/><line x1="4" y1="21" x2="20" y2="21"/></svg>
                         </button>
-
                         <div class="editor-divisor"></div>
-
                         <button type="button" title="Título" aria-label="Título" data-cmd="formatBlock" data-value="h2">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h8"/><path d="M4 5v14"/><path d="M12 5v14"/><path d="M17 10.5l3-1.5v10"/></svg>
                         </button>
@@ -194,9 +179,7 @@
                         <button type="button" title="Lista numerada" aria-label="Lista numerada" data-cmd="insertOrderedList">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="10" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="10" y1="18" x2="21" y2="18"/><path d="M4 6h1v4"/><path d="M4 10h2"/><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/></svg>
                         </button>
-
                         <div class="editor-divisor"></div>
-
                         <button type="button" title="Inserir imagem" aria-label="Inserir imagem" id="btn-inserir-img">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
                         </button>
@@ -206,8 +189,6 @@
                 </div>
 
                 <div class="editor-folha" id="editor-folha">
-
-                    <!-- Capa -->
                     <div class="editor-capa" id="editor-capa" role="button" tabindex="0" title="Clique para adicionar uma capa">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
                         <span class="capa-titulo">Adicionar imagem de capa</span>
@@ -215,32 +196,27 @@
                     </div>
 
                     <div class="editor-corpo">
-
-                    <div class="editor-meta">
-                        <span class="editor-meta-dica">Tipo</span>
-                        <div class="seg" role="radiogroup" aria-label="Tipo de publicação">
-                            <button type="button" class="seg-btn ativo" data-cat="Artigo" role="radio" aria-checked="true">Artigo</button>
-                            <button type="button" class="seg-btn" data-cat="Vídeo" role="radio" aria-checked="false">Vídeo</button>
+                        <div class="editor-meta">
+                            <span class="editor-meta-dica">Tipo</span>
+                            <div class="seg" role="radiogroup" aria-label="Tipo de publicação">
+                                <button type="button" class="seg-btn ativo" data-cat="Artigo" role="radio" aria-checked="true">Artigo</button>
+                                <button type="button" class="seg-btn" data-cat="Vídeo" role="radio" aria-checked="false">Vídeo</button>
+                            </div>
+                            <input type="hidden" id="input-categoria" value="Artigo">
                         </div>
-                        <input type="hidden" id="input-categoria" value="Artigo">
+
+                        <input type="text" class="editor-titulo" id="input-titulo" placeholder="Título do seu artigo..." maxlength="120">
+
+                        <div class="editor-conteudo" id="input-conteudo" contenteditable="true" data-placeholder="Comece a escrever sua história..." data-vazio="true"></div>
+
+                        <div class="editor-status" aria-live="polite">
+                            <span id="contador-palavras">0 palavras</span>
+                            <span class="ponto"></span>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                            <span id="tempo-leitura">0 min de leitura</span>
+                        </div>
                     </div>
 
-                    <input type="text" class="editor-titulo" id="input-titulo" placeholder="Título do seu artigo..." maxlength="120">
-
-                    <div class="editor-conteudo" id="input-conteudo" contenteditable="true"
-                         data-placeholder="Comece a escrever sua história..." data-vazio="true"></div>
-
-                    <!-- Contador -->
-                    <div class="editor-status" aria-live="polite">
-                        <span id="contador-palavras">0 palavras</span>
-                        <span class="ponto"></span>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
-                        <span id="tempo-leitura">0 min de leitura</span>
-                    </div>
-
-                    </div><!-- /editor-corpo -->
-
-                    <!-- Mini-barra da imagem selecionada -->
                     <div class="img-flutuante" id="img-flutuante" contenteditable="false">
                         <button type="button" data-tam="p" title="Pequena">P</button>
                         <button type="button" data-tam="m" title="Média">M</button>
@@ -251,13 +227,10 @@
                         </button>
                     </div>
                 </div>
-
             </div>
         </section>
-
     </main>
 
-    <!-- MODAL DE CRIAÇÃO -->
     <div id="modal-criar-atelie" class="modal-overlay" hidden>
         <div class="modal-conteudo">
             <header class="modal-header">
@@ -274,7 +247,6 @@
         </div>
     </div>
 
-    <!-- GAVETA DE CONFIGURAÇÃO -->
     <div class="gaveta-overlay-config" id="overlay-config"></div>
     <aside class="atelie-gaveta" id="gaveta-config">
         <header class="atelie-gaveta-header">
@@ -310,6 +282,6 @@
     <script src="assets/js/auth.js"></script>
     <script src="assets/js/lib/utils.js"></script>
     <script src="assets/js/layout.js"></script>
-    <script src="assets/js/pages/atelie.js?v=28"></script>
+    <script src="assets/js/pages/atelie.js?v=29"></script>
 </body>
 </html>
