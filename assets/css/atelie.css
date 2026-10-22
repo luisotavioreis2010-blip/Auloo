@@ -1,6 +1,6 @@
 @charset "UTF-8";
 /* ==============================================
-   ATELIE.CSS — v26 (Layout Premium de Redação)
+   ATELIE.CSS — v27 (Correção de Layout e Exibição)
    ============================================== */
 
 /* 1. ESTRUTURA GERAL */
@@ -66,7 +66,7 @@
 #atelie-main.modo-redacao .atelie-abas { display: none !important; }
 
 /* ==============================================
-   REDAÇÃO - INTRO
+   REDAÇÃO - INTRO E EDITOR
    ============================================== */
 .redacao-intro {
     display: flex;
@@ -91,28 +91,13 @@
     50% { transform: translateY(-15px); }
 }
 
-.redacao-intro h2 {
-    font-family: var(--fonte-titulo);
-    font-style: italic;
-    color: var(--vinho);
-    font-size: 2.2rem;
-    margin-bottom: 1rem;
-}
+.redacao-intro h2 { font-family: var(--fonte-titulo); font-style: italic; color: var(--vinho); font-size: 2.2rem; margin-bottom: 1rem; }
+.redacao-intro p { font-family: var(--fonte-display); font-size: 1.2rem; color: var(--tinta-suave); margin-bottom: 2rem; line-height: 1.5; }
 
-.redacao-intro p {
-    font-family: var(--fonte-display);
-    font-size: 1.2rem;
-    color: var(--tinta-suave);
-    margin-bottom: 2rem;
-    line-height: 1.5;
-}
-
-/* ==============================================
-   EDITOR - LAYOUT PROFISSIONAL
-   ============================================== */
+/* EDITOR */
 .redacao-editor {
     width: 100%;
-    max-width: 950px; /* Mais largo para parecer uma folha A4 */
+    max-width: 950px;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
@@ -121,10 +106,9 @@
     padding-bottom: 4rem;
 }
 
-/* Barra de Ferramentas (Topo Flutuante) */
 .editor-topo-custom {
     width: 100%;
-    background: rgba(248, 242, 228, 0.95); /* Papel claro com transparência */
+    background: rgba(248, 242, 228, 0.95);
     backdrop-filter: blur(8px);
     border: 1px solid var(--papel-sombra);
     border-radius: 8px 8px 0 0;
@@ -135,43 +119,27 @@
     flex-wrap: wrap;
     gap: 1rem;
     position: sticky;
-    top: 1rem; /* Flutua um pouco abaixo da navbar */
+    top: 1rem;
     z-index: 100;
     box-shadow: 0 10px 30px rgba(26, 22, 20, 0.05);
 }
 
-.btn-voltar-editor {
-    background: transparent;
-    border: none;
-    font-family: var(--fonte-corpo);
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--tinta-suave);
-    cursor: pointer;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    transition: color 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
+.btn-voltar-editor { background: transparent; border: none; font-family: var(--fonte-corpo); font-size: 0.75rem; font-weight: 600; color: var(--tinta-suave); cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: color 0.2s; display: flex; align-items: center; gap: 0.5rem; }
 .btn-voltar-editor:hover { color: var(--vinho); }
 
-/* A Folha de Papel Real */
 .editor-folha {
     width: 100%;
-    background: #FFFFFF; /* Papel branco puro para parecer digitação real */
+    background: #FFFFFF;
     border: 1px solid var(--papel-sombra);
     border-radius: 0 0 8px 8px;
-    padding: 4rem 5rem; /* Respiro grande (estilo Medium/Notion) */
+    padding: 4rem 5rem;
     box-shadow: 0 20px 50px rgba(26, 22, 20, 0.08);
     min-height: 80vh;
 }
 
-/* A Capa no Tamanho Correto (Desktop) */
 .editor-capa {
     width: 100%;
-    height: 280px; /* Altura fixa elegante */
+    height: 280px;
     background: linear-gradient(135deg, var(--papel-escuro) 0%, #D9C4A0 100%);
     border: 2px dashed var(--dourado);
     border-radius: 6px;
@@ -190,62 +158,17 @@
     background-position: center;
     transition: all 0.3s ease;
 }
-.editor-capa:hover {
-    background: linear-gradient(135deg, var(--papel) 0%, #E5D9C0 100%);
-    border-color: var(--vinho);
-    color: var(--vinho);
-}
+.editor-capa:hover { background: linear-gradient(135deg, var(--papel) 0%, #E5D9C0 100%); border-color: var(--vinho); color: var(--vinho); }
 
-/* Meta (Categoria) */
-.editor-meta {
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 1px solid rgba(184, 137, 74, 0.2);
-}
+.editor-meta { display: flex; align-items: center; gap: 1.5rem; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid rgba(184, 137, 74, 0.2); }
+.editor-categoria { background: transparent; border: none; font-family: var(--fonte-corpo); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--dourado); cursor: pointer; outline: none; }
 
-.editor-categoria {
-    background: transparent;
-    border: none;
-    font-family: var(--fonte-corpo);
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--dourado);
-    cursor: pointer;
-    outline: none;
-}
-
-/* Título Imponente */
-.editor-titulo {
-    width: 100%;
-    background: transparent;
-    border: none;
-    outline: none;
-    font-family: var(--fonte-titulo);
-    font-size: 3.5rem; /* Título maior */
-    font-style: italic;
-    color: var(--vinho);
-    margin-bottom: 2rem;
-    line-height: 1.1;
-}
+.editor-titulo { width: 100%; background: transparent; border: none; outline: none; font-family: var(--fonte-titulo); font-size: 3.5rem; font-style: italic; color: var(--vinho); margin-bottom: 2rem; line-height: 1.1; }
 .editor-titulo::placeholder { color: rgba(92, 26, 26, 0.2); }
 
-/* Conteúdo */
-.editor-conteudo {
-    min-height: 400px;
-    outline: none;
-    font-family: var(--fonte-display);
-    font-size: 1.4rem;
-    line-height: 1.8;
-    color: var(--tinta-suave);
-}
+.editor-conteudo { min-height: 400px; outline: none; font-family: var(--fonte-display); font-size: 1.4rem; line-height: 1.8; color: var(--tinta-suave); }
 .editor-conteudo:empty::before { content: 'Comece a escrever...'; color: var(--tinta-clara); font-style: italic; }
 
-/* Estilos internos do conteúdo */
 .editor-conteudo h2 { font-family: var(--fonte-titulo); color: var(--vinho); margin: 2.5rem 0 1rem; font-style: italic; font-size: 2rem; }
 .editor-conteudo blockquote { border-left: 3px solid var(--dourado); padding-left: 1.5rem; margin: 2rem 0; font-style: italic; color: var(--tinta-clara); font-size: 1.5rem; }
 .editor-conteudo img { max-width: 100%; border-radius: 4px; margin: 2rem 0; }
@@ -293,11 +216,9 @@
     .capa-preview-container { height: 140px; }
     .atelie-abas { justify-content: center; }
     .aba-btn { padding: 1rem; font-size: 0.7rem; }
-    
     .redacao-intro h2 { font-size: 1.8rem; }
     .redacao-intro p { font-size: 1.1rem; }
     .ilustracao-redacao { max-width: 240px; }
-    
     .editor-topo-custom { flex-direction: column; align-items: stretch; gap: 1rem; padding: 1rem; top: 0; border-radius: 0; }
     .editor-toolbar { justify-content: center; }
     .editor-folha { padding: 1.5rem; border-radius: 0; }
