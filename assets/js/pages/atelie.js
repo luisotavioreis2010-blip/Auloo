@@ -19,22 +19,40 @@
 
     const gavetaPermanente = () =>
         window.matchMedia('(min-width: 1367px)').matches ||
-        (window.matchMedia('(min-width: 1025px)').matches && document.body.classList.contains('atelie-modo-redacao'));
+        (window.matchMedia('(min-width: 1025px)').matches &&
+            document.body.classList.contains('atelie-modo-redacao'));
 
+    // ==============================================
+    // ABRIR / FECHAR GAVETA (compatível com iOS)
+    // ==============================================
     function abrirGaveta() {
         if (gavetaPermanente()) return;
+
+        const y = window.scrollY || window.pageYOffset || 0;
+        document.documentElement.style.setProperty('--scroll-lock-top', `-${y}px`);
+
         $('gaveta-config').classList.add('ativa');
         $('overlay-config').classList.add('ativa');
         document.body.classList.add('atelie-gaveta-aberta');
         document.documentElement.classList.add('atelie-travado');
+        document.body.style.top = `-${y}px`;
     }
 
     function fecharGaveta(forcar) {
         if (forcar !== true && gavetaPermanente()) return;
+
         $('gaveta-config').classList.remove('ativa');
         $('overlay-config').classList.remove('ativa');
         document.body.classList.remove('atelie-gaveta-aberta');
         document.documentElement.classList.remove('atelie-travado');
+
+        const y = parseInt(
+            document.documentElement.style.getPropertyValue('--scroll-lock-top') || '0',
+            10
+        );
+        document.documentElement.style.removeProperty('--scroll-lock-top');
+        document.body.style.top = '';
+        window.scrollTo(0, Math.abs(y));
     }
 
     // ==============================================
@@ -85,14 +103,24 @@
 
     function validarImagem(file) {
         if (!file) return false;
-        if (!/^image\//.test(file.type)) { avisar('Escolha um arquivo de imagem.', 'erro'); return false; }
-        if (file.size > MAX_MB * 1024 * 1024) { avisar('A imagem deve ter no máximo ' + MAX_MB + ' MB.', 'erro'); return false; }
+        if (!/^image\//.test(file.type)) {
+            avisar('Escolha um arquivo de imagem.', 'erro');
+            return false;
+        }
+        if (file.size > MAX_MB * 1024 * 1024) {
+            avisar('A imagem deve ter no máximo ' + MAX_MB + ' MB.', 'erro');
+            return false;
+        }
         return true;
     }
 
     function escaparHtml(str) {
         return String(str || '').replace(/[&<>"']/g, c => ({
-            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
         }[c]));
     }
 
@@ -100,13 +128,15 @@
         if (!iso) return '';
         try {
             return new Date(iso).toLocaleDateString('pt-BR', {
-                day: '2-digit', month: 'short', year: 'numeric'
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
             });
         } catch { return ''; }
     }
 
     // ==============================================
-    // ENQUADRADOR
+    // ENQUADRADOR (avatar/capa)
     // ==============================================
     function criarEnquadrador({ container, camada, slider, linhaZoom, aoImagem, aoMudar }) {
         const est = { x: 50, y: 50, zoom: 1, nw: 0, nh: 0, pronto: false };
@@ -143,8 +173,12 @@
 
         function mover(dx, dy) {
             const m = medidas();
-            if (m.livreX > 0.5) est.x = limitar(x0 - (dx / (est.zoom * m.s)) / m.livreX * 100, 0, 100);
-            if (m.livreY > 0.5) est.y = limitar(y0 - (dy / (est.zoom * m.s)) / m.livreY * 100, 0, 100);
+            if (m.livreX > 0.5) {
+                est.x = limitar(x0 - (dx / (est.zoom * m.s)) / m.livreX * 100, 0, 100);
+            }
+            if (m.livreY > 0.5) {
+                est.y = limitar(y0 - (dy / (est.zoom * m.s)) / m.livreY * 100, 0, 100);
+            }
             aplicar();
             mudou();
         }
@@ -160,9 +194,13 @@
             ponteiros.set(e.pointerId, { x: e.clientX, y: e.clientY });
             container.setPointerCapture(e.pointerId);
             if (ponteiros.size === 1) {
-                arrastando = true; ix = e.clientX; iy = e.clientY; x0 = est.x; y0 = est.y;
+                arrastando = true;
+                ix = e.clientX; iy = e.clientY;
+                x0 = est.x; y0 = est.y;
             } else if (ponteiros.size === 2) {
-                arrastando = false; dist0 = distancia(); zoom0 = est.zoom;
+                arrastando = false;
+                dist0 = distancia();
+                zoom0 = est.zoom;
             }
         });
 
@@ -182,7 +220,9 @@
             dist0 = 0;
             if (ponteiros.size === 1) {
                 const [p] = [...ponteiros.values()];
-                arrastando = true; ix = p.x; iy = p.y; x0 = est.x; y0 = est.y;
+                arrastando = true;
+                ix = p.x; iy = p.y;
+                x0 = est.x; y0 = est.y;
             } else {
                 arrastando = false;
             }
@@ -196,7 +236,9 @@
             definirZoom(est.zoom + (e.deltaY < 0 ? 0.1 : -0.1));
         }, { passive: false });
 
-        if (slider) slider.addEventListener('input', () => definirZoom(parseFloat(slider.value)));
+        if (slider) {
+            slider.addEventListener('input', () => definirZoom(parseFloat(slider.value)));
+        }
 
         return {
             carregar(url, ini) {
@@ -209,11 +251,18 @@
                 if (linhaZoom) linhaZoom.hidden = false;
                 if (aoImagem) aoImagem(true);
                 const im = new Image();
-                im.onload = () => { est.nw = im.naturalWidth; est.nh = im.naturalHeight; est.pronto = true; };
+                im.onload = () => {
+                    est.nw = im.naturalWidth;
+                    est.nh = im.naturalHeight;
+                    est.pronto = true;
+                };
                 im.src = url;
             },
             limpar() {
-                est.pronto = false; est.x = 50; est.y = 50; est.zoom = 1;
+                est.pronto = false;
+                est.x = 50;
+                est.y = 50;
+                est.zoom = 1;
                 camada.style.backgroundImage = '';
                 aplicar();
                 if (linhaZoom) linhaZoom.hidden = true;
@@ -256,7 +305,9 @@
             $('atelie-vazio').hidden = false;
             $('atelie-conteudo').hidden = true;
             $('atelie-abas').hidden = true;
-            $('btn-criar-atelie').addEventListener('click', () => $('modal-criar-atelie').hidden = false);
+            $('btn-criar-atelie').addEventListener('click', () => {
+                $('modal-criar-atelie').hidden = false;
+            });
         } else {
             $('atelie-vazio').hidden = true;
             $('atelie-conteudo').hidden = false;
@@ -276,8 +327,10 @@
         const vazio = $('canal-vazio');
         if (!lista) return;
 
-        lista.innerHTML = '<div class="canal-carregando">' +
-            '<div class="canal-skeleton"></div>'.repeat(2) + '</div>';
+        lista.innerHTML =
+            '<div class="canal-carregando">' +
+            '<div class="canal-skeleton"></div>'.repeat(2) +
+            '</div>';
         vazio.hidden = true;
 
         const { data: posts, error } = await db
@@ -320,7 +373,8 @@
             card.dataset.id = post.id;
 
             const capaHtml = post.cover_url
-                ? '<div class="canal-post-capa"><img src="' + escaparHtml(post.cover_url) +
+                ? '<div class="canal-post-capa"><img src="' +
+                  escaparHtml(post.cover_url) +
                   '" alt="Capa do artigo" loading="lazy" referrerpolicy="no-referrer"></div>'
                 : '';
 
@@ -328,19 +382,25 @@
                 '<div class="canal-post-corpo">' +
                     '<div class="canal-post-meta">' +
                         (post.category
-                            ? '<span class="canal-post-categoria">' + escaparHtml(post.category) + '</span>'
+                            ? '<span class="canal-post-categoria">' +
+                              escaparHtml(post.category) + '</span>'
                             : '') +
                         '<span>' + escaparHtml(formatarData(post.created_at)) + '</span>' +
                     '</div>' +
-                    '<h2 class="canal-post-titulo">' + escaparHtml(post.title || 'Sem título') + '</h2>' +
-                    '<div class="canal-post-trecho">' + escaparHtml(extrairTrecho(post.content)) + '</div>' +
+                    '<h2 class="canal-post-titulo">' +
+                        escaparHtml(post.title || 'Sem título') +
+                    '</h2>' +
+                    '<div class="canal-post-trecho">' +
+                        escaparHtml(extrairTrecho(post.content)) +
+                    '</div>' +
                     '<div class="canal-post-rodape">' +
-                        '<button type="button" class="canal-post-ler" data-ler="' + post.id + '">' +
-                            'Ler artigo' +
-                            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>' +
+                        '<button type="button" class="canal-post-ler" data-ler="' +
+                        post.id + '">Ler artigo' +
+                        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>' +
                         '</button>' +
                         '<div class="canal-post-acoes">' +
-                            '<button type="button" class="perigo" data-excluir="' + post.id + '" title="Excluir">' +
+                            '<button type="button" class="perigo" data-excluir="' +
+                            post.id + '" title="Excluir">' +
                                 '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>' +
                             '</button>' +
                         '</div>' +
@@ -425,7 +485,10 @@
         if (capaFr) {
             if (atelie.cover_url) {
                 const [x, y] = parsePos(atelie.cover_position);
-                capaFr.carregar(atelie.cover_url, { x, y, zoom: parseFloat(atelie.cover_zoom) || 1 });
+                capaFr.carregar(atelie.cover_url, {
+                    x, y,
+                    zoom: parseFloat(atelie.cover_zoom) || 1
+                });
             } else {
                 capaFr.limpar();
             }
@@ -450,7 +513,9 @@
         const modalCriar = $('modal-criar-atelie');
         if (!modalCriar) return;
         $('btn-fechar-modal').addEventListener('click', () => modalCriar.hidden = true);
-        modalCriar.addEventListener('click', (e) => { if (e.target === modalCriar) modalCriar.hidden = true; });
+        modalCriar.addEventListener('click', (e) => {
+            if (e.target === modalCriar) modalCriar.hidden = true;
+        });
 
         $('form-criar-atelie').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -462,10 +527,16 @@
             btn.textContent = 'Abrindo...';
 
             try {
-                const { data: handleGerado, error: errHandle } = await db.rpc('gerar_handle_unico');
+                const { data: handleGerado, error: errHandle } =
+                    await db.rpc('gerar_handle_unico');
                 if (errHandle) throw errHandle;
                 const { data, error } = await db.from('ateliers').insert([{
-                    owner_id: usuarioLogado.id, name: nome, handle: handleGerado, description: bio, cover_position: '50% 50%', cover_zoom: 1
+                    owner_id: usuarioLogado.id,
+                    name: nome,
+                    handle: handleGerado,
+                    description: bio,
+                    cover_position: '50% 50%',
+                    cover_zoom: 1
                 }]).select().single();
                 if (error) throw error;
 
@@ -500,7 +571,10 @@
             aoImagem: (tem) => {
                 const cam = $('avatar-preview-arrastavel');
                 cam.classList.toggle('tem-imagem', tem);
-                if (tem) { const svg = cam.querySelector('svg'); if (svg) svg.remove(); }
+                if (tem) {
+                    const svg = cam.querySelector('svg');
+                    if (svg) svg.remove();
+                }
             },
             aoMudar: () => { avatarEditado = true; }
         });
@@ -518,25 +592,33 @@
 
         $('btn-configurar-atelie').addEventListener('click', () => abrirGaveta());
         const btnOpcoesMobile = $('btn-opcoes-mobile');
-        if (btnOpcoesMobile) btnOpcoesMobile.addEventListener('click', () => abrirGaveta());
+        if (btnOpcoesMobile) {
+            btnOpcoesMobile.addEventListener('click', () => abrirGaveta());
+        }
         $('btn-fechar-config').addEventListener('click', () => fecharGaveta());
         $('btn-fechar-config-redacao').addEventListener('click', () => fecharGaveta());
         overlay.addEventListener('click', () => fecharGaveta());
-        window.addEventListener('resize', () => { if (gavetaPermanente()) fecharGaveta(true); });
+        window.addEventListener('resize', () => {
+            if (gavetaPermanente()) fecharGaveta(true);
+        });
 
+        // --- Upload do avatar ---
         const inputAvatar = $('input-config-avatar');
         $('btn-upload-avatar').addEventListener('click', () => inputAvatar.click());
         inputAvatar.addEventListener('change', () => {
             const file = inputAvatar.files[0];
             inputAvatar.value = '';
             if (!validarImagem(file)) return;
-            if (fileAvatar && avatarImageUrl && avatarImageUrl.indexOf('blob:') === 0) URL.revokeObjectURL(avatarImageUrl);
+            if (fileAvatar && avatarImageUrl && avatarImageUrl.indexOf('blob:') === 0) {
+                URL.revokeObjectURL(avatarImageUrl);
+            }
             fileAvatar = file;
             avatarImageUrl = URL.createObjectURL(file);
             avatarFr.carregar(avatarImageUrl);
             avatarEditado = true;
         });
 
+        // --- Upload da capa ---
         const inputCapa = $('input-config-capa');
         $('btn-upload-capa').addEventListener('click', () => inputCapa.click());
         inputCapa.addEventListener('change', () => {
@@ -547,6 +629,7 @@
             capaFr.carregar(URL.createObjectURL(file));
         });
 
+        // --- Capa do artigo ---
         const capaArtigoPreview = $('capa-artigo-preview');
         const capaArtigoArrastavel = $('capa-artigo-arrastavel');
         const inputCapaArtigo = $('input-capa-artigo');
@@ -558,7 +641,8 @@
             arquivoCapaEditor = file;
             const reader = new FileReader();
             reader.onload = (e) => {
-                capaArtigoArrastavel.style.backgroundImage = 'url("' + e.target.result + '")';
+                capaArtigoArrastavel.style.backgroundImage =
+                    'url("' + e.target.result + '")';
                 capaArtigoPreview.hidden = false;
             };
             reader.readAsDataURL(file);
@@ -598,12 +682,15 @@
 
             const SAIDA = 512;
             const canvas = document.createElement('canvas');
-            canvas.width = SAIDA; canvas.height = SAIDA;
+            canvas.width = SAIDA;
+            canvas.height = SAIDA;
             const ctx = canvas.getContext('2d');
             ctx.fillStyle = '#fff';
             ctx.fillRect(0, 0, SAIDA, SAIDA);
             ctx.drawImage(img, sx, sy, lado, lado, 0, 0, SAIDA, SAIDA);
-            return new Promise((ok) => canvas.toBlob((b) => ok(b), 'image/jpeg', 0.92));
+            return new Promise((ok) =>
+                canvas.toBlob((b) => ok(b), 'image/jpeg', 0.92)
+            );
         }
 
         $('form-config-atelie').addEventListener('submit', async (e) => {
@@ -622,18 +709,30 @@
                     try { blob = await gerarAvatarRecortado(); } catch (_) { blob = null; }
                     const corpo = blob || fileAvatar;
                     if (corpo) {
-                        const path = usuarioLogado.id + '/atelie-avatar-' + Date.now() + '.jpg';
-                        const up = await db.storage.from('avatars').upload(path, corpo, { contentType: blob ? 'image/jpeg' : corpo.type });
+                        const path = usuarioLogado.id +
+                            '/atelie-avatar-' + Date.now() + '.jpg';
+                        const up = await db.storage
+                            .from('avatars')
+                            .upload(path, corpo, {
+                                contentType: blob ? 'image/jpeg' : corpo.type
+                            });
                         if (up.error) throw up.error;
-                        newAvatarUrl = db.storage.from('avatars').getPublicUrl(path).data.publicUrl;
+                        newAvatarUrl = db.storage
+                            .from('avatars')
+                            .getPublicUrl(path).data.publicUrl;
                     }
                 }
 
                 if (fileCapa) {
-                    const path = usuarioLogado.id + '/atelie-capa-' + Date.now() + '.jpg';
-                    const up = await db.storage.from('avatars').upload(path, fileCapa, { contentType: fileCapa.type });
+                    const path = usuarioLogado.id +
+                        '/atelie-capa-' + Date.now() + '.jpg';
+                    const up = await db.storage
+                        .from('avatars')
+                        .upload(path, fileCapa, { contentType: fileCapa.type });
                     if (up.error) throw up.error;
-                    newCoverUrl = db.storage.from('avatars').getPublicUrl(path).data.publicUrl;
+                    newCoverUrl = db.storage
+                        .from('avatars')
+                        .getPublicUrl(path).data.publicUrl;
                 }
 
                 const c = capaFr.estado();
@@ -689,28 +788,45 @@
             if (devolverFoco) gatilho.focus();
         }
         function escolher(li) {
-            itens.forEach(i => i.setAttribute('aria-selected', i === li ? 'true' : 'false'));
+            itens.forEach(i => i.setAttribute(
+                'aria-selected', i === li ? 'true' : 'false'
+            ));
             campo.value = li.dataset.valor;
             valorEl.textContent = li.dataset.valor;
             iconeEl.innerHTML = li.querySelector('.dropdown-icone').innerHTML;
             fechar(true);
         }
 
-        gatilho.addEventListener('click', () => raiz.classList.contains('aberto') ? fechar() : abrir());
+        gatilho.addEventListener('click', () => {
+            raiz.classList.contains('aberto') ? fechar() : abrir();
+        });
         gatilho.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); abrir(); }
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                abrir();
+            }
         });
 
         itens.forEach((li, idx) => {
             li.addEventListener('click', () => escolher(li));
             li.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); escolher(li); }
-                else if (e.key === 'Escape') { e.preventDefault(); fechar(true); }
-                else if (e.key === 'ArrowDown') { e.preventDefault(); itens[(idx + 1) % itens.length].focus(); }
-                else if (e.key === 'ArrowUp') { e.preventDefault(); itens[(idx - 1 + itens.length) % itens.length].focus(); }
-                else if (e.key === 'Home') { e.preventDefault(); itens[0].focus(); }
-                else if (e.key === 'End') { e.preventDefault(); itens[itens.length - 1].focus(); }
-                else if (e.key === 'Tab') { fechar(); }
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault(); escolher(li);
+                } else if (e.key === 'Escape') {
+                    e.preventDefault(); fechar(true);
+                } else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    itens[(idx + 1) % itens.length].focus();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    itens[(idx - 1 + itens.length) % itens.length].focus();
+                } else if (e.key === 'Home') {
+                    e.preventDefault(); itens[0].focus();
+                } else if (e.key === 'End') {
+                    e.preventDefault(); itens[itens.length - 1].focus();
+                } else if (e.key === 'Tab') {
+                    fechar();
+                }
             });
         });
 
@@ -720,7 +836,7 @@
     }
 
     // ==============================================
-    // ABAS & CONFIG DINÂMICA
+    // ABAS
     // ==============================================
     function configurarAbas() {
         const botoes = document.querySelectorAll('.aba-btn');
@@ -773,8 +889,11 @@
 
         $('btn-cancelar-escrita').addEventListener('click', () => {
             const editor = $('input-conteudo');
-            const temConteudo = $('input-titulo').value.trim() || editor.textContent.trim() || editor.querySelector('img');
-            if (!temConteudo || confirm('Tem certeza que deseja apagar o que escreveu?')) {
+            const temConteudo = $('input-titulo').value.trim() ||
+                editor.textContent.trim() ||
+                editor.querySelector('img');
+            if (!temConteudo ||
+                confirm('Tem certeza que deseja apagar o que escreveu?')) {
                 if (window.__resetarEditorAtelie) window.__resetarEditorAtelie();
                 document.querySelector('[data-aba="canal"]').click();
             }
@@ -795,7 +914,10 @@
 
         const TAMANHOS = { p: 30, m: 55, g: 100 };
         const TAMANHO_PADRAO = 'm';
-        const BLOCOS = new Set(['P', 'H1', 'H2', 'H3', 'BLOCKQUOTE', 'UL', 'OL', 'FIGURE', 'DIV', 'PRE']);
+        const BLOCOS = new Set([
+            'P', 'H1', 'H2', 'H3', 'BLOCKQUOTE', 'UL', 'OL',
+            'FIGURE', 'DIV', 'PRE'
+        ]);
 
         let figura = null;
         let rangeSalvo = null;
@@ -811,16 +933,24 @@
             editor.dataset.vazio = vazio ? 'true' : 'false';
 
             const palavras = texto ? texto.split(/\s+/).length : 0;
-            const minutos = palavras === 0 ? 0 : Math.max(1, Math.round(palavras / 200));
-            $('contador-palavras').textContent = palavras + (palavras === 1 ? ' palavra' : ' palavras');
+            const minutos = palavras === 0
+                ? 0
+                : Math.max(1, Math.round(palavras / 200));
+            $('contador-palavras').textContent =
+                palavras + (palavras === 1 ? ' palavra' : ' palavras');
             $('tempo-leitura').textContent = minutos + ' min de leitura';
         }
-        editor.addEventListener('input', () => { atualizarVazio(); posicionar(); });
+        editor.addEventListener('input', () => {
+            atualizarVazio();
+            posicionar();
+        });
         atualizarVazio();
 
         document.addEventListener('selectionchange', () => {
             const sel = window.getSelection();
-            if (sel.rangeCount && editor.contains(sel.anchorNode)) rangeSalvo = sel.getRangeAt(0).cloneRange();
+            if (sel.rangeCount && editor.contains(sel.anchorNode)) {
+                rangeSalvo = sel.getRangeAt(0).cloneRange();
+            }
         });
 
         document.querySelectorAll('.editor-toolbar button[data-cmd]').forEach(btn => {
@@ -829,7 +959,10 @@
                 e.preventDefault();
                 const cmd = btn.getAttribute('data-cmd');
                 let value = btn.getAttribute('data-value') || null;
-                if (cmd === 'formatBlock' && document.queryCommandValue('formatBlock').toLowerCase() === value) value = 'p';
+                if (cmd === 'formatBlock' &&
+                    document.queryCommandValue('formatBlock').toLowerCase() === value) {
+                    value = 'p';
+                }
                 editor.focus();
                 document.execCommand(cmd, false, value);
                 atualizarVazio();
@@ -842,14 +975,25 @@
             document.execCommand('insertText', false, texto);
         });
 
-        editor.addEventListener('dragstart', (e) => { if (e.target.tagName === 'IMG') e.preventDefault(); });
+        editor.addEventListener('dragstart', (e) => {
+            if (e.target.tagName === 'IMG') e.preventDefault();
+        });
 
         function normalizarBlocos() {
             let atual = null;
             [...editor.childNodes].forEach(n => {
-                if (n.nodeType === 1 && BLOCOS.has(n.tagName)) { atual = null; return; }
-                if (n.nodeType === 3 && !n.textContent.trim() && !atual) { n.remove(); return; }
-                if (!atual) { atual = document.createElement('p'); n.before(atual); }
+                if (n.nodeType === 1 && BLOCOS.has(n.tagName)) {
+                    atual = null;
+                    return;
+                }
+                if (n.nodeType === 3 && !n.textContent.trim() && !atual) {
+                    n.remove();
+                    return;
+                }
+                if (!atual) {
+                    atual = document.createElement('p');
+                    n.before(atual);
+                }
                 atual.appendChild(n);
             });
         }
@@ -886,7 +1030,10 @@
             fig.contentEditable = 'false';
 
             const img = document.createElement('img');
-            img.src = url; img.alt = ''; img.loading = 'lazy'; img.draggable = false;
+            img.src = url;
+            img.alt = '';
+            img.loading = 'lazy';
+            img.draggable = false;
             img.addEventListener('load', posicionar);
 
             const cap = document.createElement('figcaption');
@@ -901,7 +1048,8 @@
         function inserirBloco(fig) {
             let no = null, off = 0;
             if (rangeSalvo && editor.contains(rangeSalvo.startContainer)) {
-                no = rangeSalvo.startContainer; off = rangeSalvo.startOffset;
+                no = rangeSalvo.startContainer;
+                off = rangeSalvo.startOffset;
             }
             normalizarBlocos();
 
@@ -941,14 +1089,21 @@
         const inputImg = $('input-img');
 
         btnImg.addEventListener('mousedown', (e) => e.preventDefault());
-        btnImg.addEventListener('click', (e) => { e.preventDefault(); inputImg.click(); });
+        btnImg.addEventListener('click', (e) => {
+            e.preventDefault();
+            inputImg.click();
+        });
 
         inputImg.addEventListener('change', async () => {
             const file = inputImg.files[0];
             inputImg.value = '';
             if (!file) return;
-            if (!/^image\/(jpeg|png|webp|gif)$/.test(file.type)) return avisar('Use uma imagem JPG, PNG, WEBP ou GIF.', 'erro');
-            if (file.size > MAX_MB * 1024 * 1024) return avisar('A imagem deve ter no máximo ' + MAX_MB + ' MB.', 'erro');
+            if (!/^image\/(jpeg|png|webp|gif)$/.test(file.type)) {
+                return avisar('Use uma imagem JPG, PNG, WEBP ou GIF.', 'erro');
+            }
+            if (file.size > MAX_MB * 1024 * 1024) {
+                return avisar('A imagem deve ter no máximo ' + MAX_MB + ' MB.', 'erro');
+            }
 
             btnImg.classList.add('carregando');
             btnImg.disabled = true;
@@ -975,7 +1130,9 @@
         }
 
         function definirLarguraLivre(fig, pct) {
-            const preset = Object.keys(TAMANHOS).find(k => Math.abs(TAMANHOS[k] - pct) < 1.5);
+            const preset = Object.keys(TAMANHOS).find(
+                k => Math.abs(TAMANHOS[k] - pct) < 1.5
+            );
             fig.dataset.size = preset || 'c';
             fig.style.width = (preset ? TAMANHOS[preset] : pct).toFixed(1) + '%';
             if (pct >= 99) fig.dataset.align = 'center';
@@ -983,15 +1140,21 @@
 
         function definirAlinhamento(fig, al) {
             fig.dataset.align = al;
-            if (al !== 'center' && parseFloat(fig.style.width) > 85) definirTamanho(fig, 'm');
+            if (al !== 'center' && parseFloat(fig.style.width) > 85) {
+                definirTamanho(fig, 'm');
+            }
             fig.dataset.align = al;
         }
 
         function atualizarEstados() {
             if (!figura) return;
             [barra, menu].forEach(c => {
-                c.querySelectorAll('[data-tam]').forEach(b => b.classList.toggle('ativo', b.dataset.tam === figura.dataset.size));
-                c.querySelectorAll('[data-alin]').forEach(b => b.classList.toggle('ativo', b.dataset.alin === figura.dataset.align));
+                c.querySelectorAll('[data-tam]').forEach(b => {
+                    b.classList.toggle('ativo', b.dataset.tam === figura.dataset.size);
+                });
+                c.querySelectorAll('[data-alin]').forEach(b => {
+                    b.classList.toggle('ativo', b.dataset.alin === figura.dataset.align);
+                });
             });
             selecao.dataset.align = figura.dataset.align;
         }
@@ -1039,16 +1202,27 @@
             if (ignorarClique) return;
             const fig = e.target.closest('figure.img-bloco');
             selecionarFigura(fig);
-            if (fig && !e.target.closest('figcaption')) window.getSelection().removeAllRanges();
+            if (fig && !e.target.closest('figcaption')) {
+                window.getSelection().removeAllRanges();
+            }
         });
         document.addEventListener('click', (e) => {
             if (ignorarClique) return;
-            if (!e.target.closest('#input-conteudo') && !e.target.closest('#img-flutuante') &&
-                !e.target.closest('#img-selecao') && !e.target.closest('#img-menu')) selecionarFigura(null);
+            if (!e.target.closest('#input-conteudo') &&
+                !e.target.closest('#img-flutuante') &&
+                !e.target.closest('#img-selecao') &&
+                !e.target.closest('#img-menu')) {
+                selecionarFigura(null);
+            }
         });
         window.addEventListener('resize', posicionar);
-        window.addEventListener('scroll', () => { posicionar(); fecharMenu(); }, true);
-        if ('ResizeObserver' in window) new ResizeObserver(() => posicionar()).observe(editor);
+        window.addEventListener('scroll', () => {
+            posicionar();
+            fecharMenu();
+        }, true);
+        if ('ResizeObserver' in window) {
+            new ResizeObserver(() => posicionar()).observe(editor);
+        }
 
         function removerFigura() {
             if (!figura) return;
@@ -1060,7 +1234,9 @@
 
         function moverPosicao(dir) {
             if (!figura) return;
-            const alvo = dir < 0 ? figura.previousElementSibling : figura.nextElementSibling;
+            const alvo = dir < 0
+                ? figura.previousElementSibling
+                : figura.nextElementSibling;
             if (!alvo) return;
             if (dir < 0) alvo.before(figura); else alvo.after(figura);
             garantirParagrafoFinal();
@@ -1082,7 +1258,9 @@
             posicionar();
         }
 
-        barra.addEventListener('mousedown', (e) => { if (!e.target.closest('.grip')) e.preventDefault(); });
+        barra.addEventListener('mousedown', (e) => {
+            if (!e.target.closest('.grip')) e.preventDefault();
+        });
         barra.addEventListener('click', (e) => {
             const btn = e.target.closest('button');
             if (!btn || btn.dataset.acao === 'mover') return;
@@ -1113,7 +1291,9 @@
             fecharMenu();
         });
         menu.addEventListener('contextmenu', (e) => e.preventDefault());
-        document.addEventListener('pointerdown', (e) => { if (!menu.hidden && !menu.contains(e.target)) fecharMenu(); });
+        document.addEventListener('pointerdown', (e) => {
+            if (!menu.hidden && !menu.contains(e.target)) fecharMenu();
+        });
 
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
@@ -1125,7 +1305,11 @@
             if (!figura) return;
             if (e.key !== 'Backspace' && e.key !== 'Delete') return;
             const t = e.target;
-            if (t.closest && (t.closest('figcaption') || t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) return;
+            if (t.closest && (
+                t.closest('figcaption') ||
+                t.tagName === 'INPUT' ||
+                t.tagName === 'TEXTAREA'
+            )) return;
             e.preventDefault();
             removerFigura();
         });
@@ -1173,14 +1357,24 @@
             let alvo = null, depois = false;
             for (const c of filhos) {
                 const r = c.getBoundingClientRect();
-                if (y >= r.top && y <= r.bottom) { alvo = c; depois = y > r.top + r.height / 2; break; }
+                if (y >= r.top && y <= r.bottom) {
+                    alvo = c;
+                    depois = y > r.top + r.height / 2;
+                    break;
+                }
             }
             if (!alvo && filhos.length) {
-                if (y < filhos[0].getBoundingClientRect().top) { alvo = filhos[0]; depois = false; }
-                else { alvo = filhos[filhos.length - 1]; depois = true; }
+                if (y < filhos[0].getBoundingClientRect().top) {
+                    alvo = filhos[0];
+                    depois = false;
+                } else {
+                    alvo = filhos[filhos.length - 1];
+                    depois = true;
+                }
             }
             const zona = x < rect.left + rect.width * 0.33 ? 'left'
-                       : x > rect.left + rect.width * 0.67 ? 'right' : 'center';
+                       : x > rect.left + rect.width * 0.67 ? 'right'
+                       : 'center';
             return { alvo, depois, zona };
         }
 
@@ -1203,7 +1397,8 @@
             indicador.style.width = larg + 'px';
             indicador.querySelector('span').textContent =
                 info.zona === 'left' ? 'Esquerda · texto ao redor'
-              : info.zona === 'right' ? 'Direita · texto ao redor' : 'Centralizada';
+              : info.zona === 'right' ? 'Direita · texto ao redor'
+              : 'Centralizada';
             indicador.hidden = false;
         }
 
@@ -1223,7 +1418,10 @@
 
         function encerrarArraste() {
             document.body.classList.remove('img-arrastando');
-            if (fantasma) { fantasma.remove(); fantasma = null; }
+            if (fantasma) {
+                fantasma.remove();
+                fantasma = null;
+            }
             indicador.hidden = true;
             if (arraste) arraste.fig.classList.remove('arrastando');
             setTimeout(() => { ignorarClique = false; }, 0);
@@ -1239,16 +1437,31 @@
             if (e.button !== 0 || e.pointerType === 'touch') return;
             const img = e.target.closest('figure.img-bloco > img');
             if (!img) return;
-            arraste = { fig: img.parentElement, x: e.clientX, y: e.clientY, ativo: false, info: null };
+            arraste = {
+                fig: img.parentElement,
+                x: e.clientX,
+                y: e.clientY,
+                ativo: false,
+                info: null
+            };
         });
 
         barra.addEventListener('pointerdown', (e) => {
             const grip = e.target.closest('.grip');
             if (!grip || !figura) return;
             e.preventDefault();
-            arraste = { fig: figura, x: e.clientX, y: e.clientY, ativo: false, info: null };
+            arraste = {
+                fig: figura,
+                x: e.clientX,
+                y: e.clientY,
+                ativo: false,
+                info: null
+            };
             iniciarArraste();
-            if (fantasma) { fantasma.style.left = e.clientX + 'px'; fantasma.style.top = e.clientY + 'px'; }
+            if (fantasma) {
+                fantasma.style.left = e.clientX + 'px';
+                fantasma.style.top = e.clientY + 'px';
+            }
             atualizarIndicador(e.clientX, e.clientY);
         });
 
@@ -1258,7 +1471,10 @@
                 if (Math.hypot(e.clientX - arraste.x, e.clientY - arraste.y) < 6) return;
                 iniciarArraste();
             }
-            if (fantasma) { fantasma.style.left = e.clientX + 'px'; fantasma.style.top = e.clientY + 'px'; }
+            if (fantasma) {
+                fantasma.style.left = e.clientX + 'px';
+                fantasma.style.top = e.clientY + 'px';
+            }
             const navH = (document.querySelector('.navbar') || {}).offsetHeight || 68;
             if (e.clientY < navH + 130) window.scrollBy(0, -14);
             else if (e.clientY > window.innerHeight - 90) window.scrollBy(0, 14);
@@ -1273,7 +1489,8 @@
             encerrarArraste();
             const info = a.info;
             if (info && info.alvo) {
-                if (info.depois) info.alvo.after(a.fig); else info.alvo.before(a.fig);
+                if (info.depois) info.alvo.after(a.fig);
+                else info.alvo.before(a.fig);
                 definirAlinhamento(a.fig, info.zona);
                 garantirParagrafoFinal();
             }
@@ -1299,10 +1516,14 @@
 
         function htmlParaPublicar() {
             const clone = editor.cloneNode(true);
-            clone.querySelectorAll('.selecionada, .arrastando').forEach(el => el.classList.remove('selecionada', 'arrastando'));
+            clone.querySelectorAll('.selecionada, .arrastando')
+                .forEach(el => el.classList.remove('selecionada', 'arrastando'));
             clone.querySelectorAll('figcaption').forEach(fc => {
                 if (!fc.textContent.trim()) fc.remove();
-                else { fc.removeAttribute('contenteditable'); fc.removeAttribute('data-ph'); }
+                else {
+                    fc.removeAttribute('contenteditable');
+                    fc.removeAttribute('data-ph');
+                }
             });
 
             let temFlutuante = false;
@@ -1312,22 +1533,35 @@
                 const larg = f.style.width || '55%';
                 const al = f.dataset.align || 'center';
                 let estilo = 'box-sizing:border-box;width:' + larg + ';max-width:100%;';
-                if (al === 'left') { estilo += 'float:left;margin:0.4rem 1.6rem 1rem 0;'; temFlutuante = true; }
-                else if (al === 'right') { estilo += 'float:right;margin:0.4rem 0 1rem 1.6rem;'; temFlutuante = true; }
-                else estilo += 'clear:both;margin:2rem auto;';
+                if (al === 'left') {
+                    estilo += 'float:left;margin:0.4rem 1.6rem 1rem 0;';
+                    temFlutuante = true;
+                } else if (al === 'right') {
+                    estilo += 'float:right;margin:0.4rem 0 1rem 1.6rem;';
+                    temFlutuante = true;
+                } else {
+                    estilo += 'clear:both;margin:2rem auto;';
+                }
                 f.setAttribute('style', estilo);
                 const img = f.querySelector('img');
                 if (img) {
                     img.removeAttribute('draggable');
-                    img.setAttribute('style', 'display:block;width:100%;height:auto;border-radius:6px;');
+                    img.setAttribute(
+                        'style',
+                        'display:block;width:100%;height:auto;border-radius:6px;'
+                    );
                 }
             });
 
-            while (clone.lastElementChild && clone.lastElementChild.tagName === 'P' &&
-                   !clone.lastElementChild.textContent.trim() && !clone.lastElementChild.querySelector('img,figure')) {
+            while (clone.lastElementChild &&
+                   clone.lastElementChild.tagName === 'P' &&
+                   !clone.lastElementChild.textContent.trim() &&
+                   !clone.lastElementChild.querySelector('img,figure')) {
                 clone.lastElementChild.remove();
             }
-            if (temFlutuante) clone.insertAdjacentHTML('beforeend', '<div style="clear:both"></div>');
+            if (temFlutuante) {
+                clone.insertAdjacentHTML('beforeend', '<div style="clear:both"></div>');
+            }
             return clone.innerHTML.trim();
         }
 
@@ -1336,16 +1570,30 @@
             const titulo = $('input-titulo').value.trim();
             const categoria = $('input-categoria-artigo').value;
 
-            if (!titulo) return avisar('Adicione um título ao seu conteúdo.', 'erro');
-            if (editor.textContent.trim() === '' && !editor.querySelector('img')) return avisar('Escreva algo antes de publicar!', 'erro');
+            if (!titulo) {
+                return avisar('Adicione um título ao seu conteúdo.', 'erro');
+            }
+            if (editor.textContent.trim() === '' && !editor.querySelector('img')) {
+                return avisar('Escreva algo antes de publicar!', 'erro');
+            }
 
-            btn.disabled = true; btn.textContent = 'Publicando...';
+            btn.disabled = true;
+            btn.textContent = 'Publicando...';
             try {
                 let capaUrl = null;
                 if (arquivoCapaEditor) {
-                    const path = usuarioLogado.id + '/capa_post_' + Date.now() + '.jpg';
-                    const up = await db.storage.from('avatars').upload(path, arquivoCapaEditor, { contentType: arquivoCapaEditor.type });
-                    if (!up.error) capaUrl = db.storage.from('avatars').getPublicUrl(path).data.publicUrl;
+                    const path = usuarioLogado.id +
+                        '/capa_post_' + Date.now() + '.jpg';
+                    const up = await db.storage
+                        .from('avatars')
+                        .upload(path, arquivoCapaEditor, {
+                            contentType: arquivoCapaEditor.type
+                        });
+                    if (!up.error) {
+                        capaUrl = db.storage
+                            .from('avatars')
+                            .getPublicUrl(path).data.publicUrl;
+                    }
                 }
 
                 const { error } = await db.from('posts').insert([{
@@ -1365,7 +1613,8 @@
                 console.error(err);
                 avisar('Erro ao publicar.', 'erro');
             } finally {
-                btn.disabled = false; btn.textContent = 'Publicar';
+                btn.disabled = false;
+                btn.textContent = 'Publicar';
             }
         });
     }
