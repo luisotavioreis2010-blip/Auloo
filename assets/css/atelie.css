@@ -1,9 +1,9 @@
 @charset "UTF-8";
 /* ==============================================
-   ATELIE.CSS — v33 (Clean & Robust + Config Dinâmica)
+   ATELIE.CSS — v34 (Layout Robusto + Scroll Corrigido)
    ============================================== */
 
-/* 1. RESET & ESTRUTURA GERAL */
+/* 1. ESTRUTURA GERAL */
 .atelie-main {
     margin-left: var(--sidebar-w);
     min-height: calc(100vh - var(--navbar-h));
@@ -56,6 +56,7 @@
 /* 4. REDAÇÃO (TELA CHEIA) */
 #atelie-main.modo-redacao { justify-content: flex-start; padding: 1.5rem 1rem 4rem; background: var(--papel-escuro); }
 #atelie-main.modo-redacao #wrapper-canal { display: none !important; }
+#atelie-main.modo-redacao .atelie-abas { display: none !important; }
 
 /* Intro */
 .redacao-intro { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 2rem 1rem; max-width: 600px; margin: 0 auto; animation: fadeAba 0.4s ease; }
@@ -67,7 +68,22 @@
 /* Editor */
 .redacao-editor { width: 100%; max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; animation: fadeAba 0.4s ease; }
 
-.editor-topo-custom { position: sticky; top: var(--navbar-h, 68px); z-index: 20; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; padding: 0.75rem 1.25rem; background: var(--papel-claro); border: 1px solid var(--papel-sombra); border-radius: 8px 8px 0 0; box-shadow: 0 6px 18px rgba(26, 22, 20, 0.05); }
+/* Topo do Editor */
+.editor-topo-custom {
+    position: sticky;
+    top: var(--navbar-h, 68px);
+    z-index: 20;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 0.75rem 1.25rem;
+    background: var(--papel-claro);
+    border: 1px solid var(--papel-sombra);
+    border-radius: 8px 8px 0 0;
+    box-shadow: 0 6px 18px rgba(26, 22, 20, 0.05);
+}
 
 .btn-voltar-editor { display: inline-flex; align-items: center; gap: 0.5rem; background: transparent; border: none; cursor: pointer; font-family: var(--fonte-corpo); font-size: 0.75rem; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--tinta-suave); transition: color 0.2s; }
 .btn-voltar-editor:hover { color: var(--vinho); }
@@ -80,6 +96,7 @@
 .editor-divisor { width: 1px; height: 18px; background: var(--papel-sombra); margin: 0 0.5rem; }
 .btn-publicar { padding: 0.55rem 1.6rem !important; font-size: 0.68rem !important; }
 
+/* Folha */
 .editor-folha { position: relative; width: 100%; background: #fff; border: 1px solid var(--papel-sombra); border-top: none; border-radius: 0 0 8px 8px; box-shadow: 0 24px 60px rgba(26, 22, 20, 0.09); padding: 3rem 4rem 2rem; }
 
 .editor-corpo { padding: 0; }
@@ -95,7 +112,7 @@
 .editor-status { display: flex; align-items: center; justify-content: flex-end; gap: 0.6rem; margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--papel-sombra); font-family: var(--fonte-corpo); font-size: 0.65rem; letter-spacing: 1px; text-transform: uppercase; color: var(--tinta-clara); }
 .editor-status svg { width: 14px; height: 14px; }
 
-/* Imagens no Editor */
+/* Imagens */
 .editor-conteudo figure.img-bloco { margin: 2rem auto; padding: 0; width: 100%; cursor: pointer; }
 .img-bloco[data-size="p"] { width: min(100%, 320px); }
 .img-bloco[data-size="m"] { width: min(100%, 560px); }
@@ -105,6 +122,7 @@
 .img-bloco figcaption { margin-top: 0.5rem; text-align: center; font-family: var(--fonte-display); font-style: italic; color: var(--tinta-clara); outline: none; }
 .img-bloco figcaption:empty::before { content: attr(data-ph); opacity: 0.5; }
 
+/* Mini-barra flutuante */
 .img-flutuante { position: absolute; z-index: 15; display: none; align-items: center; gap: 0.2rem; padding: 0.3rem; background: #1A1614; border-radius: 8px; transform: translateX(-50%); box-shadow: 0 8px 22px rgba(0,0,0,0.3); }
 .img-flutuante.ativa { display: flex; }
 .img-flutuante button { width: 32px; height: 30px; background: transparent; border: none; border-radius: 4px; color: #fff; cursor: pointer; font-family: var(--fonte-corpo); font-size: 0.7rem; font-weight: 600; }
@@ -157,7 +175,7 @@
 #config-redacao .campo { display: flex; flex-direction: column; gap: 0.5rem; }
 #config-redacao .campo label { font-family: var(--fonte-corpo); font-size: 0.68rem; font-weight: 600; text-transform: uppercase; color: var(--tinta-suave); }
 
-/* Select Custom */
+/* Select */
 .select-custom { width: 100%; padding: 0.75rem 0.9rem; background: #fff; border: 1px solid rgba(184, 137, 74, 0.35); border-radius: 4px; font-family: var(--fonte-display); font-size: 1rem; color: var(--tinta); outline: none; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%233D3528' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.9rem center; }
 .select-custom:focus { border-color: var(--vinho); box-shadow: 0 0 0 3px rgba(92, 26, 26, 0.08); }
 
@@ -177,9 +195,15 @@
 /* NOTEBOOK (1025px a 1366px) */
 @media (min-width: 1025px) and (max-width: 1366px) {
     .atelie-main { margin-left: 0; padding: 2rem 1rem; }
+    
+    /* Painel fixo na redação também em notebook */
+    #atelie-main.modo-redacao { margin-right: 420px; padding: 1rem 1rem 3rem; }
     .atelie-gaveta { max-width: 420px; width: 100%; border-left: 3px double var(--dourado); border-top: none; }
-    #atelie-main.modo-redacao { padding: 1rem 0 3rem; }
+    body.atelie-modo-redacao .atelie-gaveta { transform: translateX(0) !important; visibility: visible !important; }
+    body.atelie-modo-redacao .gaveta-overlay-config { display: none !important; }
+    body.atelie-modo-redacao .atelie-gaveta-fechar { display: none !important; }
     .editor-corpo { padding: 0 2rem; }
+    .editor-topo-custom { border-radius: 8px 8px 0 0; }
 }
 
 /* TABLET (769px a 1024px) */
@@ -204,9 +228,11 @@
     .btn-primario { width: 100%; max-width: 300px; }
     .atelie-abas { justify-content: center; }
     .aba-btn { padding: 1rem; font-size: 0.7rem; }
+    
     .redacao-intro h2 { font-size: 1.8rem; }
     .redacao-intro p { font-size: 1.1rem; }
     .ilustracao-redacao { max-width: 240px; }
+    
     .editor-topo-custom { flex-direction: column; align-items: stretch; gap: 1rem; padding: 1rem; }
     .editor-toolbar { justify-content: center; }
     .editor-corpo { padding: 0 1.2rem; }
@@ -216,16 +242,19 @@
 }
 
 /* ==============================================
-   DESKTOP GRANDE (Painel Fixo - >= 1367px)
+   DESKTOP GRANDE (Painel Fixo)
    ============================================== */
 @media (min-width: 1367px) {
     .atelie-main { margin-right: 460px; padding-right: 1rem; }
+    
     .atelie-gaveta { transform: translateX(0) !important; visibility: visible !important; box-shadow: -4px 0 20px rgba(26, 22, 20, 0.05); }
     .gaveta-overlay-config { display: none !important; }
     .atelie-gaveta-fechar { display: none !important; }
     #btn-configurar-atelie { display: none !important; }
     
-    /* No desktop, quando abre a redação, libera o espaço da gaveta */
-    body.atelie-modo-redacao .atelie-main { margin-right: 0; }
-    body.atelie-modo-redacao .atelie-gaveta { display: none !important; }
+    /* No modo redação, mantém a gaveta fixa e ajusta o layout */
+    body.atelie-modo-redacao .atelie-main { margin-right: 460px; padding: 1.5rem 1rem 4rem; }
+    body.atelie-modo-redacao .atelie-gaveta { transform: translateX(0) !important; visibility: visible !important; }
+    body.atelie-modo-redacao .gaveta-overlay-config { display: none !important; }
+    body.atelie-modo-redacao .atelie-gaveta-fechar { display: none !important; }
 }

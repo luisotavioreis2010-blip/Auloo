@@ -20,6 +20,8 @@
     const TEXTO_BTN_AVATAR = 'Escolher Imagem de Perfil';
 
     const isDesktop = () => window.matchMedia('(min-width: 1367px)').matches;
+    const isNotebook = () => window.matchMedia('(min-width: 1025px) and (max-width: 1366px)').matches;
+    const isMobile = () => window.matchMedia('(max-width: 1024px)').matches;
 
     async function aguardarSupabase() {
         for (let i = 0; i < 30; i++) {
@@ -196,7 +198,7 @@
         }
 
         function fecharGaveta() {
-            if (isDesktop()) return;
+            if (isDesktop() || isNotebook()) return;
             gaveta.classList.remove('ativa'); overlay.classList.remove('ativa');
             document.body.classList.remove('atelie-gaveta-aberta');
         }
@@ -262,7 +264,7 @@
             }
         });
 
-        // --- Drag & Zoom do Ateliê (Mantido) ---
+        // Drag & Zoom do Ateliê
         container.addEventListener('pointerdown', (e) => {
             if (e.pointerType === 'touch' && e.isPrimary === false) return;
             if (e.touches && e.touches.length === 2) return;
@@ -356,7 +358,6 @@
         const botoes = document.querySelectorAll('.aba-btn');
         const main = $('atelie-main');
         
-        // Painéis da Gaveta
         const painelCanal = $('config-canal');
         const painelRedacao = $('config-redacao');
 
@@ -371,7 +372,6 @@
                 $('aba-canal').classList.remove('ativa');
                 $('aba-redacao').classList.remove('ativa');
 
-                // Alterna os painéis da gaveta direita
                 painelCanal.classList.remove('ativo');
                 painelRedacao.classList.remove('ativo');
                 painelCanal.hidden = true;
@@ -417,7 +417,7 @@
         const editor = $('input-conteudo');
         const folha = $('editor-folha');
         const barraImg = $('img-flutuante');
-        const capaEl = $('editor-capa'); // (Mesmo não estando mais visível no topo, mantemos a referência para o JS não quebrar)
+        const capaEl = $('editor-capa');
         const capaHtmlOriginal = capaEl ? capaEl.innerHTML : '';
         const TAMANHO_PADRAO = 'm';
         const MAX_MB = 5;
@@ -572,7 +572,6 @@
             rangeSalvo = null;
             atualizarVazio();
             
-            // Reseta a capa no painel de configuração também
             const capaArtigoPreview = $('capa-artigo-preview');
             const capaArtigoArrastavel = $('capa-artigo-arrastavel');
             if (capaArtigoPreview) capaArtigoPreview.style.display = 'none';
