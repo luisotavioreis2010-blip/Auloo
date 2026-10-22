@@ -1,7 +1,6 @@
-
 @charset "UTF-8";
 /* ==============================================
-   ATELIE.CSS — v38 (Sidebar Clean e Editorial)
+   ATELIE.CSS — v39 (Elegante e Identidade Auloo)
    ============================================== */
 
 /* 0. RESET E SCROLL GLOBAL */
@@ -136,13 +135,13 @@ body.mural-body { overflow-y: auto !important; }
 .img-flutuante .sep { width: 1px; height: 16px; background: rgba(255,255,255,0.2); margin: 0 0.2rem; }
 
 /* ==============================================
-   5. GAVETA LATERAL (DESIGN CLEAN)
+   5. GAVETA LATERAL (IDENTIDADE AULOO)
    ============================================== */
 .atelie-gaveta { 
     position: fixed; top: var(--navbar-h, 68px); right: 0; bottom: 0; z-index: 250; 
     width: 100%; max-width: 420px; 
     background: var(--papel-claro); 
-    border-left: 1px solid var(--papel-sombra); /* Borda fina e sutil */
+    border-left: 1px solid var(--papel-sombra); 
     box-shadow: -10px 0 40px rgba(26, 22, 20, 0.08); 
     transform: translateX(100%); visibility: hidden; 
     transition: transform 0.4s ease, visibility 0s 0.4s; 
@@ -159,9 +158,9 @@ body.mural-body { overflow-y: auto !important; }
 /* Cabeçalho da Gaveta */
 .atelie-gaveta-header { 
     display: flex; justify-content: space-between; align-items: center; 
-    padding: 1.5rem 1.5rem 0.5rem; 
+    padding: 1.5rem 1.5rem 1rem; 
     background: var(--papel-claro); 
-    /* Removemos a borda e o fundo pesado */
+    border-bottom: 1px solid rgba(184, 137, 74, 0.2);
 }
 .atelie-gaveta-header h2 { 
     font-family: var(--fonte-titulo); font-size: 1.4rem; 
@@ -178,48 +177,52 @@ body.mural-body { overflow-y: auto !important; }
 
 /* Corpo da Gaveta */
 .atelie-gaveta-corpo { 
-    padding: 1rem 1.5rem 2rem; 
+    padding: 1.5rem 1.5rem 2rem; 
     display: flex; flex-direction: column; gap: 1.8rem; 
     flex: 1; overflow-y: auto; 
 }
 
-/* Formulário em geral */
+/* Formulário */
 #form-config-atelie { display: flex; flex-direction: column; gap: 1.5rem; }
 #form-config-atelie .campo { display: flex; flex-direction: column; gap: 0.4rem; }
 #form-config-atelie .campo label { 
     font-family: var(--fonte-corpo); font-size: 0.65rem; 
-    font-weight: 600; text-transform: uppercase; color: var(--tinta-clara); 
+    font-weight: 700; text-transform: uppercase; color: var(--vinho); 
     letter-spacing: 0.5px;
 }
 #form-config-atelie .campo input, #form-config-atelie .campo textarea { 
-    width: 100%; padding: 0.6rem 0; /* Input estilo "linha" */
-    background: transparent; 
-    border: none; border-bottom: 1px solid rgba(184, 137, 74, 0.4); 
-    border-radius: 0;
-    font-family: var(--fonte-display); font-size: 1.1rem; 
+    width: 100%; padding: 0.8rem; 
+    background: #fff; 
+    border: 1px solid rgba(184, 137, 74, 0.35); 
+    border-radius: 4px;
+    font-family: var(--fonte-display); font-size: 1rem; 
     color: var(--tinta); outline: none; transition: border-color 0.2s; 
 }
 #form-config-atelie .campo input:focus, #form-config-atelie .campo textarea:focus { 
-    border-bottom-color: var(--vinho); 
+    border-color: var(--vinho); box-shadow: 0 0 0 3px rgba(92, 26, 26, 0.05);
 }
-#form-config-atelie .campo textarea { resize: vertical; min-height: 60px; }
+#form-config-atelie .campo textarea { resize: vertical; min-height: 80px; }
 
-/* ==============================================
-   UPLOADS (AVATAR E CAPA) - CLEAN
-   ============================================== */
+/* Uploads */
 #form-config-atelie .campo-upload { 
     display: flex; flex-direction: column; gap: 0.8rem; 
-    padding: 0; background: transparent; border: none; 
+    padding: 1.2rem; 
+    background: rgba(184, 137, 74, 0.04); 
+    border: 1px dashed rgba(184, 137, 74, 0.4); 
+    border-radius: 6px;
 }
 #form-config-atelie .campo-upload label { 
     font-family: var(--fonte-corpo); font-size: 0.65rem; 
-    font-weight: 600; text-transform: uppercase; color: var(--tinta-clara); 
+    font-weight: 700; text-transform: uppercase; color: var(--vinho); 
     letter-spacing: 0.5px;
 }
 
 /* Avatar */
+.avatar-upload-wrapper {
+    display: flex; align-items: center; gap: 1.2rem;
+}
 .avatar-preview-container {
-    width: 80px; height: 80px; border-radius: 50%; 
+    width: 72px; height: 72px; border-radius: 50%; 
     background: var(--papel-escuro); border: 2px solid var(--dourado);
     overflow: hidden; position: relative;
     display: flex; align-items: center; justify-content: center;
@@ -230,11 +233,11 @@ body.mural-body { overflow-y: auto !important; }
     width: 100%; height: 100%;
     background-size: cover; background-position: center; background-repeat: no-repeat;
     display: flex; align-items: center; justify-content: center;
-    color: var(--dourado); opacity: 0.6;
+    color: var(--dourado); opacity: 0.7;
 }
-.avatar-preview-arrastavel svg { width: 32px; height: 32px; }
+.avatar-preview-arrastavel svg { width: 28px; height: 28px; }
 
-/* O botão de upload fica ao lado do avatar */
+/* Botões de texto */
 #form-config-atelie .btn-container {
     background: transparent; border: none; 
     color: var(--vinho); font-family: var(--fonte-corpo); 
@@ -255,13 +258,14 @@ body.mural-body { overflow-y: auto !important; }
 
 /* Capa */
 .capa-preview-container {
-    height: 120px; /* Mais compacto */
+    height: 120px;
     background: var(--papel-escuro);
     border: 1px dashed rgba(184, 137, 74, 0.5);
     border-radius: 4px;
-    overflow: hidden; cursor: grab; margin-bottom: 0.5rem;
+    overflow: hidden; cursor: grab; margin-bottom: 0.2rem;
     display: flex; align-items: center; justify-content: center;
     transition: border-color 0.2s;
+    position: relative;
 }
 .capa-preview-container:hover { border-color: var(--dourado); }
 .capa-preview-container::before {
@@ -275,31 +279,30 @@ body.mural-body { overflow-y: auto !important; }
     pointer-events: none;
 }
 .capa-preview-container:hover::before { opacity: 1; }
-
 .capa-preview-arrastavel { width: 100%; height: 100%; background-size: cover; background-position: center; transform-origin: center; }
 
 /* Redação */
-#config-redacao .campo-upload { display: flex; flex-direction: column; gap: 0.8rem; padding: 0; background: transparent; border: none; }
-#config-redacao .campo-upload label { font-family: var(--fonte-corpo); font-size: 0.65rem; font-weight: 600; text-transform: uppercase; color: var(--tinta-clara); }
+#config-redacao .campo-upload { display: flex; flex-direction: column; gap: 0.8rem; padding: 1.2rem; background: rgba(184, 137, 74, 0.04); border: 1px dashed rgba(184, 137, 74, 0.4); border-radius: 6px; }
+#config-redacao .campo-upload label { font-family: var(--fonte-corpo); font-size: 0.65rem; font-weight: 700; text-transform: uppercase; color: var(--vinho); }
 #config-redacao .capa-preview-container { width: 100%; height: auto; aspect-ratio: 16/9; background: var(--papel-escuro); border: 1px dashed rgba(184, 137, 74, 0.5); border-radius: 4px; overflow: hidden; cursor: grab; margin-bottom: 0; }
 #config-redacao .capa-preview-arrastavel { width: 100%; height: 100%; background-size: cover; background-position: center; transform-origin: center; }
 #config-redacao .btn-container { background: transparent; border: none; color: var(--vinho); font-family: var(--fonte-corpo); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; padding: 0; text-align: left; transition: color 0.2s; text-decoration: underline; text-underline-offset: 4px; text-decoration-color: rgba(92, 26, 26, 0.3); }
 #config-redacao .btn-container:hover { color: var(--dourado); text-decoration-color: var(--dourado); }
 
 #config-redacao .campo { display: flex; flex-direction: column; gap: 0.4rem; }
-#config-redacao .campo label { font-family: var(--fonte-corpo); font-size: 0.65rem; font-weight: 600; text-transform: uppercase; color: var(--tinta-clara); }
+#config-redacao .campo label { font-family: var(--fonte-corpo); font-size: 0.65rem; font-weight: 600; text-transform: uppercase; color: var(--vinho); }
 
 .select-custom { 
-    width: 100%; padding: 0.6rem 0; 
-    background: transparent; 
-    border: none; border-bottom: 1px solid rgba(184, 137, 74, 0.4); 
-    border-radius: 0; 
+    width: 100%; padding: 0.8rem; 
+    background: #fff; 
+    border: 1px solid rgba(184, 137, 74, 0.35); 
+    border-radius: 4px; 
     font-family: var(--fonte-display); font-size: 1rem; color: var(--tinta); 
     outline: none; cursor: pointer; appearance: none; 
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%233D3528' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); 
-    background-repeat: no-repeat; background-position: right 0.5rem center; 
+    background-repeat: no-repeat; background-position: right 0.8rem center; 
 }
-.select-custom:focus { border-bottom-color: var(--vinho); }
+.select-custom:focus { border-color: var(--vinho); box-shadow: 0 0 0 3px rgba(92, 26, 26, 0.05); }
 
 /* Modais */
 .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(26, 22, 20, 0.8); z-index: 999; display: flex; align-items: center; justify-content: center; padding: 1rem; backdrop-filter: blur(4px); }
@@ -316,7 +319,7 @@ body.mural-body { overflow-y: auto !important; }
 
 @media (min-width: 1025px) and (max-width: 1366px) {
     .atelie-main { margin-left: 0; padding: 2rem 1rem; }
-    #atelie-main.modo-redacao { margin-right: 420px; padding: 1rem 1rem 3rem; }
+    #atelie-main.modo-redacao { margin-right: 380px; padding: 1rem 1rem 3rem; }
     .atelie-gaveta { max-width: 380px; width: 100%; border-left: 1px solid var(--papel-sombra); border-top: none; }
     body.atelie-modo-redacao .atelie-gaveta { transform: translateX(0) !important; visibility: visible !important; }
     body.atelie-modo-redacao .gaveta-overlay-config { display: none !important; }
