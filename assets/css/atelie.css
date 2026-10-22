@@ -1,8 +1,9 @@
 @charset "UTF-8";
 /* ==============================================================
-   ATELIE.CSS — v49
-   Reescrita limpa. Modelo de scroll único: quem rola é o <html>.
-   Gaveta = flex column (header / corpo rolável / rodapé fixo).
+   ATELIE.CSS — v50
+   - Gaveta com layout flex rígido (header / corpo rolável / rodapé fixo)
+   - Botões redesenhados (aparência: pílula + sombra 3D)
+   - Removida a seção "Dicas do editor" (agora sem uso)
    ============================================================== */
 
 :root {
@@ -11,7 +12,6 @@
 
 /* --------------------------------------------------------------
    1. MODELO DE SCROLL
-   Regra de ouro: só `html` rola. Nada de fixed em html/body.
    -------------------------------------------------------------- */
 html {
     overflow-x: hidden;
@@ -28,9 +28,7 @@ body.mural-body {
     -webkit-overflow-scrolling: touch;
 }
 
-/* Trava de rolagem do fundo quando a gaveta abre.
-   Usamos apenas overflow:hidden — sem position:fixed, sem top:-Ypx.
-   A posição do scroll é guardada e restaurada pelo JS. */
+/* Trava de rolagem do fundo quando a gaveta abre */
 html.atelie-travado {
     overflow: hidden;
 }
@@ -946,10 +944,10 @@ body.img-arrastando .img-selecao { opacity: 0; }
 }
 
 /* --------------------------------------------------------------
-   7. GAVETA LATERAL — modelo flex puro
-   header (fixo) / corpo (rolável) / rodapé (fixo)
-   NÃO usamos overflow:hidden na gaveta para não bloquear o scroll
-   interno do iOS. O corte é feito pelo position + border-radius.
+   7. GAVETA LATERAL — layout flex rígido
+   A gaveta é position:fixed. Como o rodapé está DENTRO dela,
+   ele se move junto ao abrir/fechar. O corpo central é o único
+   elemento com overflow-y:auto.
    -------------------------------------------------------------- */
 .atelie-gaveta {
     position: fixed;
@@ -990,11 +988,12 @@ body.img-arrastando .img-selecao { opacity: 0; }
     pointer-events: auto;
 }
 
+/* Painel interno — cada painel (config ou redação) ocupa toda a gaveta */
 .config-painel {
     display: none;
     flex-direction: column;
     flex: 1;
-    min-height: 0;
+    min-height: 0;          /* permite que o filho (corpo) role */
     overflow: hidden;
 }
 .config-painel.ativo { display: flex; }
@@ -1005,7 +1004,7 @@ body.img-arrastando .img-selecao { opacity: 0; }
     justify-content: space-between;
     align-items: flex-start;
     padding: 1.75rem 1.75rem 1.25rem;
-    flex-shrink: 0;
+    flex-shrink: 0;         /* cabeçalho nunca é esmagado */
 }
 .atelie-gaveta-header::after {
     content: '';
@@ -1057,11 +1056,12 @@ body.img-arrastando .img-selecao { opacity: 0; }
 }
 .atelie-gaveta-fechar svg { width: 16px; height: 16px; }
 
+/* Formulário: corpo rolável + rodapé fixo */
 .gaveta-form {
     display: flex;
     flex-direction: column;
     flex: 1;
-    min-height: 0;
+    min-height: 0;           /* permite o scroll interno do corpo */
     margin: 0;
 }
 
@@ -1085,12 +1085,16 @@ body.img-arrastando .img-selecao { opacity: 0; }
     border-radius: 3px;
 }
 
+/* Rodapé — fica preso na base da gaveta, dentro do painel */
 .gaveta-rodape {
     flex-shrink: 0;
     padding: 1rem 1.75rem calc(1.1rem + env(safe-area-inset-bottom, 0px));
     background: var(--papel-claro);
     border-top: 1px solid rgba(184, 137, 74, 0.3);
     box-shadow: 0 -12px 28px rgba(26, 22, 20, 0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
 }
 
 /* ---------- Seções numeradas ---------- */
@@ -1557,32 +1561,6 @@ body.img-arrastando .img-selecao { opacity: 0; }
 }
 .dropdown-lista li[aria-selected="true"] .dropdown-check { opacity: 1; }
 
-/* ---------- Dicas do editor ---------- */
-.gaveta-dicas {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-.gaveta-dicas li {
-    display: flex;
-    gap: 0.7rem;
-    align-items: flex-start;
-    font-family: var(--fonte-display);
-    font-size: 1rem;
-    line-height: 1.35;
-    color: var(--tinta-suave);
-}
-.gaveta-dicas li::before {
-    content: '✦';
-    color: var(--dourado);
-    font-size: 0.7rem;
-    margin-top: 0.3rem;
-}
-.gaveta-dicas strong { color: var(--vinho); font-weight: 600; }
-
 /* --------------------------------------------------------------
    10. TOAST E MODAIS
    -------------------------------------------------------------- */
@@ -1653,8 +1631,6 @@ body.img-arrastando .img-selecao { opacity: 0; }
 /* --------------------------------------------------------------
    11. RESPONSIVIDADE
    -------------------------------------------------------------- */
-
-/* Telas grandes com gaveta fixa ao lado */
 @media (min-width: 1367px) {
     .atelie-main {
         margin-right: var(--gaveta-w);
@@ -1674,7 +1650,6 @@ body.img-arrastando .img-selecao { opacity: 0; }
     }
 }
 
-/* Telas médias — gaveta fixa apenas em modo redação */
 @media (min-width: 1025px) and (max-width: 1366px) {
     .atelie-main { margin-left: 0; padding: 2rem 1rem; }
     #atelie-main.modo-redacao {
@@ -1689,7 +1664,6 @@ body.img-arrastando .img-selecao { opacity: 0; }
     body.atelie-modo-redacao .atelie-gaveta-fechar { display: none; }
 }
 
-/* Tablets e celulares */
 @media (max-width: 1024px) {
     .atelie-main { margin-left: 0; padding: 1rem; }
     #atelie-main.modo-redacao { padding: 1rem 0.75rem 3rem; }
@@ -1771,11 +1745,9 @@ body.img-arrastando .img-selecao { opacity: 0; }
         left: 1.25rem;
         right: 1.25rem;
     }
-    /* No mobile a gaveta ocupa toda a altura abaixo da navbar e
-       o rodapé fica visível — o corpo central rola.
-       O overscroll-behavior evita que o scroll "vaze" para o body. */
-    .atelie-gaveta-corpo {
-        overscroll-behavior-y: contain;
+    .btn-gaveta {
+        min-height: 60px;
+        font-size: 0.82rem;
     }
 }
 
