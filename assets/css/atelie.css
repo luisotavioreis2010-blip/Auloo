@@ -284,6 +284,86 @@ body.atelie-modo-redacao #atelie-main { margin-right: 0; }
 .img-flutuante button svg { width: 16px; height: 16px; }
 .img-flutuante .sep { width: 1px; height: 18px; background: rgba(255, 255, 255, 0.2); margin: 0 0.2rem; }
 
+/* ==============================================
+   v27 — REFINAMENTO VISUAL DA REDAÇÃO
+   (sobrescreve regras antigas e o editor.css)
+   ============================================== */
+.redacao-editor, .redacao-editor * { box-sizing: border-box; }
+
+.redacao-editor {
+    width: 100% !important;
+    max-width: 960px !important;
+    margin: 0 auto !important;
+    gap: 1rem;
+}
+
+/* Barra solta, flutuante, alinhada com a folha */
+.redacao-editor .editor-topo-custom {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    top: calc(var(--navbar-h, 68px) + 0.75rem);
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--papel-sombra);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(26, 22, 20, 0.09);
+}
+
+/* Folha: mesma largura da barra, capa colada no topo */
+.redacao-editor .editor-folha {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 0 2rem !important;
+    border: 1px solid var(--papel-sombra);
+    border-radius: 12px;
+    box-shadow: 0 24px 60px rgba(26, 22, 20, 0.08);
+}
+
+.redacao-editor .editor-capa {
+    width: 100%; max-width: none; max-height: none;
+    aspect-ratio: 21 / 8;
+    margin: 0 0 2.25rem;
+    flex-direction: column; gap: 0.4rem;
+    border: none; border-bottom: 1px solid var(--papel-sombra);
+    border-radius: 12px 12px 0 0;
+    background-color: transparent;
+    background-image: linear-gradient(135deg, rgba(184, 137, 74, 0.14), rgba(92, 26, 26, 0.05));
+    background-size: cover; background-position: center;
+    color: var(--vinho);
+}
+.redacao-editor .editor-capa:hover { background-color: transparent; filter: brightness(0.97); color: var(--vinho); }
+.redacao-editor .editor-capa svg { width: 28px; height: 28px; opacity: 0.75; }
+.redacao-editor .editor-capa .capa-titulo { font-family: var(--fonte-corpo); font-size: 0.72rem; font-weight: 600; letter-spacing: 1.4px; text-transform: uppercase; }
+.redacao-editor .editor-capa .capa-dica { font-family: var(--fonte-display); font-style: italic; font-size: 1rem; color: var(--tinta-clara); text-transform: none; letter-spacing: 0; }
+
+.redacao-editor .editor-corpo { padding: 0 4rem; }
+
+/* Tipo de publicação em botões */
+.redacao-editor .editor-meta {
+    max-width: 780px; margin: 0 auto 1.5rem; padding: 0; border: none; gap: 0.75rem;
+}
+.redacao-editor .editor-meta-dica { font-size: 0.62rem; letter-spacing: 1.4px; color: var(--tinta-clara); }
+.seg { display: inline-flex; padding: 3px; gap: 2px; background: var(--papel-escuro); border-radius: 999px; }
+.seg-btn {
+    padding: 0.4rem 1.1rem; border: none; border-radius: 999px; background: transparent; cursor: pointer;
+    font-family: var(--fonte-corpo); font-size: 0.68rem; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+    color: var(--tinta-suave); transition: background 0.2s, color 0.2s;
+}
+.seg-btn:hover { color: var(--vinho); }
+.seg-btn.ativo { background: var(--vinho); color: var(--papel); }
+
+.redacao-editor .editor-titulo { font-size: 2.9rem; margin-bottom: 1.25rem; }
+.redacao-editor .editor-conteudo { min-height: 50vh; }
+
+@media (max-width: 768px) {
+    .redacao-editor .editor-topo-custom { top: calc(var(--navbar-h, 56px) + 0.4rem); border-radius: 10px; }
+    .redacao-editor .editor-folha { padding-bottom: 1.5rem !important; border-radius: 10px; }
+    .redacao-editor .editor-capa { aspect-ratio: 16 / 9; margin-bottom: 1.5rem; border-radius: 10px 10px 0 0; }
+    .redacao-editor .editor-corpo { padding: 0 1.1rem; }
+    .redacao-editor .editor-titulo { font-size: 2rem; }
+}
+
 /* 5. GAVETA LATERAL E MODAL */
 .atelie-gaveta { position: fixed; top: var(--navbar-h, 68px); right: 0; bottom: 0; z-index: 250; width: 100%; max-width: 460px; background: var(--papel-claro); border-left: 3px double var(--dourado); box-shadow: -20px 0 40px rgba(26, 22, 20, 0.15); transform: translateX(100%); visibility: hidden; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s linear 0.4s; display: flex; flex-direction: column; overflow-y: auto; }
 .atelie-gaveta.ativa { transform: translateX(0); visibility: visible; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s; }

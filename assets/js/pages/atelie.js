@@ -540,8 +540,21 @@
             reader.readAsDataURL(file);
         });
 
+        // ----- tipo de publicação (Artigo / Vídeo) -----
+        function definirCategoria(cat) {
+            $('input-categoria').value = cat;
+            document.querySelectorAll('.seg-btn').forEach(b => {
+                const ativo = b.dataset.cat === cat;
+                b.classList.toggle('ativo', ativo);
+                b.setAttribute('aria-checked', ativo ? 'true' : 'false');
+            });
+        }
+        document.querySelectorAll('.seg-btn').forEach(b =>
+            b.addEventListener('click', () => definirCategoria(b.dataset.cat)));
+
         // ----- reset -----
         function resetarEditor() {
+            definirCategoria('Artigo');
             $('input-titulo').value = '';
             editor.innerHTML = '';
             selecionarFigura(null);

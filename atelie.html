@@ -210,15 +210,19 @@
                     <!-- Capa -->
                     <div class="editor-capa" id="editor-capa" role="button" tabindex="0" title="Clique para adicionar uma capa">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
-                        <span>Adicionar Capa</span>
+                        <span class="capa-titulo">Adicionar imagem de capa</span>
+                        <span class="capa-dica">Uma boa capa convida à leitura</span>
                     </div>
 
+                    <div class="editor-corpo">
+
                     <div class="editor-meta">
-                        <select class="editor-categoria" id="input-categoria">
-                            <option value="Artigo">Artigo (Texto)</option>
-                            <option value="Vídeo">Vídeo (Link)</option>
-                        </select>
-                        <span class="editor-meta-dica">O que você vai publicar hoje?</span>
+                        <span class="editor-meta-dica">Tipo</span>
+                        <div class="seg" role="radiogroup" aria-label="Tipo de publicação">
+                            <button type="button" class="seg-btn ativo" data-cat="Artigo" role="radio" aria-checked="true">Artigo</button>
+                            <button type="button" class="seg-btn" data-cat="Vídeo" role="radio" aria-checked="false">Vídeo</button>
+                        </div>
+                        <input type="hidden" id="input-categoria" value="Artigo">
                     </div>
 
                     <input type="text" class="editor-titulo" id="input-titulo" placeholder="Título do seu artigo..." maxlength="120">
@@ -233,6 +237,8 @@
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
                         <span id="tempo-leitura">0 min de leitura</span>
                     </div>
+
+                    </div><!-- /editor-corpo -->
 
                     <!-- Mini-barra da imagem selecionada -->
                     <div class="img-flutuante" id="img-flutuante" contenteditable="false">
