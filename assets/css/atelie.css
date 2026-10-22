@@ -1,18 +1,18 @@
 @charset "UTF-8";
 /* ==============================================
-   ATELIE.CSS — v27 (Correção de Layout e Exibição)
+   ATELIE.CSS — v28 (Correção de Layout e Abas)
    ============================================== */
 
 /* 1. ESTRUTURA GERAL */
 .atelie-main {
     margin-left: var(--sidebar-w);
-    min-height: calc(100vh - var(--navbar-h));
     background: var(--papel);
     padding: 3rem 1rem;
     display: flex;
     flex-direction: column;
     align-items: center;
     transition: margin-right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    min-height: calc(100vh - var(--navbar-h));
 }
 
 /* 2. CARD DO ATELIÊ */
@@ -61,7 +61,7 @@
 @keyframes fadeAba { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
 /* Modo Redação (Tela cheia) */
-#atelie-main.modo-redacao { justify-content: flex-start; padding-top: 2rem; background: var(--papel-escuro); }
+#atelie-main.modo-redacao { justify-content: flex-start; padding: 2rem 1rem 0; background: var(--papel-escuro); }
 #atelie-main.modo-redacao #wrapper-canal { display: none !important; }
 #atelie-main.modo-redacao .atelie-abas { display: none !important; }
 
@@ -106,6 +106,7 @@
     padding-bottom: 4rem;
 }
 
+/* Barra de Ferramentas (Topo Flutuante) */
 .editor-topo-custom {
     width: 100%;
     background: rgba(248, 242, 228, 0.95);
@@ -127,6 +128,7 @@
 .btn-voltar-editor { background: transparent; border: none; font-family: var(--fonte-corpo); font-size: 0.75rem; font-weight: 600; color: var(--tinta-suave); cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: color 0.2s; display: flex; align-items: center; gap: 0.5rem; }
 .btn-voltar-editor:hover { color: var(--vinho); }
 
+/* A Folha de Papel */
 .editor-folha {
     width: 100%;
     background: #FFFFFF;
@@ -137,6 +139,7 @@
     min-height: 80vh;
 }
 
+/* A Capa no Tamanho Correto */
 .editor-capa {
     width: 100%;
     height: 280px;
@@ -160,19 +163,20 @@
 }
 .editor-capa:hover { background: linear-gradient(135deg, var(--papel) 0%, #E5D9C0 100%); border-color: var(--vinho); color: var(--vinho); }
 
+/* Meta (Categoria) */
 .editor-meta { display: flex; align-items: center; gap: 1.5rem; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid rgba(184, 137, 74, 0.2); }
 .editor-categoria { background: transparent; border: none; font-family: var(--fonte-corpo); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--dourado); cursor: pointer; outline: none; }
 
+/* Título */
 .editor-titulo { width: 100%; background: transparent; border: none; outline: none; font-family: var(--fonte-titulo); font-size: 3.5rem; font-style: italic; color: var(--vinho); margin-bottom: 2rem; line-height: 1.1; }
 .editor-titulo::placeholder { color: rgba(92, 26, 26, 0.2); }
 
+/* Conteúdo */
 .editor-conteudo { min-height: 400px; outline: none; font-family: var(--fonte-display); font-size: 1.4rem; line-height: 1.8; color: var(--tinta-suave); }
 .editor-conteudo:empty::before { content: 'Comece a escrever...'; color: var(--tinta-clara); font-style: italic; }
-
 .editor-conteudo h2 { font-family: var(--fonte-titulo); color: var(--vinho); margin: 2.5rem 0 1rem; font-style: italic; font-size: 2rem; }
 .editor-conteudo blockquote { border-left: 3px solid var(--dourado); padding-left: 1.5rem; margin: 2rem 0; font-style: italic; color: var(--tinta-clara); font-size: 1.5rem; }
 .editor-conteudo img { max-width: 100%; border-radius: 4px; margin: 2rem 0; }
-
 
 /* 5. GAVETA LATERAL E MODAL */
 .atelie-gaveta { position: fixed; top: var(--navbar-h, 68px); right: 0; bottom: 0; z-index: 250; width: 100%; max-width: 460px; background: var(--papel-claro); border-left: 3px double var(--dourado); box-shadow: -20px 0 40px rgba(26, 22, 20, 0.15); transform: translateX(100%); visibility: hidden; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s linear 0.4s; display: flex; flex-direction: column; overflow-y: auto; }

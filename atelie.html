@@ -17,7 +17,7 @@
 <body class="mural-body">
 
     <!-- SIDEBAR E NAVBAR (Mantidas) -->
-    <!-- Cole aqui a navbar, sidebar e ficha iguais às do código anterior -->
+    <!-- Cole aqui a navbar, sidebar e ficha iguais ao seu código -->
 
     <main class="atelie-main" id="atelie-main">
         
@@ -28,7 +28,7 @@
             <button id="btn-criar-atelie" class="btn-primario">Abrir Meu Ateliê</button>
         </div>
 
-        <!-- O WRAPPER DO CANAL (Aqui está a correção) -->
+        <!-- O WRAPPER DO CANAL (Onde o card e as abas ficam) -->
         <div id="wrapper-canal" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
             
             <!-- CARD DO ATELIÊ -->
@@ -61,10 +61,11 @@
                     <p style="font-family: var(--fonte-display); font-size: 1.4rem; font-style: italic;">O seu canal ainda não tem publicações.</p>
                 </div>
             </section>
+
         </div>
 
-        <!-- ABA REDAÇÃO (Fora do wrapper-canal para poder ocupar a tela toda) -->
-        <section id="aba-redacao" class="aba-conteudo">
+        <!-- ABA REDAÇÃO (Fora do wrapper para ocupar a tela toda no modo redacao) -->
+        <section id="aba-redacao" class="aba-conteudo" style="width: 100%;">
             <!-- Tela Inicial -->
             <div id="redacao-intro" class="redacao-intro">
                 <img src="assets/img/ilustracoes/Thesis-bro.png" alt="Escrevendo" class="ilustracao-redacao">
@@ -75,6 +76,8 @@
 
             <!-- Editor -->
             <div id="redacao-editor" class="redacao-editor" hidden>
+                
+                <!-- Topo do Editor -->
                 <div class="editor-topo-custom">
                     <button type="button" id="btn-cancelar-escrita" class="btn-voltar-editor">← Voltar</button>
                     <div class="editor-toolbar" style="margin: 0;">
@@ -90,10 +93,14 @@
                     <button type="button" class="btn-primario" id="btn-publicar-atelie" style="padding: 0.5rem 1.5rem; font-size: 0.65rem;">Publicar</button>
                 </div>
 
+                <!-- Folha de Papel -->
                 <div class="editor-folha">
+                    
+                    <!-- Capa Padrão (16:9) -->
                     <div class="editor-capa" id="editor-capa" title="Clique para adicionar uma capa">
                         <span>Adicionar Capa</span>
                     </div>
+
                     <div class="editor-meta">
                         <select class="editor-categoria" id="input-categoria">
                             <option value="Artigo">Artigo (Texto)</option>
@@ -101,23 +108,20 @@
                         </select>
                         <span style="font-family: var(--fonte-corpo); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; color: var(--tinta-clara);">O que você vai publicar hoje?</span>
                     </div>
+
                     <input type="text" class="editor-titulo" id="input-titulo" placeholder="Título do seu artigo..." maxlength="120">
+
                     <div class="editor-conteudo" id="input-conteudo" contenteditable="true">
                         <p>Comece a escrever sua história...</p>
                     </div>
                 </div>
+
             </div>
         </section>
 
     </main>
 
-    <!-- Modais, Gaveta e Scripts (Mantidos iguais) -->
-    <!-- Cole aqui o restante do HTML igual ao anterior -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-    <script src="assets/js/config.js"></script>
-    <script src="assets/js/auth.js"></script>
-    <script src="assets/js/lib/utils.js"></script>
-    <script src="assets/js/layout.js"></script>
-    <script src="assets/js/pages/atelie.js"></script>
+    <!-- MODAIS E SCRIPTS (Mantidos) -->
+    <!-- ... (mantenha o restante do seu HTML: modal, gaveta, scripts) ... -->
 </body>
 </html>
