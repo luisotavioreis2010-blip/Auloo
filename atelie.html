@@ -9,9 +9,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400;1,500&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    
     <link rel="stylesheet" href="assets/css/global.css">
     <link rel="stylesheet" href="assets/css/estante.css">
-    <link rel="stylesheet" href="assets/css/atelie.css?v=50">
+    <link rel="stylesheet" href="assets/css/atelie.css?v=45">
 </head>
 <body class="mural-body">
 
@@ -104,8 +105,8 @@
     <main class="atelie-main" id="atelie-main">
 
         <div id="atelie-vazio" class="atelie-vazio" hidden>
-            <h2>Seu Ateliê ainda está em branco.</h2>
-            <p>Este é o seu espaço de criação. Crie o seu Ateliê para começar a publicar textos.</p>
+            <h2>Seu Ateliê está vazio.</h2>
+            <p>Este é o seu espaço de criação. Abra o seu Ateliê para começar.</p>
             <button id="btn-criar-atelie" class="btn-primario" type="button">Abrir Meu Ateliê</button>
         </div>
 
@@ -133,21 +134,23 @@
             </nav>
 
             <section id="aba-canal" class="aba-conteudo ativa">
-                <div id="feed-canal" class="canal-feed">
-                    <p class="canal-vazio">Seu ateliê ainda está em branco. Publique seu primeiro texto na aba <strong>Redação</strong> para começar.</p>
+                <div class="canal-vazio">
+                    <p>O seu canal ainda não tem publicações.</p>
                 </div>
             </section>
         </div>
 
         <section id="aba-redacao" class="aba-conteudo">
+            
             <div id="redacao-intro" class="redacao-intro">
                 <img src="assets/img/ilustracoes/Thesis-bro.png" alt="Escrevendo" class="ilustracao-redacao">
-                <h2>Sua próxima publicação começa aqui</h2>
-                <p>Escreva, adicione imagens e compartilhe com o Mural quando estiver pronto.</p>
+                <h2>A página em branco</h2>
+                <p>Toda grande obra começa com uma única palavra. Dê vida às suas ideias.</p>
                 <button class="btn-primario" id="btn-iniciar-escrita" type="button">Começar a Escrever</button>
             </div>
 
             <div id="redacao-editor" class="redacao-editor" hidden>
+                
                 <div class="editor-topo-custom">
                     <button type="button" id="btn-cancelar-escrita" class="btn-voltar-editor" aria-label="Voltar">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
@@ -164,7 +167,8 @@
                         <button type="button" title="Lista" data-cmd="insertUnorderedList"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></svg></button>
                         <div class="editor-divisor"></div>
                         <button type="button" title="Inserir imagem" id="btn-inserir-img"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></button>
-                        <button type="button" title="Opções do Artigo" id="btn-opcoes-mobile" class="btn-opcoes-mobile">
+                        
+                        <button type="button" title="Opções do Artigo" id="btn-opcoes-mobile" class="btn-mobile-only">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
                         </button>
                     </div>
@@ -186,6 +190,7 @@
                         </div>
                     </div>
 
+                    <!-- Caixa de seleção com alças de redimensionar -->
                     <div class="img-selecao" id="img-selecao" contenteditable="false" aria-hidden="true">
                         <span class="img-handle" data-h="nw"></span>
                         <span class="img-handle" data-h="ne"></span>
@@ -194,10 +199,11 @@
                         <span class="img-selecao-rotulo" id="img-selecao-rotulo"></span>
                     </div>
 
+                    <!-- Barra flutuante da imagem -->
                     <div class="img-flutuante" id="img-flutuante" contenteditable="false" role="toolbar" aria-label="Opções da imagem">
                         <button type="button" data-tam="p" title="Pequena">P</button>
                         <button type="button" data-tam="m" title="Média">M</button>
-                        <button type="button" data-tam="g" title="Grande">G</button>
+                        <button type="button" data-tam="g" title="Grande (largura total)">G</button>
                         <span class="sep"></span>
                         <button type="button" data-alin="left" title="Esquerda · texto ao redor"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="8" height="7" rx="1"/><path d="M14 5h7M14 9h7M3 15h18M3 19h18"/></svg></button>
                         <button type="button" data-alin="center" title="Centralizada"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="4" width="10" height="7" rx="1"/><path d="M3 15h18M3 19h18"/></svg></button>
@@ -207,6 +213,7 @@
                         <button type="button" data-acao="remover" title="Remover imagem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg></button>
                     </div>
 
+                    <!-- Linha que mostra onde a imagem vai cair ao arrastar -->
                     <div class="img-indicador" id="img-indicador" hidden><span></span></div>
                 </div>
             </div>
@@ -227,9 +234,13 @@
         </div>
     </div>
 
+    <!-- ==============================================
+         GAVETA LATERAL (os dois painéis têm a mesma estrutura)
+         ============================================== -->
     <div class="gaveta-overlay-config" id="overlay-config"></div>
     <aside class="atelie-gaveta" id="gaveta-config">
 
+        <!-- Painel do Canal -->
         <div id="config-canal" class="config-painel ativo">
             <header class="atelie-gaveta-header">
                 <div class="gaveta-titulo-bloco">
@@ -263,7 +274,7 @@
                                 </div>
                             </div>
                             <div class="avatar-acoes">
-                                <p class="gaveta-dica">Arraste para centralizar o rosto. Use a barra para aproximar.</p>
+                                <p class="gaveta-dica">Arraste a imagem para enquadrar o rosto.</p>
                                 <button type="button" class="btn-container" id="btn-upload-avatar">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                                     Escolher imagem
@@ -296,7 +307,6 @@
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                             Escolher imagem de capa
                         </button>
-                        <button type="button" class="btn-remover-capa" id="btn-remover-capa" hidden>Remover capa</button>
                         <input type="file" id="input-config-capa" accept="image/*" hidden>
                     </section>
 
@@ -311,6 +321,7 @@
             </form>
         </div>
 
+        <!-- Painel da Redação -->
         <div id="config-redacao" class="config-painel" hidden>
             <header class="atelie-gaveta-header">
                 <div class="gaveta-titulo-bloco">
@@ -327,17 +338,12 @@
                         <h3 class="gaveta-secao-titulo"><span class="romano">I</span>Capa do artigo</h3>
                         <div id="capa-artigo-preview" class="capa-preview-container capa-preview-container--fixa" hidden>
                             <div id="capa-artigo-arrastavel" class="capa-preview-arrastavel"></div>
-                        </div>
-                        <div class="gaveta-zoom" id="capa-artigo-zoom-linha" hidden>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/><path d="M8 11h6"/></svg>
-                            <input type="range" id="capa-artigo-zoom" min="1" max="3" step="0.01" value="1" aria-label="Zoom da capa do artigo">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/><path d="M8 11h6M11 8v6"/></svg>
+                            <button type="button" class="capa-remover" id="btn-remover-capa-artigo" aria-label="Remover capa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
                         </div>
                         <button type="button" class="btn-container" id="btn-upload-capa-artigo">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                             Escolher imagem de capa
                         </button>
-                        <button type="button" class="btn-remover-capa" id="btn-remover-capa-artigo" hidden>Remover capa</button>
                         <input type="file" id="input-capa-artigo" accept="image/*" hidden>
                     </section>
 
@@ -382,6 +388,15 @@
                         </div>
                     </section>
 
+                    <section class="gaveta-secao">
+                        <h3 class="gaveta-secao-titulo"><span class="romano">III</span>Dicas do editor</h3>
+                        <ul class="gaveta-dicas">
+                            <li><span><strong>Clique</strong> numa imagem para mudar o tamanho pelas alças.</span></li>
+                            <li><span><strong>Arraste</strong> a imagem para mover. Solte na borda esquerda ou direita para o texto contornar.</span></li>
+                            <li><span><strong>Botão direito</strong> na imagem abre todas as opções.</span></li>
+                        </ul>
+                    </section>
+
                 </div>
 
                 <footer class="gaveta-rodape">
@@ -394,19 +409,48 @@
         </div>
     </aside>
 
+    <!-- Menu de contexto das imagens (botão direito) -->
     <div class="img-menu" id="img-menu" role="menu" hidden>
         <div class="img-menu-titulo">Imagem</div>
-        <button type="button" role="menuitem" data-alin="left"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="8" height="7" rx="1"/><path d="M14 5h7M14 9h7M3 15h18M3 19h18"/></svg><span>Esquerda<small>Texto ao redor</small></span></button>
-        <button type="button" role="menuitem" data-alin="center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="4" width="10" height="7" rx="1"/><path d="M3 15h18M3 19h18"/></svg><span>Centralizada<small>Sem texto ao lado</small></span></button>
-        <button type="button" role="menuitem" data-alin="right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="13" y="4" width="8" height="7" rx="1"/><path d="M3 5h7M3 9h7M3 15h18M3 19h18"/></svg><span>Direita<small>Texto ao redor</small></span></button>
+        <button type="button" role="menuitem" data-alin="left">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="8" height="7" rx="1"/><path d="M14 5h7M14 9h7M3 15h18M3 19h18"/></svg>
+            <span>Esquerda<small>Texto ao redor</small></span>
+        </button>
+        <button type="button" role="menuitem" data-alin="center">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="4" width="10" height="7" rx="1"/><path d="M3 15h18M3 19h18"/></svg>
+            <span>Centralizada<small>Sem texto ao lado</small></span>
+        </button>
+        <button type="button" role="menuitem" data-alin="right">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="13" y="4" width="8" height="7" rx="1"/><path d="M3 5h7M3 9h7M3 15h18M3 19h18"/></svg>
+            <span>Direita<small>Texto ao redor</small></span>
+        </button>
         <div class="img-menu-sep"></div>
-        <div class="img-menu-linha"><span class="img-menu-rotulo">Tamanho</span><div class="img-menu-seg"><button type="button" data-tam="p">P</button><button type="button" data-tam="m">M</button><button type="button" data-tam="g">G</button></div></div>
+        <div class="img-menu-linha">
+            <span class="img-menu-rotulo">Tamanho</span>
+            <div class="img-menu-seg">
+                <button type="button" data-tam="p" title="Pequena">P</button>
+                <button type="button" data-tam="m" title="Média">M</button>
+                <button type="button" data-tam="g" title="Grande">G</button>
+            </div>
+        </div>
         <div class="img-menu-sep"></div>
-        <button type="button" role="menuitem" data-acao="subir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg><span>Mover para cima</span></button>
-        <button type="button" role="menuitem" data-acao="descer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg><span>Mover para baixo</span></button>
-        <button type="button" role="menuitem" data-acao="legenda"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M4 12h10"/><path d="M4 17h16"/></svg><span>Editar legenda</span></button>
+        <button type="button" role="menuitem" data-acao="subir">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+            <span>Mover para cima</span>
+        </button>
+        <button type="button" role="menuitem" data-acao="descer">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            <span>Mover para baixo</span>
+        </button>
+        <button type="button" role="menuitem" data-acao="legenda">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M4 12h10"/><path d="M4 17h16"/></svg>
+            <span>Editar legenda</span>
+        </button>
         <div class="img-menu-sep"></div>
-        <button type="button" role="menuitem" class="perigo" data-acao="remover"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg><span>Remover imagem</span></button>
+        <button type="button" role="menuitem" class="perigo" data-acao="remover">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>
+            <span>Remover imagem</span>
+        </button>
     </div>
 
     <input type="file" id="input-img" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
@@ -416,6 +460,6 @@
     <script src="assets/js/auth.js"></script>
     <script src="assets/js/lib/utils.js"></script>
     <script src="assets/js/layout.js"></script>
-    <script src="assets/js/pages/atelie.js?v=50"></script>
+    <script src="assets/js/pages/atelie.js?v=45"></script>
 </body>
 </html>
