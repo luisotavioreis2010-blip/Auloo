@@ -1,49 +1,48 @@
 @charset "UTF-8";
 /* ==============================================================
-   ATELIE.CSS — v51 (FINAL)
-   - Scroll do desktop e mobile corrigidos.
-   - Gaveta é um container flex rígido (header / corpo / rodapé).
-   - Botões acompanham a gaveta (sem position: fixed).
+   ATELIE.CSS — v53
+   Base: v50 (todos os recursos preservados)
+   Correções: scroll desktop/mobile estável + rodapé ancorado
    ============================================================== */
 
 :root {
     --gaveta-w: 420px;
 }
 
-/* --------------------------------------------------------------
-   1. MODELO DE SCROLL BASE
-   -------------------------------------------------------------- */
+/* ==============================================================
+   0. MODELO DE SCROLL — apenas o <html> rola
+   ============================================================== */
 html {
     height: 100%;
+    overflow-x: hidden;
     scrollbar-gutter: stable;
+    -webkit-overflow-scrolling: touch;
 }
-
 body.mural-body {
-    min-height: 100vh;
+    min-height: 100%;
     display: flex;
     flex-direction: column;
     overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
 }
-
-/* Trava o scroll do fundo APENAS quando a gaveta está aberta.
-   O JS aplica/remove a classe 'atelie-travado' no HTML. */
+/* Trava scroll do fundo só quando a gaveta está aberta */
 html.atelie-travado {
     overflow: hidden;
 }
 
-/* --------------------------------------------------------------
-   2. LAYOUT PRINCIPAL
-   -------------------------------------------------------------- */
+/* ==============================================================
+   1. LAYOUT PRINCIPAL
+   ============================================================== */
 .atelie-main {
     margin-left: var(--sidebar-w);
-    min-height: calc(100vh - var(--navbar-h));
+    min-height: 100vh;
+    flex: 1;
     background: var(--papel);
     padding: 3rem 1rem;
     display: flex;
     flex-direction: column;
     align-items: center;
     transition: margin 0.4s ease;
-    flex: 1; /* Permite que o body flex cresça */
 }
 
 .wrapper-canal {
@@ -54,9 +53,9 @@ html.atelie-travado {
     align-items: center;
 }
 
-/* --------------------------------------------------------------
-   3. CARD DO ATELIÊ
-   -------------------------------------------------------------- */
+/* ==============================================================
+   2. CARD DO ATELIÊ
+   ============================================================== */
 .atelie-conteudo {
     width: 100%;
     background: var(--papel-claro);
@@ -67,7 +66,6 @@ html.atelie-travado {
     margin-bottom: 2rem;
     animation: cardEntrar 0.5s ease both;
 }
-
 @keyframes cardEntrar {
     from { opacity: 0; transform: translateY(20px); }
     to   { opacity: 1; transform: translateY(0); }
@@ -81,7 +79,6 @@ html.atelie-travado {
     background: var(--papel-escuro);
     border-bottom: 2px solid var(--dourado);
 }
-
 .atelie-capa-img {
     width: 100%;
     height: 100%;
@@ -89,7 +86,6 @@ html.atelie-travado {
     transform-origin: center;
     pointer-events: none;
 }
-
 .atelie-capa-wrapper::after {
     content: '';
     position: absolute;
@@ -106,14 +102,13 @@ html.atelie-travado {
     padding: 0 2rem 2rem;
     position: relative;
 }
-
 .atelie-avatar {
     width: 100px;
     height: 100px;
     border-radius: 50%;
     background: var(--vinho);
     border: 4px solid var(--papel-claro);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     margin-top: -50px;
     overflow: hidden;
     display: flex;
@@ -122,16 +117,12 @@ html.atelie-travado {
     flex-shrink: 0;
     z-index: 2;
 }
-
 .atelie-avatar img {
-    width: 100%;
-    height: 100%;
+    width: 100%; height: 100%;
     object-fit: cover;
     border-radius: 50%;
 }
-
 .atelie-info { flex: 1; margin-top: 0.5rem; }
-
 .atelie-nome {
     font-family: var(--fonte-titulo);
     font-size: 2rem;
@@ -140,7 +131,6 @@ html.atelie-travado {
     margin-bottom: 0.1rem;
     line-height: 1.2;
 }
-
 .atelie-handle {
     font-family: var(--fonte-corpo);
     font-size: 0.8rem;
@@ -149,14 +139,12 @@ html.atelie-travado {
     display: block;
     margin-bottom: 0.8rem;
 }
-
 .atelie-bio {
     font-family: var(--fonte-display);
     font-size: 1.1rem;
     line-height: 1.4;
     color: var(--tinta-suave);
 }
-
 .atelie-acoes { margin-top: 0.8rem; }
 
 .btn-primario {
@@ -177,9 +165,9 @@ html.atelie-travado {
 .btn-primario:hover { background: var(--dourado); border-color: var(--dourado); }
 .btn-primario:disabled { opacity: 0.6; cursor: wait; }
 
-/* --------------------------------------------------------------
-   4. ESTADO VAZIO E ABAS
-   -------------------------------------------------------------- */
+/* ==============================================================
+   3. ESTADO VAZIO E ABAS
+   ============================================================== */
 .atelie-vazio {
     background: var(--papel-claro);
     border: 1px dashed var(--dourado);
@@ -248,9 +236,9 @@ html.atelie-travado {
     font-style: italic;
 }
 
-/* --------------------------------------------------------------
-   5. CANAL — LISTA DE PUBLICAÇÕES
-   -------------------------------------------------------------- */
+/* ==============================================================
+   4. CANAL — LISTA DE PUBLICAÇÕES
+   ============================================================== */
 .canal-lista {
     display: flex;
     flex-direction: column;
@@ -273,7 +261,6 @@ html.atelie-travado {
     transform: translateY(-3px);
     box-shadow: 0 18px 42px rgba(26, 22, 20, 0.12);
 }
-
 .canal-post-capa {
     width: 100%;
     aspect-ratio: 16 / 9;
@@ -281,10 +268,8 @@ html.atelie-travado {
     background: var(--papel-escuro);
 }
 .canal-post-capa img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
+    width: 100%; height: 100%;
+    object-fit: cover; display: block;
     transition: transform 0.6s ease;
 }
 .canal-post:hover .canal-post-capa img { transform: scale(1.04); }
@@ -295,7 +280,6 @@ html.atelie-travado {
     flex-direction: column;
     gap: 0.6rem;
 }
-
 .canal-post-meta {
     display: flex;
     align-items: center;
@@ -316,7 +300,6 @@ html.atelie-travado {
     border-radius: 999px;
     font-weight: 600;
 }
-
 .canal-post-titulo {
     font-family: var(--fonte-titulo);
     font-style: italic;
@@ -325,7 +308,6 @@ html.atelie-travado {
     color: var(--vinho);
     margin: 0;
 }
-
 .canal-post-trecho {
     font-family: var(--fonte-display);
     font-size: 1.05rem;
@@ -336,9 +318,6 @@ html.atelie-travado {
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
-.canal-post-trecho img,
-.canal-post-trecho figure { display: none; }
-
 .canal-post-rodape {
     display: flex;
     align-items: center;
@@ -352,7 +331,6 @@ html.atelie-travado {
     letter-spacing: 0.8px;
     color: var(--tinta-clara);
 }
-
 .canal-post-ler {
     background: transparent;
     border: none;
@@ -373,8 +351,7 @@ html.atelie-travado {
 
 .canal-post-acoes { display: inline-flex; gap: 0.4rem; }
 .canal-post-acoes button {
-    width: 30px;
-    height: 30px;
+    width: 30px; height: 30px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -406,12 +383,7 @@ html.atelie-travado {
 .canal-skeleton {
     height: 220px;
     border-radius: 10px;
-    background: linear-gradient(
-        90deg,
-        var(--papel-sombra) 25%,
-        var(--papel-claro) 50%,
-        var(--papel-sombra) 75%
-    );
+    background: linear-gradient(90deg, var(--papel-sombra) 25%, var(--papel-claro) 50%, var(--papel-sombra) 75%);
     background-size: 200% 100%;
     animation: shimmer 1.4s infinite;
 }
@@ -420,9 +392,9 @@ html.atelie-travado {
     100% { background-position: -200% 0; }
 }
 
-/* --------------------------------------------------------------
-   6. REDAÇÃO — TELA CHEIA
-   -------------------------------------------------------------- */
+/* ==============================================================
+   5. REDAÇÃO — TELA CHEIA
+   ============================================================== */
 #atelie-main.modo-redacao {
     justify-content: flex-start;
     padding: 2rem 1.5rem 5rem;
@@ -430,7 +402,7 @@ html.atelie-travado {
         radial-gradient(900px 380px at 50% -80px, rgba(184, 137, 74, 0.14), transparent 70%),
         var(--papel-escuro);
 }
-#atelie-main.modo-redacao #wrapper-canal { display: none; }
+#atelie-main.modo-redacao #wrapper-canal,
 #atelie-main.modo-redacao .atelie-abas { display: none; }
 
 .redacao-intro {
@@ -496,7 +468,6 @@ html.atelie-travado {
     border-radius: 10px 10px 0 0;
     box-shadow: 0 6px 18px rgba(26, 22, 20, 0.05);
 }
-
 .btn-voltar-editor {
     display: inline-flex;
     align-items: center;
@@ -524,8 +495,7 @@ html.atelie-travado {
     flex: 1;
 }
 .editor-toolbar button {
-    width: 34px;
-    height: 34px;
+    width: 34px; height: 34px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -548,7 +518,6 @@ html.atelie-travado {
     background: var(--papel-sombra);
     margin: 0 0.5rem;
 }
-
 .btn-publicar {
     padding: 0.55rem 1.6rem;
     font-size: 0.68rem;
@@ -564,10 +533,7 @@ html.atelie-travado {
     box-shadow: 0 24px 60px rgba(26, 22, 20, 0.09);
     padding: 3.5rem 3rem 2.5rem;
 }
-.editor-corpo {
-    max-width: 720px;
-    margin: 0 auto;
-}
+.editor-corpo { max-width: 720px; margin: 0 auto; }
 
 .editor-titulo {
     display: block;
@@ -658,7 +624,7 @@ html.atelie-travado {
 }
 .editor-status svg { width: 14px; height: 14px; }
 
-/* --- Imagens no conteúdo --- */
+/* ---------- IMAGENS NO CONTEÚDO (todos os recursos preservados) ---------- */
 .editor-conteudo figure.img-bloco {
     position: relative;
     box-sizing: border-box;
@@ -682,7 +648,6 @@ html.atelie-travado {
     -webkit-user-drag: none;
 }
 .img-bloco.arrastando { opacity: 0.35; }
-
 .img-bloco figcaption {
     margin-top: 0.5rem;
     text-align: center;
@@ -763,8 +728,7 @@ html.atelie-travado {
 }
 .img-flutuante.ativa { display: flex; }
 .img-flutuante button {
-    width: 32px;
-    height: 30px;
+    width: 32px; height: 30px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -783,8 +747,7 @@ html.atelie-travado {
 .img-flutuante button svg { width: 16px; height: 16px; }
 .img-flutuante button.grip { cursor: grab; touch-action: none; }
 .img-flutuante .sep {
-    width: 1px;
-    height: 16px;
+    width: 1px; height: 16px;
     background: rgba(255, 255, 255, 0.2);
     margin: 0 0.25rem;
 }
@@ -801,8 +764,7 @@ html.atelie-travado {
 .img-indicador[hidden] { display: none; }
 .img-indicador span {
     position: absolute;
-    top: -28px;
-    left: 0;
+    top: -28px; left: 0;
     padding: 0.15rem 0.55rem;
     background: #1a1614;
     color: #fff;
@@ -812,7 +774,6 @@ html.atelie-travado {
     letter-spacing: 0.5px;
     white-space: nowrap;
 }
-
 .img-fantasma {
     position: fixed;
     z-index: 1000;
@@ -876,8 +837,7 @@ body.img-arrastando .img-selecao { opacity: 0; }
     transition: background 0.15s, color 0.15s;
 }
 .img-menu > button svg {
-    width: 17px;
-    height: 17px;
+    width: 17px; height: 17px;
     flex-shrink: 0;
     color: var(--dourado);
 }
@@ -923,8 +883,7 @@ body.img-arrastando .img-selecao { opacity: 0; }
     border-radius: 8px;
 }
 .img-menu-seg button {
-    min-width: 34px;
-    height: 28px;
+    min-width: 34px; height: 28px;
     padding: 0 0.5rem;
     background: transparent;
     border: none;
@@ -937,14 +896,11 @@ body.img-arrastando .img-selecao { opacity: 0; }
     transition: color 0.15s, background 0.15s;
 }
 .img-menu-seg button:hover { color: var(--vinho); }
-.img-menu-seg button.ativo {
-    background: var(--vinho);
-    color: #fff;
-}
+.img-menu-seg button.ativo { background: var(--vinho); color: #fff; }
 
-/* --------------------------------------------------------------
-   7. GAVETA LATERAL (A gaveta inteira se move)
-   -------------------------------------------------------------- */
+/* ==============================================================
+   6. GAVETA LATERAL — estrutura rígida (correção principal)
+   ============================================================== */
 .atelie-gaveta {
     position: fixed;
     top: var(--navbar-h, 68px);
@@ -952,14 +908,14 @@ body.img-arrastando .img-selecao { opacity: 0; }
     bottom: 0;
     z-index: 250;
     width: min(100vw, var(--gaveta-w));
-    background: var(--papel-claro);
+    background:
+        linear-gradient(180deg, rgba(184, 137, 74, 0.06) 0%, transparent 220px),
+        var(--papel-claro);
     border-left: 1px solid var(--papel-sombra);
     box-shadow: -10px 0 40px rgba(26, 22, 20, 0.08);
-    
     display: flex;
     flex-direction: column;
-    overflow: hidden; /* Corta o que sair da gaveta */
-    
+    overflow: hidden;
     transform: translateX(100%);
     visibility: hidden;
     transition: transform 0.4s ease, visibility 0s 0.4s;
@@ -980,16 +936,14 @@ body.img-arrastando .img-selecao { opacity: 0; }
     pointer-events: none;
     transition: opacity 0.3s ease;
 }
-.gaveta-overlay-config.ativa {
-    opacity: 1;
-    pointer-events: auto;
-}
+.gaveta-overlay-config.ativa { opacity: 1; pointer-events: auto; }
 
 .config-painel {
     display: none;
     flex-direction: column;
     flex: 1;
-    min-height: 0; /* Permite rolar o corpo */
+    min-height: 0;
+    overflow: hidden;
 }
 .config-painel.ativo { display: flex; }
 
@@ -1004,17 +958,11 @@ body.img-arrastando .img-selecao { opacity: 0; }
 .atelie-gaveta-header::after {
     content: '';
     position: absolute;
-    left: 1.75rem;
-    right: 1.75rem;
-    bottom: 0;
+    left: 1.75rem; right: 1.75rem; bottom: 0;
     height: 1px;
     background: linear-gradient(90deg, var(--dourado), rgba(184, 137, 74, 0.15) 70%, transparent);
 }
-.gaveta-titulo-bloco {
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-}
+.gaveta-titulo-bloco { display: flex; flex-direction: column; gap: 0.3rem; }
 .gaveta-eyebrow {
     font-family: var(--fonte-corpo);
     font-size: 0.6rem;
@@ -1032,8 +980,7 @@ body.img-arrastando .img-selecao { opacity: 0; }
     margin: 0;
 }
 .atelie-gaveta-fechar {
-    width: 32px;
-    height: 32px;
+    width: 32px; height: 32px;
     color: var(--tinta-suave);
     background: transparent;
     border: 1px solid transparent;
@@ -1055,7 +1002,7 @@ body.img-arrastando .img-selecao { opacity: 0; }
     display: flex;
     flex-direction: column;
     flex: 1;
-    min-height: 0; /* Permite rolar o corpo */
+    min-height: 0;
     margin: 0;
 }
 
@@ -1064,11 +1011,14 @@ body.img-arrastando .img-selecao { opacity: 0; }
     min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
     padding: 1.5rem 1.75rem;
     display: flex;
     flex-direction: column;
     gap: 1.25rem;
-    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--dourado-fraco) transparent;
 }
 .atelie-gaveta-corpo::-webkit-scrollbar { width: 6px; }
 .atelie-gaveta-corpo::-webkit-scrollbar-thumb {
@@ -1076,7 +1026,6 @@ body.img-arrastando .img-selecao { opacity: 0; }
     border-radius: 3px;
 }
 
-/* RODAPÉ DOS BOTÕES: ancorado no fim da gaveta, sem position fixed */
 .gaveta-rodape {
     flex-shrink: 0;
     padding: 1.25rem 1.75rem calc(1.25rem + env(safe-area-inset-bottom, 0px));
@@ -1086,11 +1035,11 @@ body.img-arrastando .img-selecao { opacity: 0; }
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
+    position: relative;
+    z-index: 2;
 }
 
-/* --------------------------------------------------------------
-   8. CONTEÚDO DA GAVETA (seções, campos, avatar, capa)
-   -------------------------------------------------------------- */
+/* ---------- Seções numeradas ---------- */
 .gaveta-secao {
     display: flex;
     flex-direction: column;
@@ -1137,11 +1086,8 @@ body.img-arrastando .img-selecao { opacity: 0; }
     margin: 0;
 }
 
-.atelie-gaveta .campo {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-}
+/* ---------- Campos ---------- */
+.atelie-gaveta .campo { display: flex; flex-direction: column; gap: 0.4rem; }
 .atelie-gaveta .campo > label {
     font-family: var(--fonte-corpo);
     font-size: 0.62rem;
@@ -1177,14 +1123,10 @@ body.img-arrastando .img-selecao { opacity: 0; }
     line-height: 1.4;
 }
 
-.avatar-linha {
-    display: flex;
-    align-items: center;
-    gap: 1.1rem;
-}
+/* ---------- Avatar ---------- */
+.avatar-linha { display: flex; align-items: center; gap: 1.1rem; }
 .avatar-preview-container {
-    width: 88px;
-    height: 88px;
+    width: 88px; height: 88px;
     border-radius: 50%;
     flex-shrink: 0;
     background: var(--papel-escuro);
@@ -1197,8 +1139,7 @@ body.img-arrastando .img-selecao { opacity: 0; }
 }
 .avatar-preview-container:active { cursor: grabbing; }
 .avatar-preview-arrastavel {
-    width: 100%;
-    height: 100%;
+    width: 100%; height: 100%;
     background-size: cover;
     background-position: 50% 50%;
     background-repeat: no-repeat;
@@ -1218,6 +1159,7 @@ body.img-arrastando .img-selecao { opacity: 0; }
     min-width: 0;
 }
 
+/* ---------- Capa ---------- */
 .capa-preview-container {
     position: relative;
     width: 100%;
@@ -1234,8 +1176,7 @@ body.img-arrastando .img-selecao { opacity: 0; }
 .avatar-preview-container,
 .capa-preview-container { user-select: none; -webkit-user-select: none; }
 .capa-preview-arrastavel {
-    width: 100%;
-    height: 100%;
+    width: 100%; height: 100%;
     background-size: cover;
     background-position: 50% 50%;
     background-repeat: no-repeat;
@@ -1265,11 +1206,9 @@ body.img-arrastando .img-selecao { opacity: 0; }
 
 .capa-remover {
     position: absolute;
-    top: 8px;
-    right: 8px;
+    top: 8px; right: 8px;
     z-index: 2;
-    width: 28px;
-    height: 28px;
+    width: 28px; height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1301,6 +1240,7 @@ body.img-arrastando .img-selecao { opacity: 0; }
 }
 .capa-vazia svg { width: 26px; height: 26px; opacity: 0.8; }
 
+/* ---------- Slider de zoom ---------- */
 .gaveta-zoom {
     display: flex;
     align-items: center;
@@ -1320,22 +1260,21 @@ body.img-arrastando .img-selecao { opacity: 0; }
 }
 .gaveta-zoom input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
-    width: 16px;
-    height: 16px;
+    width: 16px; height: 16px;
     border-radius: 50%;
     background: #fff;
     border: 2px solid var(--dourado);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
 }
 .gaveta-zoom input[type="range"]::-moz-range-thumb {
-    width: 12px;
-    height: 12px;
+    width: 12px; height: 12px;
     border-radius: 50%;
     background: #fff;
     border: 2px solid var(--dourado);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
 }
 
+/* ---------- Botão container (upload) ---------- */
 .atelie-gaveta .btn-container {
     display: inline-flex;
     align-items: center;
@@ -1362,9 +1301,9 @@ body.img-arrastando .img-selecao { opacity: 0; }
     color: #fff;
 }
 
-/* --------------------------------------------------------------
-   9. BOTÕES DA GAVETA (Salvar / Descartar)
-   -------------------------------------------------------------- */
+/* ==============================================================
+   7. BOTÕES DA GAVETA (Salvar / Descartar)
+   ============================================================== */
 .btn-gaveta {
     position: relative;
     display: flex;
@@ -1384,8 +1323,7 @@ body.img-arrastando .img-selecao { opacity: 0; }
     transition: transform 0.15s ease, box-shadow 0.3s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 .btn-gaveta svg {
-    width: 18px;
-    height: 18px;
+    width: 18px; height: 18px;
     flex-shrink: 0;
     transition: transform 0.3s ease;
 }
@@ -1432,8 +1370,7 @@ body.img-arrastando .img-selecao { opacity: 0; }
 .btn-gaveta.carregando .btn-icone { display: none; }
 .btn-gaveta.carregando::before {
     content: '';
-    width: 16px;
-    height: 16px;
+    width: 16px; height: 16px;
     border: 2px solid rgba(255, 255, 255, 0.4);
     border-top-color: #fff;
     border-radius: 50%;
@@ -1441,9 +1378,9 @@ body.img-arrastando .img-selecao { opacity: 0; }
 }
 @keyframes girar { to { transform: rotate(360deg); } }
 
-/* --------------------------------------------------------------
-   10. DROPDOWN, TOAST, MODAIS
-   -------------------------------------------------------------- */
+/* ==============================================================
+   8. DROPDOWN DE CATEGORIA
+   ============================================================== */
 .dropdown { position: relative; }
 .dropdown-gatilho {
     display: flex;
@@ -1473,8 +1410,7 @@ body.img-arrastando .img-selecao { opacity: 0; }
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 32px; height: 32px;
     flex-shrink: 0;
     border-radius: 9px;
     background: rgba(184, 137, 74, 0.14);
@@ -1483,8 +1419,7 @@ body.img-arrastando .img-selecao { opacity: 0; }
 .dropdown-icone svg { width: 17px; height: 17px; }
 .dropdown-valor { flex: 1; }
 .dropdown-seta {
-    width: 14px;
-    height: 14px;
+    width: 14px; height: 14px;
     color: var(--tinta-suave);
     transition: transform 0.25s;
 }
@@ -1526,14 +1461,16 @@ body.img-arrastando .img-selecao { opacity: 0; }
     background: rgba(184, 137, 74, 0.12);
 }
 .dropdown-check {
-    width: 15px;
-    height: 15px;
+    width: 15px; height: 15px;
     margin-left: auto;
     color: var(--vinho);
     opacity: 0;
 }
 .dropdown-lista li[aria-selected="true"] .dropdown-check { opacity: 1; }
 
+/* ==============================================================
+   9. TOAST E MODAIS
+   ============================================================== */
 .atelie-toast {
     position: fixed;
     left: 50%;
@@ -1598,9 +1535,9 @@ body.img-arrastando .img-selecao { opacity: 0; }
 }
 .modal-fechar svg { width: 18px; height: 18px; }
 
-/* --------------------------------------------------------------
-   11. RESPONSIVIDADE
-   -------------------------------------------------------------- */
+/* ==============================================================
+   10. RESPONSIVIDADE
+   ============================================================== */
 @media (min-width: 1367px) {
     .atelie-main {
         margin-right: var(--gaveta-w);
