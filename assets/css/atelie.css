@@ -1,6 +1,6 @@
 @charset "UTF-8";
 /* ==============================================
-   ATELIE.CSS — v36 (Avatar Drag & Preview)
+   ATELIE.CSS — v37 (Avatar Compacto e Elegante)
    ============================================== */
 
 /* 0. RESET E SCROLL GLOBAL */
@@ -157,44 +157,175 @@ body.mural-body { overflow-y: auto !important; }
 #form-config-atelie .campo input:focus, #form-config-atelie .campo textarea:focus { border-color: var(--vinho); box-shadow: 0 0 0 3px rgba(92, 26, 26, 0.08); }
 #form-config-atelie .campo textarea { resize: vertical; min-height: 96px; }
 
-#form-config-atelie .campo-upload { display: flex; flex-direction: column; gap: 0.75rem; padding: 1.1rem 1rem; background: rgba(184, 137, 74, 0.06); border: 1px dashed rgba(184, 137, 74, 0.4); border-radius: 4px; }
-#form-config-atelie .campo-upload label { font-family: var(--fonte-corpo); font-size: 0.68rem; font-weight: 700; text-transform: uppercase; color: var(--vinho); }
+/* ==============================================
+   AVATAR (Compacto e Elegante)
+   ============================================== */
+#form-config-atelie .campo-upload { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 0.75rem; 
+    padding: 1rem; 
+    background: rgba(184, 137, 74, 0.04); 
+    border: 1px solid rgba(184, 137, 74, 0.2); 
+    border-radius: 6px; 
+}
+#form-config-atelie .campo-upload label { 
+    font-family: var(--fonte-corpo); 
+    font-size: 0.65rem; 
+    font-weight: 700; 
+    text-transform: uppercase; 
+    color: var(--vinho); 
+    letter-spacing: 0.5px;
+}
 
-/* PREVIEW DO AVATAR (REDONDO) */
+/* Container do Avatar (mais compacto e lado a lado) */
+.avatar-upload-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
 .avatar-preview-container {
-    width: 120px; height: 120px; margin: 0 auto 1rem;
-    border-radius: 50%; background: var(--papel-claro); border: 2px solid var(--dourado);
-    overflow: hidden; cursor: grab; position: relative;
+    width: 80px; 
+    height: 80px; 
+    border-radius: 50%; 
+    background: var(--papel-escuro); 
+    border: 2px solid var(--dourado);
+    overflow: hidden; 
+    position: relative;
     display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    flex-shrink: 0;
+    cursor: grab;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 .avatar-preview-container:active { cursor: grabbing; }
+
 .avatar-preview-arrastavel {
     width: 100%; height: 100%;
-    background-size: cover; background-position: center; background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
     display: flex; align-items: center; justify-content: center;
-    color: var(--dourado); opacity: 0.6;
+    color: var(--dourado); 
+    opacity: 0.8;
 }
-.avatar-preview-arrastavel svg { width: 48px; height: 48px; }
+.avatar-preview-arrastavel svg { width: 32px; height: 32px; }
 
-.capa-preview-container { height: 170px; background: var(--papel-escuro); border: 1px solid var(--dourado); border-radius: 4px; overflow: hidden; cursor: grab; }
-.capa-preview-arrastavel { width: 100%; height: 100%; background-size: cover; background-position: center; transform-origin: center; }
+/* Controles do Avatar */
+.avatar-controles {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
 
-#form-config-atelie .btn-container { width: 100%; padding: 0.6rem 1rem; background: transparent; border: 1px solid var(--dourado); color: var(--dourado); font-family: var(--fonte-corpo); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; border-radius: 2px; cursor: pointer; transition: 0.3s; }
+.btn-container-mini {
+    width: 100%;
+    padding: 0.5rem;
+    background: transparent;
+    border: 1px solid var(--dourado);
+    color: var(--dourado);
+    font-family: var(--fonte-corpo);
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: 0.3s;
+    text-align: center;
+}
+.btn-container-mini:hover { background: var(--dourado); color: var(--papel-claro); }
+
+/* Slider de Zoom */
+.zoom-slider-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.2rem;
+}
+.zoom-slider-wrapper span {
+    font-size: 0.6rem;
+    color: var(--tinta-clara);
+    font-family: var(--fonte-corpo);
+}
+input[type="range"].zoom-slider {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    background: var(--papel-sombra);
+    border-radius: 2px;
+    outline: none;
+}
+input[type="range"].zoom-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--dourado);
+    cursor: pointer;
+    border: 2px solid var(--papel-claro);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+input[type="range"].zoom-slider::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--dourado);
+    cursor: pointer;
+    border: 2px solid var(--papel-claro);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+/* ==============================================
+   CAPA (Compacta)
+   ============================================== */
+.capa-preview-container {
+    height: 140px;
+    background: var(--papel-escuro);
+    border: 1px solid var(--dourado);
+    border-radius: 4px;
+    overflow: hidden;
+    cursor: grab;
+    margin-bottom: 0.5rem;
+}
+.capa-preview-arrastavel {
+    width: 100%; height: 100%;
+    background-size: cover;
+    background-position: center;
+    transform-origin: center;
+}
+
+#form-config-atelie .btn-container {
+    width: 100%;
+    padding: 0.55rem 1rem;
+    background: transparent;
+    border: 1px solid var(--dourado);
+    color: var(--dourado);
+    font-family: var(--fonte-corpo);
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: 0.3s;
+}
 #form-config-atelie .btn-container:hover { background: var(--dourado); color: var(--papel-claro); }
-#form-config-atelie #btn-salvar-config { padding: 0.85rem 1.5rem; width: 100%; }
+#form-config-atelie #btn-salvar-config { padding: 0.85rem 1.5rem; width: 100%; background: var(--vinho); color: var(--papel); border-color: var(--vinho); margin-top: 0.5rem; }
 
-#config-redacao .campo-upload { display: flex; flex-direction: column; gap: 0.75rem; padding: 1.1rem 1rem; background: rgba(184, 137, 74, 0.06); border: 1px dashed rgba(184, 137, 74, 0.4); border-radius: 4px; }
-#config-redacao .campo-upload label { font-family: var(--fonte-corpo); font-size: 0.68rem; font-weight: 700; text-transform: uppercase; color: var(--vinho); }
-#config-redacao .capa-preview-container { width: 100%; height: auto; aspect-ratio: 16/9; background: var(--papel-escuro); border: 1px solid var(--dourado); border-radius: 4px; overflow: hidden; cursor: grab; }
+/* Config Redação */
+#config-redacao .campo-upload { display: flex; flex-direction: column; gap: 0.75rem; padding: 1rem; background: rgba(184, 137, 74, 0.04); border: 1px solid rgba(184, 137, 74, 0.2); border-radius: 6px; }
+#config-redacao .campo-upload label { font-family: var(--fonte-corpo); font-size: 0.65rem; font-weight: 700; text-transform: uppercase; color: var(--vinho); }
+#config-redacao .capa-preview-container { width: 100%; height: auto; aspect-ratio: 16/9; background: var(--papel-escuro); border: 1px solid var(--dourado); border-radius: 4px; overflow: hidden; cursor: grab; margin-bottom: 0; }
 #config-redacao .capa-preview-arrastavel { width: 100%; height: 100%; background-size: cover; background-position: center; transform-origin: center; }
-#config-redacao .btn-container { width: 100%; padding: 0.6rem 1rem; background: transparent; border: 1px solid var(--dourado); color: var(--dourado); font-family: var(--fonte-corpo); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; border-radius: 2px; cursor: pointer; transition: 0.3s; }
+#config-redacao .btn-container { width: 100%; padding: 0.55rem 1rem; background: transparent; border: 1px solid var(--dourado); color: var(--dourado); font-family: var(--fonte-corpo); font-size: 0.65rem; font-weight: 600; text-transform: uppercase; border-radius: 2px; cursor: pointer; transition: 0.3s; }
 #config-redacao .btn-container:hover { background: var(--dourado); color: var(--papel-claro); }
 
 #config-redacao .campo { display: flex; flex-direction: column; gap: 0.5rem; }
-#config-redacao .campo label { font-family: var(--fonte-corpo); font-size: 0.68rem; font-weight: 600; text-transform: uppercase; color: var(--tinta-suave); }
+#config-redacao .campo label { font-family: var(--fonte-corpo); font-size: 0.65rem; font-weight: 600; text-transform: uppercase; color: var(--tinta-suave); }
 
-.select-custom { width: 100%; padding: 0.75rem 0.9rem; background: #fff; border: 1px solid rgba(184, 137, 74, 0.35); border-radius: 4px; font-family: var(--fonte-display); font-size: 1rem; color: var(--tinta); outline: none; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%233D3528' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.9rem center; }
+.select-custom { width: 100%; padding: 0.6rem 0.8rem; background: #fff; border: 1px solid rgba(184, 137, 74, 0.35); border-radius: 4px; font-family: var(--fonte-display); font-size: 0.9rem; color: var(--tinta); outline: none; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%233D3528' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.9rem center; }
 .select-custom:focus { border-color: var(--vinho); box-shadow: 0 0 0 3px rgba(92, 26, 26, 0.08); }
 
 /* Modais */
@@ -210,29 +341,22 @@ body.mural-body { overflow-y: auto !important; }
    RESPONSIVIDADE
    ============================================== */
 
-/* Notebook (1025px a 1366px) */
 @media (min-width: 1025px) and (max-width: 1366px) {
     .atelie-main { margin-left: 0; padding: 2rem 1rem; }
-    
     #atelie-main.modo-redacao { margin-right: 420px; padding: 1rem 1rem 3rem; }
     .atelie-gaveta { max-width: 420px; width: 100%; border-left: 3px double var(--dourado); border-top: none; }
     body.atelie-modo-redacao .atelie-gaveta { transform: translateX(0) !important; visibility: visible !important; }
     body.atelie-modo-redacao .gaveta-overlay-config { display: none !important; }
     body.atelie-modo-redacao .atelie-gaveta-fechar { display: none !important; }
-    
     .editor-corpo { padding: 0 2rem; }
-    .editor-topo-custom { border-radius: 8px 8px 0 0; }
 }
 
-/* Tablet e Celular (< 1024px) */
 @media (max-width: 1024px) {
     .atelie-main { margin-left: 0; padding: 1rem; }
     #atelie-main.modo-redacao { padding: 1rem 1rem 3rem; }
-    
     .atelie-gaveta { max-width: 100%; border-left: none; }
     .editor-folha { border-radius: 8px; border-left: 1px solid var(--papel-sombra); border-right: 1px solid var(--papel-sombra); }
     .editor-topo-custom { border-radius: 8px 8px 0 0; top: 0; position: relative; display: flex; flex-wrap: wrap; }
-    
     .btn-mobile-only { display: inline-flex !important; margin-left: auto; background: var(--vinho) !important; color: #fff !important; border-color: var(--vinho) !important; }
 }
 
@@ -245,11 +369,9 @@ body.mural-body { overflow-y: auto !important; }
     .btn-primario { width: 100%; max-width: 300px; }
     .atelie-abas { justify-content: center; gap: 0.5rem; }
     .aba-btn { padding: 1rem 0.5rem; font-size: 0.65rem; }
-    
     .redacao-intro h2 { font-size: 1.8rem; }
     .redacao-intro p { font-size: 1.1rem; }
     .ilustracao-redacao { max-width: 240px; }
-    
     .editor-topo-custom { flex-direction: column; align-items: stretch; gap: 1rem; padding: 1rem; }
     .editor-toolbar { justify-content: flex-start; overflow-x: auto; padding-bottom: 0.5rem; }
     .editor-toolbar button { width: 38px; height: 38px; flex-shrink: 0; }
@@ -257,21 +379,15 @@ body.mural-body { overflow-y: auto !important; }
     .editor-titulo { font-size: 2rem; }
     .editor-conteudo { font-size: 1.15rem; }
     .editor-status { justify-content: center; }
-    
     .btn-publicar { width: 100%; margin-top: 0.5rem; }
 }
 
-/* ==============================================
-   DESKTOP GRANDE (Painel Fixo)
-   ============================================== */
 @media (min-width: 1367px) {
     .atelie-main { margin-right: 460px; padding-right: 1rem; }
-    
     .atelie-gaveta { transform: translateX(0) !important; visibility: visible !important; box-shadow: -4px 0 20px rgba(26, 22, 20, 0.05); }
     .gaveta-overlay-config { display: none !important; }
     .atelie-gaveta-fechar { display: none !important; }
     #btn-configurar-atelie { display: none !important; }
-    
     body.atelie-modo-redacao .atelie-main { margin-right: 460px; padding: 1.5rem 1rem 4rem; }
     body.atelie-modo-redacao .atelie-gaveta { transform: translateX(0) !important; visibility: visible !important; }
     body.atelie-modo-redacao .gaveta-overlay-config { display: none !important; }
