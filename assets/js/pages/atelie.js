@@ -8,6 +8,7 @@
     let fileAvatar = null;
     let fileCapa = null;
     let fileImgEditor = null;
+    let arquivoCapaEditor = null;
 
     let posX = 50, posY = 50;
     let zoom = 1;
@@ -54,13 +55,11 @@
             $('atelie-vazio').hidden = false;
             $('atelie-conteudo').hidden = true;
             $('atelie-abas').hidden = true;
-            $('aba-conteudos-wrapper').hidden = true;
             $('btn-criar-atelie').addEventListener('click', () => $('modal-criar-atelie').hidden = false);
         } else {
             $('atelie-vazio').hidden = true;
             $('atelie-conteudo').hidden = false;
             $('atelie-abas').hidden = false;
-            $('aba-conteudos-wrapper').hidden = false;
             atelieAtual = atelie;
             renderizarAtelie(atelie);
             if (isDesktop()) preencherPainel(atelie);
@@ -123,7 +122,6 @@
         $('input-config-bio').value = atelie.description || '';
         const arrastavel = $('capa-preview-arrastavel');
         const container = $('capa-preview-container');
-
         if (atelie.cover_url) {
             arrastavel.style.backgroundImage = `url('${atelie.cover_url}')`;
             container.style.display = 'block';
@@ -135,7 +133,6 @@
     function configurarCriacao() {
         const modalCriar = $('modal-criar-atelie');
         if (!modalCriar) return;
-
         $('btn-fechar-modal').addEventListener('click', () => modalCriar.hidden = true);
         modalCriar.addEventListener('click', (e) => { if (e.target === modalCriar) modalCriar.hidden = true; });
 
@@ -144,42 +141,27 @@
             const btn = $('btn-salvar-atelie');
             const nome = $('input-nome-atelie').value.trim();
             const bio = $('input-bio-atelie').value.trim();
-
             if (!nome) return alert('O Nome do Ateliê é obrigatório.');
-
             btn.disabled = true;
             btn.textContent = 'Abrindo...';
 
             try {
                 const { data: handleGerado, error: errHandle } = await db.rpc('gerar_handle_unico');
                 if (errHandle) throw errHandle;
-
                 const { data, error } = await db.from('ateliers').insert([{
-                    owner_id: usuarioLogado.id,
-                    name: nome,
-                    handle: handleGerado,
-                    description: bio,
-                    cover_position: '50% 50%',
-                    cover_zoom: 1
+                    owner_id: usuarioLogado.id, name: nome, handle: handleGerado, description: bio, cover_position: '50% 50%', cover_zoom: 1
                 }]).select().single();
-
                 if (error) throw error;
-
                 modalCriar.hidden = true;
                 $('atelie-vazio').hidden = true;
                 $('atelie-conteudo').hidden = false;
                 $('atelie-abas').hidden = false;
-                $('aba-conteudos-wrapper').hidden = false;
                 atelieAtual = data;
                 renderizarAtelie(data);
                 if (isDesktop()) preencherPainel(data);
-
             } catch (err) {
                 console.error(err);
-                const msg = (err && err.code === '23505')
-                    ? 'Já existe um ateliê com esse nome. Tente outro.'
-                    : 'Erro ao abrir o Ateliê. Tente novamente.';
-                alert(msg);
+                alert('Erro ao abrir o Ateliê.');
                 btn.disabled = false;
                 btn.textContent = 'Abrir Ateliê';
             }
@@ -195,22 +177,18 @@
         const btnUploadCapa = $('btn-upload-capa');
 
         function abrirGaveta() {
-            gaveta.classList.add('ativa');
-            overlay.classList.add('ativa');
+            gaveta.classList.add('ativa'); overlay.classList.add('ativa');
             document.body.classList.add('atelie-gaveta-aberta');
             if (atelieAtual.cover_url) {
                 arrastavel.style.backgroundImage = `url('${atelieAtual.cover_url}')`;
                 container.style.display = 'block';
-            } else {
-                container.style.display = 'none';
-            }
+            } else { container.style.display = 'none'; }
             atualizarTransformacao();
         }
 
         function fecharGaveta() {
             if (isDesktop()) return; 
-            gaveta.classList.remove('ativa');
-            overlay.classList.remove('ativa');
+            gaveta.classList.remove('ativa'); overlay.classList.remove('ativa');
             document.body.classList.remove('atelie-gaveta-aberta');
         }
 
@@ -240,13 +218,8 @@
         btnUploadAvatar.addEventListener('click', () => inputAvatar.click());
         inputAvatar.addEventListener('change', () => {
             const f = inputAvatar.files[0];
-            if (!f) {
-                fileAvatar = null;
-                btnUploadAvatar.textContent = 'Escolher Imagem de Perfil';
-                return;
-            }
-            fileAvatar = f;
-            btnUploadAvatar.textContent = 'Avatar Selecionado ✓';
+            if (!f) { fileAvatar = null; btnUploadAvatar.textContent = 'Escolher Imagem de Perfil'; return; }
+            fileAvatar = f; btnUploadAvatar.textContent = 'Avatar Selecionado ✓';
         });
 
         function atualizarTransformacao() {
@@ -254,12 +227,10 @@
             arrastavel.style.transform = `scale(${zoom})`;
         }
 
-        // Lógica de Drag
         container.addEventListener('pointerdown', (e) => {
             if (e.pointerType === 'touch' && e.isPrimary === false) return;
             if (e.touches && e.touches.length === 2) return;
-            isDragging = true;
-            container.setPointerCapture(e.pointerId);
+            isDragging = true; container.setPointerCapture(e.pointerId);
             startX = e.clientX - (posX * container.offsetWidth / 100);
             startY = e.clientY - (posY * container.offsetHeight / 100);
         });
@@ -274,7 +245,6 @@
         container.addEventListener('pointerup', () => { isDragging = false; });
         container.addEventListener('pointercancel', () => { isDragging = false; });
 
-        // Pinch
         container.addEventListener('touchstart', (e) => {
             if (e.touches.length === 2) {
                 isDragging = false;
@@ -296,7 +266,6 @@
             }
         }, { passive: false });
         container.addEventListener('touchend', () => { pinchInicial = 0; });
-
         container.addEventListener('wheel', (e) => {
             e.preventDefault();
             if (e.deltaY < 0) zoom += 0.1; else zoom -= 0.1;
@@ -304,12 +273,10 @@
             atualizarTransformacao();
         }, { passive: false });
 
-        // Salvar Configurações
         $('form-config-atelie').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = $('btn-salvar-config');
-            btn.disabled = true;
-            btn.textContent = 'Salvando...';
+            btn.disabled = true; btn.textContent = 'Salvando...';
             const nome = $('input-config-nome').value.trim();
             const bio = $('input-config-bio').value.trim();
             let newAvatarUrl = atelieAtual.avatar_url;
@@ -334,55 +301,65 @@
                 }).eq('id', atelieAtual.id).select().single();
 
                 if (error) throw error;
-                atelieAtual = data;
-                renderizarAtelie(data);
-                fileAvatar = null;
-                fileCapa = null;
-                btnUploadAvatar.textContent = 'Escolher Imagem de Perfil';
+                atelieAtual = data; renderizarAtelie(data);
+                fileAvatar = null; fileCapa = null; btnUploadAvatar.textContent = 'Escolher Imagem de Perfil';
                 fecharGaveta();
                 if (isDesktop()) preencherPainel(data);
             } catch (err) {
-                console.error(err);
-                alert('Erro ao salvar as configurações.');
+                console.error(err); alert('Erro ao salvar.');
             } finally {
-                btn.disabled = false;
-                btn.textContent = 'Salvar Alterações';
+                btn.disabled = false; btn.textContent = 'Salvar Alterações';
             }
         });
     }
 
     // ==============================================
-    // ABAS E EDITOR EMBUTIDO
+    // ABAS E EDITOR
     // ==============================================
     function configurarAbas() {
         const botoes = document.querySelectorAll('.aba-btn');
-        const conteudos = document.querySelectorAll('.aba-conteudo');
-
+        const main = $('atelie-main');
+        
         botoes.forEach(btn => {
             btn.addEventListener('click', () => {
                 botoes.forEach(b => b.classList.remove('ativa'));
-                conteudos.forEach(c => c.classList.remove('ativa'));
-
                 btn.classList.add('ativa');
+                
                 const alvo = btn.getAttribute('data-aba');
-                if (alvo === 'canal') $('aba-canal').classList.add('ativa');
-                if (alvo === 'redacao') $('aba-redacao').classList.add('ativa');
+                
+                // Limpa classes de estado
+                main.classList.remove('modo-redacao');
+                $('aba-canal').classList.remove('ativa');
+                $('aba-redacao').classList.remove('ativa');
+
+                if (alvo === 'canal') {
+                    $('aba-canal').classList.add('ativa');
+                } else if (alvo === 'redacao') {
+                    main.classList.add('modo-redacao'); // Ativa o layout de tela cheia
+                    $('aba-redacao').classList.add('ativa');
+                    // Reseta a tela de introdução
+                    $('redacao-intro').hidden = false;
+                    $('redacao-editor').hidden = true;
+                }
             });
         });
 
-        // Botão de iniciar a escrita
+        // Botão iniciar escrita
         $('btn-iniciar-escrita').addEventListener('click', () => {
             $('redacao-intro').hidden = true;
             $('redacao-editor').hidden = false;
         });
 
-        // Botão de cancelar
+        // Botão cancelar escrita
         $('btn-cancelar-escrita').addEventListener('click', () => {
             if (confirm('Tem certeza que deseja apagar o que escreveu?')) {
                 $('input-titulo').value = '';
                 $('input-conteudo').innerHTML = '<p>Comece a escrever sua história...</p>';
                 $('redacao-editor').hidden = true;
                 $('redacao-intro').hidden = false;
+                
+                // Volta para a aba principal
+                document.querySelector('[data-aba="canal"]').click();
             }
         });
     }
@@ -433,14 +410,31 @@
             }
         });
 
-        // Validação do placeholder
+        // Capa do editor
+        const capaEl = $('editor-capa');
+        const inputCapa = document.createElement('input');
+        inputCapa.type = 'file'; inputCapa.accept = 'image/*';
+        capaEl.addEventListener('click', () => inputCapa.click());
+        inputCapa.addEventListener('change', () => {
+            const file = inputCapa.files[0];
+            if (!file) return;
+            arquivoCapaEditor = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                capaEl.style.backgroundImage = `url('${e.target.result}')`;
+                capaEl.innerHTML = '';
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // Limpar placeholder
         editor.addEventListener('focus', () => {
             if (editor.textContent.trim() === 'Comece a escrever sua história...') {
                 editor.innerHTML = '';
             }
         }, { once: true });
 
-        // Publicar Post
+        // Publicar
         $('btn-publicar-atelie').addEventListener('click', async () => {
             const btn = $('btn-publicar-atelie');
             const titulo = $('input-titulo').value.trim();
@@ -452,14 +446,21 @@
                 return alert('Escreva algo antes de publicar!');
             }
 
-            btn.disabled = true;
-            btn.textContent = 'Publicando...';
+            btn.disabled = true; btn.textContent = 'Publicando...';
 
             try {
+                let capaUrl = null;
+                if (arquivoCapaEditor) {
+                    const path = usuarioLogado.id + '/capa_post_' + Date.now() + '.jpg';
+                    const up = await db.storage.from('avatars').upload(path, arquivoCapaEditor);
+                    if (!up.error) capaUrl = db.storage.from('avatars').getPublicUrl(path).data.publicUrl;
+                }
+
                 const { error } = await db.from('posts').insert([{
                     author_id: usuarioLogado.id,
                     title: titulo,
-                    content: htmlCru, // Idealmente usar um sanitizador no backend
+                    content: htmlCru,
+                    cover_url: capaUrl,
                     category: categoria
                 }]);
 
@@ -468,18 +469,20 @@
                 alert('Conteúdo publicado com sucesso no seu canal!');
                 $('input-titulo').value = '';
                 editor.innerHTML = '<p>Comece a escrever sua história...</p>';
+                capaEl.style.backgroundImage = '';
+                capaEl.innerHTML = '<span>Adicionar Capa</span>';
+                arquivoCapaEditor = null;
                 $('redacao-editor').hidden = true;
                 $('redacao-intro').hidden = false;
-
-                // Muda de volta para a aba do canal
+                
+                // Volta para o canal
                 document.querySelector('[data-aba="canal"]').click();
 
             } catch (err) {
                 console.error(err);
-                alert('Erro ao publicar. Tente novamente.');
+                alert('Erro ao publicar.');
             } finally {
-                btn.disabled = false;
-                btn.textContent = 'Publicar no Canal';
+                btn.disabled = false; btn.textContent = 'Publicar';
             }
         });
     }

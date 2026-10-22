@@ -13,17 +13,16 @@
     <link rel="stylesheet" href="assets/css/global.css">
     <link rel="stylesheet" href="assets/css/estante.css">
     <link rel="stylesheet" href="assets/css/atelie.css">
-    <link rel="stylesheet" href="assets/css/editor.css"> <!-- Reaproveitando estilos do editor -->
+    <!-- Reaproveitando os estilos do editor -->
+    <link rel="stylesheet" href="assets/css/editor.css">
 </head>
 <body class="mural-body">
 
-    <!-- SPRITES DE ÍCONES -->
     <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
         <symbol id="icone-olho-aberto" viewBox="0 0 16 16"><path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/><path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/></symbol>
         <symbol id="icone-olho-fechado" viewBox="0 0 16 16"><path d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7.028 7.028 0 0 0-2.79.588l.77.771A5.944 5.944 0 0 1 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.134 13.134 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755-.165.165-.337.328-.517.486l.708.709z"/><path d="M11.297 9.176a3.5 3.5 0 0 0-4.474-4.474l.823.823a2.5 2.5 0 0 1 2.829 2.829l.822.822zm-2.943 1.299.822.822a3.5 3.5 0 0 1-4.474-4.474l.823.823a2.5 2.5 0 0 0 2.829 2.829z"/><path d="M3.35 5.47c-.18.16-.353.322-.518.487A13.134 13.134 0 0 0 1.172 8l.195.288c.335.48.83 1.12 1.465 1.755C4.121 11.332 5.881 12.5 8 12.5c.716 0 1.39-.133 2.02-.36l.77.772A7.029 7.029 0 0 1 8 13.5C3 13.5 0 8 0 8s.939-1.721 2.641-3.238l.708.709zm10.296 8.884-12-12 .708-.708 12 12-.708.708z"/></symbol>
     </svg>
 
-    <!-- NAVBAR -->
     <header class="navbar">
         <div class="navbar-left">
             <button class="btn-hamburger" id="btn-hamburger" type="button" aria-label="Abrir sumário" aria-expanded="false" aria-controls="sidebar">&#9776;</button>
@@ -39,7 +38,6 @@
 
     <div class="gaveta-overlay" id="gaveta-overlay" aria-hidden="true"></div>
 
-    <!-- SIDEBAR ESQUERDA -->
     <aside class="sidebar" id="sidebar" aria-label="Sumário">
         <div class="sidebar-secao">
             <h2 class="sidebar-titulo">Sumário</h2>
@@ -102,9 +100,8 @@
         </div>
     </aside>
 
-    <!-- FICHA DO ALUNO -->
     <aside class="sidebar-direita" id="sidebar-perfil" aria-label="Ficha do Aluno">
-        <!-- ... (Mantido igual ao seu original) ... -->
+        <!-- Ficha do Aluno (mantida igual) -->
         <div class="ficha-header">
             <h2 class="ficha-titulo">Ficha do Aluno</h2>
             <button class="ficha-fechar" id="ficha-fechar" type="button" aria-label="Fechar ficha">&#10005;</button>
@@ -137,41 +134,39 @@
                 <span class="ficha-texto">Senha</span>
             </button>
             <form id="container-editar-senha" class="container-expansivel" hidden novalidate>
-                <!-- ... (campos de senha mantidos) ... -->
                 <label for="input-senha-atual">Senha Atual</label>
                 <div class="wrapper-olho-senha">
-                    <input type="password" id="input-senha-atual" placeholder="Senha atual" aria-label="Senha atual">
-                    <button type="button" class="btn-olho-senha" aria-pressed="false" data-target="input-senha-atual" aria-label="Mostrar senha atual">
-                        <svg class="icone-olho-aberto" aria-hidden="true"><use href="#icone-olho-aberto"/></svg>
-                        <svg class="icone-olho-fechado" aria-hidden="true"><use href="#icone-olho-fechado"/></svg>
+                    <input type="password" id="input-senha-atual" placeholder="Senha atual">
+                    <button type="button" class="btn-olho-senha" aria-pressed="false" data-target="input-senha-atual">
+                        <svg class="icone-olho-aberto"><use href="#icone-olho-aberto"/></svg>
+                        <svg class="icone-olho-fechado"><use href="#icone-olho-fechado"/></svg>
                     </button>
                 </div>
                 <label for="input-senha-nova">Nova Senha</label>
                 <div class="wrapper-olho-senha">
-                    <input type="password" id="input-senha-nova" placeholder="Nova senha" aria-label="Nova senha">
-                    <button type="button" class="btn-olho-senha" aria-pressed="false" data-target="input-senha-nova" aria-label="Mostrar nova senha">
-                        <svg class="icone-olho-aberto" aria-hidden="true"><use href="#icone-olho-aberto"/></svg>
-                        <svg class="icone-olho-fechado" aria-hidden="true"><use href="#icone-olho-fechado"/></svg>
+                    <input type="password" id="input-senha-nova" placeholder="Nova senha">
+                    <button type="button" class="btn-olho-senha" aria-pressed="false" data-target="input-senha-nova">
+                        <svg class="icone-olho-aberto"><use href="#icone-olho-aberto"/></svg>
+                        <svg class="icone-olho-fechado"><use href="#icone-olho-fechado"/></svg>
                     </button>
                 </div>
                 <button id="btn-confirmar-senha" class="btn-container" type="submit">Atualizar Senha</button>
             </form>
             <form id="container-criar-senha" class="container-expansivel" hidden novalidate>
-                <!-- ... (campos de criar senha mantidos) ... -->
                 <label for="input-nova-senha-criar">Criar Senha</label>
                 <div class="wrapper-olho-senha">
                     <input type="password" id="input-nova-senha-criar" placeholder="Nova senha">
-                    <button type="button" class="btn-olho-senha" aria-pressed="false" data-target="input-nova-senha-criar" aria-label="Mostrar nova senha">
-                        <svg class="icone-olho-aberto" aria-hidden="true"><use href="#icone-olho-aberto"/></svg>
-                        <svg class="icone-olho-fechado" aria-hidden="true"><use href="#icone-olho-fechado"/></svg>
+                    <button type="button" class="btn-olho-senha" aria-pressed="false" data-target="input-nova-senha-criar">
+                        <svg class="icone-olho-aberto"><use href="#icone-olho-aberto"/></svg>
+                        <svg class="icone-olho-fechado"><use href="#icone-olho-fechado"/></svg>
                     </button>
                 </div>
                 <label for="input-confirmar-senha-criar">Confirmar Senha</label>
                 <div class="wrapper-olho-senha">
                     <input type="password" id="input-confirmar-senha-criar" placeholder="Confirmar senha">
-                    <button type="button" class="btn-olho-senha" aria-pressed="false" data-target="input-confirmar-senha-criar" aria-label="Mostrar confirmacao">
-                        <svg class="icone-olho-aberto" aria-hidden="true"><use href="#icone-olho-aberto"/></svg>
-                        <svg class="icone-olho-fechado" aria-hidden="true"><use href="#icone-olho-fechado"/></svg>
+                    <button type="button" class="btn-olho-senha" aria-pressed="false" data-target="input-confirmar-senha-criar">
+                        <svg class="icone-olho-aberto"><use href="#icone-olho-aberto"/></svg>
+                        <svg class="icone-olho-fechado"><use href="#icone-olho-fechado"/></svg>
                     </button>
                 </div>
                 <button id="btn-confirmar-criar-senha" class="btn-container" type="submit">Criar Senha</button>
@@ -181,73 +176,76 @@
                 <span class="ficha-texto">Saiba mais</span>
             </button>
             <div id="container-saiba-mais" class="container-expansivel" hidden>
-                <!-- ... (links mantidos) ... -->
+                <a class="ficha-saiba-item" href="/?de=estante"><span class="ficha-saiba-num">I</span><span class="ficha-saiba-corpo"><strong>Conheça o Auloo</strong><small>Portfólio</small></span></a>
+                <a class="ficha-saiba-item" href="/termos.html?de=estante"><span class="ficha-saiba-num">II</span><span class="ficha-saiba-corpo"><strong>Termos</strong><small>Regras</small></span></a>
+                <a class="ficha-saiba-item" href="/privacidade.html?de=estante"><span class="ficha-saiba-num">III</span><span class="ficha-saiba-corpo"><strong>Privacidade</strong><small>Seus dados</small></span></a>
             </div>
         </nav>
     </aside>
 
     <input type="file" id="input-foto" accept="image/jpeg,image/png,image/gif,image/webp" hidden aria-label="Upload de foto de perfil">
 
-    <!-- ========================================================
-         CONTEÚDO PRINCIPAL DO ATELIÊ
-         ======================================================== -->
-    <main class="atelie-main" style="padding-top: 2rem; justify-content: flex-start;">
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="atelie-main" id="atelie-main">
         
+        <!-- ESTADO VAZIO -->
         <div id="atelie-vazio" class="atelie-vazio" hidden>
             <h2>Seu Ateliê está vazio.</h2>
             <p>Este é o seu espaço de criação. Abra o seu Ateliê para começar a escrever, criar quizzes e publicar no Mural.</p>
             <button id="btn-criar-atelie" class="btn-primario">Abrir Meu Ateliê</button>
         </div>
 
-        <!-- CARD DO ATELIÊ (Sempre visível no topo) -->
-        <div id="atelie-conteudo" class="atelie-conteudo" hidden style="margin-bottom: 2rem;">
-            <div class="atelie-capa-wrapper">
-                <img id="atelie-capa-img" class="atelie-capa-img" src="" alt="Capa do Ateliê">
-            </div>
-            
-            <div class="atelie-header">
-                <div class="atelie-avatar" id="atelie-avatar"></div>
-                <div class="atelie-info">
-                    <h1 class="atelie-nome" id="atelie-nome">Nome do Ateliê</h1>
-                    <span class="atelie-handle" id="atelie-handle">@handle</span>
-                    <p class="atelie-bio" id="atelie-bio">Bio do ateliê aqui.</p>
+        <!-- ABA: MEU CANAL (Card do ateliê e abas) -->
+        <div id="wrapper-canal" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+            <div id="atelie-conteudo" class="atelie-conteudo" hidden style="margin-bottom: 2rem;">
+                <div class="atelie-capa-wrapper">
+                    <img id="atelie-capa-img" class="atelie-capa-img" src="" alt="Capa do Ateliê">
                 </div>
-                <div class="atelie-acoes">
-                    <button class="btn-primario" id="btn-configurar-atelie">Configurar Ateliê</button>
+                <div class="atelie-header">
+                    <div class="atelie-avatar" id="atelie-avatar"></div>
+                    <div class="atelie-info">
+                        <h1 class="atelie-nome" id="atelie-nome">Nome do Ateliê</h1>
+                        <span class="atelie-handle" id="atelie-handle">@handle</span>
+                        <p class="atelie-bio" id="atelie-bio">Bio do ateliê aqui.</p>
+                    </div>
+                    <div class="atelie-acoes">
+                        <button class="btn-primario" id="btn-configurar-atelie">Configurar Ateliê</button>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- ABAS DE NAVEGAÇÃO -->
-        <nav class="atelie-abas" id="atelie-abas" hidden>
-            <button class="aba-btn ativa" data-aba="canal">Meu Canal</button>
-            <button class="aba-btn" data-aba="redacao">Redação</button>
-        </nav>
+            <nav class="atelie-abas" id="atelie-abas" hidden>
+                <button class="aba-btn ativa" data-aba="canal">Meu Canal</button>
+                <button class="aba-btn" data-aba="redacao">Redação</button>
+            </nav>
 
-        <!-- CONTEÚDO DAS ABAS -->
-        <div id="aba-conteudos-wrapper" style="width: 100%; max-width: 650px; position: relative;" hidden>
-            
-            <!-- ABA: MEU CANAL (Posts e Vídeos) -->
+            <!-- FEED DO CANAL -->
             <section id="aba-canal" class="aba-conteudo ativa">
                 <div style="text-align: center; padding: 3rem 1rem; color: var(--tinta-clara);">
                     <p style="font-family: var(--fonte-display); font-size: 1.4rem; font-style: italic;">O seu canal ainda não tem publicações.</p>
                 </div>
             </section>
+        </div>
 
-            <!-- ABA: REDAÇÃO (O Editor) -->
-            <section id="aba-redacao" class="aba-conteudo">
-                <!-- Tela Inicial da Redação (Ilustração) -->
-                <div id="redacao-intro" style="text-align: center; padding: 2rem 1rem;">
-                    <img src="assets/img/ilustracoes/Dictionary-bro.webp" alt="Dicionário aberto" style="max-width: 280px; margin: 0 auto 2rem; display: block; opacity: 0.9;">
-                    <h2 style="font-family: var(--fonte-titulo); font-style: italic; color: var(--vinho); font-size: 2rem; margin-bottom: 1rem;">A página em branco</h2>
-                    <p style="font-family: var(--fonte-display); font-size: 1.1rem; color: var(--tinta-suave); max-width: 400px; margin: 0 auto 2rem;">Um novo capítulo começa aqui. Dê vida às suas ideias, publique artigos ou compartilhe vídeos.</p>
-                    <button class="btn-primario" id="btn-iniciar-escrita" style="padding: 1rem 2.5rem; font-size: 0.8rem;">Começar a Escrever</button>
-                </div>
+        <!-- ABA: REDAÇÃO (O Editor Embutido) -->
+        <section id="aba-redacao" class="aba-conteudo" style="width: 100%;">
+            
+            <!-- Tela Inicial da Redação (Ilustração) -->
+            <div id="redacao-intro" style="text-align: center; padding: 2rem 1rem; display: flex; flex-direction: column; align-items: center;">
+                <img src="assets/img/ilustracoes/Dictionary-bro.webp" alt="Dicionário aberto" style="max-width: 280px; margin: 0 auto 2rem; display: block; opacity: 0.9;">
+                <h2 style="font-family: var(--fonte-titulo); font-style: italic; color: var(--vinho); font-size: 2rem; margin-bottom: 1rem;">A página em branco</h2>
+                <p style="font-family: var(--fonte-display); font-size: 1.1rem; color: var(--tinta-suave); max-width: 400px; margin: 0 auto 2rem;">Um novo capítulo começa aqui. Dê vida às suas ideias.</p>
+                <button class="btn-primario" id="btn-iniciar-escrita" style="padding: 1rem 2.5rem; font-size: 0.8rem;">Começar a Escrever</button>
+            </div>
 
-                <!-- O Editor (Fica escondido até clicar em Começar) -->
-                <div id="redacao-editor" hidden style="background: var(--papel-claro); padding: 2rem; border: 1px solid var(--dourado-fraco); border-radius: 8px; box-shadow: 0 10px 30px rgba(26,22,20,0.05);">
+            <!-- O Editor Real (Oculto até clicar em Começar) -->
+            <div id="redacao-editor" hidden style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+                
+                <!-- Barra de Ferramentas e Topo -->
+                <div class="editor-topo-wrapper" style="width: 100%; max-width: 800px; background: var(--papel-claro); border: 1px solid var(--papel-sombra); border-bottom: none; border-radius: 4px 4px 0 0; padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                    <button type="button" id="btn-cancelar-escrita" class="btn-voltar" style="background: none; border: none; cursor: pointer; font-family: var(--fonte-corpo); color: var(--tinta-suave); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">← Voltar</button>
                     
-                    <div class="editor-toolbar" style="position: relative; margin-bottom: 1.5rem; border-bottom: 1px solid var(--papel-sombra); padding-bottom: 1rem; background: transparent;">
+                    <div class="editor-toolbar" style="margin: 0;">
                         <button type="button" title="Negrito" data-cmd="bold"><b>B</b></button>
                         <button type="button" title="Itálico" data-cmd="italic"><i>I</i></button>
                         <button type="button" title="Sublinhado" data-cmd="underline"><u>U</u></button>
@@ -257,29 +255,35 @@
                         <div class="editor-divisor"></div>
                         <button type="button" title="Inserir Imagem" id="btn-inserir-img">🖼️</button>
                     </div>
+                    
+                    <button type="button" class="btn-primario" id="btn-publicar-atelie" style="padding: 0.5rem 1rem; font-size: 0.65rem;">Publicar</button>
+                </div>
 
-                    <select class="editor-categoria" id="input-categoria" style="width: auto; margin-bottom: 1rem;">
+                <!-- A Folha de Papel do Editor -->
+                <div class="editor-folha" style="margin-top: 0; border-top-left-radius: 0; border-top-right-radius: 0; width: 100%; max-width: 800px; box-shadow: 0 20px 50px rgba(26, 22, 20, 0.1);">
+                    
+                    <div class="editor-capa" id="editor-capa" title="Clique para adicionar uma capa">
+                        <span>Adicionar Capa</span>
+                    </div>
+
+                    <select class="editor-categoria" id="input-categoria">
                         <option value="Artigo">Artigo (Texto)</option>
                         <option value="Vídeo">Vídeo (Link)</option>
                     </select>
 
-                    <input type="text" class="editor-titulo" id="input-titulo" placeholder="Título do conteúdo..." maxlength="120" style="font-size: 2.2rem; margin-bottom: 1rem;">
+                    <input type="text" class="editor-titulo" id="input-titulo" placeholder="Título do artigo..." maxlength="120">
 
-                    <div class="editor-conteudo" id="input-conteudo" contenteditable="true" aria-label="Conteúdo do artigo" style="min-height: 250px;">
+                    <div class="editor-conteudo" id="input-conteudo" contenteditable="true">
                         <p>Comece a escrever sua história...</p>
                     </div>
-                    
-                    <div style="display: flex; gap: 1rem; margin-top: 2rem; justify-content: flex-end; border-top: 1px solid var(--papel-sombra); padding-top: 1.5rem;">
-                        <button type="button" id="btn-cancelar-escrita" style="background: transparent; border: none; color: var(--tinta-suave); font-family: var(--fonte-corpo); font-size: 0.75rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;">Cancelar</button>
-                        <button type="button" class="btn-primario" id="btn-publicar-atelie">Publicar no Canal</button>
-                    </div>
                 </div>
-            </section>
 
-        </div>
+            </div>
+        </section>
+
     </main>
 
-    <!-- MODAL DE CRIAÇÃO DE ATELIÊ -->
+    <!-- MODAL DE CRIAÇÃO -->
     <div id="modal-criar-atelie" class="modal-overlay" hidden>
         <div class="modal-conteudo">
             <header class="modal-header">
@@ -338,7 +342,6 @@
 
     <input type="file" id="input-img" accept="image/*" hidden>
 
-    <!-- SCRIPTS OBRIGATÓRIOS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script src="assets/js/config.js"></script>
     <script src="assets/js/auth.js"></script>
