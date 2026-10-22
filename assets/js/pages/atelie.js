@@ -340,8 +340,9 @@
                     main.classList.add('modo-redacao');
                     document.body.classList.add('atelie-modo-redacao');
                     $('aba-redacao').classList.add('ativa');
-                    $('redacao-intro').hidden = false;
-                    $('redacao-editor').hidden = true;
+                    // abre o editor direto, sem a tela de introdução
+                    $('redacao-intro').hidden = true;
+                    $('redacao-editor').hidden = false;
                 }
             });
         });
@@ -564,8 +565,6 @@
             arquivoCapaEditor = null;
             rangeSalvo = null;
             atualizarVazio();
-            $('redacao-editor').hidden = true;
-            $('redacao-intro').hidden = false;
         }
         window.__resetarEditorAtelie = resetarEditor;
 

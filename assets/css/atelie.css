@@ -322,7 +322,7 @@ body.atelie-modo-redacao #atelie-main { margin-right: 0; }
 
 .redacao-editor .editor-capa {
     width: 100%; max-width: none; max-height: none;
-    aspect-ratio: 21 / 8;
+    aspect-ratio: 16 / 9;
     margin: 0 0 2.25rem;
     flex-direction: column; gap: 0.4rem;
     border: none; border-bottom: 1px solid var(--papel-sombra);
@@ -374,6 +374,14 @@ body.atelie-modo-redacao #atelie-main { margin-right: 0; }
 .atelie-gaveta-fechar { width: 34px; height: 34px; font-size: 1rem; color: var(--tinta-suave); background: transparent; border: none; border-radius: 50%; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
 .atelie-gaveta-fechar svg { width: 16px; height: 16px; }
 .atelie-gaveta-corpo { padding: 1.5rem 1.75rem 2.5rem; display: flex; flex-direction: column; gap: 1.25rem; }
+#form-config-atelie { display: flex; flex-direction: column; gap: 1.5rem; }
+.atelie-gaveta-corpo .campo { display: flex; flex-direction: column; gap: 0.5rem; }
+.atelie-gaveta-corpo .campo label { margin-bottom: 0 !important; }
+.atelie-gaveta-corpo .campo textarea { resize: vertical; min-height: 96px; }
+.campo-upload { display: flex; flex-direction: column; gap: 0.75rem; }
+.campo-upload label, .campo-upload .capa-preview-container { margin-bottom: 0 !important; }
+.campo-upload .btn-container { margin-top: 0 !important; }
+#form-config-atelie #btn-salvar-config { margin-top: 0.25rem !important; }
 .atelie-gaveta-corpo .campo label { display: block; font-family: var(--fonte-corpo); font-size: 0.68rem; font-weight: 600; text-transform: uppercase; color: var(--tinta-suave); margin-bottom: 0.5rem; }
 .atelie-gaveta-corpo .campo input, .atelie-gaveta-corpo .campo textarea { width: 100%; padding: 0.75rem 0.9rem; background: #fff; border: 1px solid rgba(184, 137, 74, 0.35); border-radius: 3px; font-family: var(--fonte-display); font-size: 1rem; color: var(--tinta); outline: none; }
 .atelie-gaveta-corpo .campo input:focus, .atelie-gaveta-corpo .campo textarea:focus { border-color: var(--vinho); box-shadow: 0 0 0 3px rgba(92, 26, 26, 0.08); }
