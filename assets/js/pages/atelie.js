@@ -1,6 +1,24 @@
+/* ==============================================================
+   ATELIE.JS — v55
+   --------------------------------------------------------------
+   Refatorações estruturais:
+   - Enquadrador reescrito com Pointer Events puros + touch-action
+     (funciona em mobile sem conflito com o scroll da gaveta).
+   - Título da gaveta agora rola junto (feito no HTML/CSS).
+   - URL.createObjectURL da capa é revogado (capaBlobUrl).
+   - aguardarSupabase() com feedback visual de erro.
+   - carregarCanal() usa DOMParser (sem executar HTML do banco).
+   - avatarEditado compara com estado original persistido no banco.
+   - Modal de confirmação próprio (substitui confirm()).
+   - execComando() centraliza execCommand.
+   - setModoRedacao() sincroniza body + main.
+   ============================================================== */
 (function () {
     'use strict';
 
+    // ============================================================
+    // ESTADO GLOBAL
+    // ============================================================
     const $ = (id) => document.getElementById(id);
     let db = null;
     let usuarioLogado = null;
@@ -9,7 +27,8 @@
     let fileAvatar = null;
     let fileCapa = null;
     let arquivoCapaEditor = null;
-    let avatarImageUrl = null;
+    let avatarBlobUrl = null;
+    let capaBlobUrl = null;
     let avatarEditado = false;
 
     let avatarFr = null;
@@ -17,50 +36,29 @@
 
     const MAX_MB = 5;
 
-    // A gaveta é "permanente" (sempre visível ao lado) em telas >= 1367px,
-    // e também entre 1025 e 1366px enquanto você está na aba Redação.
-    // Nos demais casos ela é uma sobreposição que abre e fecha.
+    // ============================================================
+    // UTILITÁRIOS
+    // ============================================================
     const gavetaPermanente = () =>
         window.matchMedia('(min-width: 1367px)').matches ||
         (window.matchMedia('(min-width: 1025px)').matches &&
             document.body.classList.contains('atelie-modo-redacao'));
 
-    // --- CONTROLE DE SCROLL ---
-    let scrollYGuardado = 0;
-
-    function abrirGaveta() {
-        if (gavetaPermanente()) return;
-        scrollYGuardado = window.scrollY || window.pageYOffset || 0;
-        document.documentElement.classList.add('atelie-travado');
-        $('gaveta-config').classList.add('ativa');
-        $('overlay-config').classList.add('ativa');
-        document.body.classList.add('atelie-gaveta-aberta');
-    }
-
-    function fecharGaveta(forcar) {
-        if (forcar !== true && gavetaPermanente()) return;
-        const estavaTravado = document.documentElement.classList.contains('atelie-travado');
-        $('gaveta-config').classList.remove('ativa');
-        $('overlay-config').classList.remove('ativa');
-        document.body.classList.remove('atelie-gaveta-aberta');
-        document.documentElement.classList.remove('atelie-travado');
-        // Só restaura a posição se a gaveta realmente estava travando o scroll.
-        // (antes isso também rodava no "resize" e jogava a página para o topo)
-        if (estavaTravado && Math.abs((window.scrollY || 0) - scrollYGuardado) > 1) {
-            window.scrollTo(0, scrollYGuardado);
-        }
-    }
-
-    // Se a página voltar do cache do navegador (botão "voltar") com a trava ligada, destrava
-    window.addEventListener('pageshow', () => fecharGaveta(true));
-
-    // --- UTILITÁRIOS ---
-    async function aguardarSupabase() {
-        for (let i = 0; i < 30; i++) {
-            if (window.supabaseClient) return window.supabaseClient;
-            await new Promise(r => setTimeout(r, 200));
-        }
-        return null;
+    function aguardarSupabase() {
+        return new Promise((resolve) => {
+            let tentativas = 0;
+            const intervalo = setInterval(() => {
+                if (window.supabaseClient) {
+                    clearInterval(intervalo);
+                    resolve(window.supabaseClient);
+                    return;
+                }
+                if (++tentativas >= 30) {
+                    clearInterval(intervalo);
+                    resolve(null);
+                }
+            }, 200);
+        });
     }
 
     function iniciais(nome) {
@@ -120,12 +118,62 @@
         } catch (_) { return ''; }
     }
 
-    // --- ENQUADRADOR (avatar/capa) ---
+    // Modal de confirmação (substitui confirm())
+    function confirmar(titulo, mensagem) {
+        return new Promise((resolve) => {
+            const modal = $('modal-confirmar');
+            $('modal-confirmar-titulo').textContent = titulo;
+            $('modal-confirmar-mensagem').textContent = mensagem;
+            modal.hidden = false;
+
+            const fechar = (resultado) => {
+                modal.hidden = true;
+                $('modal-confirmar-ok').removeEventListener('click', onOk);
+                $('modal-confirmar-cancelar').removeEventListener('click', onCancelar);
+                modal.removeEventListener('click', onOverlay);
+                document.removeEventListener('keydown', onTecla);
+                resolve(resultado);
+            };
+            const onOk = () => fechar(true);
+            const onCancelar = () => fechar(false);
+            const onOverlay = (e) => { if (e.target === modal) fechar(false); };
+            const onTecla = (e) => {
+                if (e.key === 'Escape') fechar(false);
+                else if (e.key === 'Enter') fechar(true);
+            };
+
+            $('modal-confirmar-ok').addEventListener('click', onOk);
+            $('modal-confirmar-cancelar').addEventListener('click', onCancelar);
+            modal.addEventListener('click', onOverlay);
+            document.addEventListener('keydown', onTecla);
+            $('modal-confirmar-ok').focus();
+        });
+    }
+
+    // Helper para execCommand (futuro ponto único de migração)
+    function execComando(cmd, value) {
+        try {
+            document.execCommand(cmd, false, value === undefined ? null : value);
+        } catch (_) { /* silent */ }
+    }
+
+    // Sincroniza body + main no modo redação
+    function setModoRedacao(ativo) {
+        const main = $('atelie-main');
+        if (!main) return;
+        main.classList.toggle('modo-redacao', ativo);
+        document.body.classList.toggle('atelie-modo-redacao', ativo);
+    }
+
+    // ============================================================
+    // ENQUADRADOR (avatar/capa) — Pointer Events puros
+    // ============================================================
     function criarEnquadrador({ container, camada, slider, linhaZoom, aoImagem, aoMudar }) {
         const est = { x: 50, y: 50, zoom: 1, nw: 0, nh: 0, pronto: false };
         const ponteiros = new Map();
         let ix = 0, iy = 0, x0 = 50, y0 = 50, dist0 = 0, zoom0 = 1;
         let arrastando = false;
+        let capturando = false;
         const limitar = (v, a, b) => Math.max(a, Math.min(b, v));
 
         function aplicar() {
@@ -156,39 +204,64 @@
             return Math.hypot(a.x - b.x, a.y - b.y);
         };
 
+        // --- pointerdown: registra ponteiro e captura ---
         container.addEventListener('pointerdown', (e) => {
             if (!est.pronto) return;
             if (e.pointerType === 'mouse' && e.button !== 0) return;
+            // impede gesto do navegador (scroll/zoom) enquanto interage
+            e.preventDefault();
             ponteiros.set(e.pointerId, { x: e.clientX, y: e.clientY });
-            container.setPointerCapture(e.pointerId);
+            try { container.setPointerCapture(e.pointerId); } catch (_) {}
+            capturando = true;
             if (ponteiros.size === 1) {
-                arrastando = true; ix = e.clientX; iy = e.clientY; x0 = est.x; y0 = est.y;
+                arrastando = true;
+                ix = e.clientX; iy = e.clientY;
+                x0 = est.x; y0 = est.y;
             } else if (ponteiros.size === 2) {
-                arrastando = false; dist0 = distancia(); zoom0 = est.zoom;
+                arrastando = false;
+                dist0 = distancia();
+                zoom0 = est.zoom;
             }
-        });
+        }, { passive: false });
+
         container.addEventListener('pointermove', (e) => {
             if (!ponteiros.has(e.pointerId)) return;
             ponteiros.set(e.pointerId, { x: e.clientX, y: e.clientY });
             e.preventDefault();
-            if (ponteiros.size === 2 && dist0 > 0) definirZoom(zoom0 * (distancia() / dist0));
-            else if (arrastando) mover(e.clientX - ix, e.clientY - iy);
-        });
+            if (ponteiros.size === 2 && dist0 > 0) {
+                definirZoom(zoom0 * (distancia() / dist0));
+            } else if (arrastando) {
+                mover(e.clientX - ix, e.clientY - iy);
+            }
+        }, { passive: false });
+
         const soltar = (e) => {
-            ponteiros.delete(e.pointerId); dist0 = 0;
+            ponteiros.delete(e.pointerId);
+            dist0 = 0;
             if (ponteiros.size === 1) {
                 const [p] = [...ponteiros.values()];
-                arrastando = true; ix = p.x; iy = p.y; x0 = est.x; y0 = est.y;
-            } else arrastando = false;
+                arrastando = true;
+                ix = p.x; iy = p.y;
+                x0 = est.x; y0 = est.y;
+            } else {
+                arrastando = false;
+                if (ponteiros.size === 0) capturando = false;
+            }
         };
         container.addEventListener('pointerup', soltar);
         container.addEventListener('pointercancel', soltar);
-        // Zoom pela roda só com Ctrl/⌘ — sem isso a roda continua rolando a gaveta
+        container.addEventListener('pointerleave', (e) => {
+            // Só solta se não houver captura ativa (segurança em desktop)
+            if (!capturando && ponteiros.has(e.pointerId)) soltar(e);
+        });
+
+        // Zoom pela roda só com Ctrl/⌘
         container.addEventListener('wheel', (e) => {
             if (!est.pronto || !(e.ctrlKey || e.metaKey)) return;
             e.preventDefault();
             definirZoom(est.zoom + (e.deltaY < 0 ? 0.1 : -0.1));
         }, { passive: false });
+
         if (slider) slider.addEventListener('input', () => definirZoom(parseFloat(slider.value)));
 
         return {
@@ -202,11 +275,17 @@
                 if (linhaZoom) linhaZoom.hidden = false;
                 if (aoImagem) aoImagem(true);
                 const im = new Image();
-                im.onload = () => { est.nw = im.naturalWidth; est.nh = im.naturalHeight; est.pronto = true; };
+                im.onload = () => {
+                    est.nw = im.naturalWidth;
+                    est.nh = im.naturalHeight;
+                    est.pronto = true;
+                };
+                im.onerror = () => { est.pronto = false; };
                 im.src = url;
             },
             limpar() {
-                est.pronto = false; est.x = 50; est.y = 50; est.zoom = 1;
+                est.pronto = false;
+                est.x = 50; est.y = 50; est.zoom = 1;
                 camada.style.backgroundImage = '';
                 aplicar();
                 if (linhaZoom) linhaZoom.hidden = true;
@@ -217,12 +296,28 @@
         };
     }
 
-    // --- INÍCIO ---
+    // ============================================================
+    // INÍCIO
+    // ============================================================
     async function iniciar() {
         db = await aguardarSupabase();
-        if (!db) return console.error('Supabase não carregado.');
-        const { data: { session } } = await db.auth.getSession();
-        if (!session) return (window.location.href = 'login.html');
+        if (!db) {
+            mostrarErroConexao();
+            return;
+        }
+        let session;
+        try {
+            const res = await db.auth.getSession();
+            session = res.data && res.data.session;
+        } catch (err) {
+            console.error('Erro ao obter sessão:', err);
+            mostrarErroConexao();
+            return;
+        }
+        if (!session) {
+            window.location.href = 'login.html';
+            return;
+        }
         usuarioLogado = session.user;
 
         configurarGavetaConfig();
@@ -233,9 +328,31 @@
         configurarEditorEmbutido();
     }
 
+    function mostrarErroConexao() {
+        const div = document.createElement('div');
+        div.className = 'atelie-erro-conexao';
+        div.innerHTML = `
+            <h2>Não foi possível conectar</h2>
+            <p>Verifique sua conexão com a internet e recarregue a página.</p>
+            <button type="button" class="btn-primario" id="btn-recarregar-erro">Recarregar</button>
+        `;
+        document.body.appendChild(div);
+        const btn = $('btn-recarregar-erro');
+        if (btn) btn.addEventListener('click', () => window.location.reload());
+    }
+
     async function verificarAtelie() {
-        const { data: atelie, error } = await db.from('ateliers').select('*').eq('owner_id', usuarioLogado.id).maybeSingle();
-        if (error) return console.error('Erro ao buscar ateliê:', error);
+        const { data: atelie, error } = await db
+            .from('ateliers')
+            .select('*')
+            .eq('owner_id', usuarioLogado.id)
+            .maybeSingle();
+
+        if (error) {
+            console.error('Erro ao buscar ateliê:', error);
+            avisar('Erro ao carregar o ateliê.', 'erro');
+            return;
+        }
 
         if (!atelie) {
             $('atelie-vazio').hidden = false;
@@ -253,7 +370,9 @@
         }
     }
 
-    // --- CANAL ---
+    // ============================================================
+    // CANAL
+    // ============================================================
     async function carregarCanal() {
         const lista = $('canal-lista'), vazio = $('canal-vazio');
         if (!lista) return;
@@ -266,7 +385,10 @@
             .order('created_at', { ascending: false });
 
         lista.innerHTML = '';
-        if (error || !posts || posts.length === 0) { vazio.hidden = false; return; }
+        if (error || !posts || posts.length === 0) {
+            vazio.hidden = false;
+            return;
+        }
 
         posts.forEach(post => {
             const card = document.createElement('article');
@@ -275,10 +397,14 @@
             const capa = post.cover_url
                 ? '<div class="canal-post-capa"><img src="' + escaparHtml(post.cover_url) + '" loading="lazy" referrerpolicy="no-referrer"></div>'
                 : '';
-            const div = document.createElement('div');
-            div.innerHTML = post.content || '';
-            div.querySelectorAll('figure, img, figcaption, style, script').forEach(el => el.remove());
-            const texto = (div.textContent || '').replace(/\s+/g, ' ').trim();
+
+            // DOMParser: extrai texto SEM executar HTML/onerror do banco
+            let texto = '';
+            try {
+                const doc = new DOMParser().parseFromString(post.content || '', 'text/html');
+                doc.querySelectorAll('figure, img, figcaption, style, script, iframe, object, embed').forEach(el => el.remove());
+                texto = (doc.body.textContent || '').replace(/\s+/g, ' ').trim();
+            } catch (_) { texto = ''; }
             const trecho = texto.length > 220 ? texto.slice(0, 220).trim() + '…' : texto;
 
             card.innerHTML = capa +
@@ -304,17 +430,22 @@
         });
 
         lista.querySelectorAll('[data-excluir]').forEach(btn => btn.addEventListener('click', async () => {
-            if (!confirm('Excluir esta publicação?')) return;
+            const ok = await confirmar('Excluir publicação', 'Essa ação não pode ser desfeita. Deseja continuar?');
+            if (!ok) return;
             const { error } = await db.from('posts').delete().eq('id', btn.dataset.excluir);
             if (error) return avisar('Não foi possível excluir.', 'erro');
             avisar('Publicação excluída.');
             carregarCanal();
         }));
+
         lista.querySelectorAll('[data-ler]').forEach(btn => btn.addEventListener('click', () => {
             window.location.href = 'post.html?id=' + encodeURIComponent(btn.dataset.ler);
         }));
     }
 
+    // ============================================================
+    // RENDERIZAÇÃO DO ATELIÊ
+    // ============================================================
     function renderizarAtelie(atelie) {
         $('atelie-nome').textContent = atelie.name;
         $('atelie-handle').textContent = '@' + atelie.handle;
@@ -360,25 +491,33 @@
         $('input-config-nome').value = atelie.name || '';
         $('input-config-bio').value = atelie.description || '';
 
+        // Capa
         if (capaFr) {
             if (atelie.cover_url) {
                 const [x, y] = parsePos(atelie.cover_position);
                 capaFr.carregar(atelie.cover_url, { x, y, zoom: parseFloat(atelie.cover_zoom) || 1 });
             } else capaFr.limpar();
         }
+        // Avatar
         if (avatarFr) {
             if (atelie.avatar_url) {
-                avatarImageUrl = atelie.avatar_url;
-                avatarFr.carregar(atelie.avatar_url);
+                avatarBlobUrl = null;
+                avatarFr.carregar(atelie.avatar_url, {
+                    x: parsePos(atelie.avatar_position)[0],
+                    y: parsePos(atelie.avatar_position)[1],
+                    zoom: parseFloat(atelie.avatar_zoom) || 1
+                });
             } else {
-                avatarImageUrl = null;
+                avatarBlobUrl = null;
                 avatarFr.limpar();
             }
         }
         avatarEditado = false;
     }
 
-    // --- CRIAÇÃO ---
+    // ============================================================
+    // CRIAÇÃO DO ATELIÊ
+    // ============================================================
     function configurarCriacao() {
         const modal = $('modal-criar-atelie');
         if (!modal) return;
@@ -390,14 +529,21 @@
             const btn = $('btn-salvar-atelie');
             const nome = $('input-nome-atelie').value.trim();
             const bio = $('input-bio-atelie').value.trim();
-            if (!nome) return alert('O Nome do Ateliê é obrigatório.');
-            btn.disabled = true; btn.textContent = 'Abrindo...';
+            if (!nome) { avisar('O Nome do Ateliê é obrigatório.', 'erro'); return; }
+            btn.disabled = true;
+            btn.textContent = 'Abrindo...';
             try {
                 const { data: handleGerado, error: errHandle } = await db.rpc('gerar_handle_unico');
                 if (errHandle) throw errHandle;
                 const { data, error } = await db.from('ateliers').insert([{
-                    owner_id: usuarioLogado.id, name: nome, handle: handleGerado,
-                    description: bio, cover_position: '50% 50%', cover_zoom: 1
+                    owner_id: usuarioLogado.id,
+                    name: nome,
+                    handle: handleGerado,
+                    description: bio,
+                    cover_position: '50% 50%',
+                    cover_zoom: 1,
+                    avatar_position: '50% 50%',
+                    avatar_zoom: 1
                 }]).select().single();
                 if (error) throw error;
                 modal.hidden = true;
@@ -410,14 +556,18 @@
                 await carregarCanal();
             } catch (err) {
                 console.error(err);
-                alert('Erro ao abrir o Ateliê.');
-                btn.disabled = false; btn.textContent = 'Criar Ateliê';
+                avisar('Erro ao abrir o Ateliê.', 'erro');
+                btn.disabled = false;
+                btn.textContent = 'Criar Ateliê';
             }
         });
     }
 
-    // --- GAVETA DE CONFIGURAÇÃO ---
+    // ============================================================
+    // GAVETA DE CONFIGURAÇÃO
+    // ============================================================
     function configurarGavetaConfig() {
+        // --- Enquadrador do avatar ---
         avatarFr = criarEnquadrador({
             container: $('avatar-preview-container'),
             camada: $('avatar-preview-arrastavel'),
@@ -426,10 +576,15 @@
             aoImagem: (tem) => {
                 const cam = $('avatar-preview-arrastavel');
                 cam.classList.toggle('tem-imagem', tem);
-                if (tem) { const svg = cam.querySelector('svg'); if (svg) svg.remove(); }
+                if (tem) {
+                    const svg = cam.querySelector('svg');
+                    if (svg) svg.remove();
+                }
             },
             aoMudar: () => { avatarEditado = true; }
         });
+
+        // --- Enquadrador da capa ---
         capaFr = criarEnquadrador({
             container: $('capa-preview-container'),
             camada: $('capa-preview-arrastavel'),
@@ -441,6 +596,7 @@
             }
         });
 
+        // --- Controles de abertura/fechamento ---
         $('btn-configurar-atelie').addEventListener('click', () => abrirGaveta());
         const btnOpcoesMobile = $('btn-opcoes-mobile');
         if (btnOpcoesMobile) btnOpcoesMobile.addEventListener('click', () => abrirGaveta());
@@ -449,29 +605,35 @@
         $('overlay-config').addEventListener('click', () => fecharGaveta());
         window.addEventListener('resize', () => { if (gavetaPermanente()) fecharGaveta(true); });
 
+        // --- Upload de avatar ---
         const inputAvatar = $('input-config-avatar');
         $('btn-upload-avatar').addEventListener('click', () => inputAvatar.click());
         inputAvatar.addEventListener('change', () => {
             const file = inputAvatar.files[0];
             inputAvatar.value = '';
             if (!validarImagem(file)) return;
-            if (fileAvatar && avatarImageUrl && avatarImageUrl.indexOf('blob:') === 0) URL.revokeObjectURL(avatarImageUrl);
+            // Revoga URL antiga se existir
+            if (avatarBlobUrl) { URL.revokeObjectURL(avatarBlobUrl); avatarBlobUrl = null; }
             fileAvatar = file;
-            avatarImageUrl = URL.createObjectURL(file);
-            avatarFr.carregar(avatarImageUrl);
+            avatarBlobUrl = URL.createObjectURL(file);
+            avatarFr.carregar(avatarBlobUrl);
             avatarEditado = true;
         });
 
+        // --- Upload de capa (agora revoga URL antiga) ---
         const inputCapa = $('input-config-capa');
         $('btn-upload-capa').addEventListener('click', () => inputCapa.click());
         inputCapa.addEventListener('change', () => {
             const file = inputCapa.files[0];
             inputCapa.value = '';
             if (!validarImagem(file)) return;
+            if (capaBlobUrl) { URL.revokeObjectURL(capaBlobUrl); capaBlobUrl = null; }
             fileCapa = file;
-            capaFr.carregar(URL.createObjectURL(file));
+            capaBlobUrl = URL.createObjectURL(file);
+            capaFr.carregar(capaBlobUrl);
         });
 
+        // --- Capa do artigo (redação) ---
         const capaArtigoPreview = $('capa-artigo-preview');
         const capaArtigoArrastavel = $('capa-artigo-arrastavel');
         const inputCapaArtigo = $('input-capa-artigo');
@@ -494,25 +656,26 @@
             capaArtigoPreview.hidden = true;
         });
 
-        $('btn-descartar-rascunho').addEventListener('click', () => {
-            if (confirm('Tem certeza que deseja descartar este rascunho?')) {
+        // --- Descartar rascunho ---
+        $('btn-descartar-rascunho').addEventListener('click', async () => {
+            const ok = await confirmar('Descartar rascunho', 'Tem certeza que deseja descartar este rascunho?');
+            if (ok) {
                 if (window.__resetarEditorAtelie) window.__resetarEditorAtelie();
                 document.querySelector('[data-aba="canal"]').click();
                 fecharGaveta();
             }
         });
 
+        // --- Gera avatar recortado via canvas ---
         async function gerarAvatarRecortado() {
-            const src = fileAvatar ? URL.createObjectURL(fileAvatar) : avatarImageUrl;
+            const src = fileAvatar ? avatarBlobUrl : null;
             if (!src) return null;
             const img = await new Promise((ok, falha) => {
                 const im = new Image();
-                if (!fileAvatar) im.crossOrigin = 'anonymous';
                 im.onload = () => ok(im);
                 im.onerror = falha;
                 im.src = src;
             });
-            if (fileAvatar) URL.revokeObjectURL(src);
 
             const est = avatarFr.estado();
             const cs = $('avatar-preview-container').clientWidth || 88;
@@ -531,6 +694,7 @@
             return new Promise((ok) => canvas.toBlob((b) => ok(b), 'image/jpeg', 0.92));
         }
 
+        // --- Submit do form de configuração ---
         $('form-config-atelie').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = $('btn-salvar-config');
@@ -540,33 +704,49 @@
             let newAvatarUrl = atelieAtual.avatar_url;
             let newCoverUrl = atelieAtual.cover_url;
             try {
+                // Avatar
                 if (avatarEditado && avatarFr.temImagem()) {
                     let blob = null;
                     try { blob = await gerarAvatarRecortado(); } catch (_) { blob = null; }
                     const corpo = blob || fileAvatar;
                     if (corpo) {
                         const path = usuarioLogado.id + '/atelie-avatar-' + Date.now() + '.jpg';
-                        const up = await db.storage.from('avatars').upload(path, corpo, { contentType: blob ? 'image/jpeg' : corpo.type });
+                        const up = await db.storage.from('avatars').upload(path, corpo, {
+                            contentType: blob ? 'image/jpeg' : corpo.type
+                        });
                         if (up.error) throw up.error;
                         newAvatarUrl = db.storage.from('avatars').getPublicUrl(path).data.publicUrl;
                     }
                 }
+                // Capa
                 if (fileCapa) {
                     const path = usuarioLogado.id + '/atelie-capa-' + Date.now() + '.jpg';
                     const up = await db.storage.from('avatars').upload(path, fileCapa, { contentType: fileCapa.type });
                     if (up.error) throw up.error;
                     newCoverUrl = db.storage.from('avatars').getPublicUrl(path).data.publicUrl;
                 }
+
                 const c = capaFr.estado();
+                const a = avatarFr.estado();
                 const { data, error } = await db.from('ateliers').update({
-                    name: nome, description: bio,
-                    avatar_url: newAvatarUrl, cover_url: newCoverUrl,
+                    name: nome,
+                    description: bio,
+                    avatar_url: newAvatarUrl,
+                    cover_url: newCoverUrl,
                     cover_position: c.x.toFixed(1) + '% ' + c.y.toFixed(1) + '%',
-                    cover_zoom: Number(c.zoom.toFixed(2))
+                    cover_zoom: Number(c.zoom.toFixed(2)),
+                    avatar_position: a.x.toFixed(1) + '% ' + a.y.toFixed(1) + '%',
+                    avatar_zoom: Number(a.zoom.toFixed(2))
                 }).eq('id', atelieAtual.id).select().single();
                 if (error) throw error;
+
                 atelieAtual = data;
-                fileAvatar = null; fileCapa = null;
+                fileAvatar = null;
+                fileCapa = null;
+                // Revoga blob URLs antigas — já foram enviadas
+                if (avatarBlobUrl) { URL.revokeObjectURL(avatarBlobUrl); avatarBlobUrl = null; }
+                if (capaBlobUrl) { URL.revokeObjectURL(capaBlobUrl); capaBlobUrl = null; }
+
                 renderizarAtelie(data);
                 preencherPainel(data);
                 fecharGaveta();
@@ -580,7 +760,37 @@
         });
     }
 
-    // --- DROPDOWN ---
+    // ============================================================
+    // ABRIR / FECHAR GAVETA
+    // ============================================================
+    let scrollYGuardado = 0;
+
+    function abrirGaveta() {
+        if (gavetaPermanente()) return;
+        scrollYGuardado = window.scrollY || window.pageYOffset || 0;
+        document.documentElement.classList.add('atelie-travado');
+        $('gaveta-config').classList.add('ativa');
+        $('overlay-config').classList.add('ativa');
+        document.body.classList.add('atelie-gaveta-aberta');
+    }
+
+    function fecharGaveta(forcar) {
+        if (forcar !== true && gavetaPermanente()) return;
+        const estavaTravado = document.documentElement.classList.contains('atelie-travado');
+        $('gaveta-config').classList.remove('ativa');
+        $('overlay-config').classList.remove('ativa');
+        document.body.classList.remove('atelie-gaveta-aberta');
+        document.documentElement.classList.remove('atelie-travado');
+        if (estavaTravado && Math.abs((window.scrollY || 0) - scrollYGuardado) > 1) {
+            window.scrollTo(0, scrollYGuardado);
+        }
+    }
+
+    window.addEventListener('pageshow', () => fecharGaveta(true));
+
+    // ============================================================
+    // DROPDOWN
+    // ============================================================
     function configurarDropdown() {
         const raiz = $('dropdown-categoria');
         if (!raiz) return;
@@ -611,7 +821,10 @@
         }
         gatilho.addEventListener('click', () => raiz.classList.contains('aberto') ? fechar() : abrir());
         gatilho.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); abrir(); }
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                abrir();
+            }
         });
         itens.forEach((li, idx) => {
             li.addEventListener('click', () => escolher(li));
@@ -625,13 +838,16 @@
                 else if (e.key === 'Tab') fechar();
             });
         });
-        document.addEventListener('pointerdown', (e) => { if (!raiz.contains(e.target)) fechar(); });
+        document.addEventListener('pointerdown', (e) => {
+            if (!raiz.contains(e.target)) fechar();
+        });
     }
 
-    // --- ABAS ---
+    // ============================================================
+    // ABAS
+    // ============================================================
     function configurarAbas() {
         const botoes = document.querySelectorAll('.aba-btn');
-        const main = $('atelie-main');
         const painelCanal = $('config-canal');
         const painelRedacao = $('config-redacao');
 
@@ -643,8 +859,7 @@
                 btn.classList.add('ativa');
                 const alvo = btn.getAttribute('data-aba');
 
-                main.classList.remove('modo-redacao');
-                document.body.classList.remove('atelie-modo-redacao');
+                setModoRedacao(false);
                 $('aba-canal').classList.remove('ativa');
                 $('aba-redacao').classList.remove('ativa');
                 painelCanal.classList.remove('ativo');
@@ -658,8 +873,7 @@
                     painelCanal.classList.add('ativo');
                     carregarCanal();
                 } else if (alvo === 'redacao') {
-                    main.classList.add('modo-redacao');
-                    document.body.classList.add('atelie-modo-redacao');
+                    setModoRedacao(true);
                     $('aba-redacao').classList.add('ativa');
                     painelRedacao.hidden = false;
                     painelRedacao.classList.add('ativo');
@@ -675,17 +889,27 @@
             $('input-titulo').focus();
         });
 
-        $('btn-cancelar-escrita').addEventListener('click', () => {
+        $('btn-cancelar-escrita').addEventListener('click', async () => {
             const editor = $('input-conteudo');
-            const temConteudo = $('input-titulo').value.trim() || editor.textContent.trim() || editor.querySelector('img');
-            if (!temConteudo || confirm('Tem certeza que deseja apagar o que escreveu?')) {
+            const temConteudo = $('input-titulo').value.trim() ||
+                                editor.textContent.trim() ||
+                                editor.querySelector('img');
+            if (!temConteudo) {
+                if (window.__resetarEditorAtelie) window.__resetarEditorAtelie();
+                document.querySelector('[data-aba="canal"]').click();
+                return;
+            }
+            const ok = await confirmar('Descartar texto', 'Tem certeza que deseja apagar o que escreveu?');
+            if (ok) {
                 if (window.__resetarEditorAtelie) window.__resetarEditorAtelie();
                 document.querySelector('[data-aba="canal"]').click();
             }
         });
     }
 
-    // --- EDITOR DE REDAÇÃO ---
+    // ============================================================
+    // EDITOR DE REDAÇÃO
+    // ============================================================
     function configurarEditorEmbutido() {
         const editor = $('input-conteudo');
         const folha = $('editor-folha');
@@ -705,7 +929,7 @@
         let fantasma = null;
         let ignorarClique = false;
 
-        document.execCommand('defaultParagraphSeparator', false, 'p');
+        execComando('defaultParagraphSeparator', 'p');
 
         function atualizarVazio() {
             const texto = editor.textContent.trim();
@@ -721,35 +945,47 @@
 
         document.addEventListener('selectionchange', () => {
             const sel = window.getSelection();
-            if (sel.rangeCount && editor.contains(sel.anchorNode)) rangeSalvo = sel.getRangeAt(0).cloneRange();
+            if (sel.rangeCount && editor.contains(sel.anchorNode)) {
+                rangeSalvo = sel.getRangeAt(0).cloneRange();
+            }
         });
 
+        // Toolbar
         document.querySelectorAll('.editor-toolbar button[data-cmd]').forEach(btn => {
             btn.addEventListener('mousedown', (e) => e.preventDefault());
             btn.addEventListener('click', (e) => {
                 e.preventDefault();
                 const cmd = btn.getAttribute('data-cmd');
                 let value = btn.getAttribute('data-value') || null;
-                if (cmd === 'formatBlock' && document.queryCommandValue('formatBlock').toLowerCase() === value) value = 'p';
+                if (cmd === 'formatBlock' &&
+                    document.queryCommandValue('formatBlock').toLowerCase() === value) {
+                    value = 'p';
+                }
                 editor.focus();
-                document.execCommand(cmd, false, value);
+                execComando(cmd, value);
                 atualizarVazio();
             });
         });
 
+        // Colar apenas texto puro
         editor.addEventListener('paste', (e) => {
             e.preventDefault();
             const texto = (e.clipboardData || window.clipboardData).getData('text/plain');
-            document.execCommand('insertText', false, texto);
+            execComando('insertText', texto);
         });
-        editor.addEventListener('dragstart', (e) => { if (e.target.tagName === 'IMG') e.preventDefault(); });
+        editor.addEventListener('dragstart', (e) => {
+            if (e.target.tagName === 'IMG') e.preventDefault();
+        });
 
         function normalizarBlocos() {
             let atual = null;
             [...editor.childNodes].forEach(n => {
                 if (n.nodeType === 1 && BLOCOS.has(n.tagName)) { atual = null; return; }
                 if (n.nodeType === 3 && !n.textContent.trim() && !atual) { n.remove(); return; }
-                if (!atual) { atual = document.createElement('p'); n.before(atual); }
+                if (!atual) {
+                    atual = document.createElement('p');
+                    n.before(atual);
+                }
                 atual.appendChild(n);
             });
         }
@@ -781,7 +1017,10 @@
             fig.style.width = TAMANHOS[TAMANHO_PADRAO] + '%';
             fig.contentEditable = 'false';
             const img = document.createElement('img');
-            img.src = url; img.alt = ''; img.loading = 'lazy'; img.draggable = false;
+            img.src = url;
+            img.alt = '';
+            img.loading = 'lazy';
+            img.draggable = false;
             img.addEventListener('load', posicionar);
             const cap = document.createElement('figcaption');
             cap.contentEditable = 'true';
@@ -793,14 +1032,16 @@
         function inserirBloco(fig) {
             let no = null, off = 0;
             if (rangeSalvo && editor.contains(rangeSalvo.startContainer)) {
-                no = rangeSalvo.startContainer; off = rangeSalvo.startOffset;
+                no = rangeSalvo.startContainer;
+                off = rangeSalvo.startOffset;
             }
             normalizarBlocos();
             const topo = no && editor.contains(no) ? blocoTopo(no) : null;
             if (topo && topo.tagName === 'P') {
                 const vazio = !topo.textContent.trim() && !topo.querySelector('img');
-                if (vazio) { topo.replaceWith(fig); }
-                else {
+                if (vazio) {
+                    topo.replaceWith(fig);
+                } else {
                     const r = document.createRange();
                     r.setStart(no, off);
                     r.setEndAfter(topo.lastChild);
@@ -812,8 +1053,11 @@
                     fig.after(p2);
                     if (!topo.textContent.trim()) topo.remove();
                 }
-            } else if (topo) { topo.after(fig); }
-            else { editor.appendChild(fig); }
+            } else if (topo) {
+                topo.after(fig);
+            } else {
+                editor.appendChild(fig);
+            }
             garantirParagrafoFinal();
             const prox = fig.nextElementSibling;
             editor.focus({ preventScroll: true });
@@ -831,9 +1075,16 @@
             const file = inputImg.files[0];
             inputImg.value = '';
             if (!file) return;
-            if (!/^image\/(jpeg|png|webp|gif)$/.test(file.type)) return avisar('Use uma imagem JPG, PNG, WEBP ou GIF.', 'erro');
-            if (file.size > MAX_MB * 1024 * 1024) return avisar('A imagem deve ter no máximo ' + MAX_MB + ' MB.', 'erro');
-            btnImg.classList.add('carregando'); btnImg.disabled = true;
+            if (!/^image\/(jpeg|png|webp|gif)$/.test(file.type)) {
+                avisar('Use uma imagem JPG, PNG, WEBP ou GIF.', 'erro');
+                return;
+            }
+            if (file.size > MAX_MB * 1024 * 1024) {
+                avisar('A imagem deve ter no máximo ' + MAX_MB + ' MB.', 'erro');
+                return;
+            }
+            btnImg.classList.add('carregando');
+            btnImg.disabled = true;
             try {
                 const ext = file.type.split('/')[1] || 'jpg';
                 const path = usuarioLogado.id + '/img_' + Date.now() + '.' + ext;
@@ -857,7 +1108,7 @@
         }
         function definirLarguraLivre(fig, pct) {
             const preset = Object.keys(TAMANHOS).find(k => Math.abs(TAMANHOS[k] - pct) < 1.5);
-            fig.dataset.size = preset || 'c';
+            fig.dataset.size = preset || 'custom';
             fig.style.width = (preset ? TAMANHOS[preset] : pct).toFixed(1) + '%';
             if (pct >= 99) fig.dataset.align = 'center';
         }
@@ -869,8 +1120,12 @@
         function atualizarEstados() {
             if (!figura) return;
             [barra, menu].forEach(c => {
-                c.querySelectorAll('[data-tam]').forEach(b => b.classList.toggle('ativo', b.dataset.tam === figura.dataset.size));
-                c.querySelectorAll('[data-alin]').forEach(b => b.classList.toggle('ativo', b.dataset.alin === figura.dataset.align));
+                c.querySelectorAll('[data-tam]').forEach(b => {
+                    b.classList.toggle('ativo', b.dataset.tam === figura.dataset.size);
+                });
+                c.querySelectorAll('[data-alin]').forEach(b => {
+                    b.classList.toggle('ativo', b.dataset.alin === figura.dataset.align);
+                });
             });
             selecao.dataset.align = figura.dataset.align;
         }
@@ -914,26 +1169,38 @@
             if (ignorarClique) return;
             const fig = e.target.closest('figure.img-bloco');
             selecionarFigura(fig);
-            if (fig && !e.target.closest('figcaption')) window.getSelection().removeAllRanges();
+            if (fig && !e.target.closest('figcaption')) {
+                window.getSelection().removeAllRanges();
+            }
         });
         document.addEventListener('click', (e) => {
             if (ignorarClique) return;
-            if (!e.target.closest('#input-conteudo') && !e.target.closest('#img-flutuante') &&
-                !e.target.closest('#img-selecao') && !e.target.closest('#img-menu')) selecionarFigura(null);
+            if (!e.target.closest('#input-conteudo') &&
+                !e.target.closest('#img-flutuante') &&
+                !e.target.closest('#img-selecao') &&
+                !e.target.closest('#img-menu')) {
+                selecionarFigura(null);
+            }
         });
         window.addEventListener('resize', posicionar);
         window.addEventListener('scroll', () => { posicionar(); fecharMenu(); }, true);
-        if ('ResizeObserver' in window) new ResizeObserver(() => posicionar()).observe(editor);
+        if ('ResizeObserver' in window) {
+            new ResizeObserver(() => posicionar()).observe(editor);
+        }
 
         function removerFigura() {
             if (!figura) return;
-            const f = figura; selecionarFigura(null); f.remove(); atualizarVazio();
+            const f = figura;
+            selecionarFigura(null);
+            f.remove();
+            atualizarVazio();
         }
         function moverPosicao(dir) {
             if (!figura) return;
             const alvo = dir < 0 ? figura.previousElementSibling : figura.nextElementSibling;
             if (!alvo) return;
-            if (dir < 0) alvo.before(figura); else alvo.after(figura);
+            if (dir < 0) alvo.before(figura);
+            else alvo.after(figura);
             garantirParagrafoFinal();
             figura.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
         }
@@ -948,10 +1215,13 @@
                 const cap = figura.querySelector('figcaption');
                 if (cap) { cap.focus(); colocarCursor(cap); }
             }
-            atualizarEstados(); posicionar();
+            atualizarEstados();
+            posicionar();
         }
 
-        barra.addEventListener('mousedown', (e) => { if (!e.target.closest('.grip')) e.preventDefault(); });
+        barra.addEventListener('mousedown', (e) => {
+            if (!e.target.closest('.grip')) e.preventDefault();
+        });
         barra.addEventListener('click', (e) => {
             const btn = e.target.closest('button');
             if (!btn || btn.dataset.acao === 'mover') return;
@@ -978,10 +1248,13 @@
         menu.addEventListener('click', (e) => {
             const btn = e.target.closest('button');
             if (!btn) return;
-            executar(btn); fecharMenu();
+            executar(btn);
+            fecharMenu();
         });
         menu.addEventListener('contextmenu', (e) => e.preventDefault());
-        document.addEventListener('pointerdown', (e) => { if (!menu.hidden && !menu.contains(e.target)) fecharMenu(); });
+        document.addEventListener('pointerdown', (e) => {
+            if (!menu.hidden && !menu.contains(e.target)) fecharMenu();
+        });
 
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
@@ -998,10 +1271,12 @@
             removerFigura();
         });
 
+        // Redimensionamento via handles
         selecao.querySelectorAll('.img-handle').forEach(h => {
             h.addEventListener('pointerdown', (e) => {
                 if (!figura) return;
-                e.preventDefault(); e.stopPropagation();
+                e.preventDefault();
+                e.stopPropagation();
                 h.setPointerCapture(e.pointerId);
                 const fig = figura;
                 const lado = h.dataset.h.indexOf('e') !== -1 ? 1 : -1;
@@ -1016,7 +1291,8 @@
                     if (pct > 96) pct = 100;
                     definirLarguraLivre(fig, pct);
                     rotuloSel.textContent = Math.round(pct) + '%';
-                    atualizarEstados(); posicionar();
+                    atualizarEstados();
+                    posicionar();
                 };
                 const fim = () => {
                     h.removeEventListener('pointermove', mover);
@@ -1037,11 +1313,20 @@
             let alvo = null, depois = false;
             for (const c of filhos) {
                 const r = c.getBoundingClientRect();
-                if (y >= r.top && y <= r.bottom) { alvo = c; depois = y > r.top + r.height / 2; break; }
+                if (y >= r.top && y <= r.bottom) {
+                    alvo = c;
+                    depois = y > r.top + r.height / 2;
+                    break;
+                }
             }
             if (!alvo && filhos.length) {
-                if (y < filhos[0].getBoundingClientRect().top) { alvo = filhos[0]; depois = false; }
-                else { alvo = filhos[filhos.length - 1]; depois = true; }
+                if (y < filhos[0].getBoundingClientRect().top) {
+                    alvo = filhos[0];
+                    depois = false;
+                } else {
+                    alvo = filhos[filhos.length - 1];
+                    depois = true;
+                }
             }
             const zona = x < rect.left + rect.width * 0.33 ? 'left'
                        : x > rect.left + rect.width * 0.67 ? 'right' : 'center';
@@ -1106,7 +1391,10 @@
             e.preventDefault();
             arraste = { fig: figura, x: e.clientX, y: e.clientY, ativo: false, info: null };
             iniciarArraste();
-            if (fantasma) { fantasma.style.left = e.clientX + 'px'; fantasma.style.top = e.clientY + 'px'; }
+            if (fantasma) {
+                fantasma.style.left = e.clientX + 'px';
+                fantasma.style.top = e.clientY + 'px';
+            }
             atualizarIndicador(e.clientX, e.clientY);
         });
         document.addEventListener('pointermove', (e) => {
@@ -1115,7 +1403,10 @@
                 if (Math.hypot(e.clientX - arraste.x, e.clientY - arraste.y) < 6) return;
                 iniciarArraste();
             }
-            if (fantasma) { fantasma.style.left = e.clientX + 'px'; fantasma.style.top = e.clientY + 'px'; }
+            if (fantasma) {
+                fantasma.style.left = e.clientX + 'px';
+                fantasma.style.top = e.clientY + 'px';
+            }
             const navH = (document.querySelector('.navbar') || {}).offsetHeight || 68;
             if (e.clientY < navH + 130) window.scrollBy(0, -14);
             else if (e.clientY > window.innerHeight - 90) window.scrollBy(0, 14);
@@ -1129,7 +1420,8 @@
             encerrarArraste();
             const info = a.info;
             if (info && info.alvo) {
-                if (info.depois) info.alvo.after(a.fig); else info.alvo.before(a.fig);
+                if (info.depois) info.alvo.after(a.fig);
+                else info.alvo.before(a.fig);
                 definirAlinhamento(a.fig, info.zona);
                 garantirParagrafoFinal();
             }
@@ -1154,10 +1446,15 @@
 
         function htmlParaPublicar() {
             const clone = editor.cloneNode(true);
-            clone.querySelectorAll('.selecionada, .arrastando').forEach(el => el.classList.remove('selecionada', 'arrastando'));
+            clone.querySelectorAll('.selecionada, .arrastando').forEach(el => {
+                el.classList.remove('selecionada', 'arrastando');
+            });
             clone.querySelectorAll('figcaption').forEach(fc => {
                 if (!fc.textContent.trim()) fc.remove();
-                else { fc.removeAttribute('contenteditable'); fc.removeAttribute('data-ph'); }
+                else {
+                    fc.removeAttribute('contenteditable');
+                    fc.removeAttribute('data-ph');
+                }
             });
             let temFlutuante = false;
             clone.querySelectorAll('figure.img-bloco').forEach(f => {
@@ -1171,14 +1468,20 @@
                 else estilo += 'clear:both;margin:2rem auto;';
                 f.setAttribute('style', estilo);
                 const img = f.querySelector('img');
-                if (img) { img.removeAttribute('draggable'); img.setAttribute('style', 'display:block;width:100%;height:auto;border-radius:6px;'); }
+                if (img) {
+                    img.removeAttribute('draggable');
+                    img.setAttribute('style', 'display:block;width:100%;height:auto;border-radius:6px;');
+                }
             });
-            while (clone.lastElementChild && clone.lastElementChild.tagName === 'P' &&
+            while (clone.lastElementChild &&
+                   clone.lastElementChild.tagName === 'P' &&
                    !clone.lastElementChild.textContent.trim() &&
                    !clone.lastElementChild.querySelector('img,figure')) {
                 clone.lastElementChild.remove();
             }
-            if (temFlutuante) clone.insertAdjacentHTML('beforeend', '<div style="clear:both"></div>');
+            if (temFlutuante) {
+                clone.insertAdjacentHTML('beforeend', '<div style="clear:both"></div>');
+            }
             return clone.innerHTML.trim();
         }
 
@@ -1186,19 +1489,30 @@
             const btn = $('btn-publicar-atelie');
             const titulo = $('input-titulo').value.trim();
             const categoria = $('input-categoria-artigo').value;
-            if (!titulo) return avisar('Adicione um título ao seu conteúdo.', 'erro');
-            if (editor.textContent.trim() === '' && !editor.querySelector('img')) return avisar('Escreva algo antes de publicar!', 'erro');
-            btn.disabled = true; btn.textContent = 'Publicando...';
+            if (!titulo) { avisar('Adicione um título ao seu conteúdo.', 'erro'); return; }
+            if (editor.textContent.trim() === '' && !editor.querySelector('img')) {
+                avisar('Escreva algo antes de publicar!', 'erro');
+                return;
+            }
+            btn.disabled = true;
+            btn.textContent = 'Publicando...';
             try {
                 let capaUrl = null;
                 if (arquivoCapaEditor) {
                     const path = usuarioLogado.id + '/capa_post_' + Date.now() + '.jpg';
-                    const up = await db.storage.from('avatars').upload(path, arquivoCapaEditor, { contentType: arquivoCapaEditor.type });
-                    if (!up.error) capaUrl = db.storage.from('avatars').getPublicUrl(path).data.publicUrl;
+                    const up = await db.storage.from('avatars').upload(path, arquivoCapaEditor, {
+                        contentType: arquivoCapaEditor.type
+                    });
+                    if (!up.error) {
+                        capaUrl = db.storage.from('avatars').getPublicUrl(path).data.publicUrl;
+                    }
                 }
                 const { error } = await db.from('posts').insert([{
-                    author_id: usuarioLogado.id, title: titulo,
-                    content: htmlParaPublicar(), cover_url: capaUrl, category: categoria
+                    author_id: usuarioLogado.id,
+                    title: titulo,
+                    content: htmlParaPublicar(),
+                    cover_url: capaUrl,
+                    category: categoria
                 }]);
                 if (error) throw error;
                 avisar('Conteúdo publicado com sucesso no seu canal!');
@@ -1209,11 +1523,15 @@
                 console.error(err);
                 avisar('Erro ao publicar.', 'erro');
             } finally {
-                btn.disabled = false; btn.textContent = 'Publicar';
+                btn.disabled = false;
+                btn.textContent = 'Publicar';
             }
         });
     }
 
+    // ============================================================
+    // BOOT
+    // ============================================================
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', iniciar);
     } else {

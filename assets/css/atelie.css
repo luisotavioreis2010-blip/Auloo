@@ -1,12 +1,14 @@
 @charset "UTF-8";
 /* ==============================================================
-   ATELIE.CSS — v54
-   Base: v53 (todos os recursos preservados)
-   Correções:
-   - Modelo de scroll blindado (só a janela rola; html/body não viram
-     contêineres de rolagem, mesmo que global.css/estante.css tentem)
-   - Botões Salvar/Descartar agora fazem parte do conteúdo da gaveta
-     (rolam junto, não ficam presos na tela)
+   ATELIE.CSS — v55
+   --------------------------------------------------------------
+   Mudanças estruturais em relação à v54:
+   - Título da gaveta agora ROLA junto (não é mais fixo no topo).
+     Apenas o botão de fechar fica flutuando, sobreposto.
+   - Enquadrador (avatar/capa) reescrito para mobile: o CSS agora
+     aplica `touch-action: none` no container E na camada interna,
+     para o navegador não interceptar o gesto antes do JS.
+   - Modal de confirmação próprio (substitui confirm()).
    ============================================================== */
 
 :root {
@@ -15,11 +17,6 @@
 
 /* ==============================================================
    0. MODELO DE SCROLL — apenas a JANELA (viewport) rola
-   --------------------------------------------------------------
-   Usamos !important e "html:root" (mais específico) para vencer
-   qualquer "overflow: hidden" / "height: 100vh" vindo dos CSS
-   globais. Se html ou body virarem contêineres de scroll, o
-   "position: sticky" quebra e a página trava ou rola por dentro.
    ============================================================== */
 html:root {
     height: auto !important;
@@ -36,10 +33,9 @@ body.mural-body {
     display: flex;
     flex-direction: column;
     overflow-x: hidden !important;
-    overflow-x: clip !important;      /* corta o excesso lateral SEM criar contêiner de scroll */
+    overflow-x: clip !important;
     overflow-y: visible !important;
 }
-/* Trava o scroll do fundo só enquanto a gaveta (sobreposição) está aberta */
 html:root.atelie-travado {
     overflow: hidden !important;
 }
@@ -912,11 +908,12 @@ body.img-arrastando .img-selecao { opacity: 0; }
 .img-menu-seg button.ativo { background: var(--vinho); color: #fff; }
 
 /* ==============================================================
-   6. GAVETA LATERAL
+   6. GAVETA LATERAL — v55
    --------------------------------------------------------------
-   Estrutura: [cabeçalho fixo] + [corpo que ROLA]
-   Os botões Salvar/Descartar ficam DENTRO do corpo, no fim do
-   conteúdo: rolam junto com tudo, sem ficar presos na tela.
+   Mudança estrutural: o cabeçalho (título) NÃO é mais fixo.
+   Ele está DENTRO de .atelie-gaveta-corpo e rola junto.
+   Apenas o botão de fechar flutua, sobreposto (position: sticky
+   dentro do corpo, alinhado ao topo direito).
    ============================================================== */
 .atelie-gaveta {
     position: fixed;
@@ -961,25 +958,53 @@ body.img-arrastando .img-selecao { opacity: 0; }
     flex: 1;
     min-height: 0;
     overflow: hidden;
+    position: relative;
 }
 .config-painel.ativo { display: flex; }
 
+/* Botão de fechar flutuante — fica sobreposto ao conteúdo,
+   ancorado no canto superior direito do painel. */
+.atelie-gaveta-fechar--flutuante {
+    position: absolute;
+    top: 1rem;
+    right: 1.25rem;
+    z-index: 30;
+    width: 36px;
+    height: 36px;
+    background: rgba(250, 247, 242, 0.92);
+    border: 1px solid var(--papel-sombra);
+    border-radius: 50%;
+    box-shadow: 0 2px 10px rgba(26, 22, 20, 0.08);
+    color: var(--tinta-suave);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s, border-color 0.2s, background 0.2s, transform 0.2s;
+}
+.atelie-gaveta-fechar--flutuante:hover {
+    color: var(--vinho);
+    border-color: var(--dourado-fraco);
+    background: #fff;
+    transform: scale(1.05);
+}
+.atelie-gaveta-fechar--flutuante svg { width: 16px; height: 16px; }
+
+/* Cabeçalho que ROLA junto com o conteúdo (não é mais fixo) */
 .atelie-gaveta-header {
     position: relative;
+    padding: 0 0 1.25rem;
     display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    padding: 1.75rem 1.75rem 1.25rem;
-    flex-shrink: 0;
+    flex-direction: column;
 }
 .atelie-gaveta-header::after {
     content: '';
     position: absolute;
-    left: 1.75rem; right: 1.75rem; bottom: 0;
+    left: 0; right: 0; bottom: 0;
     height: 1px;
     background: linear-gradient(90deg, var(--dourado), rgba(184, 137, 74, 0.15) 70%, transparent);
 }
-.gaveta-titulo-bloco { display: flex; flex-direction: column; gap: 0.3rem; }
+.gaveta-titulo-bloco { display: flex; flex-direction: column; gap: 0.3rem; padding-right: 48px; }
 .gaveta-eyebrow {
     font-family: var(--fonte-corpo);
     font-size: 0.6rem;
@@ -996,26 +1021,7 @@ body.img-arrastando .img-selecao { opacity: 0; }
     color: var(--vinho);
     margin: 0;
 }
-.atelie-gaveta-fechar {
-    width: 32px; height: 32px;
-    color: var(--tinta-suave);
-    background: transparent;
-    border: 1px solid transparent;
-    border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: color 0.2s, border-color 0.2s, background 0.2s;
-}
-.atelie-gaveta-fechar:hover {
-    color: var(--vinho);
-    border-color: var(--dourado-fraco);
-    background: rgba(92, 26, 26, 0.05);
-}
-.atelie-gaveta-fechar svg { width: 16px; height: 16px; }
 
-/* O form (ou div) ocupa o espaço restante e deixa o corpo rolar */
 .gaveta-form {
     display: flex;
     flex-direction: column;
@@ -1024,7 +1030,6 @@ body.img-arrastando .img-selecao { opacity: 0; }
     margin: 0;
 }
 
-/* ÚNICA área que rola dentro da gaveta */
 .atelie-gaveta-corpo {
     flex: 1 1 auto;
     min-height: 0;
@@ -1037,6 +1042,7 @@ body.img-arrastando .img-selecao { opacity: 0; }
     gap: 1.25rem;
     scrollbar-width: thin;
     scrollbar-color: var(--dourado-fraco) transparent;
+    -webkit-overflow-scrolling: touch;
 }
 .atelie-gaveta-corpo > * { flex-shrink: 0; }
 .atelie-gaveta-corpo::-webkit-scrollbar { width: 6px; }
@@ -1045,7 +1051,6 @@ body.img-arrastando .img-selecao { opacity: 0; }
     border-radius: 3px;
 }
 
-/* Botões de ação: no FIM do conteúdo, rolam junto com as seções */
 .gaveta-acoes {
     display: flex;
     flex-direction: column;
@@ -1151,7 +1156,10 @@ body.img-arrastando .img-selecao { opacity: 0; }
     overflow: hidden;
     position: relative;
     cursor: grab;
-    touch-action: none;
+    touch-action: none;              /* bloqueia gesto do navegador */
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
 }
 .avatar-preview-container:active { cursor: grabbing; }
 .avatar-preview-arrastavel {
@@ -1164,9 +1172,12 @@ body.img-arrastando .img-selecao { opacity: 0; }
     justify-content: center;
     color: var(--dourado);
     opacity: 0.8;
+    touch-action: none;              /* dupla garantia */
+    pointer-events: none;            /* gesto é capturado pelo container */
 }
 .avatar-preview-arrastavel.tem-imagem { opacity: 1; }
 .avatar-preview-arrastavel svg { width: 32px; height: 32px; }
+
 .avatar-acoes {
     display: flex;
     flex-direction: column;
@@ -1185,17 +1196,20 @@ body.img-arrastando .img-selecao { opacity: 0; }
     border-radius: 8px;
     overflow: hidden;
     cursor: grab;
-    touch-action: none;
+    touch-action: none;              /* bloqueia gesto do navegador */
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
     box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.5);
 }
 .capa-preview-container:active { cursor: grabbing; }
-.avatar-preview-container,
-.capa-preview-container { user-select: none; -webkit-user-select: none; }
 .capa-preview-arrastavel {
     width: 100%; height: 100%;
     background-size: cover;
     background-position: 50% 50%;
     background-repeat: no-repeat;
+    touch-action: none;              /* dupla garantia */
+    pointer-events: none;            /* gesto é capturado pelo container */
 }
 .capa-preview-container::after {
     content: 'Arraste para enquadrar · zoom no controle abaixo';
@@ -1551,6 +1565,76 @@ body.img-arrastando .img-selecao { opacity: 0; }
 }
 .modal-fechar svg { width: 18px; height: 18px; }
 
+/* Modal de confirmação */
+.modal-confirmar-conteudo {
+    max-width: 440px;
+    padding: 2rem;
+}
+.modal-confirmar-texto {
+    font-family: var(--fonte-display);
+    font-size: 1.1rem;
+    line-height: 1.5;
+    color: var(--tinta-suave);
+    margin-bottom: 1.5rem;
+}
+.modal-confirmar-acoes {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+.btn-modal {
+    padding: 0.65rem 1.4rem;
+    border-radius: 6px;
+    font-family: var(--fonte-corpo);
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+.btn-modal--secundario {
+    background: transparent;
+    color: var(--tinta-suave);
+    border-color: var(--papel-sombra);
+}
+.btn-modal--secundario:hover { border-color: var(--dourado); color: var(--vinho); }
+.btn-modal--perigo {
+    background: var(--erro, #a63a3a);
+    color: #fff;
+    border-color: var(--erro, #a63a3a);
+}
+.btn-modal--perigo:hover { background: #8a2f2f; border-color: #8a2f2f; }
+
+/* Tela de erro de conexão (quando Supabase falha) */
+.atelie-erro-conexao {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.25rem;
+    padding: 2rem;
+    text-align: center;
+    background: var(--papel);
+}
+.atelie-erro-conexao h2 {
+    font-family: var(--fonte-titulo);
+    font-style: italic;
+    font-size: 2rem;
+    color: var(--vinho);
+}
+.atelie-erro-conexao p {
+    font-family: var(--fonte-display);
+    font-size: 1.15rem;
+    color: var(--tinta-suave);
+    max-width: 420px;
+}
+
 /* ==============================================================
    10. RESPONSIVIDADE
    ============================================================== */
@@ -1565,7 +1649,7 @@ body.img-arrastando .img-selecao { opacity: 0; }
         box-shadow: none;
     }
     .gaveta-overlay-config { display: none; }
-    .atelie-gaveta-fechar { display: none; }
+    .atelie-gaveta-fechar--flutuante { display: none; }
     #btn-configurar-atelie { display: none; }
     body.atelie-modo-redacao .atelie-main {
         margin-right: var(--gaveta-w);
@@ -1584,7 +1668,7 @@ body.img-arrastando .img-selecao { opacity: 0; }
         visibility: visible;
     }
     body.atelie-modo-redacao .gaveta-overlay-config,
-    body.atelie-modo-redacao .atelie-gaveta-fechar { display: none; }
+    body.atelie-modo-redacao .atelie-gaveta-fechar--flutuante { display: none; }
 }
 
 @media (max-width: 1024px) {
@@ -1651,15 +1735,8 @@ body.img-arrastando .img-selecao { opacity: 0; }
     .editor-conteudo { font-size: 1.15rem; }
     .btn-publicar { width: auto; padding: 0.5rem 1rem; flex-shrink: 0; }
 
-    .atelie-gaveta-corpo,
-    .atelie-gaveta-header {
-        padding-left: 1.25rem;
-        padding-right: 1.25rem;
-    }
-    .atelie-gaveta-header::after {
-        left: 1.25rem;
-        right: 1.25rem;
-    }
+    .atelie-gaveta-corpo { padding-left: 1.25rem; padding-right: 1.25rem; }
+    .atelie-gaveta-fechar--flutuante { top: 0.75rem; right: 0.75rem; }
     .btn-gaveta {
         min-height: 60px;
         font-size: 0.82rem;
