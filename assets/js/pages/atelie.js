@@ -17,12 +17,15 @@
 
     const MAX_MB = 5;
 
+    // A gaveta é "permanente" (sempre visível ao lado) em telas >= 1367px,
+    // e também entre 1025 e 1366px enquanto você está na aba Redação.
+    // Nos demais casos ela é uma sobreposição que abre e fecha.
     const gavetaPermanente = () =>
         window.matchMedia('(min-width: 1367px)').matches ||
         (window.matchMedia('(min-width: 1025px)').matches &&
             document.body.classList.contains('atelie-modo-redacao'));
 
-    // --- CONTROLE DE SCROLL (estável em desktop e mobile) ---
+    // --- CONTROLE DE SCROLL ---
     let scrollYGuardado = 0;
 
     function abrirGaveta() {
@@ -36,14 +39,20 @@
 
     function fecharGaveta(forcar) {
         if (forcar !== true && gavetaPermanente()) return;
+        const estavaTravado = document.documentElement.classList.contains('atelie-travado');
         $('gaveta-config').classList.remove('ativa');
         $('overlay-config').classList.remove('ativa');
         document.body.classList.remove('atelie-gaveta-aberta');
         document.documentElement.classList.remove('atelie-travado');
-        if (Math.abs((window.scrollY || 0) - scrollYGuardado) > 1) {
+        // Só restaura a posição se a gaveta realmente estava travando o scroll.
+        // (antes isso também rodava no "resize" e jogava a página para o topo)
+        if (estavaTravado && Math.abs((window.scrollY || 0) - scrollYGuardado) > 1) {
             window.scrollTo(0, scrollYGuardado);
         }
     }
+
+    // Se a página voltar do cache do navegador (botão "voltar") com a trava ligada, destrava
+    window.addEventListener('pageshow', () => fecharGaveta(true));
 
     // --- UTILITÁRIOS ---
     async function aguardarSupabase() {
@@ -108,7 +117,7 @@
             return new Date(iso).toLocaleDateString('pt-BR', {
                 day: '2-digit', month: 'short', year: 'numeric'
             });
-        } catch { return ''; }
+        } catch (_) { return ''; }
     }
 
     // --- ENQUADRADOR (avatar/capa) ---
@@ -174,6 +183,7 @@
         };
         container.addEventListener('pointerup', soltar);
         container.addEventListener('pointercancel', soltar);
+        // Zoom pela roda só com Ctrl/⌘ — sem isso a roda continua rolando a gaveta
         container.addEventListener('wheel', (e) => {
             if (!est.pronto || !(e.ctrlKey || e.metaKey)) return;
             e.preventDefault();
@@ -184,9 +194,9 @@
         return {
             carregar(url, ini) {
                 est.pronto = false;
-                est.x = ini?.x ?? 50;
-                est.y = ini?.y ?? 50;
-                est.zoom = ini?.zoom ?? 1;
+                est.x = ini && ini.x != null ? ini.x : 50;
+                est.y = ini && ini.y != null ? ini.y : 50;
+                est.zoom = ini && ini.zoom ? ini.zoom : 1;
                 camada.style.backgroundImage = 'url("' + String(url).replace(/"/g, '%22') + '")';
                 aplicar();
                 if (linhaZoom) linhaZoom.hidden = false;
@@ -675,7 +685,7 @@
         });
     }
 
-    // --- EDITOR DE REDAÇÃO (todos os recursos) ---
+    // --- EDITOR DE REDAÇÃO ---
     function configurarEditorEmbutido() {
         const editor = $('input-conteudo');
         const folha = $('editor-folha');

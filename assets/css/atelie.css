@@ -1,8 +1,12 @@
 @charset "UTF-8";
 /* ==============================================================
-   ATELIE.CSS — v53
-   Base: v50 (todos os recursos preservados)
-   Correções: scroll desktop/mobile estável + rodapé ancorado
+   ATELIE.CSS — v54
+   Base: v53 (todos os recursos preservados)
+   Correções:
+   - Modelo de scroll blindado (só a janela rola; html/body não viram
+     contêineres de rolagem, mesmo que global.css/estante.css tentem)
+   - Botões Salvar/Descartar agora fazem parte do conteúdo da gaveta
+     (rolam junto, não ficam presos na tela)
    ============================================================== */
 
 :root {
@@ -10,24 +14,34 @@
 }
 
 /* ==============================================================
-   0. MODELO DE SCROLL — apenas o <html> rola
+   0. MODELO DE SCROLL — apenas a JANELA (viewport) rola
+   --------------------------------------------------------------
+   Usamos !important e "html:root" (mais específico) para vencer
+   qualquer "overflow: hidden" / "height: 100vh" vindo dos CSS
+   globais. Se html ou body virarem contêineres de scroll, o
+   "position: sticky" quebra e a página trava ou rola por dentro.
    ============================================================== */
-html {
-    height: 100%;
-    overflow-x: hidden;
+html:root {
+    height: auto !important;
+    min-height: 100%;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
     scrollbar-gutter: stable;
-    -webkit-overflow-scrolling: touch;
 }
 body.mural-body {
-    min-height: 100%;
+    box-sizing: border-box;
+    height: auto !important;
+    min-height: 100vh;
+    min-height: 100dvh;
     display: flex;
     flex-direction: column;
-    overflow-x: hidden;
-    -webkit-overflow-scrolling: touch;
+    overflow-x: hidden !important;
+    overflow-x: clip !important;      /* corta o excesso lateral SEM criar contêiner de scroll */
+    overflow-y: visible !important;
 }
-/* Trava scroll do fundo só quando a gaveta está aberta */
-html.atelie-travado {
-    overflow: hidden;
+/* Trava o scroll do fundo só enquanto a gaveta (sobreposição) está aberta */
+html:root.atelie-travado {
+    overflow: hidden !important;
 }
 
 /* ==============================================================
@@ -35,8 +49,7 @@ html.atelie-travado {
    ============================================================== */
 .atelie-main {
     margin-left: var(--sidebar-w);
-    min-height: 100vh;
-    flex: 1;
+    flex: 1 0 auto;
     background: var(--papel);
     padding: 3rem 1rem;
     display: flex;
@@ -624,7 +637,7 @@ html.atelie-travado {
 }
 .editor-status svg { width: 14px; height: 14px; }
 
-/* ---------- IMAGENS NO CONTEÚDO (todos os recursos preservados) ---------- */
+/* ---------- IMAGENS NO CONTEÚDO ---------- */
 .editor-conteudo figure.img-bloco {
     position: relative;
     box-sizing: border-box;
@@ -899,7 +912,11 @@ body.img-arrastando .img-selecao { opacity: 0; }
 .img-menu-seg button.ativo { background: var(--vinho); color: #fff; }
 
 /* ==============================================================
-   6. GAVETA LATERAL — estrutura rígida (correção principal)
+   6. GAVETA LATERAL
+   --------------------------------------------------------------
+   Estrutura: [cabeçalho fixo] + [corpo que ROLA]
+   Os botões Salvar/Descartar ficam DENTRO do corpo, no fim do
+   conteúdo: rolam junto com tudo, sem ficar presos na tela.
    ============================================================== */
 .atelie-gaveta {
     position: fixed;
@@ -998,6 +1015,7 @@ body.img-arrastando .img-selecao { opacity: 0; }
 }
 .atelie-gaveta-fechar svg { width: 16px; height: 16px; }
 
+/* O form (ou div) ocupa o espaço restante e deixa o corpo rolar */
 .gaveta-form {
     display: flex;
     flex-direction: column;
@@ -1006,37 +1024,35 @@ body.img-arrastando .img-selecao { opacity: 0; }
     margin: 0;
 }
 
+/* ÚNICA área que rola dentro da gaveta */
 .atelie-gaveta-corpo {
-    flex: 1;
+    flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
-    -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
-    padding: 1.5rem 1.75rem;
+    padding: 1.5rem 1.75rem calc(2rem + env(safe-area-inset-bottom, 0px));
     display: flex;
     flex-direction: column;
     gap: 1.25rem;
     scrollbar-width: thin;
     scrollbar-color: var(--dourado-fraco) transparent;
 }
+.atelie-gaveta-corpo > * { flex-shrink: 0; }
 .atelie-gaveta-corpo::-webkit-scrollbar { width: 6px; }
 .atelie-gaveta-corpo::-webkit-scrollbar-thumb {
     background: var(--dourado-fraco);
     border-radius: 3px;
 }
 
-.gaveta-rodape {
-    flex-shrink: 0;
-    padding: 1.25rem 1.75rem calc(1.25rem + env(safe-area-inset-bottom, 0px));
-    background: #fff;
-    border-top: 1px solid rgba(184, 137, 74, 0.3);
-    box-shadow: 0 -8px 24px rgba(26, 22, 20, 0.06);
+/* Botões de ação: no FIM do conteúdo, rolam junto com as seções */
+.gaveta-acoes {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
-    position: relative;
-    z-index: 2;
+    margin-top: 0.25rem;
+    padding-top: 1.5rem;
+    border-top: 1px dashed rgba(184, 137, 74, 0.4);
 }
 
 /* ---------- Seções numeradas ---------- */
@@ -1197,7 +1213,7 @@ body.img-arrastando .img-selecao { opacity: 0; }
     pointer-events: none;
 }
 .capa-preview-container:hover::after { opacity: 1; }
-.capa-preview-container--fixa { cursor: default; aspect-ratio: 16 / 9; }
+.capa-preview-container--fixa { cursor: default; aspect-ratio: 16 / 9; touch-action: auto; }
 .capa-preview-container--fixa::after { display: none; }
 .capa-preview-container--fixa .capa-preview-arrastavel { background-size: cover; }
 .capa-preview-container[hidden],
@@ -1635,7 +1651,6 @@ body.img-arrastando .img-selecao { opacity: 0; }
     .editor-conteudo { font-size: 1.15rem; }
     .btn-publicar { width: auto; padding: 0.5rem 1rem; flex-shrink: 0; }
 
-    .gaveta-rodape,
     .atelie-gaveta-corpo,
     .atelie-gaveta-header {
         padding-left: 1.25rem;
