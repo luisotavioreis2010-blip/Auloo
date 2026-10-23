@@ -1,25 +1,20 @@
 @charset "UTF-8";
 /* ==============================================================
-   ATELIE.CSS — v58
+   ATELIE.CSS — v59
    --------------------------------------------------------------
-   Correção da v57: o scroll do desktop voltou a funcionar.
+   Modelo de scroll ÚNICO (sem conflito desktop/mobile):
 
-   MODELO DE SCROLL POR BREAKPOINT (sem !important):
+   - `html` NUNCA rola (overflow: hidden sempre).
+   - `body` é o contêiner de scroll (overflow-y: auto sempre).
+   - Quando a gaveta abre, `body` trava e SÓ o corpo da gaveta
+     rola (via .atelie-travado + .atelie-gaveta-corpo).
 
-   Desktop (>1024px):
-     html { height: auto; overflow-y: auto }  ← RODA DO MOUSE ROLA
-     body { overflow-y: visible }             ← body NÃO vira contêiner
+   Isso elimina a causa raiz dos bugs anteriores: regras de
+   desktop vs mobile competindo pela propriedade `overflow`.
 
-   Mobile (<=1024px):
-     html { height: 100%; overflow: hidden }
-     body { height: 100dvh; overflow-y: auto } ← GESTO ARRASTA NOS CARDS
-
-   Trava da gaveta:
-     body.mural-body.atelie-travado { overflow: hidden }
-
-   ENQUADRADOR (avatar/capa):
-     pointer-events: auto em PAI e FILHO (corrige hit-test no mobile)
-     touch-action: none só nos enquadradores
+   ENQUADRADOR:
+   pointer-events: auto em PAI e FILHO (corrige hit-test mobile).
+   touch-action: none só no enquadrador (não vaza para cards).
    ============================================================== */
 
 :root {
@@ -27,51 +22,29 @@
 }
 
 /* ==============================================================
-   0. MODELO DE SCROLL — desktop vs mobile
+   0. MODELO DE SCROLL — único, sem @media
    ============================================================== */
-
-/* --- DESKTOP (padrão) --- */
 html {
-    height: auto;
-    min-height: 100%;
-    overflow-y: auto;
-    overflow-x: hidden;
-    scrollbar-gutter: stable;
+    height: 100%;
+    overflow: hidden;
 }
 
 body.mural-body {
     box-sizing: border-box;
-    height: auto;
-    min-height: 100vh;
-    min-height: 100dvh;
+    height: 100vh;
+    height: 100dvh;
     display: flex;
     flex-direction: column;
+    overflow-y: auto;
     overflow-x: hidden;
-    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+    scrollbar-gutter: stable;
 }
 
-/* Trava de scroll quando a gaveta (sobreposição) está aberta */
+/* Trava o body quando a gaveta (sobreposição) está aberta */
 body.mural-body.atelie-travado {
     overflow: hidden;
-}
-
-/* --- MOBILE --- */
-@media (max-width: 1024px) {
-    html {
-        height: 100%;
-        overflow: hidden;
-    }
-    body.mural-body {
-        height: 100vh;
-        height: 100dvh;
-        overflow-y: auto;
-        overflow-x: hidden;
-        -webkit-overflow-scrolling: touch;
-        overscroll-behavior-y: contain;
-    }
-    body.mural-body.atelie-travado {
-        overflow: hidden;
-    }
 }
 
 /* ==============================================================
@@ -1039,10 +1012,6 @@ body.img-arrastando .img-selecao { opacity: 0; }
 
 /* ==============================================================
    6. GAVETA LATERAL
-   --------------------------------------------------------------
-   - O corpo é o ÚNICO elemento com overflow-y: auto.
-   - O título (header) rola junto com o conteúdo (não é fixo).
-   - O botão de fechar flutua, sobreposto no canto do painel.
    ============================================================== */
 .atelie-gaveta {
     position: fixed;
@@ -1305,10 +1274,6 @@ body.img-arrastando .img-selecao { opacity: 0; }
 
 /* ==============================================================
    ENQUADRADOR (avatar/capa)
-   --------------------------------------------------------------
-   pointer-events: auto em PAI e FILHO (sem isso o hit-testing
-   falha no mobile e nenhum evento chega ao container).
-   touch-action: none só AQUI — não vaza para a gaveta/cards.
    ============================================================== */
 .avatar-linha {
     display: flex;
@@ -1547,7 +1512,7 @@ body.img-arrastando .img-selecao { opacity: 0; }
 }
 
 /* ==============================================================
-   7. BOTÕES DA GAVETA (Salvar / Descartar)
+   7. BOTÕES DA GAVETA
    ============================================================== */
 .btn-gaveta {
     position: relative;
@@ -1871,7 +1836,6 @@ body.img-arrastando .img-selecao { opacity: 0; }
     border-color: #8a2f2f;
 }
 
-/* Tela de erro de conexão (quando Supabase falha) */
 .atelie-erro-conexao {
     position: fixed;
     inset: 0;
@@ -1901,9 +1865,8 @@ body.img-arrastando .img-selecao { opacity: 0; }
 }
 
 /* ==============================================================
-   10. RESPONSIVIDADE
+   10. RESPONSIVIDADE (sem tocar em overflow/height do html/body)
    ============================================================== */
-
 @media (min-width: 1367px) {
     .atelie-main {
         margin-right: var(--gaveta-w);
