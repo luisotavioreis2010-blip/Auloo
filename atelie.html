@@ -9,10 +9,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400;1,500&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-    
+
     <link rel="stylesheet" href="assets/css/global.css">
     <link rel="stylesheet" href="assets/css/estante.css">
-    <link rel="stylesheet" href="assets/css/atelie.css?v=57">
+    <link rel="stylesheet" href="assets/css/atelie.css?v=55">
 </head>
 <body class="mural-body">
 
@@ -102,6 +102,9 @@
 
     <input type="file" id="input-foto" accept="image/jpeg,image/png,image/gif,image/webp" hidden aria-label="Upload de foto de perfil">
 
+    <!-- ==============================================
+         CONTEÚDO PRINCIPAL
+         ============================================== -->
     <main class="atelie-main" id="atelie-main">
 
         <div id="atelie-vazio" class="atelie-vazio" hidden>
@@ -142,16 +145,8 @@
         </div>
 
         <section id="aba-redacao" class="aba-conteudo">
-            
-            <div id="redacao-intro" class="redacao-intro">
-                <img src="assets/img/ilustracoes/Thesis-bro.png" alt="Escrevendo" class="ilustracao-redacao">
-                <h2>A página em branco</h2>
-                <p>Toda grande obra começa com uma única palavra. Dê vida às suas ideias.</p>
-                <button class="btn-primario" id="btn-iniciar-escrita" type="button">Começar a Escrever</button>
-            </div>
+            <div id="redacao-editor" class="redacao-editor">
 
-            <div id="redacao-editor" class="redacao-editor" hidden>
-                
                 <div class="editor-topo-custom">
                     <button type="button" id="btn-cancelar-escrita" class="btn-voltar-editor" aria-label="Voltar">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
@@ -168,7 +163,7 @@
                         <button type="button" title="Lista" data-cmd="insertUnorderedList"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></svg></button>
                         <div class="editor-divisor"></div>
                         <button type="button" title="Inserir imagem" id="btn-inserir-img"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></button>
-                        
+
                         <button type="button" title="Opções do Artigo" id="btn-opcoes-mobile" class="btn-mobile-only">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
                         </button>
@@ -182,10 +177,9 @@
                         <input type="text" class="editor-titulo" id="input-titulo" placeholder="Título do seu texto..." maxlength="120">
                         <div class="editor-ornamento" aria-hidden="true"><span>&#10022;</span></div>
                         <div class="editor-conteudo" id="input-conteudo" contenteditable="true" data-placeholder="Comece a escrever..." data-vazio="true"></div>
-                        
+
                         <div class="editor-status" aria-live="polite">
                             <span id="contador-palavras">0 palavras</span>
-                            <span class="ponto"></span>
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
                             <span id="tempo-leitura">0 min de leitura</span>
                         </div>
@@ -218,6 +212,9 @@
         </section>
     </main>
 
+    <!-- ==============================================
+         MODAL: CRIAR ATELIÊ
+         ============================================== -->
     <div id="modal-criar-atelie" class="modal-overlay" hidden>
         <div class="modal-conteudo">
             <header class="modal-header">
@@ -232,192 +229,184 @@
         </div>
     </div>
 
-    <!-- Modal de confirmação (substitui confirm() nativo) -->
-    <div id="modal-confirmar" class="modal-overlay" hidden>
-        <div class="modal-conteudo modal-confirmar-conteudo">
-            <header class="modal-header">
-                <h2 id="modal-confirmar-titulo">Confirmar</h2>
-            </header>
-            <p id="modal-confirmar-mensagem" class="modal-confirmar-texto"></p>
-            <div class="modal-confirmar-acoes">
-                <button type="button" class="btn-modal btn-modal--secundario" id="modal-confirmar-cancelar">Cancelar</button>
-                <button type="button" class="btn-modal btn-modal--perigo" id="modal-confirmar-ok">Confirmar</button>
-            </div>
-        </div>
-    </div>
-
     <!-- ==============================================
-         GAVETA LATERAL — v57
-         Título rola junto com o conteúdo (não é fixo).
-         Só o botão X flutua, sobreposto no canto do painel.
+         GAVETA LATERAL
+         Cada painel é UM contêiner de scroll: o botão X fica
+         "grudado" no topo, e o resto (título, seções, botões)
+         rola junto com o conteúdo.
          ============================================== -->
-    <div class="gaveta-overlay-config" id="overlay-config"></div>
-    <aside class="atelie-gaveta" id="gaveta-config">
+    <div class="gaveta-overlay-config" id="overlay-config" aria-hidden="true"></div>
+    <aside class="atelie-gaveta" id="gaveta-config" aria-label="Configurações">
 
         <!-- Painel do Canal -->
-        <div id="config-canal" class="config-painel ativo">
-            <button type="button" class="atelie-gaveta-fechar atelie-gaveta-fechar--flutuante" id="btn-fechar-config" aria-label="Fechar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+        <section id="config-canal" class="config-painel ativo">
+            <div class="gaveta-fechar-wrap">
+                <button type="button" class="atelie-gaveta-fechar" id="btn-fechar-config" aria-label="Fechar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+            </div>
 
-            <form id="form-config-atelie" class="gaveta-form">
-                <div class="atelie-gaveta-corpo">
+            <header class="atelie-gaveta-header">
+                <span class="gaveta-eyebrow">Seu espaço</span>
+                <h2>Configurar Ateliê</h2>
+            </header>
 
-                    <header class="atelie-gaveta-header">
-                        <div class="gaveta-titulo-bloco">
-                            <span class="gaveta-eyebrow">Seu espaço</span>
-                            <h2>Configurar Ateliê</h2>
-                        </div>
-                    </header>
+            <form id="form-config-atelie" class="gaveta-conteudo">
 
-                    <section class="gaveta-secao">
-                        <h3 class="gaveta-secao-titulo"><span class="romano">I</span>Identidade</h3>
-                        <div class="campo">
-                            <label for="input-config-nome">Nome do Ateliê</label>
-                            <input type="text" id="input-config-nome" maxlength="60" required>
-                        </div>
-                        <div class="campo">
-                            <label for="input-config-bio">Descrição (Bio)</label>
-                            <textarea id="input-config-bio" rows="3" maxlength="200" placeholder="Conte em poucas palavras o que você cria..."></textarea>
-                        </div>
-                    </section>
+                <section class="gaveta-secao">
+                    <h3 class="gaveta-secao-titulo"><span class="romano">I</span>Identidade</h3>
+                    <div class="campo">
+                        <label for="input-config-nome">Nome do Ateliê</label>
+                        <input type="text" id="input-config-nome" maxlength="60" required>
+                    </div>
+                    <div class="campo">
+                        <label for="input-config-bio">Descrição (Bio)</label>
+                        <textarea id="input-config-bio" rows="3" maxlength="200" placeholder="Conte em poucas palavras o que você cria..."></textarea>
+                    </div>
+                </section>
 
-                    <section class="gaveta-secao">
-                        <h3 class="gaveta-secao-titulo"><span class="romano">II</span>Avatar</h3>
-                        <div class="avatar-linha">
-                            <div id="avatar-preview-container" class="avatar-preview-container" title="Arraste para enquadrar">
-                                <div id="avatar-preview-arrastavel" class="avatar-preview-arrastavel">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                                </div>
+                <section class="gaveta-secao">
+                    <h3 class="gaveta-secao-titulo"><span class="romano">II</span>Avatar</h3>
+                    <div class="avatar-linha">
+                        <div id="avatar-preview-container" class="avatar-preview-container">
+                            <div id="avatar-preview-arrastavel" class="avatar-preview-arrastavel">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                             </div>
-                            <div class="avatar-acoes">
-                                <p class="gaveta-dica">Arraste a imagem para enquadrar o rosto.</p>
-                                <button type="button" class="btn-container" id="btn-upload-avatar">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                                    Escolher imagem
-                                </button>
-                            </div>
-                            <input type="file" id="input-config-avatar" accept="image/*" hidden>
                         </div>
-                        <div class="gaveta-zoom" id="avatar-zoom-linha" hidden>
+                        <div class="avatar-acoes">
+                            <p class="gaveta-dica">Enquadre o rosto dentro do círculo.</p>
+                            <button type="button" class="btn-container" id="btn-upload-avatar">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                Escolher imagem
+                            </button>
+                        </div>
+                        <input type="file" id="input-config-avatar" accept="image/*" hidden>
+                    </div>
+                    <div class="gaveta-ajuste" id="avatar-ajuste" hidden>
+                        <div class="gaveta-zoom">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/><path d="M8 11h6"/></svg>
                             <input type="range" id="avatar-zoom" min="1" max="3" step="0.01" value="1" aria-label="Zoom do avatar">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/><path d="M8 11h6M11 8v6"/></svg>
                         </div>
-                    </section>
+                        <button type="button" class="btn-container btn-ajustar" id="avatar-btn-ajuste" aria-pressed="false">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20"/></svg>
+                            <span class="btn-rotulo">Ajustar posição</span>
+                        </button>
+                    </div>
+                </section>
 
-                    <section class="gaveta-secao">
-                        <h3 class="gaveta-secao-titulo"><span class="romano">III</span>Capa</h3>
-                        <div id="capa-preview-container" class="capa-preview-container" hidden>
-                            <div id="capa-preview-arrastavel" class="capa-preview-arrastavel"></div>
-                        </div>
-                        <div class="capa-vazia" id="capa-vazia">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
-                            Nenhuma capa ainda
-                        </div>
-                        <div class="gaveta-zoom" id="capa-zoom-linha" hidden>
+                <section class="gaveta-secao">
+                    <h3 class="gaveta-secao-titulo"><span class="romano">III</span>Capa</h3>
+                    <div id="capa-preview-container" class="capa-preview-container" hidden>
+                        <div id="capa-preview-arrastavel" class="capa-preview-arrastavel"></div>
+                    </div>
+                    <div class="capa-vazia" id="capa-vazia">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+                        Nenhuma capa ainda
+                    </div>
+                    <div class="gaveta-ajuste" id="capa-ajuste" hidden>
+                        <div class="gaveta-zoom">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/><path d="M8 11h6"/></svg>
                             <input type="range" id="capa-zoom" min="1" max="3" step="0.01" value="1" aria-label="Zoom da capa">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/><path d="M8 11h6M11 8v6"/></svg>
                         </div>
-                        <button type="button" class="btn-container" id="btn-upload-capa">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                            Escolher imagem de capa
-                        </button>
-                        <input type="file" id="input-config-capa" accept="image/*" hidden>
-                    </section>
-
-                    <!-- Ação: no fim do conteúdo, rola junto com a gaveta -->
-                    <div class="gaveta-acoes">
-                        <button type="submit" id="btn-salvar-config" class="btn-gaveta btn-gaveta--primario">
-                            <svg class="btn-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-                            <span class="btn-rotulo">Salvar alterações</span>
+                        <button type="button" class="btn-container btn-ajustar" id="capa-btn-ajuste" aria-pressed="false">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20"/></svg>
+                            <span class="btn-rotulo">Ajustar posição</span>
                         </button>
                     </div>
+                    <button type="button" class="btn-container" id="btn-upload-capa">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        Escolher imagem de capa
+                    </button>
+                    <input type="file" id="input-config-capa" accept="image/*" hidden>
+                </section>
 
+                <div class="gaveta-acoes">
+                    <button type="submit" id="btn-salvar-config" class="btn-gaveta btn-gaveta--primario">
+                        <svg class="btn-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                        <span class="btn-rotulo">Salvar alterações</span>
+                    </button>
                 </div>
             </form>
-        </div>
+        </section>
 
         <!-- Painel da Redação -->
-        <div id="config-redacao" class="config-painel" hidden>
-            <button type="button" class="atelie-gaveta-fechar atelie-gaveta-fechar--flutuante" id="btn-fechar-config-redacao" aria-label="Fechar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+        <section id="config-redacao" class="config-painel">
+            <div class="gaveta-fechar-wrap">
+                <button type="button" class="atelie-gaveta-fechar" id="btn-fechar-config-redacao" aria-label="Fechar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+            </div>
 
-            <div class="gaveta-form">
-                <div class="atelie-gaveta-corpo">
+            <header class="atelie-gaveta-header">
+                <span class="gaveta-eyebrow">Redação</span>
+                <h2>Opções do Artigo</h2>
+            </header>
 
-                    <header class="atelie-gaveta-header">
-                        <div class="gaveta-titulo-bloco">
-                            <span class="gaveta-eyebrow">Redação</span>
-                            <h2>Opções do Artigo</h2>
-                        </div>
-                    </header>
+            <div class="gaveta-conteudo">
 
-                    <section class="gaveta-secao">
-                        <h3 class="gaveta-secao-titulo"><span class="romano">I</span>Capa do artigo</h3>
-                        <div id="capa-artigo-preview" class="capa-preview-container capa-preview-container--fixa" hidden>
-                            <div id="capa-artigo-arrastavel" class="capa-preview-arrastavel"></div>
-                            <button type="button" class="capa-remover" id="btn-remover-capa-artigo" aria-label="Remover capa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
-                        </div>
-                        <button type="button" class="btn-container" id="btn-upload-capa-artigo">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                            Escolher imagem de capa
-                        </button>
-                        <input type="file" id="input-capa-artigo" accept="image/*" hidden>
-                    </section>
-
-                    <section class="gaveta-secao">
-                        <h3 class="gaveta-secao-titulo"><span class="romano">II</span>Categoria</h3>
-                        <div class="campo">
-                            <input type="hidden" id="input-categoria-artigo" value="Matemática">
-                            <div class="dropdown" id="dropdown-categoria">
-                                <button type="button" class="dropdown-gatilho" aria-haspopup="listbox" aria-expanded="false" aria-label="Categoria do artigo">
-                                    <span class="dropdown-icone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><path d="M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></svg></span>
-                                    <span class="dropdown-valor">Matemática</span>
-                                    <svg class="dropdown-seta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-                                </button>
-                                <ul class="dropdown-lista" role="listbox" aria-label="Categorias">
-                                    <li role="option" tabindex="-1" data-valor="Matemática" aria-selected="true">
-                                        <span class="dropdown-icone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><path d="M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></svg></span>
-                                        <span>Matemática</span>
-                                        <svg class="dropdown-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-                                    </li>
-                                    <li role="option" tabindex="-1" data-valor="Ciências" aria-selected="false">
-                                        <span class="dropdown-icone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v7.5L4.5 19a2 2 0 0 0 1.7 3h11.6a2 2 0 0 0 1.7-3L14 9.5V2"/><path d="M8.5 2h7"/><path d="M7 16h10"/></svg></span>
-                                        <span>Ciências</span>
-                                        <svg class="dropdown-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-                                    </li>
-                                    <li role="option" tabindex="-1" data-valor="Redação & Literatura" aria-selected="false">
-                                        <span class="dropdown-icone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg></span>
-                                        <span>Redação &amp; Literatura</span>
-                                        <svg class="dropdown-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-                                    </li>
-                                    <li role="option" tabindex="-1" data-valor="História & Geografia" aria-selected="false">
-                                        <span class="dropdown-icone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="3" x2="21" y1="22" y2="22"/><line x1="6" x2="6" y1="18" y2="11"/><line x1="10" x2="10" y1="18" y2="11"/><line x1="14" x2="14" y1="18" y2="11"/><line x1="18" x2="18" y1="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg></span>
-                                        <span>História &amp; Geografia</span>
-                                        <svg class="dropdown-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-                                    </li>
-                                    <li role="option" tabindex="-1" data-valor="Dicas de Estudo" aria-selected="false">
-                                        <span class="dropdown-icone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg></span>
-                                        <span>Dicas de Estudo</span>
-                                        <svg class="dropdown-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-                    </section>
-
-                    <!-- Ação: no fim do conteúdo, rola junto com a gaveta -->
-                    <div class="gaveta-acoes">
-                        <button type="button" class="btn-gaveta btn-gaveta--perigo" id="btn-descartar-rascunho">
-                            <svg class="btn-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
-                            <span class="btn-rotulo">Descartar rascunho</span>
-                        </button>
+                <section class="gaveta-secao">
+                    <h3 class="gaveta-secao-titulo"><span class="romano">I</span>Capa do artigo</h3>
+                    <div id="capa-artigo-preview" class="capa-preview-container capa-preview-container--fixa" hidden>
+                        <div id="capa-artigo-arrastavel" class="capa-preview-arrastavel"></div>
+                        <button type="button" class="capa-remover" id="btn-remover-capa-artigo" aria-label="Remover capa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
                     </div>
+                    <button type="button" class="btn-container" id="btn-upload-capa-artigo">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        Escolher imagem de capa
+                    </button>
+                    <input type="file" id="input-capa-artigo" accept="image/*" hidden>
+                </section>
 
+                <section class="gaveta-secao">
+                    <h3 class="gaveta-secao-titulo"><span class="romano">II</span>Categoria</h3>
+                    <div class="campo">
+                        <input type="hidden" id="input-categoria-artigo" value="Matemática">
+                        <div class="dropdown" id="dropdown-categoria">
+                            <button type="button" class="dropdown-gatilho" aria-haspopup="listbox" aria-expanded="false" aria-label="Categoria do artigo">
+                                <span class="dropdown-icone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><path d="M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></svg></span>
+                                <span class="dropdown-valor">Matemática</span>
+                                <svg class="dropdown-seta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                            </button>
+                            <ul class="dropdown-lista" role="listbox" aria-label="Categorias">
+                                <li role="option" tabindex="-1" data-valor="Matemática" aria-selected="true">
+                                    <span class="dropdown-icone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><path d="M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></svg></span>
+                                    <span>Matemática</span>
+                                    <svg class="dropdown-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                                </li>
+                                <li role="option" tabindex="-1" data-valor="Ciências" aria-selected="false">
+                                    <span class="dropdown-icone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v7.5L4.5 19a2 2 0 0 0 1.7 3h11.6a2 2 0 0 0 1.7-3L14 9.5V2"/><path d="M8.5 2h7"/><path d="M7 16h10"/></svg></span>
+                                    <span>Ciências</span>
+                                    <svg class="dropdown-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                                </li>
+                                <li role="option" tabindex="-1" data-valor="Redação & Literatura" aria-selected="false">
+                                    <span class="dropdown-icone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg></span>
+                                    <span>Redação &amp; Literatura</span>
+                                    <svg class="dropdown-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                                </li>
+                                <li role="option" tabindex="-1" data-valor="História & Geografia" aria-selected="false">
+                                    <span class="dropdown-icone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="3" x2="21" y1="22" y2="22"/><line x1="6" x2="6" y1="18" y2="11"/><line x1="10" x2="10" y1="18" y2="11"/><line x1="14" x2="14" y1="18" y2="11"/><line x1="18" x2="18" y1="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg></span>
+                                    <span>História &amp; Geografia</span>
+                                    <svg class="dropdown-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                                </li>
+                                <li role="option" tabindex="-1" data-valor="Dicas de Estudo" aria-selected="false">
+                                    <span class="dropdown-icone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg></span>
+                                    <span>Dicas de Estudo</span>
+                                    <svg class="dropdown-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="gaveta-acoes">
+                    <button type="button" class="btn-gaveta btn-gaveta--perigo" id="btn-descartar-rascunho">
+                        <svg class="btn-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+                        <span class="btn-rotulo">Descartar rascunho</span>
+                    </button>
                 </div>
             </div>
-        </div>
+        </section>
     </aside>
 
+    <!-- Menu de contexto das imagens (botão direito) -->
     <div class="img-menu" id="img-menu" role="menu" hidden>
         <div class="img-menu-titulo">Imagem</div>
         <button type="button" role="menuitem" data-alin="left">
@@ -468,6 +457,6 @@
     <script src="assets/js/auth.js"></script>
     <script src="assets/js/lib/utils.js"></script>
     <script src="assets/js/layout.js"></script>
-    <script src="assets/js/pages/atelie.js?v=57"></script>
+    <script src="assets/js/pages/atelie.js?v=55"></script>
 </body>
 </html>
