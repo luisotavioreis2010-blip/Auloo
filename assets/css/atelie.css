@@ -1,27 +1,25 @@
 @charset "UTF-8";
 /* ==============================================================
-   ATELIE.CSS — v57
+   ATELIE.CSS — v58
    --------------------------------------------------------------
-   Correções estruturais (sem !important, sem remendos):
+   Correção da v57: o scroll do desktop voltou a funcionar.
 
-   - MODELO DE SCROLL POR BREAKPOINT:
-     * Desktop (>1024px): html rola, body é visible → preserva
-       position: sticky do editor.
-     * Mobile (<=1024px): body é o contêiner de scroll, html fica
-       hidden → o gesto de arrastar funciona direto nos cards.
+   MODELO DE SCROLL POR BREAKPOINT (sem !important):
 
-   - Trava da gaveta via classes no BODY (não mais no HTML):
-     body.atelie-travado → overflow: hidden.
-     Sem !important: a especificidade das classes resolve.
+   Desktop (>1024px):
+     html { height: auto; overflow-y: auto }  ← RODA DO MOUSE ROLA
+     body { overflow-y: visible }             ← body NÃO vira contêiner
 
-   - ENQUADRADOR (avatar/capa):
-     pointer-events: auto em PAI e FILHO (na v55 o filho tinha
-     `none`, o que fazia o hit-testing falhar no mobile — nenhum
-     evento chegava ao container). touch-action: none só nos
-     enquadradores, não vaza para a gaveta.
+   Mobile (<=1024px):
+     html { height: 100%; overflow: hidden }
+     body { height: 100dvh; overflow-y: auto } ← GESTO ARRASTA NOS CARDS
 
-   - TÍTULO DA GAVETA rola junto com o conteúdo (não é fixo).
-     Apenas o botão de fechar flutua, sobreposto.
+   Trava da gaveta:
+     body.mural-body.atelie-travado { overflow: hidden }
+
+   ENQUADRADOR (avatar/capa):
+     pointer-events: auto em PAI e FILHO (corrige hit-test no mobile)
+     touch-action: none só nos enquadradores
    ============================================================== */
 
 :root {
@@ -30,29 +28,34 @@
 
 /* ==============================================================
    0. MODELO DE SCROLL — desktop vs mobile
-   --------------------------------------------------------------
-   Desktop: html rola, body é visible (preserva sticky).
-   Mobile:  body rola, html é hidden (gesto nativo nos cards).
    ============================================================== */
 
-/* Desktop: html é o contêiner de scroll */
+/* --- DESKTOP (padrão) --- */
 html {
-    height: 100%;
-    overflow-x: hidden;
+    height: auto;
+    min-height: 100%;
     overflow-y: auto;
+    overflow-x: hidden;
     scrollbar-gutter: stable;
 }
 
 body.mural-body {
     box-sizing: border-box;
-    min-height: 100%;
+    height: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
     display: flex;
     flex-direction: column;
     overflow-x: hidden;
     overflow-y: visible;
 }
 
-/* Mobile: body vira o contêiner de scroll */
+/* Trava de scroll quando a gaveta (sobreposição) está aberta */
+body.mural-body.atelie-travado {
+    overflow: hidden;
+}
+
+/* --- MOBILE --- */
 @media (max-width: 1024px) {
     html {
         height: 100%;
@@ -66,15 +69,9 @@ body.mural-body {
         -webkit-overflow-scrolling: touch;
         overscroll-behavior-y: contain;
     }
-    /* Trava a página quando a gaveta está aberta (só a gaveta rola) */
     body.mural-body.atelie-travado {
         overflow: hidden;
     }
-}
-
-/* Desktop também pode travar via body (quando gaveta abre sobreposta) */
-body.mural-body.atelie-travado {
-    overflow: hidden;
 }
 
 /* ==============================================================
@@ -1098,7 +1095,6 @@ body.img-arrastando .img-selecao { opacity: 0; }
 
 .config-painel.ativo { display: flex; }
 
-/* Botão de fechar flutuante */
 .atelie-gaveta-fechar--flutuante {
     position: absolute;
     top: 1rem;
@@ -1820,7 +1816,6 @@ body.img-arrastando .img-selecao { opacity: 0; }
 
 .modal-fechar svg { width: 18px; height: 18px; }
 
-/* Modal de confirmação */
 .modal-confirmar-conteudo {
     max-width: 440px;
     padding: 2rem;
@@ -1909,7 +1904,6 @@ body.img-arrastando .img-selecao { opacity: 0; }
    10. RESPONSIVIDADE
    ============================================================== */
 
-/* Desktop grande: gaveta permanente ao lado */
 @media (min-width: 1367px) {
     .atelie-main {
         margin-right: var(--gaveta-w);
@@ -1929,7 +1923,6 @@ body.img-arrastando .img-selecao { opacity: 0; }
     }
 }
 
-/* Tablet grande: gaveta permanente só no modo redação */
 @media (min-width: 1025px) and (max-width: 1366px) {
     .atelie-main { margin-left: 0; padding: 2rem 1rem; }
     #atelie-main.modo-redacao {
@@ -1944,7 +1937,6 @@ body.img-arrastando .img-selecao { opacity: 0; }
     body.atelie-modo-redacao .atelie-gaveta-fechar--flutuante { display: none; }
 }
 
-/* Mobile / tablet pequeno */
 @media (max-width: 1024px) {
     .atelie-main { margin-left: 0; padding: 1rem; }
     #atelie-main.modo-redacao { padding: 1rem 0.75rem 3rem; }
