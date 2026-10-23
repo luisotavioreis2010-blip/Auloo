@@ -9,10 +9,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400;1,500&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-
+    
     <link rel="stylesheet" href="assets/css/global.css">
     <link rel="stylesheet" href="assets/css/estante.css">
-    <link rel="stylesheet" href="assets/css/atelie.css?v=54">
+    <link rel="stylesheet" href="assets/css/atelie.css?v=46">
 </head>
 <body class="mural-body">
 
@@ -86,13 +86,13 @@
             <form id="container-editar-nome" class="container-expansivel" hidden novalidate><label for="input-novo-nome">Nome</label><input type="text" id="input-novo-nome" autocomplete="off" maxlength="60" placeholder="Digite seu novo nome"><button id="btn-salvar-nome" class="btn-container" type="submit">Salvar</button></form>
             <button class="ficha-item" id="btn-editar-senha" type="button" aria-expanded="false" aria-controls="container-editar-senha container-criar-senha"><span class="ficha-romano">&#10033;</span><span class="ficha-texto">Senha</span></button>
             <form id="container-editar-senha" class="container-expansivel" hidden novalidate>
-                <label for="input-senha-atual">Senha Atual</label><div class="wrapper-olho-senha"><input type="password" id="input-senha-atual" placeholder="Senha atual" autocomplete="current-password"><button type="button" class="btn-olho-senha" aria-pressed="false" data-target="input-senha-atual"><svg class="icone-olho-aberto"><use href="#icone-olho-aberto"/></svg><svg class="icone-olho-fechado"><use href="#icone-olho-fechado"/></svg></button></div>
-                <label for="input-senha-nova">Nova Senha</label><div class="wrapper-olho-senha"><input type="password" id="input-senha-nova" placeholder="Nova senha" autocomplete="new-password"><button type="button" class="btn-olho-senha" aria-pressed="false" data-target="input-senha-nova"><svg class="icone-olho-aberto"><use href="#icone-olho-aberto"/></svg><svg class="icone-olho-fechado"><use href="#icone-olho-fechado"/></svg></button></div>
+                <label for="input-senha-atual">Senha Atual</label><div class="wrapper-olho-senha"><input type="password" id="input-senha-atual" placeholder="Senha atual"><button type="button" class="btn-olho-senha" aria-pressed="false" data-target="input-senha-atual"><svg class="icone-olho-aberto"><use href="#icone-olho-aberto"/></svg><svg class="icone-olho-fechado"><use href="#icone-olho-fechado"/></svg></button></div>
+                <label for="input-senha-nova">Nova Senha</label><div class="wrapper-olho-senha"><input type="password" id="input-senha-nova" placeholder="Nova senha"><button type="button" class="btn-olho-senha" aria-pressed="false" data-target="input-senha-nova"><svg class="icone-olho-aberto"><use href="#icone-olho-aberto"/></svg><svg class="icone-olho-fechado"><use href="#icone-olho-fechado"/></svg></button></div>
                 <button id="btn-confirmar-senha" class="btn-container" type="submit">Atualizar Senha</button>
             </form>
             <form id="container-criar-senha" class="container-expansivel" hidden novalidate>
-                <label for="input-nova-senha-criar">Criar Senha</label><div class="wrapper-olho-senha"><input type="password" id="input-nova-senha-criar" placeholder="Nova senha" autocomplete="new-password"><button type="button" class="btn-olho-senha" aria-pressed="false" data-target="input-nova-senha-criar"><svg class="icone-olho-aberto"><use href="#icone-olho-aberto"/></svg><svg class="icone-olho-fechado"><use href="#icone-olho-fechado"/></svg></button></div>
-                <label for="input-confirmar-senha-criar">Confirmar Senha</label><div class="wrapper-olho-senha"><input type="password" id="input-confirmar-senha-criar" placeholder="Confirmar senha" autocomplete="new-password"><button type="button" class="btn-olho-senha" aria-pressed="false" data-target="input-confirmar-senha-criar"><svg class="icone-olho-aberto"><use href="#icone-olho-aberto"/></svg><svg class="icone-olho-fechado"><use href="#icone-olho-fechado"/></svg></button></div>
+                <label for="input-nova-senha-criar">Criar Senha</label><div class="wrapper-olho-senha"><input type="password" id="input-nova-senha-criar" placeholder="Nova senha"><button type="button" class="btn-olho-senha" aria-pressed="false" data-target="input-nova-senha-criar"><svg class="icone-olho-aberto"><use href="#icone-olho-aberto"/></svg><svg class="icone-olho-fechado"><use href="#icone-olho-fechado"/></svg></button></div>
+                <label for="input-confirmar-senha-criar">Confirmar Senha</label><div class="wrapper-olho-senha"><input type="password" id="input-confirmar-senha-criar" placeholder="Confirmar senha"><button type="button" class="btn-olho-senha" aria-pressed="false" data-target="input-confirmar-senha-criar"><svg class="icone-olho-aberto"><use href="#icone-olho-aberto"/></svg><svg class="icone-olho-fechado"><use href="#icone-olho-fechado"/></svg></button></div>
                 <button id="btn-confirmar-criar-senha" class="btn-container" type="submit">Criar Senha</button>
             </form>
             <button class="ficha-item" id="btn-saiba-mais" type="button" aria-expanded="false" aria-controls="container-saiba-mais"><span class="ficha-romano">&#10022;</span><span class="ficha-texto">Saiba mais</span></button>
@@ -134,15 +134,14 @@
             </nav>
 
             <section id="aba-canal" class="aba-conteudo ativa">
-                <div id="canal-lista" class="canal-lista"></div>
-                <div class="canal-vazio" id="canal-vazio" hidden>
+                <div class="canal-vazio">
                     <p>O seu canal ainda não tem publicações.</p>
                 </div>
             </section>
         </div>
 
         <section id="aba-redacao" class="aba-conteudo">
-
+            
             <div id="redacao-intro" class="redacao-intro">
                 <img src="assets/img/ilustracoes/Thesis-bro.png" alt="Escrevendo" class="ilustracao-redacao">
                 <h2>A página em branco</h2>
@@ -151,7 +150,7 @@
             </div>
 
             <div id="redacao-editor" class="redacao-editor" hidden>
-
+                
                 <div class="editor-topo-custom">
                     <button type="button" id="btn-cancelar-escrita" class="btn-voltar-editor" aria-label="Voltar">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
@@ -168,7 +167,7 @@
                         <button type="button" title="Lista" data-cmd="insertUnorderedList"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></svg></button>
                         <div class="editor-divisor"></div>
                         <button type="button" title="Inserir imagem" id="btn-inserir-img"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></button>
-
+                        
                         <button type="button" title="Opções do Artigo" id="btn-opcoes-mobile" class="btn-mobile-only">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
                         </button>
@@ -179,10 +178,10 @@
 
                 <div class="editor-folha" id="editor-folha">
                     <div class="editor-corpo">
-                        <input type="text" class="editor-titulo" id="input-titulo" placeholder="Título do seu texto..." maxlength="120" autocomplete="off">
+                        <input type="text" class="editor-titulo" id="input-titulo" placeholder="Título do seu texto..." maxlength="120">
                         <div class="editor-ornamento" aria-hidden="true"><span>&#10022;</span></div>
                         <div class="editor-conteudo" id="input-conteudo" contenteditable="true" data-placeholder="Comece a escrever..." data-vazio="true"></div>
-
+                        
                         <div class="editor-status" aria-live="polite">
                             <span id="contador-palavras">0 palavras</span>
                             <span class="ponto"></span>
@@ -191,6 +190,7 @@
                         </div>
                     </div>
 
+                    <!-- Caixa de seleção com alças de redimensionar -->
                     <div class="img-selecao" id="img-selecao" contenteditable="false" aria-hidden="true">
                         <span class="img-handle" data-h="nw"></span>
                         <span class="img-handle" data-h="ne"></span>
@@ -199,6 +199,7 @@
                         <span class="img-selecao-rotulo" id="img-selecao-rotulo"></span>
                     </div>
 
+                    <!-- Barra flutuante da imagem -->
                     <div class="img-flutuante" id="img-flutuante" contenteditable="false" role="toolbar" aria-label="Opções da imagem">
                         <button type="button" data-tam="p" title="Pequena">P</button>
                         <button type="button" data-tam="m" title="Média">M</button>
@@ -212,6 +213,7 @@
                         <button type="button" data-acao="remover" title="Remover imagem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg></button>
                     </div>
 
+                    <!-- Linha que mostra onde a imagem vai cair ao arrastar -->
                     <div class="img-indicador" id="img-indicador" hidden><span></span></div>
                 </div>
             </div>
@@ -224,14 +226,17 @@
                 <h2>Forjar seu Ateliê</h2>
                 <button type="button" id="btn-fechar-modal" class="modal-fechar" aria-label="Fechar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
             </header>
-            <form id="form-criar-atelie" novalidate>
-                <div class="campo"><label for="input-nome-atelie">Nome do Ateliê</label><input type="text" id="input-nome-atelie" placeholder="Ex: O Ateliê do João" required maxlength="60" autocomplete="off"></div>
-                <div class="campo"><label for="input-bio-atelie">Descrição (Bio)</label><textarea id="input-bio-atelie" placeholder="Amante de exatas e café..." rows="3" maxlength="200"></textarea></div>
-                <button type="submit" class="btn-primario btn-criar-atelie-full" id="btn-salvar-atelie">Criar Ateliê</button>
+            <form id="form-criar-atelie">
+                <div class="campo"><label for="input-nome-atelie">Nome do Ateliê</label><input type="text" id="input-nome-atelie" placeholder="Ex: O Ateliê do João" required></div>
+                <div class="campo"><label for="input-bio-atelie">Descrição (Bio)</label><textarea id="input-bio-atelie" placeholder="Amante de exatas e café..." rows="3"></textarea></div>
+                <button type="submit" class="btn-primario" id="btn-salvar-atelie" style="width: 100%; margin-top: 1rem;">Criar Ateliê</button>
             </form>
         </div>
     </div>
 
+    <!-- ==============================================
+         GAVETA LATERAL (os dois painéis têm a mesma estrutura)
+         ============================================== -->
     <div class="gaveta-overlay-config" id="overlay-config"></div>
     <aside class="atelie-gaveta" id="gaveta-config">
 
@@ -252,7 +257,7 @@
                         <h3 class="gaveta-secao-titulo"><span class="romano">I</span>Identidade</h3>
                         <div class="campo">
                             <label for="input-config-nome">Nome do Ateliê</label>
-                            <input type="text" id="input-config-nome" maxlength="60" required autocomplete="off">
+                            <input type="text" id="input-config-nome" maxlength="60" required>
                         </div>
                         <div class="campo">
                             <label for="input-config-bio">Descrição (Bio)</label>
@@ -383,6 +388,15 @@
                         </div>
                     </section>
 
+                    <section class="gaveta-secao">
+                        <h3 class="gaveta-secao-titulo"><span class="romano">III</span>Dicas do editor</h3>
+                        <ul class="gaveta-dicas">
+                            <li><span><strong>Clique</strong> numa imagem para mudar o tamanho pelas alças.</span></li>
+                            <li><span><strong>Arraste</strong> a imagem para mover. Solte na borda esquerda ou direita para o texto contornar.</span></li>
+                            <li><span><strong>Botão direito</strong> na imagem abre todas as opções.</span></li>
+                        </ul>
+                    </section>
+
                 </div>
 
                 <footer class="gaveta-rodape">
@@ -395,6 +409,7 @@
         </div>
     </aside>
 
+    <!-- Menu de contexto das imagens (botão direito) -->
     <div class="img-menu" id="img-menu" role="menu" hidden>
         <div class="img-menu-titulo">Imagem</div>
         <button type="button" role="menuitem" data-alin="left">
@@ -445,6 +460,6 @@
     <script src="assets/js/auth.js"></script>
     <script src="assets/js/lib/utils.js"></script>
     <script src="assets/js/layout.js"></script>
-    <script src="assets/js/pages/atelie.js?v=54"></script>
+    <script src="assets/js/pages/atelie.js?v=46"></script>
 </body>
 </html>
