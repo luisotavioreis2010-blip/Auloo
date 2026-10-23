@@ -1,17 +1,27 @@
 @charset "UTF-8";
 /* ==============================================================
-   ATELIE.CSS — v56
+   ATELIE.CSS — v57
    --------------------------------------------------------------
-   Correções estruturais (não são remendos):
-   - Enquadrador (avatar/capa): pointer-events: auto em PAI e FILHO.
-     Na v55 o filho tinha `pointer-events: none`, o que fazia o
-     hit-testing falhar no mobile: nenhum evento (pointer, touch,
-     mouse) chegava ao container. Corrigido na raiz.
-   - touch-action: none em PAI e FILHO (necessário nos dois níveis
-     para o navegador mobile não interceptar o gesto).
-   - Título da gaveta rola junto com o conteúdo (não é mais fixo).
+   Correções estruturais (sem !important, sem remendos):
+
+   - MODELO DE SCROLL POR BREAKPOINT:
+     * Desktop (>1024px): html rola, body é visible → preserva
+       position: sticky do editor.
+     * Mobile (<=1024px): body é o contêiner de scroll, html fica
+       hidden → o gesto de arrastar funciona direto nos cards.
+
+   - Trava da gaveta via classes no BODY (não mais no HTML):
+     body.atelie-travado → overflow: hidden.
+     Sem !important: a especificidade das classes resolve.
+
+   - ENQUADRADOR (avatar/capa):
+     pointer-events: auto em PAI e FILHO (na v55 o filho tinha
+     `none`, o que fazia o hit-testing falhar no mobile — nenhum
+     evento chegava ao container). touch-action: none só nos
+     enquadradores, não vaza para a gaveta.
+
+   - TÍTULO DA GAVETA rola junto com o conteúdo (não é fixo).
      Apenas o botão de fechar flutua, sobreposto.
-   - Modelo de scroll "blindado" preservado (só a janela rola).
    ============================================================== */
 
 :root {
@@ -19,33 +29,52 @@
 }
 
 /* ==============================================================
-   0. MODELO DE SCROLL — apenas a JANELA (viewport) rola
+   0. MODELO DE SCROLL — desktop vs mobile
    --------------------------------------------------------------
-   html e body NÃO são contêineres de scroll. Isso preserva o
-   position: sticky (editor-topo-custom) e evita scroll duplo.
+   Desktop: html rola, body é visible (preserva sticky).
+   Mobile:  body rola, html é hidden (gesto nativo nos cards).
    ============================================================== */
-html:root {
-    height: auto !important;
-    min-height: 100%;
-    overflow-x: hidden !important;
-    overflow-y: auto !important;
+
+/* Desktop: html é o contêiner de scroll */
+html {
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
     scrollbar-gutter: stable;
 }
 
 body.mural-body {
     box-sizing: border-box;
-    height: auto !important;
-    min-height: 100vh;
-    min-height: 100dvh;
+    min-height: 100%;
     display: flex;
     flex-direction: column;
-    overflow-x: clip !important;
-    overflow-y: visible !important;
+    overflow-x: hidden;
+    overflow-y: visible;
 }
 
-/* Trava o scroll do fundo só enquanto a gaveta (sobreposição) está aberta */
-html:root.atelie-travado {
-    overflow: hidden !important;
+/* Mobile: body vira o contêiner de scroll */
+@media (max-width: 1024px) {
+    html {
+        height: 100%;
+        overflow: hidden;
+    }
+    body.mural-body {
+        height: 100vh;
+        height: 100dvh;
+        overflow-y: auto;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-y: contain;
+    }
+    /* Trava a página quando a gaveta está aberta (só a gaveta rola) */
+    body.mural-body.atelie-travado {
+        overflow: hidden;
+    }
+}
+
+/* Desktop também pode travar via body (quando gaveta abre sobreposta) */
+body.mural-body.atelie-travado {
+    overflow: hidden;
 }
 
 /* ==============================================================
@@ -1012,14 +1041,11 @@ body.img-arrastando .img-selecao { opacity: 0; }
 .img-menu-seg button.ativo { background: var(--vinho); color: #fff; }
 
 /* ==============================================================
-   6. GAVETA LATERAL — v56
+   6. GAVETA LATERAL
    --------------------------------------------------------------
-   Estrutura:
-   - O título (header) está DENTRO de .atelie-gaveta-corpo e rola
-     junto com o conteúdo (não é fixo).
-   - Apenas o botão de fechar flutua, sobreposto no canto superior
-     direito do painel (position: absolute).
-   - O corpo da gaveta é o ÚNICO elemento com overflow-y: auto.
+   - O corpo é o ÚNICO elemento com overflow-y: auto.
+   - O título (header) rola junto com o conteúdo (não é fixo).
+   - O botão de fechar flutua, sobreposto no canto do painel.
    ============================================================== */
 .atelie-gaveta {
     position: fixed;
@@ -1066,12 +1092,13 @@ body.img-arrastando .img-selecao { opacity: 0; }
     flex: 1;
     min-height: 0;
     overflow: hidden;
-    position: relative; /* âncora para o botão de fechar flutuante */
+    position: relative;
+    touch-action: auto;
 }
 
 .config-painel.ativo { display: flex; }
 
-/* Botão de fechar flutuante — ancorado no canto superior direito do painel */
+/* Botão de fechar flutuante */
 .atelie-gaveta-fechar--flutuante {
     position: absolute;
     top: 1rem;
@@ -1100,7 +1127,6 @@ body.img-arrastando .img-selecao { opacity: 0; }
 
 .atelie-gaveta-fechar--flutuante svg { width: 16px; height: 16px; }
 
-/* Cabeçalho que ROLA junto com o conteúdo */
 .atelie-gaveta-header {
     position: relative;
     padding: 0 0 1.25rem;
@@ -1122,7 +1148,7 @@ body.img-arrastando .img-selecao { opacity: 0; }
     display: flex;
     flex-direction: column;
     gap: 0.3rem;
-    padding-right: 48px; /* evita sobreposição do botão X */
+    padding-right: 48px;
 }
 
 .gaveta-eyebrow {
@@ -1157,13 +1183,14 @@ body.img-arrastando .img-selecao { opacity: 0; }
     overflow-y: auto;
     overflow-x: hidden;
     overscroll-behavior: contain;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
     padding: 1.5rem 1.75rem calc(2rem + env(safe-area-inset-bottom, 0px));
     display: flex;
     flex-direction: column;
     gap: 1.25rem;
     scrollbar-width: thin;
     scrollbar-color: var(--dourado-fraco) transparent;
-    -webkit-overflow-scrolling: touch;
 }
 
 .atelie-gaveta-corpo > * { flex-shrink: 0; }
@@ -1281,16 +1308,12 @@ body.img-arrastando .img-selecao { opacity: 0; }
 }
 
 /* ==============================================================
-   ENQUADRADOR (avatar/capa) — v56
+   ENQUADRADOR (avatar/capa)
    --------------------------------------------------------------
-   Regra de ouro para arrastar funcionar no mobile:
-   1. `pointer-events: auto` no PAI e no FILHO (sem isso, o
-      hit-testing falha e NENHUM evento chega no container).
-   2. `touch-action: none` no PAI e no FILHO (sem isso, o
-      navegador intercepta o gesto como scroll/zoom da página).
-   3. `user-select: none` e `-webkit-touch-callout: none` para
-      evitar seleção de texto / menu de contexto ao toque.
-    ============================================================== */
+   pointer-events: auto em PAI e FILHO (sem isso o hit-testing
+   falha no mobile e nenhum evento chega ao container).
+   touch-action: none só AQUI — não vaza para a gaveta/cards.
+   ============================================================== */
 .avatar-linha {
     display: flex;
     align-items: center;

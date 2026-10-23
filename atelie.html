@@ -9,9 +9,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400;1,500&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    
     <link rel="stylesheet" href="assets/css/global.css">
     <link rel="stylesheet" href="assets/css/estante.css">
-    <link rel="stylesheet" href="assets/css/atelie.css?v=55">
+    <link rel="stylesheet" href="assets/css/atelie.css?v=57">
 </head>
 <body class="mural-body">
 
@@ -246,9 +247,9 @@
     </div>
 
     <!-- ==============================================
-         GAVETA LATERAL — v55
-         Título agora rola junto (não é mais fixo).
-         Só a barra de fechar é fixa no topo, sobreposta.
+         GAVETA LATERAL — v57
+         Título rola junto com o conteúdo (não é fixo).
+         Só o botão X flutua, sobreposto no canto do painel.
          ============================================== -->
     <div class="gaveta-overlay-config" id="overlay-config"></div>
     <aside class="atelie-gaveta" id="gaveta-config">
@@ -324,6 +325,7 @@
                         <input type="file" id="input-config-capa" accept="image/*" hidden>
                     </section>
 
+                    <!-- Ação: no fim do conteúdo, rola junto com a gaveta -->
                     <div class="gaveta-acoes">
                         <button type="submit" id="btn-salvar-config" class="btn-gaveta btn-gaveta--primario">
                             <svg class="btn-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
@@ -403,6 +405,7 @@
                         </div>
                     </section>
 
+                    <!-- Ação: no fim do conteúdo, rola junto com a gaveta -->
                     <div class="gaveta-acoes">
                         <button type="button" class="btn-gaveta btn-gaveta--perigo" id="btn-descartar-rascunho">
                             <svg class="btn-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
@@ -465,6 +468,6 @@
     <script src="assets/js/auth.js"></script>
     <script src="assets/js/lib/utils.js"></script>
     <script src="assets/js/layout.js"></script>
-    <script src="assets/js/pages/atelie.js?v=55"></script>
+    <script src="assets/js/pages/atelie.js?v=57"></script>
 </body>
 </html>

@@ -1,17 +1,34 @@
 /* ==============================================================
-   ATELIE.JS — v55
+   ATELIE.JS — v57
    --------------------------------------------------------------
-   Refatorações estruturais:
-   - Enquadrador reescrito com Pointer Events puros + touch-action
-     (funciona em mobile sem conflito com o scroll da gaveta).
-   - Título da gaveta agora rola junto (feito no HTML/CSS).
-   - URL.createObjectURL da capa é revogado (capaBlobUrl).
-   - aguardarSupabase() com feedback visual de erro.
-   - carregarCanal() usa DOMParser (sem executar HTML do banco).
-   - avatarEditado compara com estado original persistido no banco.
-   - Modal de confirmação próprio (substitui confirm()).
+   Correções estruturais em relação à v55:
+
+   - TRAVA DE SCROLL NO BODY (não mais no HTML). Alinhado com o
+     CSS v57, que faz o `body` ser o contêiner de scroll no mobile.
+     `abrirGaveta()` → body.classList.add('atelie-travado')
+     `fecharGaveta()` → body.classList.remove('atelie-travado')
+
+   - ENQUADRADOR UNIVERSAL:
+     * pointerdown / pointermove / pointerup (Pointer Events)
+     * touchstart / touchmove / touchend (fallback mobile)
+     * mousedown / mousemove / mouseup (fallback desktop antigo)
+     * setPointerCapture ANTES de qualquer preventDefault
+     * SEM preventDefault no pointerdown (só no pointermove)
+     → Funciona em qualquer navegador, mobile ou desktop.
+
+   - URL.revokeObjectURL em avatar e capa (sem vazamento).
+
+   - DOMParser no carregarCanal (não executa HTML do banco).
+
+   - Modal de confirmação próprio (substitui confirm() nativo).
+
    - execComando() centraliza execCommand.
+
    - setModoRedacao() sincroniza body + main.
+
+   - aguardarSupabase() com tela de erro visual.
+
+   - Persistência de avatar_position / avatar_zoom.
    ============================================================== */
 (function () {
     'use strict';
@@ -98,8 +115,14 @@
 
     function validarImagem(file) {
         if (!file) return false;
-        if (!/^image\//.test(file.type)) { avisar('Escolha um arquivo de imagem.', 'erro'); return false; }
-        if (file.size > MAX_MB * 1024 * 1024) { avisar('A imagem deve ter no máximo ' + MAX_MB + ' MB.', 'erro'); return false; }
+        if (!/^image\//.test(file.type)) {
+            avisar('Escolha um arquivo de imagem.', 'erro');
+            return false;
+        }
+        if (file.size > MAX_MB * 1024 * 1024) {
+            avisar('A imagem deve ter no máximo ' + MAX_MB + ' MB.', 'erro');
+            return false;
+        }
         return true;
     }
 
@@ -150,7 +173,7 @@
         });
     }
 
-    // Helper para execCommand (futuro ponto único de migração)
+    // Helper para execCommand
     function execComando(cmd, value) {
         try {
             document.execCommand(cmd, false, value === undefined ? null : value);
@@ -166,14 +189,14 @@
     }
 
     // ============================================================
-    // ENQUADRADOR (avatar/capa) — Pointer Events puros
+    // ENQUADRADOR UNIVERSAL (pointer + touch + mouse)
     // ============================================================
     function criarEnquadrador({ container, camada, slider, linhaZoom, aoImagem, aoMudar }) {
         const est = { x: 50, y: 50, zoom: 1, nw: 0, nh: 0, pronto: false };
         const ponteiros = new Map();
-        let ix = 0, iy = 0, x0 = 50, y0 = 50, dist0 = 0, zoom0 = 1;
         let arrastando = false;
-        let capturando = false;
+        let ix = 0, iy = 0, x0 = 50, y0 = 50;
+        let dist0 = 0, zoom0 = 1;
         const limitar = (v, a, b) => Math.max(a, Math.min(b, v));
 
         function aplicar() {
@@ -199,63 +222,117 @@
             if (m.livreY > 0.5) est.y = limitar(y0 - (dy / (est.zoom * m.s)) / m.livreY * 100, 0, 100);
             aplicar(); mudou();
         }
-        const distancia = () => {
-            const [a, b] = [...ponteiros.values()];
-            return Math.hypot(a.x - b.x, a.y - b.y);
-        };
 
-        // --- pointerdown: registra ponteiro e captura ---
+        function iniciar(x, y) {
+            if (!est.pronto) return false;
+            ix = x; iy = y;
+            x0 = est.x; y0 = est.y;
+            arrastando = true;
+            return true;
+        }
+        function continuar(x, y) {
+            if (!arrastando) return;
+            mover(x - ix, y - iy);
+        }
+        function finalizar() {
+            arrastando = false;
+        }
+
+        // ---- POINTER EVENTS (desktop + mobile moderno) ----
         container.addEventListener('pointerdown', (e) => {
-            if (!est.pronto) return;
             if (e.pointerType === 'mouse' && e.button !== 0) return;
-            // impede gesto do navegador (scroll/zoom) enquanto interage
-            e.preventDefault();
-            ponteiros.set(e.pointerId, { x: e.clientX, y: e.clientY });
             try { container.setPointerCapture(e.pointerId); } catch (_) {}
-            capturando = true;
-            if (ponteiros.size === 1) {
-                arrastando = true;
-                ix = e.clientX; iy = e.clientY;
-                x0 = est.x; y0 = est.y;
-            } else if (ponteiros.size === 2) {
+            ponteiros.set(e.pointerId, { x: e.clientX, y: e.clientY });
+            if (ponteiros.size === 1) iniciar(e.clientX, e.clientY);
+            else if (ponteiros.size === 2) {
                 arrastando = false;
-                dist0 = distancia();
+                const [a, b] = [...ponteiros.values()];
+                dist0 = Math.hypot(a.x - b.x, a.y - b.y);
                 zoom0 = est.zoom;
             }
-        }, { passive: false });
+        }, { passive: true });
 
         container.addEventListener('pointermove', (e) => {
             if (!ponteiros.has(e.pointerId)) return;
             ponteiros.set(e.pointerId, { x: e.clientX, y: e.clientY });
-            e.preventDefault();
             if (ponteiros.size === 2 && dist0 > 0) {
-                definirZoom(zoom0 * (distancia() / dist0));
-            } else if (arrastando) {
-                mover(e.clientX - ix, e.clientY - iy);
+                const [a, b] = [...ponteiros.values()];
+                const d = Math.hypot(a.x - b.x, a.y - b.y);
+                definirZoom(zoom0 * (d / dist0));
+                return;
             }
-        }, { passive: false });
+            continuar(e.clientX, e.clientY);
+        }, { passive: true });
 
         const soltar = (e) => {
             ponteiros.delete(e.pointerId);
-            dist0 = 0;
             if (ponteiros.size === 1) {
                 const [p] = [...ponteiros.values()];
-                arrastando = true;
-                ix = p.x; iy = p.y;
-                x0 = est.x; y0 = est.y;
-            } else {
-                arrastando = false;
-                if (ponteiros.size === 0) capturando = false;
+                iniciar(p.x, p.y);
+            } else if (ponteiros.size === 0) {
+                dist0 = 0;
+                finalizar();
             }
         };
-        container.addEventListener('pointerup', soltar);
-        container.addEventListener('pointercancel', soltar);
-        container.addEventListener('pointerleave', (e) => {
-            // Só solta se não houver captura ativa (segurança em desktop)
-            if (!capturando && ponteiros.has(e.pointerId)) soltar(e);
+        container.addEventListener('pointerup', soltar, { passive: true });
+        container.addEventListener('pointercancel', soltar, { passive: true });
+
+        // ---- TOUCH EVENTS (fallback universal mobile) ----
+        container.addEventListener('touchstart', (e) => {
+            if (!est.pronto) return;
+            if (e.touches.length === 1) {
+                iniciar(e.touches[0].clientX, e.touches[0].clientY);
+            } else if (e.touches.length === 2) {
+                arrastando = false;
+                dist0 = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                zoom0 = est.zoom;
+            }
+        }, { passive: true });
+
+        container.addEventListener('touchmove', (e) => {
+            if (!est.pronto) return;
+            if (e.touches.length === 2 && dist0 > 0) {
+                const d = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                definirZoom(zoom0 * (d / dist0));
+                if (e.cancelable) e.preventDefault();
+                return;
+            }
+            if (arrastando && e.touches.length === 1) {
+                if (e.cancelable) e.preventDefault();
+                continuar(e.touches[0].clientX, e.touches[0].clientY);
+            }
+        }, { passive: false });
+
+        container.addEventListener('touchend', () => {
+            if (dist0) { dist0 = 0; return; }
+            finalizar();
+        }, { passive: true });
+        container.addEventListener('touchcancel', () => {
+            finalizar();
+            dist0 = 0;
+        }, { passive: true });
+
+        // ---- MOUSE EVENTS (fallback desktop antigo) ----
+        container.addEventListener('mousedown', (e) => {
+            if (e.button !== 0) return;
+            if (e.pointerType) return; // se Pointer Events funcionam, ignora
+            iniciar(e.clientX, e.clientY);
+        });
+        document.addEventListener('mousemove', (e) => {
+            if (!arrastando) return;
+            continuar(e.clientX, e.clientY);
+        });
+        document.addEventListener('mouseup', () => {
+            if (arrastando) finalizar();
         });
 
-        // Zoom pela roda só com Ctrl/⌘
+        // ---- WHEEL (zoom com Ctrl/⌘) ----
         container.addEventListener('wheel', (e) => {
             if (!est.pronto || !(e.ctrlKey || e.metaKey)) return;
             e.preventDefault();
@@ -285,7 +362,9 @@
             },
             limpar() {
                 est.pronto = false;
-                est.x = 50; est.y = 50; est.zoom = 1;
+                est.x = 50;
+                est.y = 50;
+                est.zoom = 1;
                 camada.style.backgroundImage = '';
                 aplicar();
                 if (linhaZoom) linhaZoom.hidden = true;
@@ -295,6 +374,36 @@
             temImagem: () => est.pronto
         };
     }
+
+    // ============================================================
+    // ABRIR / FECHAR GAVETA — trava de scroll no BODY (v57)
+    // ============================================================
+    let scrollYGuardado = 0;
+
+    function abrirGaveta() {
+        if (gavetaPermanente()) return;
+        scrollYGuardado = window.scrollY || window.pageYOffset || 0;
+        document.body.classList.add('atelie-travado');
+        $('gaveta-config').classList.add('ativa');
+        $('overlay-config').classList.add('ativa');
+        document.body.classList.add('atelie-gaveta-aberta');
+    }
+
+    function fecharGaveta(forcar) {
+        if (forcar !== true && gavetaPermanente()) return;
+        const estavaTravado = document.body.classList.contains('atelie-travado');
+        $('gaveta-config').classList.remove('ativa');
+        $('overlay-config').classList.remove('ativa');
+        document.body.classList.remove('atelie-gaveta-aberta');
+        document.body.classList.remove('atelie-travado');
+        // Só restaura a posição se a gaveta realmente estava travando o scroll
+        if (estavaTravado && Math.abs((window.scrollY || 0) - scrollYGuardado) > 1) {
+            window.scrollTo(0, scrollYGuardado);
+        }
+    }
+
+    // Se a página voltar do cache do navegador (botão "voltar") com a trava ligada, destrava
+    window.addEventListener('pageshow', () => fecharGaveta(true));
 
     // ============================================================
     // INÍCIO
@@ -331,11 +440,10 @@
     function mostrarErroConexao() {
         const div = document.createElement('div');
         div.className = 'atelie-erro-conexao';
-        div.innerHTML = `
-            <h2>Não foi possível conectar</h2>
-            <p>Verifique sua conexão com a internet e recarregue a página.</p>
-            <button type="button" class="btn-primario" id="btn-recarregar-erro">Recarregar</button>
-        `;
+        div.innerHTML =
+            '<h2>Não foi possível conectar</h2>' +
+            '<p>Verifique sua conexão com a internet e recarregue a página.</p>' +
+            '<button type="button" class="btn-primario" id="btn-recarregar-erro">Recarregar</button>';
         document.body.appendChild(div);
         const btn = $('btn-recarregar-erro');
         if (btn) btn.addEventListener('click', () => window.location.reload());
@@ -358,7 +466,9 @@
             $('atelie-vazio').hidden = false;
             $('atelie-conteudo').hidden = true;
             $('atelie-abas').hidden = true;
-            $('btn-criar-atelie').addEventListener('click', () => $('modal-criar-atelie').hidden = false);
+            $('btn-criar-atelie').addEventListener('click', () => {
+                $('modal-criar-atelie').hidden = false;
+            });
         } else {
             $('atelie-vazio').hidden = true;
             $('atelie-conteudo').hidden = false;
@@ -371,12 +481,17 @@
     }
 
     // ============================================================
-    // CANAL
+    // CANAL (DOMParser — sem executar HTML do banco)
     // ============================================================
     async function carregarCanal() {
-        const lista = $('canal-lista'), vazio = $('canal-vazio');
+        const lista = $('canal-lista');
+        const vazio = $('canal-vazio');
         if (!lista) return;
-        lista.innerHTML = '<div class="canal-carregando"><div class="canal-skeleton"></div><div class="canal-skeleton"></div></div>';
+        lista.innerHTML =
+            '<div class="canal-carregando">' +
+                '<div class="canal-skeleton"></div>' +
+                '<div class="canal-skeleton"></div>' +
+            '</div>';
         vazio.hidden = true;
 
         const { data: posts, error } = await db.from('posts')
@@ -402,7 +517,8 @@
             let texto = '';
             try {
                 const doc = new DOMParser().parseFromString(post.content || '', 'text/html');
-                doc.querySelectorAll('figure, img, figcaption, style, script, iframe, object, embed').forEach(el => el.remove());
+                doc.querySelectorAll('figure, img, figcaption, style, script, iframe, object, embed')
+                    .forEach(el => el.remove());
                 texto = (doc.body.textContent || '').replace(/\s+/g, ' ').trim();
             } catch (_) { texto = ''; }
             const trecho = texto.length > 220 ? texto.slice(0, 220).trim() + '…' : texto;
@@ -410,7 +526,9 @@
             card.innerHTML = capa +
                 '<div class="canal-post-corpo">' +
                     '<div class="canal-post-meta">' +
-                        (post.category ? '<span class="canal-post-categoria">' + escaparHtml(post.category) + '</span>' : '') +
+                        (post.category
+                            ? '<span class="canal-post-categoria">' + escaparHtml(post.category) + '</span>'
+                            : '') +
                         '<span>' + escaparHtml(formatarData(post.created_at)) + '</span>' +
                     '</div>' +
                     '<h2 class="canal-post-titulo">' + escaparHtml(post.title || 'Sem título') + '</h2>' +
@@ -429,18 +547,25 @@
             lista.appendChild(card);
         });
 
-        lista.querySelectorAll('[data-excluir]').forEach(btn => btn.addEventListener('click', async () => {
-            const ok = await confirmar('Excluir publicação', 'Essa ação não pode ser desfeita. Deseja continuar?');
-            if (!ok) return;
-            const { error } = await db.from('posts').delete().eq('id', btn.dataset.excluir);
-            if (error) return avisar('Não foi possível excluir.', 'erro');
-            avisar('Publicação excluída.');
-            carregarCanal();
-        }));
+        lista.querySelectorAll('[data-excluir]').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const ok = await confirmar(
+                    'Excluir publicação',
+                    'Essa ação não pode ser desfeita. Deseja continuar?'
+                );
+                if (!ok) return;
+                const { error } = await db.from('posts').delete().eq('id', btn.dataset.excluir);
+                if (error) return avisar('Não foi possível excluir.', 'erro');
+                avisar('Publicação excluída.');
+                carregarCanal();
+            });
+        });
 
-        lista.querySelectorAll('[data-ler]').forEach(btn => btn.addEventListener('click', () => {
-            window.location.href = 'post.html?id=' + encodeURIComponent(btn.dataset.ler);
-        }));
+        lista.querySelectorAll('[data-ler]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                window.location.href = 'post.html?id=' + encodeURIComponent(btn.dataset.ler);
+            });
+        });
     }
 
     // ============================================================
@@ -495,16 +620,19 @@
         if (capaFr) {
             if (atelie.cover_url) {
                 const [x, y] = parsePos(atelie.cover_position);
-                capaFr.carregar(atelie.cover_url, { x, y, zoom: parseFloat(atelie.cover_zoom) || 1 });
+                capaFr.carregar(atelie.cover_url, {
+                    x, y,
+                    zoom: parseFloat(atelie.cover_zoom) || 1
+                });
             } else capaFr.limpar();
         }
         // Avatar
         if (avatarFr) {
             if (atelie.avatar_url) {
                 avatarBlobUrl = null;
+                const [ax, ay] = parsePos(atelie.avatar_position);
                 avatarFr.carregar(atelie.avatar_url, {
-                    x: parsePos(atelie.avatar_position)[0],
-                    y: parsePos(atelie.avatar_position)[1],
+                    x: ax, y: ay,
                     zoom: parseFloat(atelie.avatar_zoom) || 1
                 });
             } else {
@@ -522,7 +650,9 @@
         const modal = $('modal-criar-atelie');
         if (!modal) return;
         $('btn-fechar-modal').addEventListener('click', () => modal.hidden = true);
-        modal.addEventListener('click', (e) => { if (e.target === modal) modal.hidden = true; });
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) modal.hidden = true;
+        });
 
         $('form-criar-atelie').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -603,7 +733,9 @@
         $('btn-fechar-config').addEventListener('click', () => fecharGaveta());
         $('btn-fechar-config-redacao').addEventListener('click', () => fecharGaveta());
         $('overlay-config').addEventListener('click', () => fecharGaveta());
-        window.addEventListener('resize', () => { if (gavetaPermanente()) fecharGaveta(true); });
+        window.addEventListener('resize', () => {
+            if (gavetaPermanente()) fecharGaveta(true);
+        });
 
         // --- Upload de avatar ---
         const inputAvatar = $('input-config-avatar');
@@ -612,22 +744,27 @@
             const file = inputAvatar.files[0];
             inputAvatar.value = '';
             if (!validarImagem(file)) return;
-            // Revoga URL antiga se existir
-            if (avatarBlobUrl) { URL.revokeObjectURL(avatarBlobUrl); avatarBlobUrl = null; }
+            if (avatarBlobUrl) {
+                URL.revokeObjectURL(avatarBlobUrl);
+                avatarBlobUrl = null;
+            }
             fileAvatar = file;
             avatarBlobUrl = URL.createObjectURL(file);
             avatarFr.carregar(avatarBlobUrl);
             avatarEditado = true;
         });
 
-        // --- Upload de capa (agora revoga URL antiga) ---
+        // --- Upload de capa (revoga URL antiga) ---
         const inputCapa = $('input-config-capa');
         $('btn-upload-capa').addEventListener('click', () => inputCapa.click());
         inputCapa.addEventListener('change', () => {
             const file = inputCapa.files[0];
             inputCapa.value = '';
             if (!validarImagem(file)) return;
-            if (capaBlobUrl) { URL.revokeObjectURL(capaBlobUrl); capaBlobUrl = null; }
+            if (capaBlobUrl) {
+                URL.revokeObjectURL(capaBlobUrl);
+                capaBlobUrl = null;
+            }
             fileCapa = file;
             capaBlobUrl = URL.createObjectURL(file);
             capaFr.carregar(capaBlobUrl);
@@ -658,7 +795,10 @@
 
         // --- Descartar rascunho ---
         $('btn-descartar-rascunho').addEventListener('click', async () => {
-            const ok = await confirmar('Descartar rascunho', 'Tem certeza que deseja descartar este rascunho?');
+            const ok = await confirmar(
+                'Descartar rascunho',
+                'Tem certeza que deseja descartar este rascunho?'
+            );
             if (ok) {
                 if (window.__resetarEditorAtelie) window.__resetarEditorAtelie();
                 document.querySelector('[data-aba="canal"]').click();
@@ -686,7 +826,8 @@
 
             const SAIDA = 512;
             const canvas = document.createElement('canvas');
-            canvas.width = SAIDA; canvas.height = SAIDA;
+            canvas.width = SAIDA;
+            canvas.height = SAIDA;
             const ctx = canvas.getContext('2d');
             ctx.fillStyle = '#fff';
             ctx.fillRect(0, 0, SAIDA, SAIDA);
@@ -721,7 +862,9 @@
                 // Capa
                 if (fileCapa) {
                     const path = usuarioLogado.id + '/atelie-capa-' + Date.now() + '.jpg';
-                    const up = await db.storage.from('avatars').upload(path, fileCapa, { contentType: fileCapa.type });
+                    const up = await db.storage.from('avatars').upload(path, fileCapa, {
+                        contentType: fileCapa.type
+                    });
                     if (up.error) throw up.error;
                     newCoverUrl = db.storage.from('avatars').getPublicUrl(path).data.publicUrl;
                 }
@@ -743,7 +886,6 @@
                 atelieAtual = data;
                 fileAvatar = null;
                 fileCapa = null;
-                // Revoga blob URLs antigas — já foram enviadas
                 if (avatarBlobUrl) { URL.revokeObjectURL(avatarBlobUrl); avatarBlobUrl = null; }
                 if (capaBlobUrl) { URL.revokeObjectURL(capaBlobUrl); capaBlobUrl = null; }
 
@@ -761,35 +903,7 @@
     }
 
     // ============================================================
-    // ABRIR / FECHAR GAVETA
-    // ============================================================
-    let scrollYGuardado = 0;
-
-    function abrirGaveta() {
-        if (gavetaPermanente()) return;
-        scrollYGuardado = window.scrollY || window.pageYOffset || 0;
-        document.documentElement.classList.add('atelie-travado');
-        $('gaveta-config').classList.add('ativa');
-        $('overlay-config').classList.add('ativa');
-        document.body.classList.add('atelie-gaveta-aberta');
-    }
-
-    function fecharGaveta(forcar) {
-        if (forcar !== true && gavetaPermanente()) return;
-        const estavaTravado = document.documentElement.classList.contains('atelie-travado');
-        $('gaveta-config').classList.remove('ativa');
-        $('overlay-config').classList.remove('ativa');
-        document.body.classList.remove('atelie-gaveta-aberta');
-        document.documentElement.classList.remove('atelie-travado');
-        if (estavaTravado && Math.abs((window.scrollY || 0) - scrollYGuardado) > 1) {
-            window.scrollTo(0, scrollYGuardado);
-        }
-    }
-
-    window.addEventListener('pageshow', () => fecharGaveta(true));
-
-    // ============================================================
-    // DROPDOWN
+    // DROPDOWN DE CATEGORIA
     // ============================================================
     function configurarDropdown() {
         const raiz = $('dropdown-categoria');
@@ -819,7 +933,10 @@
             iconeEl.innerHTML = li.querySelector('.dropdown-icone').innerHTML;
             fechar(true);
         }
-        gatilho.addEventListener('click', () => raiz.classList.contains('aberto') ? fechar() : abrir());
+        gatilho.addEventListener('click', () => {
+            if (raiz.classList.contains('aberto')) fechar();
+            else abrir();
+        });
         gatilho.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
                 e.preventDefault();
@@ -829,13 +946,27 @@
         itens.forEach((li, idx) => {
             li.addEventListener('click', () => escolher(li));
             li.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); escolher(li); }
-                else if (e.key === 'Escape') { e.preventDefault(); fechar(true); }
-                else if (e.key === 'ArrowDown') { e.preventDefault(); itens[(idx + 1) % itens.length].focus(); }
-                else if (e.key === 'ArrowUp') { e.preventDefault(); itens[(idx - 1 + itens.length) % itens.length].focus(); }
-                else if (e.key === 'Home') { e.preventDefault(); itens[0].focus(); }
-                else if (e.key === 'End') { e.preventDefault(); itens[itens.length - 1].focus(); }
-                else if (e.key === 'Tab') fechar();
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    escolher(li);
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    fechar(true);
+                } else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    itens[(idx + 1) % itens.length].focus();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    itens[(idx - 1 + itens.length) % itens.length].focus();
+                } else if (e.key === 'Home') {
+                    e.preventDefault();
+                    itens[0].focus();
+                } else if (e.key === 'End') {
+                    e.preventDefault();
+                    itens[itens.length - 1].focus();
+                } else if (e.key === 'Tab') {
+                    fechar();
+                }
             });
         });
         document.addEventListener('pointerdown', (e) => {
@@ -899,7 +1030,10 @@
                 document.querySelector('[data-aba="canal"]').click();
                 return;
             }
-            const ok = await confirmar('Descartar texto', 'Tem certeza que deseja apagar o que escreveu?');
+            const ok = await confirmar(
+                'Descartar texto',
+                'Tem certeza que deseja apagar o que escreveu?'
+            );
             if (ok) {
                 if (window.__resetarEditorAtelie) window.__resetarEditorAtelie();
                 document.querySelector('[data-aba="canal"]').click();
@@ -940,7 +1074,10 @@
             $('contador-palavras').textContent = palavras + (palavras === 1 ? ' palavra' : ' palavras');
             $('tempo-leitura').textContent = minutos + ' min de leitura';
         }
-        editor.addEventListener('input', () => { atualizarVazio(); posicionar(); });
+        editor.addEventListener('input', () => {
+            atualizarVazio();
+            posicionar();
+        });
         atualizarVazio();
 
         document.addEventListener('selectionchange', () => {
@@ -980,8 +1117,14 @@
         function normalizarBlocos() {
             let atual = null;
             [...editor.childNodes].forEach(n => {
-                if (n.nodeType === 1 && BLOCOS.has(n.tagName)) { atual = null; return; }
-                if (n.nodeType === 3 && !n.textContent.trim() && !atual) { n.remove(); return; }
+                if (n.nodeType === 1 && BLOCOS.has(n.tagName)) {
+                    atual = null;
+                    return;
+                }
+                if (n.nodeType === 3 && !n.textContent.trim() && !atual) {
+                    n.remove();
+                    return;
+                }
                 if (!atual) {
                     atual = document.createElement('p');
                     n.before(atual);
@@ -1070,7 +1213,10 @@
         const btnImg = $('btn-inserir-img');
         const inputImg = $('input-img');
         btnImg.addEventListener('mousedown', (e) => e.preventDefault());
-        btnImg.addEventListener('click', (e) => { e.preventDefault(); inputImg.click(); });
+        btnImg.addEventListener('click', (e) => {
+            e.preventDefault();
+            inputImg.click();
+        });
         inputImg.addEventListener('change', async () => {
             const file = inputImg.files[0];
             inputImg.value = '';
@@ -1114,7 +1260,9 @@
         }
         function definirAlinhamento(fig, al) {
             fig.dataset.align = al;
-            if (al !== 'center' && parseFloat(fig.style.width) > 85) definirTamanho(fig, 'm');
+            if (al !== 'center' && parseFloat(fig.style.width) > 85) {
+                definirTamanho(fig, 'm');
+            }
             fig.dataset.align = al;
         }
         function atualizarEstados() {
@@ -1183,7 +1331,10 @@
             }
         });
         window.addEventListener('resize', posicionar);
-        window.addEventListener('scroll', () => { posicionar(); fecharMenu(); }, true);
+        window.addEventListener('scroll', () => {
+            posicionar();
+            fecharMenu();
+        }, true);
         if ('ResizeObserver' in window) {
             new ResizeObserver(() => posicionar()).observe(editor);
         }
@@ -1463,9 +1614,15 @@
                 const larg = f.style.width || '55%';
                 const al = f.dataset.align || 'center';
                 let estilo = 'box-sizing:border-box;width:' + larg + ';max-width:100%;';
-                if (al === 'left') { estilo += 'float:left;margin:0.4rem 1.6rem 1rem 0;'; temFlutuante = true; }
-                else if (al === 'right') { estilo += 'float:right;margin:0.4rem 0 1rem 1.6rem;'; temFlutuante = true; }
-                else estilo += 'clear:both;margin:2rem auto;';
+                if (al === 'left') {
+                    estilo += 'float:left;margin:0.4rem 1.6rem 1rem 0;';
+                    temFlutuante = true;
+                } else if (al === 'right') {
+                    estilo += 'float:right;margin:0.4rem 0 1rem 1.6rem;';
+                    temFlutuante = true;
+                } else {
+                    estilo += 'clear:both;margin:2rem auto;';
+                }
                 f.setAttribute('style', estilo);
                 const img = f.querySelector('img');
                 if (img) {
