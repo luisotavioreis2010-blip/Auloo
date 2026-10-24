@@ -12,7 +12,7 @@
 
     <link rel="stylesheet" href="assets/css/global.css">
     <link rel="stylesheet" href="assets/css/estante.css">
-    <link rel="stylesheet" href="assets/css/atelie.css?v=55">
+    <link rel="stylesheet" href="assets/css/atelie.css?v=96">
 </head>
 <body class="mural-body">
 
@@ -27,6 +27,7 @@
             <a href="estante.html" class="logo" translate="no" style="text-decoration: none;">Auloo<span class="logo-dot">.</span></a>
         </div>
         <div class="navbar-right">
+            <button class="btn-voltar-redacao" id="btn-voltar-redacao" type="button" aria-label="Voltar para o canal" hidden>Voltar</button>
             <button class="btn-sair" id="btn-sair" type="button" aria-label="Sair do sistema">Sair</button>
             <button class="perfil-botao" id="perfil-botao" type="button" aria-label="Abrir ficha do aluno" aria-expanded="false" aria-controls="sidebar-perfil">
                 <span class="perfil-usuario" id="perfil-usuario"></span>
@@ -96,15 +97,16 @@
                 <button id="btn-confirmar-criar-senha" class="btn-container" type="submit">Criar Senha</button>
             </form>
             <button class="ficha-item" id="btn-saiba-mais" type="button" aria-expanded="false" aria-controls="container-saiba-mais"><span class="ficha-romano">&#10022;</span><span class="ficha-texto">Saiba mais</span></button>
-            <div id="container-saiba-mais" class="container-expansivel" hidden><a class="ficha-saiba-item" href="/?de=estante"><span class="ficha-saiba-num">I</span><span class="ficha-saiba-corpo"><strong>Conheça o Auloo</strong><small>Portfólio</small></span></a><a class="ficha-saiba-item" href="/termos.html?de=estante"><span class="ficha-saiba-num">II</span><span class="ficha-saiba-corpo"><strong>Termos</strong><small>Regras</small></span></a><a class="ficha-saiba-item" href="/privacidade.html?de=estante"><span class="ficha-saiba-num">III</span><span class="ficha-saiba-corpo"><strong>Privacidade</strong><small>Seus dados</small></span></a></div>
+            <div id="container-saiba-mais" class="container-expansivel" hidden>
+                <a class="ficha-saiba-item" href="/?de=estante"><span class="ficha-saiba-num">I</span><span class="ficha-saiba-corpo"><strong>Conheça o Auloo</strong><small>Portfólio</small></span></a>
+                <a class="ficha-saiba-item" href="/termos.html?de=estante"><span class="ficha-saiba-num">II</span><span class="ficha-saiba-corpo"><strong>Termos</strong><small>Regras</small></span></a>
+                <a class="ficha-saiba-item" href="/privacidade.html?de=estante"><span class="ficha-saiba-num">III</span><span class="ficha-saiba-corpo"><strong>Privacidade</strong><small>Seus dados</small></span></a>
+            </div>
         </nav>
     </aside>
 
     <input type="file" id="input-foto" accept="image/jpeg,image/png,image/gif,image/webp" hidden aria-label="Upload de foto de perfil">
 
-    <!-- ==============================================
-         CONTEÚDO PRINCIPAL
-         ============================================== -->
     <main class="atelie-main" id="atelie-main">
 
         <div id="atelie-vazio" class="atelie-vazio" hidden>
@@ -116,17 +118,19 @@
         <div id="wrapper-canal" class="wrapper-canal">
             <div id="atelie-conteudo" class="atelie-conteudo" hidden>
                 <div class="atelie-capa-wrapper">
-                    <img id="atelie-capa-img" class="atelie-capa-img" src="" alt="Capa do Ateliê">
+                    <img id="atelie-capa-img" class="atelie-capa-img" src="" alt="Capa do Ateliê" referrerpolicy="no-referrer">
                 </div>
+                
                 <div class="atelie-header">
+                    <button class="btn-config-engrenagem" id="btn-configurar-atelie" type="button" aria-label="Configurar">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    </button>
+
                     <div class="atelie-avatar" id="atelie-avatar"></div>
                     <div class="atelie-info">
                         <h1 class="atelie-nome" id="atelie-nome">Nome</h1>
                         <span class="atelie-handle" id="atelie-handle">@handle</span>
                         <p class="atelie-bio" id="atelie-bio">Bio</p>
-                    </div>
-                    <div class="atelie-acoes">
-                        <button class="btn-primario" id="btn-configurar-atelie" type="button">Configurar</button>
                     </div>
                 </div>
             </div>
@@ -144,77 +148,105 @@
             </section>
         </div>
 
-        <section id="aba-redacao" class="aba-conteudo">
-            <div id="redacao-editor" class="redacao-editor">
+        <!-- BARRA DE FERRAMENTAS -->
+        <div class="editor-topo-custom" id="editor-topo-custom" hidden>
+            
+            <button type="button" id="btn-toolbar-prev" class="btn-toolbar-nav" aria-label="Ferramenta anterior">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            </button>
 
-                <div class="editor-topo-custom">
-                    <button type="button" id="btn-cancelar-escrita" class="btn-voltar-editor" aria-label="Voltar">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
-                        <span>Voltar</span>
+            <div class="editor-toolbar-wrapper">
+                <div class="editor-toolbar" id="editor-toolbar-container" role="toolbar" aria-label="Formatação">
+                    
+                    <button type="button" title="Negrito" data-cmd="bold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4h8a4 4 0 0 1 0 8H6z"/><path d="M6 12h9a4 4 0 0 1 0 8H6z"/></svg></button>
+                    <button type="button" title="Itálico" data-cmd="italic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></svg></button>
+                    <button type="button" title="Sublinhado" data-cmd="underline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3v7a6 6 0 0 0 12 0V3"/><line x1="4" y1="21" x2="20" y2="21"/></svg></button>
+                    
+                    <div class="editor-divisor"></div>
+                    
+                    <button type="button" title="Alinhar à Esquerda" data-cmd="justifyLeft"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg></button>
+                    <button type="button" title="Centralizar" data-cmd="justifyCenter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="21" y1="18" x2="3" y2="18"/></svg></button>
+                    <button type="button" title="Alinhar à Direita" data-cmd="justifyRight"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="10" x2="7" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="21" y1="18" x2="7" y2="18"/></svg></button>
+                    
+                    <div class="editor-divisor"></div>
+                    
+                    <button type="button" title="Título" data-cmd="formatBlock" data-value="h2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12h8"/><path d="M4 5v14"/><path d="M12 5v14"/><path d="M17 10.5l3-1.5v10"/></svg></button>
+                    <button type="button" title="Citação" data-cmd="formatBlock" data-value="blockquote"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M4 17.5c0-4 1.2-7.3 4.8-9.5l1 1.4c-1.9 1.3-2.7 2.6-2.8 4H10V19H4zm9 0c0-4 1.2-7.3 4.8-9.5l1 1.4c-1.9 1.3-2.7 2.6-2.8 4H19V19h-6z" transform="translate(0 -2)"/></svg></button>
+                    <button type="button" title="Lista" data-cmd="insertUnorderedList"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></svg></button>
+                    
+                    <div class="editor-divisor"></div>
+                    
+                    <button type="button" title="Cor do Texto" id="btn-cor-texto" class="btn-cor-texto">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18.37 2.63 14 7l-1.59-1.59a2 2 0 0 0-2.82 0L8 7l9 9 1.59-1.59a2 2 0 0 0 0-2.82L17 10l4.37-4.37a2.12 2.12 0 1 0-3-3Z"/><path d="M9 8c-2 3-4 3.5-7 4l8 10c2-1 6-5 6-7"/><path d="M14.5 17.5 4.5 15"/></svg>
                     </button>
+                    <button type="button" title="Inserir imagem" id="btn-inserir-img"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></button>
+                    
+                    <button type="button" title="Opções do Artigo" id="btn-opcoes-mobile" class="btn-mobile-only"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
 
-                    <div class="editor-toolbar" role="toolbar" aria-label="Formatação">
-                        <button type="button" title="Negrito" data-cmd="bold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4h8a4 4 0 0 1 0 8H6z"/><path d="M6 12h9a4 4 0 0 1 0 8H6z"/></svg></button>
-                        <button type="button" title="Itálico" data-cmd="italic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></svg></button>
-                        <button type="button" title="Sublinhado" data-cmd="underline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3v7a6 6 0 0 0 12 0V3"/><line x1="4" y1="21" x2="20" y2="21"/></svg></button>
-                        <div class="editor-divisor"></div>
-                        <button type="button" title="Título" data-cmd="formatBlock" data-value="h2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12h8"/><path d="M4 5v14"/><path d="M12 5v14"/><path d="M17 10.5l3-1.5v10"/></svg></button>
-                        <button type="button" title="Citação" data-cmd="formatBlock" data-value="blockquote"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M4 17.5c0-4 1.2-7.3 4.8-9.5l1 1.4c-1.9 1.3-2.7 2.6-2.8 4H10V19H4zm9 0c0-4 1.2-7.3 4.8-9.5l1 1.4c-1.9 1.3-2.7 2.6-2.8 4H19V19h-6z" transform="translate(0 -2)"/></svg></button>
-                        <button type="button" title="Lista" data-cmd="insertUnorderedList"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></svg></button>
-                        <div class="editor-divisor"></div>
-                        <button type="button" title="Inserir imagem" id="btn-inserir-img"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></button>
-
-                        <button type="button" title="Opções do Artigo" id="btn-opcoes-mobile" class="btn-mobile-only">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                        </button>
-                    </div>
-
-                    <button type="button" class="btn-primario btn-publicar" id="btn-publicar-atelie">Publicar</button>
-                </div>
-
-                <div class="editor-folha" id="editor-folha">
-                    <div class="editor-corpo">
-                        <input type="text" class="editor-titulo" id="input-titulo" placeholder="Título do seu texto..." maxlength="120">
-                        <div class="editor-ornamento" aria-hidden="true"><span>&#10022;</span></div>
-                        <div class="editor-conteudo" id="input-conteudo" contenteditable="true" data-placeholder="Comece a escrever..." data-vazio="true"></div>
-
-                        <div class="editor-status" aria-live="polite">
-                            <span id="contador-palavras">0 palavras</span>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
-                            <span id="tempo-leitura">0 min de leitura</span>
-                        </div>
-                    </div>
-
-                    <div class="img-selecao" id="img-selecao" contenteditable="false" aria-hidden="true">
-                        <span class="img-handle" data-h="nw"></span>
-                        <span class="img-handle" data-h="ne"></span>
-                        <span class="img-handle" data-h="sw"></span>
-                        <span class="img-handle" data-h="se"></span>
-                        <span class="img-selecao-rotulo" id="img-selecao-rotulo"></span>
-                    </div>
-
-                    <div class="img-flutuante" id="img-flutuante" contenteditable="false" role="toolbar" aria-label="Opções da imagem">
-                        <button type="button" data-tam="p" title="Pequena">P</button>
-                        <button type="button" data-tam="m" title="Média">M</button>
-                        <button type="button" data-tam="g" title="Grande (largura total)">G</button>
-                        <span class="sep"></span>
-                        <button type="button" data-alin="left" title="Esquerda · texto ao redor"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="8" height="7" rx="1"/><path d="M14 5h7M14 9h7M3 15h18M3 19h18"/></svg></button>
-                        <button type="button" data-alin="center" title="Centralizada"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="4" width="10" height="7" rx="1"/><path d="M3 15h18M3 19h18"/></svg></button>
-                        <button type="button" data-alin="right" title="Direita · texto ao redor"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="13" y="4" width="8" height="7" rx="1"/><path d="M3 5h7M3 9h7M3 15h18M3 19h18"/></svg></button>
-                        <span class="sep"></span>
-                        <button type="button" class="grip" data-acao="mover" title="Segure e arraste para mover"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg></button>
-                        <button type="button" data-acao="remover" title="Remover imagem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg></button>
-                    </div>
-
-                    <div class="img-indicador" id="img-indicador" hidden><span></span></div>
                 </div>
             </div>
-        </section>
+
+            <button type="button" id="btn-toolbar-next" class="btn-toolbar-nav" aria-label="Próxima ferramenta">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+            </button>
+
+            <div class="painel-cores" id="painel-cores" hidden>
+                <div class="cores-lista">
+                    <button type="button" class="cor-btn" data-cor="#5c1a1a" style="background:#5c1a1a" title="Vinho"></button>
+                    <button type="button" class="cor-btn" data-cor="#1a1614" style="background:#1a1614" title="Preto"></button>
+                    <button type="button" class="cor-btn" data-cor="#b8894a" style="background:#b8894a" title="Dourado"></button>
+                    <button type="button" class="cor-btn" data-cor="#3a5a40" style="background:#3a5a40" title="Verde"></button>
+                    <button type="button" class="cor-btn" data-cor="#2b4c7e" style="background:#2b4c7e" title="Azul"></button>
+                    <button type="button" class="cor-btn" data-cor="#a63a3a" style="background:#a63a3a" title="Vermelho"></button>
+                    <button type="button" class="cor-btn" data-cor="#6b4c7e" style="background:#6b4c7e" title="Roxo"></button>
+                </div>
+                <div class="cor-custom">
+                    <label for="input-cor-texto">Outra cor...</label>
+                    <input type="color" id="input-cor-texto" value="#5c1a1a">
+                </div>
+            </div>
+        </div>
+
+        <div id="redacao-editor" class="redacao-editor" hidden>
+            <div class="editor-folha" id="editor-folha">
+                <div class="editor-corpo">
+                    <input type="text" class="editor-titulo" id="input-titulo" placeholder="Título do seu texto..." maxlength="120">
+                    <div class="editor-ornamento" aria-hidden="true"><span>&#10022;</span></div>
+                    <div class="editor-conteudo" id="input-conteudo" contenteditable="true" data-placeholder="Comece a escrever..." data-vazio="true"></div>
+                    <div class="editor-status" aria-live="polite">
+                        <span id="contador-palavras">0 palavras</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                        <span id="tempo-leitura">0 min de leitura</span>
+                    </div>
+                </div>
+
+                <div class="img-selecao" id="img-selecao" contenteditable="false" aria-hidden="true">
+                    <span class="img-handle" data-h="nw"></span>
+                    <span class="img-handle" data-h="ne"></span>
+                    <span class="img-handle" data-h="sw"></span>
+                    <span class="img-handle" data-h="se"></span>
+                    <span class="img-selecao-rotulo" id="img-selecao-rotulo"></span>
+                </div>
+
+                <div class="img-flutuante" id="img-flutuante" contenteditable="false" role="toolbar" aria-label="Opções da imagem">
+                    <button type="button" data-tam="p" title="Pequena">P</button>
+                    <button type="button" data-tam="m" title="Média">M</button>
+                    <button type="button" data-tam="g" title="Grande (largura total)">G</button>
+                    <span class="sep"></span>
+                    <button type="button" data-alin="left" title="Esquerda · texto ao redor"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="8" height="7" rx="1"/><path d="M14 5h7M14 9h7M3 15h18M3 19h18"/></svg></button>
+                    <button type="button" data-alin="center" title="Centralizada"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="4" width="10" height="7" rx="1"/><path d="M3 15h18M3 19h18"/></svg></button>
+                    <button type="button" data-alin="right" title="Direita · texto ao redor"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="13" y="4" width="8" height="7" rx="1"/><path d="M3 5h7M3 9h7M3 15h18M3 19h18"/></svg></button>
+                    <span class="sep"></span>
+                    <button type="button" class="grip" data-acao="mover" title="Segure e arraste para mover"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg></button>
+                    <button type="button" data-acao="remover" title="Remover imagem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg></button>
+                </div>
+
+                <div class="img-indicador" id="img-indicador" hidden><span></span></div>
+            </div>
+        </div>
+
     </main>
 
-    <!-- ==============================================
-         MODAL: CRIAR ATELIÊ
-         ============================================== -->
     <div id="modal-criar-atelie" class="modal-overlay" hidden>
         <div class="modal-conteudo">
             <header class="modal-header">
@@ -229,54 +261,32 @@
         </div>
     </div>
 
-    <!-- ==============================================
-         GAVETA LATERAL
-         Cada painel é UM contêiner de scroll: o botão X fica
-         "grudado" no topo, e o resto (título, seções, botões)
-         rola junto com o conteúdo.
-         ============================================== -->
     <div class="gaveta-overlay-config" id="overlay-config" aria-hidden="true"></div>
     <aside class="atelie-gaveta" id="gaveta-config" aria-label="Configurações">
 
-        <!-- Painel do Canal -->
         <section id="config-canal" class="config-painel ativo">
             <div class="gaveta-fechar-wrap">
                 <button type="button" class="atelie-gaveta-fechar" id="btn-fechar-config" aria-label="Fechar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
             </div>
-
             <header class="atelie-gaveta-header">
                 <span class="gaveta-eyebrow">Seu espaço</span>
                 <h2>Configurar Ateliê</h2>
             </header>
-
             <form id="form-config-atelie" class="gaveta-conteudo">
-
                 <section class="gaveta-secao">
                     <h3 class="gaveta-secao-titulo"><span class="romano">I</span>Identidade</h3>
-                    <div class="campo">
-                        <label for="input-config-nome">Nome do Ateliê</label>
-                        <input type="text" id="input-config-nome" maxlength="60" required>
-                    </div>
-                    <div class="campo">
-                        <label for="input-config-bio">Descrição (Bio)</label>
-                        <textarea id="input-config-bio" rows="3" maxlength="200" placeholder="Conte em poucas palavras o que você cria..."></textarea>
-                    </div>
+                    <div class="campo"><label for="input-config-nome">Nome do Ateliê</label><input type="text" id="input-config-nome" maxlength="60" required></div>
+                    <div class="campo"><label for="input-config-bio">Descrição (Bio)</label><textarea id="input-config-bio" rows="3" maxlength="200" placeholder="Conte em poucas palavras o que você cria..."></textarea></div>
                 </section>
-
                 <section class="gaveta-secao">
                     <h3 class="gaveta-secao-titulo"><span class="romano">II</span>Avatar</h3>
                     <div class="avatar-linha">
                         <div id="avatar-preview-container" class="avatar-preview-container">
-                            <div id="avatar-preview-arrastavel" class="avatar-preview-arrastavel">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                            </div>
+                            <div id="avatar-preview-arrastavel" class="avatar-preview-arrastavel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
                         </div>
                         <div class="avatar-acoes">
                             <p class="gaveta-dica">Enquadre o rosto dentro do círculo.</p>
-                            <button type="button" class="btn-container" id="btn-upload-avatar">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                                Escolher imagem
-                            </button>
+                            <button type="button" class="btn-container" id="btn-upload-avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Escolher imagem</button>
                         </div>
                         <input type="file" id="input-config-avatar" accept="image/*" hidden>
                     </div>
@@ -286,75 +296,54 @@
                             <input type="range" id="avatar-zoom" min="1" max="3" step="0.01" value="1" aria-label="Zoom do avatar">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/><path d="M8 11h6M11 8v6"/></svg>
                         </div>
-                        <button type="button" class="btn-container btn-ajustar" id="avatar-btn-ajuste" aria-pressed="false">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20"/></svg>
-                            <span class="btn-rotulo">Ajustar posição</span>
-                        </button>
+                        <button type="button" class="btn-container btn-ajustar" id="avatar-btn-ajuste" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20"/></svg><span class="btn-rotulo">Ajustar posição</span></button>
                     </div>
                 </section>
-
                 <section class="gaveta-secao">
                     <h3 class="gaveta-secao-titulo"><span class="romano">III</span>Capa</h3>
-                    <div id="capa-preview-container" class="capa-preview-container" hidden>
-                        <div id="capa-preview-arrastavel" class="capa-preview-arrastavel"></div>
-                    </div>
-                    <div class="capa-vazia" id="capa-vazia">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
-                        Nenhuma capa ainda
-                    </div>
+                    <div id="capa-preview-container" class="capa-preview-container" hidden><div id="capa-preview-arrastavel" class="capa-preview-arrastavel"></div></div>
+                    <div class="capa-vazia" id="capa-vazia"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>Nenhuma capa ainda</div>
                     <div class="gaveta-ajuste" id="capa-ajuste" hidden>
                         <div class="gaveta-zoom">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/><path d="M8 11h6"/></svg>
                             <input type="range" id="capa-zoom" min="1" max="3" step="0.01" value="1" aria-label="Zoom da capa">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/><path d="M8 11h6M11 8v6"/></svg>
                         </div>
-                        <button type="button" class="btn-container btn-ajustar" id="capa-btn-ajuste" aria-pressed="false">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20"/></svg>
-                            <span class="btn-rotulo">Ajustar posição</span>
-                        </button>
+                        <button type="button" class="btn-container btn-ajustar" id="capa-btn-ajuste" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20"/></svg><span class="btn-rotulo">Ajustar posição</span></button>
                     </div>
-                    <button type="button" class="btn-container" id="btn-upload-capa">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                        Escolher imagem de capa
-                    </button>
+                    <button type="button" class="btn-container" id="btn-upload-capa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Escolher imagem de capa</button>
                     <input type="file" id="input-config-capa" accept="image/*" hidden>
                 </section>
-
                 <div class="gaveta-acoes">
-                    <button type="submit" id="btn-salvar-config" class="btn-gaveta btn-gaveta--primario">
-                        <svg class="btn-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-                        <span class="btn-rotulo">Salvar alterações</span>
-                    </button>
+                    <button type="submit" id="btn-salvar-config" class="btn-gaveta btn-gaveta--primario"><svg class="btn-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span class="btn-rotulo">Salvar alterações</span></button>
                 </div>
             </form>
         </section>
 
-        <!-- Painel da Redação -->
         <section id="config-redacao" class="config-painel">
             <div class="gaveta-fechar-wrap">
                 <button type="button" class="atelie-gaveta-fechar" id="btn-fechar-config-redacao" aria-label="Fechar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
             </div>
-
+            
             <header class="atelie-gaveta-header">
                 <span class="gaveta-eyebrow">Redação</span>
                 <h2>Opções do Artigo</h2>
             </header>
 
             <div class="gaveta-conteudo">
-
+                
+                <!-- Opção 1: Capa -->
                 <section class="gaveta-secao">
                     <h3 class="gaveta-secao-titulo"><span class="romano">I</span>Capa do artigo</h3>
                     <div id="capa-artigo-preview" class="capa-preview-container capa-preview-container--fixa" hidden>
                         <div id="capa-artigo-arrastavel" class="capa-preview-arrastavel"></div>
                         <button type="button" class="capa-remover" id="btn-remover-capa-artigo" aria-label="Remover capa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
                     </div>
-                    <button type="button" class="btn-container" id="btn-upload-capa-artigo">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                        Escolher imagem de capa
-                    </button>
+                    <button type="button" class="btn-container" id="btn-upload-capa-artigo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Escolher imagem de capa</button>
                     <input type="file" id="input-capa-artigo" accept="image/*" hidden>
                 </section>
-
+                
+                <!-- Opção 2: Categoria -->
                 <section class="gaveta-secao">
                     <h3 class="gaveta-secao-titulo"><span class="romano">II</span>Categoria</h3>
                     <div class="campo">
@@ -366,61 +355,36 @@
                                 <svg class="dropdown-seta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                             </button>
                             <ul class="dropdown-lista" role="listbox" aria-label="Categorias">
-                                <li role="option" tabindex="-1" data-valor="Matemática" aria-selected="true">
-                                    <span class="dropdown-icone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><path d="M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></svg></span>
-                                    <span>Matemática</span>
-                                    <svg class="dropdown-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-                                </li>
-                                <li role="option" tabindex="-1" data-valor="Ciências" aria-selected="false">
-                                    <span class="dropdown-icone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v7.5L4.5 19a2 2 0 0 0 1.7 3h11.6a2 2 0 0 0 1.7-3L14 9.5V2"/><path d="M8.5 2h7"/><path d="M7 16h10"/></svg></span>
-                                    <span>Ciências</span>
-                                    <svg class="dropdown-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-                                </li>
-                                <li role="option" tabindex="-1" data-valor="Redação & Literatura" aria-selected="false">
-                                    <span class="dropdown-icone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg></span>
-                                    <span>Redação &amp; Literatura</span>
-                                    <svg class="dropdown-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-                                </li>
-                                <li role="option" tabindex="-1" data-valor="História & Geografia" aria-selected="false">
-                                    <span class="dropdown-icone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="3" x2="21" y1="22" y2="22"/><line x1="6" x2="6" y1="18" y2="11"/><line x1="10" x2="10" y1="18" y2="11"/><line x1="14" x2="14" y1="18" y2="11"/><line x1="18" x2="18" y1="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg></span>
-                                    <span>História &amp; Geografia</span>
-                                    <svg class="dropdown-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-                                </li>
-                                <li role="option" tabindex="-1" data-valor="Dicas de Estudo" aria-selected="false">
-                                    <span class="dropdown-icone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg></span>
-                                    <span>Dicas de Estudo</span>
-                                    <svg class="dropdown-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-                                </li>
+                                <li role="option" tabindex="-1" data-valor="Matemática" aria-selected="true"><span class="dropdown-icone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><path d="M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></svg></span><span>Matemática</span><svg class="dropdown-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></li>
+                                <li role="option" tabindex="-1" data-valor="Ciências" aria-selected="false"><span class="dropdown-icone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v7.5L4.5 19a2 2 0 0 0 1.7 3h11.6a2 2 0 0 0 1.7-3L14 9.5V2"/><path d="M8.5 2h7"/><path d="M7 16h10"/></svg></span><span>Ciências</span><svg class="dropdown-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></li>
+                                <li role="option" tabindex="-1" data-valor="Redação & Literatura" aria-selected="false"><span class="dropdown-icone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg></span><span>Redação &amp; Literatura</span><svg class="dropdown-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></li>
+                                <li role="option" tabindex="-1" data-valor="História & Geografia" aria-selected="false"><span class="dropdown-icone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="3" x2="21" y1="22" y2="22"/><line x1="6" x2="6" y1="18" y2="11"/><line x1="10" x2="10" y1="18" y2="11"/><line x1="14" x2="14" y1="18" y2="11"/><line x1="18" x2="18" y1="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg></span><span>História &amp; Geografia</span><svg class="dropdown-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></li>
+                                <li role="option" tabindex="-1" data-valor="Dicas de Estudo" aria-selected="false"><span class="dropdown-icone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg></span><span>Dicas de Estudo</span><svg class="dropdown-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></li>
                             </ul>
                         </div>
                     </div>
                 </section>
 
-                <div class="gaveta-acoes">
-                    <button type="button" class="btn-gaveta btn-gaveta--perigo" id="btn-descartar-rascunho">
-                        <svg class="btn-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
-                        <span class="btn-rotulo">Descartar rascunho</span>
-                    </button>
-                </div>
+            </div>
+
+            <div class="gaveta-acoes-footer">
+                <button type="button" id="btn-publicar-atelie" class="btn-gaveta btn-gaveta--primario">
+                    <svg class="btn-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+                    <span class="btn-rotulo">Publicar Artigo</span>
+                </button>
+                <button type="button" class="btn-gaveta btn-gaveta--perigo" id="btn-descartar-rascunho">
+                    <svg class="btn-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+                    <span class="btn-rotulo">Descartar rascunho</span>
+                </button>
             </div>
         </section>
     </aside>
 
-    <!-- Menu de contexto das imagens (botão direito) -->
     <div class="img-menu" id="img-menu" role="menu" hidden>
         <div class="img-menu-titulo">Imagem</div>
-        <button type="button" role="menuitem" data-alin="left">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="8" height="7" rx="1"/><path d="M14 5h7M14 9h7M3 15h18M3 19h18"/></svg>
-            <span>Esquerda<small>Texto ao redor</small></span>
-        </button>
-        <button type="button" role="menuitem" data-alin="center">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="4" width="10" height="7" rx="1"/><path d="M3 15h18M3 19h18"/></svg>
-            <span>Centralizada<small>Sem texto ao lado</small></span>
-        </button>
-        <button type="button" role="menuitem" data-alin="right">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="13" y="4" width="8" height="7" rx="1"/><path d="M3 5h7M3 9h7M3 15h18M3 19h18"/></svg>
-            <span>Direita<small>Texto ao redor</small></span>
-        </button>
+        <button type="button" role="menuitem" data-alin="left"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="8" height="7" rx="1"/><path d="M14 5h7M14 9h7M3 15h18M3 19h18"/></svg><span>Esquerda<small>Texto ao redor</small></span></button>
+        <button type="button" role="menuitem" data-alin="center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="4" width="10" height="7" rx="1"/><path d="M3 15h18M3 19h18"/></svg><span>Centralizada<small>Sem texto ao lado</small></span></button>
+        <button type="button" role="menuitem" data-alin="right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="13" y="4" width="8" height="7" rx="1"/><path d="M3 5h7M3 9h7M3 15h18M3 19h18"/></svg><span>Direita<small>Texto ao redor</small></span></button>
         <div class="img-menu-sep"></div>
         <div class="img-menu-linha">
             <span class="img-menu-rotulo">Tamanho</span>
@@ -431,23 +395,11 @@
             </div>
         </div>
         <div class="img-menu-sep"></div>
-        <button type="button" role="menuitem" data-acao="subir">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
-            <span>Mover para cima</span>
-        </button>
-        <button type="button" role="menuitem" data-acao="descer">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-            <span>Mover para baixo</span>
-        </button>
-        <button type="button" role="menuitem" data-acao="legenda">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M4 12h10"/><path d="M4 17h16"/></svg>
-            <span>Editar legenda</span>
-        </button>
+        <button type="button" role="menuitem" data-acao="subir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg><span>Mover para cima</span></button>
+        <button type="button" role="menuitem" data-acao="descer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg><span>Mover para baixo</span></button>
+        <button type="button" role="menuitem" data-acao="legenda"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M4 12h10"/><path d="M4 17h16"/></svg><span>Editar legenda</span></button>
         <div class="img-menu-sep"></div>
-        <button type="button" role="menuitem" class="perigo" data-acao="remover">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>
-            <span>Remover imagem</span>
-        </button>
+        <button type="button" role="menuitem" class="perigo" data-acao="remover"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg><span>Remover imagem</span></button>
     </div>
 
     <input type="file" id="input-img" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
@@ -457,6 +409,6 @@
     <script src="assets/js/auth.js"></script>
     <script src="assets/js/lib/utils.js"></script>
     <script src="assets/js/layout.js"></script>
-    <script src="assets/js/pages/atelie.js?v=55"></script>
+    <script src="assets/js/pages/atelie.js?v=96"></script>
 </body>
 </html>
