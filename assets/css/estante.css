@@ -647,128 +647,203 @@ input, textarea, .ficha-email { -webkit-user-select: text; user-select: text; }
 .calendario-dias span.dia-outro-mes { opacity: 0.25; }
 
 /* ==============================================
-   9. DESKTOP (>= 1367px)
+   9. DESKTOP E NOTEBOOKS (>= 1025px) — Sidebar sempre aberta
    ============================================== */
+@media (min-width: 1025px) {
+    .sidebar {
+        transform: none !important;
+        visibility: visible !important;
+        position: fixed;
+        top: var(--navbar-h);
+        bottom: 0;
+        left: 0;
+        width: var(--sidebar-w);
+        z-index: 50;
+    }
+
+    /* Esconde o botão hamburger e overlay no desktop */
+    .btn-hamburger { display: none !important; }
+    .gaveta-overlay { display: none !important; }
+    .sidebar-icone { display: inline-flex !important; }
+    .sidebar-romano { display: none !important; }
+    
+    /* Ajusta a dashboard da estante */
+    .dashboard-main {
+        margin-left: var(--sidebar-w);
+        transition: margin 0.4s var(--ease);
+    }
+}
+
 @media (min-width: 1367px) {
-    :root { --navbar-h: 76px; --navbar-px: 2.4rem; --logo-size: 1.9rem; --sair-pad: 0.55rem 1.3rem; --sair-size: 0.68rem; --secao-pt: 3rem; --secao-px: 1.4rem; --menu-gap: 1.1rem; --titulo-size: 1.05rem; --nome-size: 0.88rem; --nome-ls: 1.8px; --ficha-pad: 2.2rem 1.7rem 1.5rem; --foto-size: 76px; --cal-titulo-size: 1.5rem; }
+    :root { 
+        --navbar-h: 76px; --navbar-px: 2.4rem; --logo-size: 1.9rem; 
+        --sair-pad: 0.55rem 1.3rem; --sair-size: 0.68rem; --secao-pt: 3rem; 
+        --secao-px: 1.4rem; --menu-gap: 1.1rem; --titulo-size: 1.05rem; 
+        --nome-size: 0.88rem; --nome-ls: 1.8px; --ficha-pad: 2.2rem 1.7rem 1.5rem; 
+        --foto-size: 76px; --cal-titulo-size: 1.5rem; 
+    }
     .sidebar { width: var(--sidebar-w); }
-    .dashboard-main { transition: margin 0.4s var(--ease); }
     body.ficha-aberta .dashboard-main { margin-right: var(--ficha-w); }
 }
 
 @media (min-width: 1441px) {
-    :root { --navbar-h: 90px; --navbar-px: 3.5rem; --logo-size: 2.2rem; --sair-pad: 0.7rem 1.6rem; --sair-size: 0.72rem; --avatar-size: 48px; --sidebar-w: 320px; --ficha-w: 400px; --cal-w: 540px; --secao-pt: 4rem; --secao-px: 1.5rem; --menu-gap: 1.2rem; --link-pad-y: 1.3rem; --link-pad-x: 1.1rem; --icone-size: 26px; --titulo-size: 1.1rem; --titulo-ls: 3px; --nome-size: 0.95rem; --nome-ls: 2px; --selo-pb: 2rem; --ficha-pad: 2.5rem 2rem 1.5rem; --foto-size: 88px; --main-pad: 4rem; --main-gap: 4rem; --cal-titulo-size: 1.8rem; --dia-pad: 0.85rem; --dia-size: 1rem; }
+    :root { 
+        --navbar-h: 90px; --navbar-px: 3.5rem; --logo-size: 2.2rem; 
+        --sair-pad: 0.7rem 1.6rem; --sair-size: 0.72rem; --avatar-size: 48px; 
+        --sidebar-w: 320px; --ficha-w: 400px; --cal-w: 540px; 
+        --secao-pt: 4rem; --secao-px: 1.5rem; --menu-gap: 1.2rem; 
+        --link-pad-y: 1.3rem; --link-pad-x: 1.1rem; --icone-size: 26px; 
+        --titulo-size: 1.1rem; --titulo-ls: 3px; --nome-size: 0.95rem; 
+        --nome-ls: 2px; --selo-pb: 2rem; --ficha-pad: 2.5rem 2rem 1.5rem; 
+        --foto-size: 88px; --main-pad: 4rem; --main-gap: 4rem; 
+        --cal-titulo-size: 1.8rem; --dia-pad: 0.85rem; --dia-size: 1rem; 
+    }
 }
 
 /* ==============================================
-   10. COMPACTO (<= 1366px)
+   10. COMPACTO: Tablets e Celulares (<= 1024px)
    ============================================== */
-@media (max-width: 1366px) {
-    html, body { position: fixed; top: 0; left: 0; width: 100%; height: var(--viewport-h); overflow: hidden; overscroll-behavior: none; touch-action: manipulation; }
+@media (max-width: 1024px) {
+    html, body { 
+        position: fixed; 
+        top: 0; 
+        left: 0; 
+        width: 100%; 
+        height: var(--viewport-h); 
+        overflow: hidden; 
+        overscroll-behavior: none; 
+        touch-action: manipulation; 
+    }
+    
     .navbar { touch-action: manipulation; }
-    .btn-hamburger { display: flex; }
+    .btn-hamburger { display: flex !important; }
     .gaveta-overlay { display: block; }
 
+    /* Sidebar escondida por padrão, vira gaveta */
     .sidebar {
-        top: 0; bottom: auto; z-index: 200; width: var(--drawer-w); max-width: var(--drawer-max); height: var(--viewport-h);
-        transform: translateX(-100%); visibility: hidden; transition: transform 0.4s var(--ease), visibility 0s linear 0.4s;
+        top: 0; 
+        bottom: auto; 
+        z-index: 9999; 
+        width: var(--drawer-w); 
+        max-width: var(--drawer-max); 
+        height: var(--viewport-h);
+        transform: translateX(-100%); 
+        visibility: hidden; 
+        transition: transform 0.4s var(--ease), visibility 0s linear 0.4s;
     }
-    .sidebar.aberta { transform: translateX(0); visibility: visible; transition: transform 0.4s var(--ease), visibility 0s; }
+    .sidebar.aberta { 
+        transform: translateX(0); 
+        visibility: visible; 
+        transition: transform 0.4s var(--ease), visibility 0s; 
+    }
     
-    .sidebar-icone { display: none; }
-    .sidebar-romano { display: inline-block; }
+    .sidebar-icone { display: none !important; }
+    .sidebar-romano { display: inline-block !important; }
 
-    .sidebar-direita { top: 0; bottom: auto; z-index: 9999; width: 100%; height: var(--viewport-h); overscroll-behavior: none; box-shadow: none; }
+    .sidebar-direita { 
+        top: 0; 
+        bottom: auto; 
+        z-index: 9999; 
+        width: 100%; 
+        height: var(--viewport-h); 
+        overscroll-behavior: none; 
+        box-shadow: none; 
+    }
+    
     body.campo-focado .sidebar-direita { padding-bottom: 50vh; }
 
     .dashboard-main {
-        flex-direction: column; align-items: stretch; justify-content: flex-start; gap: 0.5rem;
-        height: calc(var(--viewport-h) - var(--navbar-h)); min-height: 0; margin: 0;
-        padding: 0.5rem 1.5rem 2rem; overflow-x: hidden; overflow-y: auto;
-        -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+        flex-direction: column; 
+        align-items: stretch; 
+        justify-content: flex-start; 
+        gap: 0.5rem;
+        height: calc(var(--viewport-h) - var(--navbar-h)); 
+        min-height: 0; 
+        margin: 0;
+        padding: 0.5rem 1.5rem 2rem; 
+        overflow-x: hidden; 
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch; 
+        overscroll-behavior: contain;
     }
-    .dashboard-main, .sidebar, .sidebar-direita { overflow-anchor: none; }
+    
     .dashboard-main > * { flex-shrink: 0; }
-
     .ilustracao-container { flex: 0 0 auto; order: 1; max-width: 60%; margin: -1rem auto 0; }
     .calendario-container { flex: 0 0 auto; order: 2; max-width: 100%; }
 }
 
-@media (min-width: 1025px) and (max-width: 1366px) {
-    :root { --secao-px: 1.4rem; --menu-gap: 1.1rem; --titulo-size: 1.05rem; --nome-size: 0.88rem; --nome-ls: 1.8px; --romano-size: 1.4rem; --foto-size: 76px; --cal-titulo-size: 1.5rem; }
-}
-
-@media (max-width: 1366px) {
-    :root:where([data-layout="row"]) { --navbar-px: 1.8rem; --logo-size: 1.75rem; --drawer-w: 55vw; --ficha-pad: 2rem 1.5rem 1.5rem; }
-    [data-layout="row"] .sidebar-direita { width: var(--ficha-row-w, 52%); box-shadow: -4px 0 12px rgba(26, 22, 20, 0.15); }
-    [data-layout="row"] .dashboard-main { flex-direction: row; align-items: flex-start; justify-content: center; gap: 1rem; padding: 0.9rem 1.2rem 0.9rem 1rem; }
-    [data-layout="row"] .dashboard-main > * { margin-block: auto; }
-    [data-layout="row"] .ilustracao-container { flex: 0 1 42%; order: 0; min-width: 0; max-width: 42%; margin-inline: 0; }
-    [data-layout="row"] .ilustracao-central { max-height: calc(var(--viewport-h) - var(--navbar-h) - 1rem); object-fit: contain; }
-    [data-layout="row"] .calendario-container { flex: 1 1 48%; order: 0; min-width: 0; max-width: 48%; margin-right: 1.5rem; }
-}
-
-@media (max-width: 900px), (max-height: 500px) {
-    :root:where([data-layout="row"]) { --navbar-h: 52px; --navbar-px: 1rem; --logo-size: 1.1rem; --logo-ls: 3px; --sair-pad: 0.38rem 0.85rem; --sair-size: 0.55rem; --avatar-size: 32px; --hamb-size: 32px; --drawer-w: 60vw; --drawer-max: 340px; --ficha-pad: 2.5rem 1.5rem 1.5rem; }
-    [data-layout="row"] .btn-hamburger { font-size: 1rem; }
-    [data-layout="row"] .dashboard-main { gap: 0.5rem; padding: 0.5rem; }
-    [data-layout="row"] .ilustracao-container { flex-basis: 40%; max-width: 40%; }
-    [data-layout="row"] .calendario-container { flex: 0 1 56%; max-width: 520px; margin-right: 0; }
-    [data-layout="row"] .calendario-cabecalho { padding: clamp(0.4rem, 1.8vh, 0.7rem) clamp(0.6rem, 2.5vw, 1rem); }
-    [data-layout="row"] .calendario-titulo { font-size: clamp(0.9rem, 2.8vh, 1.15rem); }
-    [data-layout="row"] .calendario-subtitulo { margin-top: 2px; font-size: clamp(0.4rem, 1.3vh, 0.55rem); letter-spacing: clamp(2px, 0.7vw, 3px); }
-    [data-layout="row"] .calendario-btn { width: clamp(20px, 3vh, 26px); height: clamp(20px, 3vh, 26px); font-size: clamp(0.7rem, 2.2vh, 0.95rem); }
-    [data-layout="row"] .calendario-dias-semana { padding: clamp(0.35rem, 1.5vh, 0.55rem) clamp(0.3rem, 1.5vw, 0.5rem); }
-    [data-layout="row"] .dia-semana { font-size: clamp(0.42rem, 1.5vh, 0.55rem); letter-spacing: clamp(0.8px, 0.4vw, 1.4px); }
-    [data-layout="row"] .calendario-dias { gap: clamp(1px, 0.4vh, 3px); padding: clamp(0.35rem, 1.5vh, 0.6rem); }
-    [data-layout="row"] .calendario-dias span { padding: clamp(0.3rem, 1.7vh, 0.55rem) 0; font-size: clamp(0.65rem, 2.2vh, 0.85rem); line-height: 1.15; }
-    [data-layout="row"] .calendario-dias span.dia-atual { font-size: clamp(0.75rem, 2.5vh, 0.95rem); }
-}
-
-@media (max-width: 411px) {
-    :root:where([data-layout="row"]) { --navbar-h: clamp(40px, 11vw, 50px); --navbar-px: clamp(0.5rem, 3vw, 1rem); --logo-size: clamp(0.8rem, 3.2vw, 1.1rem); --logo-ls: clamp(1.5px, 0.8vw, 3px); --sair-pad: clamp(0.25rem, 1.2vw, 0.38rem) clamp(0.5rem, 2.5vw, 0.85rem); --sair-size: clamp(0.42rem, 1.6vw, 0.55rem); --avatar-size: clamp(22px, 9vw, 32px); --hamb-size: clamp(22px, 9vw, 32px); --ficha-pad: clamp(1.5rem, 7vw, 2.5rem) clamp(1rem, 4vw, 1.5rem) 1.5rem; }
-    [data-layout="row"] .btn-hamburger { font-size: clamp(0.7rem, 3vw, 1rem); }
-    [data-layout="row"] .calendario-cabecalho { padding: clamp(0.4rem, 1.8vh, 0.7rem) clamp(0.5rem, 2.5vw, 0.9rem); }
-    [data-layout="row"] .calendario-titulo { font-size: clamp(0.85rem, 2.8vh, 1.1rem); }
-    [data-layout="row"] .calendario-subtitulo { font-size: clamp(0.38rem, 1.3vh, 0.5rem); letter-spacing: clamp(1.8px, 0.6vw, 2.5px); }
-    [data-layout="row"] .calendario-btn { width: clamp(18px, 2.8vh, 24px); height: clamp(18px, 2.8vh, 24px); font-size: clamp(0.65rem, 2vh, 0.85rem); }
-    [data-layout="row"] .calendario-dias-semana { padding: clamp(0.3rem, 1.4vh, 0.5rem) clamp(0.25rem, 1.2vw, 0.4rem); }
-    [data-layout="row"] .dia-semana { font-size: clamp(0.38rem, 1.3vh, 0.5rem); letter-spacing: clamp(0.6px, 0.3vw, 1.2px); }
-    [data-layout="row"] .calendario-dias { gap: clamp(1px, 0.3vh, 2px); padding: clamp(0.3rem, 1.4vh, 0.5rem); }
-    [data-layout="row"] .calendario-dias span { padding: clamp(0.25rem, 1.5vh, 0.45rem) 0; font-size: clamp(0.6rem, 2vh, 0.75rem); line-height: 1.1; }
-    [data-layout="row"] .calendario-dias span.dia-atual { font-size: clamp(0.7rem, 2.3vh, 0.85rem); }
-}
-
+/* Mantém as regras responsivas originais que você já tinha para telas menores */
 @media (max-width: 767px) {
-    :root:where(:not([data-layout="row"])) { --navbar-h: 56px; --navbar-px: 1.1rem; --logo-size: 1.35rem; --logo-ls: 3px; --sair-pad: 0.45rem 0.9rem; --sair-size: 0.56rem; --avatar-size: 34px; --hamb-size: 34px; --drawer-w: 82vw; --drawer-max: 360px; --ficha-pad: 2rem 1.4rem 1.5rem; --cal-titulo-size: 1.25rem; --dia-pad: 0.5rem; --dia-size: 0.78rem; }
+    :root:where(:not([data-layout="row"])) { 
+        --navbar-h: 56px; --navbar-px: 1.1rem; --logo-size: 1.35rem; 
+        --logo-ls: 3px; --sair-pad: 0.45rem 0.9rem; --sair-size: 0.56rem; 
+        --avatar-size: 34px; --hamb-size: 34px; --drawer-w: 82vw; 
+        --drawer-max: 360px; --ficha-pad: 2rem 1.4rem 1.5rem; 
+        --cal-titulo-size: 1.25rem; --dia-pad: 0.5rem; --dia-size: 0.78rem; 
+    }
     html:not([data-layout="row"]) .btn-hamburger { font-size: 1.05rem; }
     html:not([data-layout="row"]) .dashboard-main { gap: 0.8rem; padding: 0.8rem 1.2rem 2rem; }
     html:not([data-layout="row"]) .ilustracao-container { max-width: 65%; margin-top: -0.5rem; }
 }
 
 @media (max-width: 480px) {
-    :root:where(:not([data-layout="row"])) { --navbar-h: 52px; --navbar-px: 1rem; --logo-size: 1.2rem; --logo-ls: 2.5px; --sair-pad: 0.4rem 0.8rem; --sair-size: 0.52rem; --avatar-size: 32px; --hamb-size: 32px; --drawer-w: 88vw; --drawer-max: 340px; --secao-pt: 2rem; --secao-px: 1.1rem; --menu-gap: 1.1rem; --ficha-pad: 1.8rem 1.2rem 1.5rem; --cal-titulo-size: 1.15rem; --dias-pad: 0.55rem; --dia-pad: 0.45rem; --dia-size: 0.72rem; }
-    html:not([data-layout="row"]) .btn-hamburger { font-size: 1rem; }
+    :root:where(:not([data-layout="row"])) { 
+        --navbar-h: 52px; --navbar-px: 1rem; --logo-size: 1.2rem; 
+        --logo-ls: 2.5px; --sair-pad: 0.4rem 0.8rem; --sair-size: 0.52rem; 
+        --avatar-size: 32px; --hamb-size: 32px; --drawer-w: 88vw; 
+        --drawer-max: 340px; --secao-pt: 2rem; --secao-px: 1.1rem; 
+        --menu-gap: 1.1rem; --ficha-pad: 1.8rem 1.2rem 1.5rem; 
+        --cal-titulo-size: 1.15rem; --dias-pad: 0.55rem; --dia-pad: 0.45rem; --dia-size: 0.72rem; 
+    }
     html:not([data-layout="row"]) .dashboard-main { gap: 0.6rem; padding: 0.6rem 1rem 2rem; }
     html:not([data-layout="row"]) .ilustracao-container { max-width: 70%; }
-    .ficha-saiba-num { width: 1.6rem; height: 1.6rem; font-size: 0.78rem; }
-    .ficha-saiba-corpo strong { font-size: 0.86rem; }
-    .ficha-saiba-corpo small  { font-size: 0.76rem; }
-    .ficha-saiba-item { padding: 0.6rem 0.7rem; gap: 0.6rem; }
 }
 
 @media (max-width: 360px) {
-    :root:where(:not([data-layout="row"])) { --logo-size: 1.05rem; --sair-pad: 0.35rem 0.7rem; --sair-size: 0.48rem; --avatar-size: 30px; --drawer-w: 90vw; --secao-pt: 1.5rem; --cal-titulo-size: 1.05rem; --dia-size: 0.68rem; }
-    html:not([data-layout="row"]) .sidebar-ornamento { font-size: 1rem; }
-}
+    :root:where(:not([data-layout="row"])) { 
+        --logo-size: 1.05rem; --sair-pad: 0.35rem 0.7rem; --sair-size: 0.48rem; 
+        --avatar-size: 30px; --drawer-w: 90vw; --secao-pt: 1.5rem; 
+        --cal-titulo-size: 1.05rem; --dia-size: 0.68rem; 
+    }
+}/* ==============================================
+   11. CORREÇÃO DA FICHA DO PERFIL (>= 1025px)
+   ============================================== */
 
-@media (max-width: 1366px) and (max-height: 700px) { :root { --secao-pt: 1.5rem; } .volume-numero { font-size: 0.82rem; } .volume-ano { font-size: 0.45rem; } }
-@media (max-width: 1366px) and (min-height: 851px) { :root { --secao-pt: 3rem; --menu-gap: 1.2rem; --link-pad-y: 1.15rem; } }
-@media (max-width: 1366px) and (min-height: 1000px) { :root { --secao-pt: 4rem; --menu-gap: 1.5rem; --link-pad-y: 1.3rem; --link-pad-x: 1.1rem; } }
+/* Força a ficha a ter a mesma largura da gaveta do ateliê */
+@media (min-width: 1025px) {
+    :root {
+        --ficha-w: 420px; /* Igual ao --gaveta-w do atelie.css */
+    }
 
-html.redimensionando, html.redimensionando *, html.redimensionando *::before, html.redimensionando *::after { transition: none !important; animation: none !important; }
+    /* Empurra o conteúdo principal para a esquerda quando a ficha abre */
+    body.ficha-aberta .atelie-main,
+    body.ficha-aberta .dashboard-main,
+    body.ficha-aberta .main-mural {
+        margin-right: var(--ficha-w) !important;
+        padding-right: 1rem;
+        transition: margin-right 0.4s var(--ease), padding 0.4s var(--ease);
+    }
 
-@media (prefers-reduced-motion: reduce) {
-    .ilustracao-central { animation: none; }
-    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; transition-delay: 0s !important; }
+    /* Ajusta o encaixe da ficha na tela */
+    .sidebar-direita {
+        width: var(--ficha-w);
+        top: var(--navbar-h);
+        height: calc(100vh - var(--navbar-h));
+        height: calc(100dvh - var(--navbar-h));
+        transform: translateX(100%);
+        visibility: hidden;
+        transition: transform 0.4s var(--ease), visibility 0s linear 0.4s;
+        z-index: 9999;
+    }
+
+    .sidebar-direita.ativa {
+        transform: translateX(0);
+        visibility: visible;
+        transition: transform 0.4s var(--ease), visibility 0s;
+    }
+
+    /* Corrige o empilhamento para não esconder a navbar */
+    .sidebar-direita {
+        z-index: 40; /* Fica abaixo da navbar */
+    }
 }

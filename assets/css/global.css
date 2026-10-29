@@ -1,6 +1,6 @@
 ﻿@charset "UTF-8";
 /* ==============================================
-   GLOBAL.CSS - Reset e utilitarios
+   GLOBAL.CSS - Reset, utilitários e Toast (v7)
    ============================================== */
 
 *, *::before, *::after {
@@ -30,21 +30,17 @@
     --sidebar-collapsed: 70px;
 }
 
+/* Scrollbar global */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: var(--vinho-fraco); border-radius: 10px; }
 ::-webkit-scrollbar-thumb { background: var(--vinho-claro); border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--vinho-medio); }
 
 a { text-decoration: none; color: inherit; }
-
-button {
-    cursor: pointer;
-    font-family: inherit;
-    -webkit-tap-highlight-color: transparent;
-}
-
+button { cursor: pointer; font-family: inherit; -webkit-tap-highlight-color: transparent; }
 img { max-width: 100%; display: block; }
 
+/* Animações globais */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to   { opacity: 1; transform: translateY(0); }
@@ -58,6 +54,7 @@ img { max-width: 100%; display: block; }
     100% { transform: translateY(0); }
 }
 
+/* Loading de botões */
 .button-loading {
     display: inline-block;
     width: 16px;
@@ -96,16 +93,15 @@ img { max-width: 100%; display: block; }
 }
 
 /* ==============================================
-   TOAST GLOBAL (auloo-toast)
-   Usado por utils.toast()
+   TOAST GLOBAL (auloo-toast) — Alinhado ao container
    ============================================== */
 .auloo-toast {
-    position: fixed;
+    position: absolute; /* Mudou de fixed para absolute */
     bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
     left: 50%;
     transform: translateX(-50%) translateY(12px);
     z-index: 9999;
-    max-width: calc(100vw - 2rem);
+    max-width: calc(100% - 2rem);
     padding: 0.9rem 1.5rem;
     font-family: Poppins, system-ui, sans-serif;
     font-size: 0.85rem;
@@ -122,17 +118,3 @@ img { max-width: 100%; display: block; }
 }
 .auloo-toast.visivel { opacity: 1; transform: translateX(-50%) translateY(0); }
 .auloo-toast--erro { background: #B23A2E; border-left-color: #7a1f17; }
-
-/* Em modo redação no desktop grande, centraliza no editor (entre sidebar e gaveta) */
-@media (min-width: 1367px) {
-    body.atelie-modo-redacao .auloo-toast {
-        left: calc(50vw + (var(--sidebar-w, 300px) - var(--gaveta-w, 420px)) / 2);
-    }
-}
-
-/* Entre 1025 e 1366: gaveta é overlay — só desloca quando aberta */
-@media (min-width: 1025px) and (max-width: 1366px) {
-    body.atelie-modo-redacao.gaveta-aberta .auloo-toast {
-        left: calc(50vw - var(--gaveta-w, 420px) / 2);
-    }
-}

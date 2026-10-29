@@ -1,11 +1,7 @@
 ﻿/* ============================================================
-   UTILS.JS — v6
+   UTILS.JS — v7
    Helpers compartilhados (DOM, texto, storage, UI, cache HTTP,
-   sanitização de HTML).
-   
-   v6: toast() agora usa a classe .auloo-toast (CSS em global.css)
-       em vez de style inline — permite reposicionamento contextual
-       (ex.: centralizar no editor de redação).
+   sanitização de HTML). Toast ancorado ao container principal.
    ============================================================ */
 (function () {
     'use strict';
@@ -261,15 +257,18 @@
     }
 
     /* Toast global — usa .auloo-toast definida em global.css.
-       Isso permite reposicionamento contextual via CSS
-       (ex.: centralizar no editor de redação). */
+       Anexado ao container principal para alinhar ao centro da área útil. */
     function toast(mensagem, ehErro) {
         var el = document.createElement('div');
         el.className = 'auloo-toast' + (ehErro ? ' auloo-toast--erro' : '');
         el.setAttribute('role', ehErro ? 'alert' : 'status');
         el.setAttribute('aria-live', ehErro ? 'assertive' : 'polite');
         el.textContent = mensagem;
-        document.body.appendChild(el);
+        
+        // Tenta anexar dentro do container principal para alinhar corretamente
+        var container = document.querySelector('.atelie-main') || document.querySelector('.main-mural') || document.body;
+        container.appendChild(el);
+        
         requestAnimationFrame(function () { el.classList.add('visivel'); });
         setTimeout(function () {
             el.classList.remove('visivel');
