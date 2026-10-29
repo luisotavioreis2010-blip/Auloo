@@ -1,6 +1,11 @@
 ﻿/* ============================================================
-   UTILS.JS — v4
-   Helpers compartilhados (DOM, texto, storage, UI, cache HTTP)
+   UTILS.JS — v6
+   Helpers compartilhados (DOM, texto, storage, UI, cache HTTP,
+   sanitização de HTML).
+   
+   v6: toast() agora usa a classe .auloo-toast (CSS em global.css)
+       em vez de style inline — permite reposicionamento contextual
+       (ex.: centralizar no editor de redação).
    ============================================================ */
 (function () {
     'use strict';
@@ -51,6 +56,56 @@
         return t.toLowerCase()
             .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
             .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    }
+
+    /* ---------- Sanitização de HTML (segurança XSS) ----------
+       Necessário para atelie.js (publicar artigos) e mural.js. */
+    function sanitizarHtml(html) {
+        if (!html || typeof html !== 'string') return '';
+        try {
+            var doc = new DOMParser().parseFromString(
+                '<div id="__root">' + html + '</div>', 'text/html'
+            );
+            var root = doc.getElementById('__root');
+            if (!root) return '';
+
+            var PROIBIDAS = ['script', 'iframe', 'object', 'embed', 'form',
+                             'input', 'style', 'link', 'meta', 'base'];
+            for (var p = 0; p < PROIBIDAS.length; p++) {
+                var els = root.querySelectorAll(PROIBIDAS[p]);
+                for (var i = els.length - 1; i >= 0; i--) {
+                    if (els[i].parentNode) els[i].parentNode.removeChild(els[i]);
+                }
+            }
+
+            var todos = root.querySelectorAll('*');
+            for (var j = 0; j < todos.length; j++) {
+                var el = todos[j];
+                var attrs = Array.prototype.slice.call(el.attributes);
+                for (var k = 0; k < attrs.length; k++) {
+                    var attr = attrs[k];
+                    var nome = attr.name.toLowerCase();
+
+                    if (nome.indexOf('on') === 0 && nome.length > 2) {
+                        el.removeAttribute(attr.name);
+                        continue;
+                    }
+                    if (nome === 'href' || nome === 'src' || nome === 'xlink:href' ||
+                        nome === 'action' || nome === 'formaction' || nome === 'poster') {
+                        var valor = String(attr.value || '').replace(/\s+/g, '').toLowerCase();
+                        if (valor.indexOf('javascript:') === 0 ||
+                            valor.indexOf('data:text/html') === 0 ||
+                            valor.indexOf('vbscript:') === 0) {
+                            el.removeAttribute(attr.name);
+                        }
+                    }
+                }
+            }
+            return root.innerHTML;
+        } catch (e) {
+            console.error('sanitizarHtml:', e);
+            return '';
+        }
     }
 
     /* ---------- Datas ---------- */
@@ -122,7 +177,6 @@
         catch (e) { /* quota cheia: ignora */ }
     }
 
-    /* FIX: permite invalidar cache após mutations */
     function cacheLimpar(chave) {
         if (chave) {
             delete cacheMemoria[chave];
@@ -206,30 +260,24 @@
         container.appendChild(img);
     }
 
-    /* FIX: toast acessível com aria-live */
+    /* Toast global — usa .auloo-toast definida em global.css.
+       Isso permite reposicionamento contextual via CSS
+       (ex.: centralizar no editor de redação). */
     function toast(mensagem, ehErro) {
         var el = document.createElement('div');
+        el.className = 'auloo-toast' + (ehErro ? ' auloo-toast--erro' : '');
         el.setAttribute('role', ehErro ? 'alert' : 'status');
         el.setAttribute('aria-live', ehErro ? 'assertive' : 'polite');
-        el.style.cssText = [
-            'position:fixed', 'bottom:2rem', 'left:50%',
-            'transform:translateX(-50%)', 'padding:0.9rem 1.5rem',
-            'background:' + (ehErro ? '#B23A2E' : '#2E7D4F'),
-            'color:#fff', 'font-family:Poppins,sans-serif', 'font-size:0.85rem',
-            'border-radius:4px', 'box-shadow:0 12px 32px rgba(0,0,0,0.25)',
-            'z-index:9999', 'opacity:0', 'transition:opacity 0.3s',
-            'max-width:calc(100vw - 2rem)', 'text-align:center'
-        ].join(';');
         el.textContent = mensagem;
         document.body.appendChild(el);
-        requestAnimationFrame(function () { el.style.opacity = '1'; });
+        requestAnimationFrame(function () { el.classList.add('visivel'); });
         setTimeout(function () {
-            el.style.opacity = '0';
+            el.classList.remove('visivel');
             setTimeout(function () { el.remove(); }, 300);
         }, 2600);
     }
 
-    /* ---------- Fetch com timeout e cache opcional ---------- */
+    /* ---------- Fetch com timeout ---------- */
     function fetchComTimeout(url, opcoes, timeoutMs) {
         opcoes = opcoes || {};
         timeoutMs = timeoutMs || 12000;
@@ -252,6 +300,7 @@
     window.utils = {
         $: $, $$: $$, criar: criar, limpar: limpar,
         truncar: truncar, escapar: escapar, slug: slug,
+        sanitizarHtml: sanitizarHtml,
         formatarData: formatarData, tempoRelativo: tempoRelativo,
         salvarLocal: salvarLocal, lerLocal: lerLocal, removerLocal: removerLocal,
         cacheGet: cacheGet, cacheSet: cacheSet, cacheLimpar: cacheLimpar,

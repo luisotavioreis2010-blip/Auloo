@@ -94,3 +94,45 @@ img { max-width: 100%; display: block; }
         scroll-behavior: auto !important;
     }
 }
+
+/* ==============================================
+   TOAST GLOBAL (auloo-toast)
+   Usado por utils.toast()
+   ============================================== */
+.auloo-toast {
+    position: fixed;
+    bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
+    left: 50%;
+    transform: translateX(-50%) translateY(12px);
+    z-index: 9999;
+    max-width: calc(100vw - 2rem);
+    padding: 0.9rem 1.5rem;
+    font-family: Poppins, system-ui, sans-serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.3px;
+    text-align: center;
+    color: #fff;
+    background: #2E7D4F;
+    border-left: 3px solid #1f5c39;
+    border-radius: 8px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+    opacity: 0;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    pointer-events: none;
+}
+.auloo-toast.visivel { opacity: 1; transform: translateX(-50%) translateY(0); }
+.auloo-toast--erro { background: #B23A2E; border-left-color: #7a1f17; }
+
+/* Em modo redação no desktop grande, centraliza no editor (entre sidebar e gaveta) */
+@media (min-width: 1367px) {
+    body.atelie-modo-redacao .auloo-toast {
+        left: calc(50vw + (var(--sidebar-w, 300px) - var(--gaveta-w, 420px)) / 2);
+    }
+}
+
+/* Entre 1025 e 1366: gaveta é overlay — só desloca quando aberta */
+@media (min-width: 1025px) and (max-width: 1366px) {
+    body.atelie-modo-redacao.gaveta-aberta .auloo-toast {
+        left: calc(50vw - var(--gaveta-w, 420px) / 2);
+    }
+}

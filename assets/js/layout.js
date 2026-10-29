@@ -1,5 +1,8 @@
 /* ==============================================
-   LAYOUT.JS — v32 (Sidebar Universal e Limpa)
+   LAYOUT.JS — v43
+   Correções:
+   - Botão "Novo Ateliê" abre o modal em vez de recarregar
+     quando já estamos na página atelie.html.
    ============================================== */
 (function () {
     'use strict';
@@ -32,8 +35,7 @@
     const esperar = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
     function getDb() {
-        return window.supabaseClient ||
-               (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
+        return window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
     }
 
     async function aguardarDb() {
@@ -45,10 +47,7 @@
         return null;
     }
 
-    function verificar(resultado) {
-        if (resultado && resultado.error) throw resultado.error;
-        return resultado ? resultado.data : null;
-    }
+    function verificar(resultado) { if (resultado && resultado.error) throw resultado.error; return resultado ? resultado.data : null; }
     function erroUsuario(texto) { const erro = new Error(texto); erro.paraUsuario = true; return erro; }
     function exigirSessao() { const db = getDb(); if (!db || !perfil.usuario) throw erroUsuario('Usuário não autenticado!'); return db; }
 
@@ -92,9 +91,7 @@
         const raiz = document.documentElement;
         raiz.style.setProperty('--viewport-h', window.innerHeight + 'px');
         const layout = window.innerWidth > window.innerHeight ? 'row' : 'stacked';
-        if (raiz.getAttribute('data-layout') !== layout) {
-            raiz.setAttribute('data-layout', layout);
-        }
+        if (raiz.getAttribute('data-layout') !== layout) raiz.setAttribute('data-layout', layout);
     }
 
     function campoEmFoco() {
@@ -154,7 +151,7 @@
                 fragmento.appendChild(criarDia(i, ehHoje ? 'dia-atual' : '')); celulas++;
             }
             const faltam = (7 - (celulas % 7)) % 7;
-            for (let i = 1; i <= faltam; i++) { fragmento.appendChild(criarDia(i, 'dia-outro-mes')); }
+            for (let i = 1; i <= faltam; i++) fragmento.appendChild(criarDia(i, 'dia-outro-mes'));
             diasContainer.textContent = '';
             diasContainer.appendChild(fragmento);
         }
@@ -172,11 +169,7 @@
         desenhar();
     }
 
-    function removerMensagem() {
-        clearTimeout(temporizadorMensagem);
-        const atual = $('mensagem-sidebar');
-        if (atual) atual.remove();
-    }
+    function removerMensagem() { clearTimeout(temporizadorMensagem); const atual = $('mensagem-sidebar'); if (atual) atual.remove(); }
 
     function mostrarMensagem(texto, tipo) {
         tipo = tipo || 'sucesso';
@@ -187,7 +180,7 @@
         msg.setAttribute('role', tipo === 'erro' ? 'alert' : 'status');
         msg.textContent = texto;
         const referencia = $('container-editar-senha');
-        if (referencia && referencia.parentNode) { referencia.parentNode.insertBefore(msg, referencia); }
+        if (referencia && referencia.parentNode) referencia.parentNode.insertBefore(msg, referencia);
         else {
             const menu = document.querySelector('.ficha-menu');
             if (menu) menu.insertBefore(msg, menu.firstChild);
@@ -202,9 +195,7 @@
         document.querySelectorAll('[aria-controls][aria-expanded]').forEach((gatilho) => {
             const ids = gatilho.getAttribute('aria-controls').split(/\s+/);
             const aberto = ids.some((id) => { const alvo = $(id); return !!alvo && !alvo.hidden; });
-            if (ids.every((id) => IDS_CONTAINERS.indexOf(id) !== -1)) {
-                gatilho.setAttribute('aria-expanded', String(aberto));
-            }
+            if (ids.every((id) => IDS_CONTAINERS.indexOf(id) !== -1)) gatilho.setAttribute('aria-expanded', String(aberto));
         });
     }
 
@@ -276,6 +267,118 @@
         carregarPerfilRemoto(usuario, nome, avatarUrl);
     }
 
+    /* ============================================
+       CARDS DE ATELIÊ GLOBAIS NA SIDEBAR
+       ============================================ */
+    function criarBotaoNovoAtelie() {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.id = 'sidebar-novo-atelie-btn-global';
+        btn.className = 'btn-add-custom';
+        btn.innerHTML = `
+            <span class="button__text">Novo Ateliê</span>
+            <span class="button__icon">
+                <svg class="svg" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+                    <line x1="12" x2="12" y1="5" y2="19"></line>
+                    <line x1="5" x2="19" y1="12" y2="12"></line>
+                </svg>
+            </span>
+        `;
+        btn.addEventListener('click', () => {
+            const noAtelie = window.location.pathname.includes('atelie.html');
+            const temModal = typeof window.abrirModalCriarAtelie === 'function';
+            if (noAtelie && temModal) {
+                window.abrirModalCriarAtelie();
+            } else {
+                window.location.href = 'atelie.html';
+            }
+        });
+        return btn;
+    }
+
+    async function renderizarCardsAtelies() {
+        const lista = $('sidebar-atelies-lista');
+        if (!lista || !perfil.usuario) return;
+        const db = getDb();
+        if (!db) return;
+
+        try {
+            const { data: atelies, error } = await db
+                .from('ateliers')
+                .select('id, name, avatar_url, cover_url, handle')
+                .eq('owner_id', perfil.usuario.id)
+                .order('created_at', { ascending: true });
+
+            if (error) throw error;
+
+            lista.innerHTML = '';
+
+            const btnAntigo = $('sidebar-novo-atelie-btn-global');
+            if (btnAntigo) btnAntigo.remove();
+
+            if (atelies && atelies.length > 0) {
+                const urlParams = new URLSearchParams(window.location.search);
+                const atelieAtivoId = urlParams.get('id')
+                    || localStorage.getItem('auloo:atelieAtivo')
+                    || (window.estado && window.estado.atelieAtivo ? window.estado.atelieAtivo.id : null);
+
+                atelies.forEach(function (atelie) {
+                    const li = document.createElement('li');
+                    li.className = 'sidebar-atelie-card' + (atelieAtivoId === atelie.id ? ' ativo' : '');
+                    li.title = atelie.name;
+                    li.dataset.atelieId = atelie.id;
+
+                    const avatarHtml = atelie.avatar_url
+                        ? '<img src="' + atelie.avatar_url + '" alt="Avatar">'
+                        : '<span>' + (atelie.name ? atelie.name.substring(0, 2).toUpperCase() : 'AT') + '</span>';
+
+                    li.innerHTML =
+                        '<div class="sidebar-atelie-capa">' +
+                            (atelie.cover_url ? '<img src="' + atelie.cover_url + '" alt="Capa">' : '') +
+                        '</div>' +
+                        '<div class="sidebar-atelie-avatar">' + avatarHtml + '</div>' +
+                        '<div class="sidebar-atelie-info">' +
+                            '<h3 class="sidebar-atelie-nome">' + (atelie.name || 'Sem nome') + '</h3>' +
+                        '</div>';
+
+                    li.addEventListener('click', function () {
+                        lista.querySelectorAll('.sidebar-atelie-card').forEach(function (c) {
+                            c.classList.remove('ativo');
+                        });
+                        li.classList.add('ativo');
+
+                        if (window.location.pathname.includes('atelie.html') && typeof window.trocarAtelie === 'function') {
+                            window.trocarAtelie(atelie.id);
+                        } else {
+                            window.location.href = 'atelie.html?id=' + atelie.id;
+                        }
+
+                        const sidebar = $('sidebar');
+                        const overlay = $('gaveta-overlay');
+                        if (sidebar) sidebar.classList.remove('aberta');
+                        if (overlay) overlay.classList.remove('ativo');
+                    });
+
+                    lista.appendChild(li);
+                });
+            }
+
+            const menu = lista.parentNode;
+            if (menu) {
+                menu.appendChild(criarBotaoNovoAtelie());
+            }
+
+        } catch (err) {
+            console.error('Erro ao carregar ateliês na sidebar:', err);
+        }
+    }
+
+    window.utils = window.utils || {};
+    window.utils.renderizarCardsAtelies = renderizarCardsAtelies;
+
+    /* ============================================
+       RESTO DO LAYOUT (perfil, ficha, logout)
+       ============================================ */
     function usuarioTemSenha() {
         const usuario = perfil.usuario;
         if (!usuario) return false;
@@ -434,26 +537,24 @@
     function setupPerfil() {
         let btnSair = $('btn-sair');
         if (!btnSair) {
-            const navbarDir = document.querySelector('.navbar-right') ||
-                              document.querySelector('.editor-topo-dir') ||
-                              document.querySelector('.navbar-left');
+            const navbarDir = document.querySelector('.navbar-right') || document.querySelector('.editor-topo-dir') || document.querySelector('.navbar-left');
             if (navbarDir) {
+                // Fallback caso não tenha no HTML
                 btnSair = document.createElement('button');
                 btnSair.type = 'button';
-                btnSair.className = 'btn-sair';
+                btnSair.className = 'morph-btn-sair';
                 btnSair.id = 'btn-sair';
-                btnSair.setAttribute('aria-label', 'Sair do sistema');
-                btnSair.textContent = 'Sair';
+                btnSair.innerHTML = `
+                    <span class="btn-fill"></span>
+                    <span class="shadow"></span>
+                    <span class="btn-text"><span style="--i:0">S</span><span style="--i:1">a</span><span style="--i:2">i</span><span style="--i:3">r</span></span>
+                    <span class="orbit-dots"><span></span><span></span><span></span><span></span></span>
+                    <span class="corners"><span></span><span></span><span></span><span></span></span>
+                `;
                 navbarDir.appendChild(btnSair);
             }
         }
-
-        if (btnSair) {
-            btnSair.addEventListener('click', () => {
-                btnSair.disabled = true;
-                fazerLogout();
-            });
-        }
+        if (btnSair) btnSair.addEventListener('click', () => { btnSair.disabled = true; fazerLogout(); });
 
         const btnEditarFoto = $('btn-editar-foto');
         const inputFoto = $('input-foto');
@@ -491,12 +592,10 @@
         if (btnSaibaMais) btnSaibaMais.addEventListener('click', () => alternarContainer('container-saiba-mais'));
 
         const ficha = $('sidebar-perfil');
-        if (ficha) {
-            ficha.addEventListener('click', (e) => {
-                const botao = e.target.closest('.btn-olho-senha');
-                if (botao) alternarVisibilidadeSenha(botao);
-            });
-        }
+        if (ficha) ficha.addEventListener('click', (e) => {
+            const botao = e.target.closest('.btn-olho-senha');
+            if (botao) alternarVisibilidadeSenha(botao);
+        });
     }
 
     function ajustarLarguraFicha() {
@@ -531,65 +630,35 @@
             if (perfilBotao) perfilBotao.setAttribute('aria-expanded', String(fichaAberta()));
         }
 
-        if (perfilBotao) {
-            perfilBotao.addEventListener('click', () => {
-                if (fichaAberta()) {
-                    ficha.classList.remove('ativa');
-                    document.body.classList.remove('ficha-aberta');
-                    fecharTodosContainers();
-                    atualizarEstado();
-                } else {
-                    ficha.classList.add('ativa');
-                    document.body.classList.add('ficha-aberta');
-                    ajustarLarguraFicha();
-                    atualizarEstado();
-                }
-            });
-        }
-        if (fichaFechar) {
-            fichaFechar.addEventListener('click', () => {
-                ficha.classList.remove('ativa');
-                document.body.classList.remove('ficha-aberta');
-                fecharTodosContainers();
-                atualizarEstado();
-            });
-        }
-        if (btnHamburger) {
-            btnHamburger.addEventListener('click', () => {
-                if (sidebarAberta()) { sidebar.classList.remove('aberta'); atualizarEstado(); }
-                else { sidebar.classList.add('aberta'); atualizarEstado(); }
-            });
-        }
-        if (overlay) {
-            overlay.addEventListener('click', () => {
-                sidebar.classList.remove('aberta');
-                ficha.classList.remove('ativa');
-                document.body.classList.remove('ficha-aberta');
-                atualizarEstado();
-            });
-        }
+        if (perfilBotao) perfilBotao.addEventListener('click', () => {
+            if (fichaAberta()) { ficha.classList.remove('ativa'); document.body.classList.remove('ficha-aberta'); fecharTodosContainers(); atualizarEstado(); }
+            else { ficha.classList.add('ativa'); document.body.classList.add('ficha-aberta'); ajustarLarguraFicha(); atualizarEstado(); }
+        });
+        if (fichaFechar) fichaFechar.addEventListener('click', () => {
+            ficha.classList.remove('ativa'); document.body.classList.remove('ficha-aberta'); fecharTodosContainers(); atualizarEstado();
+        });
+        if (btnHamburger) btnHamburger.addEventListener('click', () => {
+            if (sidebarAberta()) { sidebar.classList.remove('aberta'); atualizarEstado(); }
+            else { sidebar.classList.add('aberta'); atualizarEstado(); }
+        });
+        if (overlay) overlay.addEventListener('click', () => {
+            sidebar.classList.remove('aberta');
+            ficha.classList.remove('ativa');
+            document.body.classList.remove('ficha-aberta');
+            atualizarEstado();
+        });
 
         document.addEventListener('click', (e) => {
             const alvo = e.target;
-            if (sidebarAberta() && !sidebar.contains(alvo) && !(btnHamburger && btnHamburger.contains(alvo))) {
-                sidebar.classList.remove('aberta'); atualizarEstado();
-            }
-            if (mqCompacto.matches && fichaAberta() && !ficha.contains(alvo) &&
-                !(perfilBotao && perfilBotao.contains(alvo)) && !campoEmFoco()) {
-                ficha.classList.remove('ativa');
-                document.body.classList.remove('ficha-aberta');
-                atualizarEstado();
+            if (sidebarAberta() && !sidebar.contains(alvo) && !(btnHamburger && btnHamburger.contains(alvo))) { sidebar.classList.remove('aberta'); atualizarEstado(); }
+            if (mqCompacto.matches && fichaAberta() && !ficha.contains(alvo) && !(perfilBotao && perfilBotao.contains(alvo)) && !campoEmFoco()) {
+                ficha.classList.remove('ativa'); document.body.classList.remove('ficha-aberta'); atualizarEstado();
             }
         });
 
-        if (sidebar) {
-            sidebar.addEventListener('click', (e) => {
-                if (mqCompacto.matches && e.target.closest('.sidebar-link')) {
-                    sidebar.classList.remove('aberta');
-                    atualizarEstado();
-                }
-            });
-        }
+        if (sidebar) sidebar.addEventListener('click', (e) => {
+            if (mqCompacto.matches && e.target.closest('.sidebar-link')) { sidebar.classList.remove('aberta'); atualizarEstado(); }
+        });
         document.addEventListener('keydown', (e) => {
             if (e.key !== 'Escape') return;
             sidebar.classList.remove('aberta');
@@ -627,7 +696,7 @@
         if (!db) { irParaLogin(); return; }
         db.auth.onAuthStateChange((evento, sessao) => {
             if (evento === 'SIGNED_OUT') { if (!saindo) irParaLogin(); return; }
-            if (sessao && sessao.user) { setTimeout(() => aplicarUsuario(sessao.user), 0); }
+            if (sessao && sessao.user) setTimeout(() => aplicarUsuario(sessao.user), 0);
         });
         try {
             const sessao = await aguardarSessao(db);
@@ -638,62 +707,16 @@
 
     if (document.body) sincronizarTela();
 
-    // ==============================================
-    // 11. LIMPEZA E REORGANIZAÇÃO DO MENU
-    // ==============================================
-    function organizarMenu() {
-        // Remove itens indesejados do menu
-        const links = document.querySelectorAll('.sidebar-link');
-        links.forEach(link => {
-            const texto = link.textContent.trim().toLowerCase();
-            if (texto.includes('progresso') || texto.includes('comunidade') || texto.includes('exercícios')) {
-                link.remove();
-            }
-        });
-
-        // Garante que o Ateliê esteja na Sidebar
-        const btnAtelieNavbar = document.querySelector('.navbar-right a[href="atelie.html"]');
-        if (btnAtelieNavbar) {
-            btnAtelieNavbar.remove(); // Remove da navbar
-        }
-        
-        const sidebarMenu = document.querySelector('.sidebar-menu');
-        if (sidebarMenu) {
-            const jaExiste = Array.from(sidebarMenu.querySelectorAll('a')).some(a => a.href.includes('atelie.html'));
-            if (!jaExiste) {
-                const novoLink = document.createElement('a');
-                novoLink.href = 'atelie.html';
-                novoLink.className = 'sidebar-link';
-                novoLink.setAttribute('aria-label', 'Meu Ateliê');
-                novoLink.innerHTML = `
-                    <span class="sidebar-icone">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
-                    </span>
-                    <span class="sidebar-romano">IV</span>
-                    <span class="sidebar-nome">Meu Ateliê</span>
-                `;
-                const muralLink = Array.from(sidebarMenu.querySelectorAll('.sidebar-link')).find(l => l.textContent.includes('O Mural'));
-                if (muralLink) {
-                    muralLink.insertAdjacentElement('afterend', novoLink);
-                } else {
-                    sidebarMenu.appendChild(novoLink);
-                }
-            }
-        }
-    }
-
     function iniciar() {
-        organizarMenu();
         setupTela();
         setupPerfil();
         setupLayout();
         setupCalendario();
-        iniciarSessao();
+        iniciarSessao().then(() => {
+            renderizarCardsAtelies();
+        });
     }
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', iniciar);
-    } else {
-        iniciar();
-    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar);
+    else iniciar();
 })();

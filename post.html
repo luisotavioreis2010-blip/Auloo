@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Lendo Artigo | Auloo</title>
+    <link rel="icon" type="image/png" href="assets/img/logo/auloo-logo.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400;1,500&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="assets/css/global.css">
+    <link rel="stylesheet" href="assets/css/estante.css">
+    <link rel="stylesheet" href="assets/css/atelie.css">
+
+    <style>
+        body.leitura-body {
+            background: var(--papel-escuro);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 2rem 1rem;
+            overflow-x: hidden;
+        }
+
+        .leitura-container {
+            width: 100%;
+            max-width: 800px;
+            background: var(--papel-claro);
+            border-radius: 12px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            position: relative;
+            padding: 4rem 3rem;
+            margin-top: 2rem;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+
+        .btn-fechar-leitura {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            width: 44px;
+            height: 44px;
+            background: #fff;
+            border: 1px solid var(--papel-sombra);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--vinho);
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: transform 0.2s, background 0.2s;
+            z-index: 10;
+        }
+        .btn-fechar-leitura:hover { transform: scale(1.1) rotate(90deg); background: var(--vinho); color: #fff; }
+        .btn-fechar-leitura svg { width: 20px; height: 20px; }
+
+        .leitura-capa {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .leitura-titulo {
+            font-family: var(--fonte-titulo);
+            font-size: 3.5rem;
+            font-style: italic;
+            line-height: 1.1;
+            color: var(--vinho);
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .leitura-meta {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            font-family: var(--fonte-corpo);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--tinta-clara);
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--papel-sombra);
+        }
+
+        .leitura-conteudo {
+            font-family: var(--fonte-display);
+            font-size: 1.4rem;
+            line-height: 1.8;
+            color: var(--tinta-suave);
+        }
+        .leitura-conteudo p { margin-bottom: 1.5rem; }
+        .leitura-conteudo h2 { margin: 2rem 0 1rem; font-family: var(--fonte-titulo); font-size: 2.2rem; color: var(--vinho); font-style: italic; }
+        .leitura-conteudo blockquote { border-left: 3px solid var(--dourado); padding-left: 1.5rem; font-style: italic; color: var(--tinta-clara); margin: 2rem 0; }
+        .leitura-conteudo img { max-width: 100%; height: auto; border-radius: 8px; margin: 2rem 0; }
+
+        .leitura-voltar {
+            display: block;
+            width: fit-content;
+            margin: 3rem auto 0;
+            padding: 0.8rem 2rem;
+            background: var(--vinho);
+            color: #fff;
+            text-decoration: none;
+            font-family: var(--fonte-corpo);
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border-radius: 999px;
+            transition: background 0.3s;
+        }
+        .leitura-voltar:hover { background: var(--dourado); }
+
+        .loader { text-align: center; font-family: var(--fonte-corpo); color: var(--dourado); margin-top: 4rem; }
+
+        @media (max-width: 768px) {
+            .leitura-container { padding: 2rem 1.5rem; }
+            .leitura-titulo { font-size: 2.2rem; }
+            .leitura-conteudo { font-size: 1.15rem; }
+            .leitura-capa { height: 200px; }
+        }
+    </style>
+</head>
+<body class="leitura-body">
+
+    <div class="leitura-container" id="leitura-container">
+        <div class="loader" id="loader">Carregando artigo...</div>
+
+        <div id="artigo-conteudo" hidden>
+            <button class="btn-fechar-leitura" onclick="window.history.back()" aria-label="Fechar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
+
+            <img id="post-capa" class="leitura-capa" src="" alt="Capa" style="display: none;">
+            <h1 id="post-titulo" class="leitura-titulo"></h1>
+            <div class="leitura-meta">
+                <span id="post-categoria"></span>
+                <span id="post-data"></span>
+            </div>
+            <div id="post-corpo" class="leitura-conteudo"></div>
+
+            <a href="atelie.html" class="leitura-voltar">Voltar para o Ateliê</a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/lib/utils.js?v=6"></script>
+
+    <script>
+        (function() {
+            var U = window.utils;
+            var db = window.supabaseClient;
+            if (!db) { console.error("Supabase não carregado."); return; }
+
+            var params = new URLSearchParams(window.location.search);
+            var postId = params.get('id');
+
+            if (!postId) {
+                document.getElementById('loader').textContent = "Artigo não encontrado.";
+                return;
+            }
+
+            db.from('posts').select('*').eq('id', postId).single().then(function(r) {
+                if (r.error || !r.data) {
+                    document.getElementById('loader').textContent = "Erro ao carregar o artigo.";
+                    return;
+                }
+
+                var post = r.data;
+                document.getElementById('loader').hidden = true;
+                document.getElementById('artigo-conteudo').hidden = false;
+
+                if (post.cover_url) {
+                    var img = document.getElementById('post-capa');
+                    img.src = post.cover_url;
+                    img.style.display = 'block';
+                }
+
+                document.getElementById('post-titulo').textContent = post.title || 'Sem título';
+                document.getElementById('post-categoria').textContent = post.category || 'Geral';
+                document.getElementById('post-data').textContent = U.formatarData(post.created_at);
+
+                document.getElementById('post-corpo').innerHTML = U.sanitizarHtml(post.content || '');
+            });
+        })();
+    </script>
+</body>
+</html>

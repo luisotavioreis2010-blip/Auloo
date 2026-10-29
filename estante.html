@@ -26,7 +26,15 @@
             <span class="logo" translate="no">Auloo<span class="logo-dot">.</span></span>
         </div>
         <div class="navbar-right">
-            <button class="btn-sair" id="btn-sair" type="button" aria-label="Sair do sistema">Sair</button>
+            <button class="morph-btn-sair" id="btn-sair" type="button" aria-label="Sair do sistema">
+                <span class="btn-fill"></span>
+                <span class="shadow"></span>
+                <span class="btn-text">
+                    <span style="--i:0">S</span><span style="--i:1">a</span><span style="--i:2">i</span><span style="--i:3">r</span>
+                </span>
+                <span class="orbit-dots"><span></span><span></span><span></span><span></span></span>
+                <span class="corners"><span></span><span></span><span></span><span></span></span>
+            </button>
             <button class="perfil-botao" id="perfil-botao" type="button" aria-label="Abrir ficha do leitor" aria-expanded="false" aria-controls="sidebar-perfil">
                 <span class="perfil-usuario" id="perfil-usuario"></span>
             </button>
@@ -36,29 +44,22 @@
     <div class="gaveta-overlay" id="gaveta-overlay" aria-hidden="true"></div>
 
     <aside class="sidebar" id="sidebar" aria-label="Sumário">
-        <div class="sidebar-secao">
+        <div class="sidebar-scroll">
+            <div class="sidebar-ornamento" aria-hidden="true">&#10086;</div>
             <h2 class="sidebar-titulo">Sumário</h2>
             <div class="sidebar-filete"></div>
-
             <nav class="sidebar-menu">
                 <a href="estante.html" class="sidebar-link" aria-label="Início">
-                    <span class="sidebar-icone">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                    </span>
+                    <span class="sidebar-icone"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
                     <span class="sidebar-romano">I</span>
                     <span class="sidebar-nome">Início</span>
                 </a>
-
                 <div class="sidebar-grupo" data-grupo="quizzes">
                     <button type="button" class="sidebar-link sidebar-toggle" aria-expanded="false" aria-controls="submenu-quizzes">
-                        <span class="sidebar-icone">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                        </span>
+                        <span class="sidebar-icone"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
                         <span class="sidebar-romano">II</span>
                         <span class="sidebar-nome">Quizzes</span>
-                        <span class="sidebar-seta" aria-hidden="true">
-                            <svg viewBox="0 0 12 8" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 1.5l5 5 5-5"/></svg>
-                        </span>
+                        <span class="sidebar-seta" aria-hidden="true"><svg viewBox="0 0 12 8" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 1.5l5 5 5-5"/></svg></span>
                     </button>
                     <ul class="sidebar-submenu" id="submenu-quizzes" hidden>
                         <li><a href="#" class="sidebar-sublink">Explorar Salas</a></li>
@@ -66,35 +67,27 @@
                         <li><a href="#" class="sidebar-sublink">Meus Quizzes</a></li>
                     </ul>
                 </div>
-
                 <a href="comunidade.html" class="sidebar-link" aria-label="O Mural">
-                    <span class="sidebar-icone">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                    </span>
+                    <span class="sidebar-icone"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
                     <span class="sidebar-romano">III</span>
                     <span class="sidebar-nome">O Mural</span>
                 </a>
-
                 <a href="atelie.html" class="sidebar-link" aria-label="Meu Ateliê">
-                    <span class="sidebar-icone">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
-                    </span>
+                    <span class="sidebar-icone"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg></span>
                     <span class="sidebar-romano">IV</span>
                     <span class="sidebar-nome">Meu Ateliê</span>
                 </a>
-
+                <ul id="sidebar-atelies-lista" class="sidebar-atelies-lista"></ul>
             </nav>
-        </div>
-
-        <div class="sidebar-selo">
-            <span>&#10022;</span>
-            <span class="selo-texto">Auloo Learning</span>
-            <span>&#10022;</span>
-        </div>
-
-        <div class="sidebar-volume">
-            <span class="volume-numero">Vol. I</span>
-            <span class="volume-ano">MMXXVI</span>
+            <div class="sidebar-selo">
+                <span>&#10086;</span>
+                <span class="selo-texto">Auloo Learning</span>
+                <span>&#10086;</span>
+            </div>
+            <div class="sidebar-volume">
+                <span class="volume-numero">Vol. I</span>
+                <span class="volume-ano">MMXXVI</span>
+            </div>
         </div>
     </aside>
 
@@ -103,9 +96,7 @@
             <h2 class="ficha-titulo">Ficha do Leitor</h2>
             <button class="ficha-fechar" id="ficha-fechar" type="button" aria-label="Fechar ficha">&#10005;</button>
         </div>
-
         <div class="ficha-filete"></div>
-
         <div class="ficha-perfil">
             <div class="ficha-foto" id="sidebar-perfil-foto"></div>
             <div class="ficha-info">
@@ -113,102 +104,47 @@
                 <span class="ficha-email" id="sidebar-perfil-email">&nbsp;</span>
             </div>
         </div>
-
         <div class="ficha-filete"></div>
-
         <nav class="ficha-menu">
-            <button class="ficha-item" id="btn-editar-foto" type="button">
-                <span class="ficha-romano">&#10070;</span>
-                <span class="ficha-texto">Mudar Foto</span>
-            </button>
-
-            <button class="ficha-item" id="btn-editar-nome" type="button" aria-expanded="false" aria-controls="container-editar-nome">
-                <span class="ficha-romano">&#9998;</span>
-                <span class="ficha-texto">Editar Nome</span>
-            </button>
-
+            <button class="ficha-item" id="btn-editar-foto" type="button"><span class="ficha-romano">&#10070;</span><span class="ficha-texto">Mudar Foto</span></button>
+            <button class="ficha-item" id="btn-editar-nome" type="button" aria-expanded="false" aria-controls="container-editar-nome"><span class="ficha-romano">&#9998;</span><span class="ficha-texto">Editar Nome</span></button>
             <form id="container-editar-nome" class="container-expansivel" hidden novalidate>
                 <label for="input-novo-nome">Nome</label>
-                <input type="text" id="input-novo-nome" autocomplete="off" autocapitalize="words" maxlength="60" name="nome-usuario" placeholder="Digite seu novo nome" aria-label="Novo nome">
+                <input type="text" id="input-novo-nome" autocomplete="off" maxlength="60" placeholder="Digite seu novo nome">
                 <button id="btn-salvar-nome" class="btn-container" type="submit">Salvar</button>
             </form>
-
-            <button class="ficha-item" id="btn-editar-senha" type="button" aria-expanded="false" aria-controls="container-editar-senha container-criar-senha">
-                <span class="ficha-romano">&#10033;</span>
-                <span class="ficha-texto">Senha</span>
-            </button>
-
+            <button class="ficha-item" id="btn-editar-senha" type="button" aria-expanded="false" aria-controls="container-editar-senha container-criar-senha"><span class="ficha-romano">&#10033;</span><span class="ficha-texto">Senha</span></button>
             <form id="container-editar-senha" class="container-expansivel" hidden novalidate>
                 <label for="input-senha-atual">Senha Atual</label>
                 <div class="wrapper-olho-senha">
-                    <input type="password" id="input-senha-atual" placeholder="Senha atual" aria-label="Senha atual" autocomplete="current-password">
-                    <button type="button" class="btn-olho-senha" aria-pressed="false" data-target="input-senha-atual" aria-label="Mostrar senha atual">
-                        <svg class="icone-olho-aberto" aria-hidden="true"><use href="#icone-olho-aberto"/></svg>
-                        <svg class="icone-olho-fechado" aria-hidden="true"><use href="#icone-olho-fechado"/></svg>
-                    </button>
+                    <input type="password" id="input-senha-atual" placeholder="Senha atual">
+                    <button type="button" class="btn-olho-senha" aria-pressed="false" data-target="input-senha-atual"><svg class="icone-olho-aberto"><use href="#icone-olho-aberto"/></svg><svg class="icone-olho-fechado"><use href="#icone-olho-fechado"/></svg></button>
                 </div>
-
                 <label for="input-senha-nova">Nova Senha</label>
                 <div class="wrapper-olho-senha">
-                    <input type="password" id="input-senha-nova" placeholder="Nova senha" aria-label="Nova senha" autocomplete="new-password">
-                    <button type="button" class="btn-olho-senha" aria-pressed="false" data-target="input-senha-nova" aria-label="Mostrar nova senha">
-                        <svg class="icone-olho-aberto" aria-hidden="true"><use href="#icone-olho-aberto"/></svg>
-                        <svg class="icone-olho-fechado" aria-hidden="true"><use href="#icone-olho-fechado"/></svg>
-                    </button>
+                    <input type="password" id="input-senha-nova" placeholder="Nova senha">
+                    <button type="button" class="btn-olho-senha" aria-pressed="false" data-target="input-senha-nova"><svg class="icone-olho-aberto"><use href="#icone-olho-aberto"/></svg><svg class="icone-olho-fechado"><use href="#icone-olho-fechado"/></svg></button>
                 </div>
-
                 <button id="btn-confirmar-senha" class="btn-container" type="submit">Atualizar Senha</button>
             </form>
-
             <form id="container-criar-senha" class="container-expansivel" hidden novalidate>
                 <label for="input-nova-senha-criar">Criar Senha</label>
                 <div class="wrapper-olho-senha">
-                    <input type="password" id="input-nova-senha-criar" placeholder="Nova senha" aria-label="Nova senha" autocomplete="new-password">
-                    <button type="button" class="btn-olho-senha" aria-pressed="false" data-target="input-nova-senha-criar" aria-label="Mostrar nova senha">
-                        <svg class="icone-olho-aberto" aria-hidden="true"><use href="#icone-olho-aberto"/></svg>
-                        <svg class="icone-olho-fechado" aria-hidden="true"><use href="#icone-olho-fechado"/></svg>
-                    </button>
+                    <input type="password" id="input-nova-senha-criar" placeholder="Nova senha">
+                    <button type="button" class="btn-olho-senha" aria-pressed="false" data-target="input-nova-senha-criar"><svg class="icone-olho-aberto"><use href="#icone-olho-aberto"/></svg><svg class="icone-olho-fechado"><use href="#icone-olho-fechado"/></svg></button>
                 </div>
-
                 <label for="input-confirmar-senha-criar">Confirmar Senha</label>
                 <div class="wrapper-olho-senha">
-                    <input type="password" id="input-confirmar-senha-criar" placeholder="Confirmar senha" aria-label="Confirmar senha" autocomplete="new-password">
-                    <button type="button" class="btn-olho-senha" aria-pressed="false" data-target="input-confirmar-senha-criar" aria-label="Mostrar confirmacao">
-                        <svg class="icone-olho-aberto" aria-hidden="true"><use href="#icone-olho-aberto"/></svg>
-                        <svg class="icone-olho-fechado" aria-hidden="true"><use href="#icone-olho-fechado"/></svg>
-                    </button>
+                    <input type="password" id="input-confirmar-senha-criar" placeholder="Confirmar senha">
+                    <button type="button" class="btn-olho-senha" aria-pressed="false" data-target="input-confirmar-senha-criar"><svg class="icone-olho-aberto"><use href="#icone-olho-aberto"/></svg><svg class="icone-olho-fechado"><use href="#icone-olho-fechado"/></svg></button>
                 </div>
-
                 <button id="btn-confirmar-criar-senha" class="btn-container" type="submit">Criar Senha</button>
             </form>
-
-            <button class="ficha-item" id="btn-saiba-mais" type="button" aria-expanded="false" aria-controls="container-saiba-mais">
-                <span class="ficha-romano">&#10022;</span>
-                <span class="ficha-texto">Saiba mais</span>
-            </button>
-
+            <button class="ficha-item" id="btn-saiba-mais" type="button" aria-expanded="false" aria-controls="container-saiba-mais"><span class="ficha-romano">&#10022;</span><span class="ficha-texto">Saiba mais</span></button>
             <div id="container-saiba-mais" class="container-expansivel" hidden>
-                <a class="ficha-saiba-item" href="/?de=estante">
-                    <span class="ficha-saiba-num">I</span>
-                    <span class="ficha-saiba-corpo">
-                        <strong>Conheça o Auloo</strong>
-                        <small>Portfólio e visão geral</small>
-                    </span>
-                </a>
-                <a class="ficha-saiba-item" href="/termos.html?de=estante">
-                    <span class="ficha-saiba-num">II</span>
-                    <span class="ficha-saiba-corpo">
-                        <strong>Regras da Casa</strong>
-                        <small>Termos de uso</small>
-                    </span>
-                </a>
-                <a class="ficha-saiba-item" href="/privacidade.html?de=estante">
-                    <span class="ficha-saiba-num">III</span>
-                    <span class="ficha-saiba-corpo">
-                        <strong>Seus Dados</strong>
-                        <small>Política de privacidade</small>
-                    </span>
-                </a>
+                <a class="ficha-saiba-item" href="/?de=estante"><span class="ficha-saiba-num">I</span><span class="ficha-saiba-corpo"><strong>Conheça o Auloo</strong><small>Portfólio e visão geral</small></span></a>
+                <a class="ficha-saiba-item" href="/termos.html?de=estante"><span class="ficha-saiba-num">II</span><span class="ficha-saiba-corpo"><strong>Regras da Casa</strong><small>Termos de uso</small></span></a>
+                <a class="ficha-saiba-item" href="/privacidade.html?de=estante"><span class="ficha-saiba-num">III</span><span class="ficha-saiba-corpo"><strong>Seus Dados</strong><small>Política de privacidade</small></span></a>
             </div>
         </nav>
     </aside>
@@ -246,6 +182,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script src="assets/js/config.js"></script>
     <script src="assets/js/auth.js"></script>
-    <script src="assets/js/layout.js"></script>
+    <script src="assets/js/layout.js?v=43"></script>
 </body>
 </html>
