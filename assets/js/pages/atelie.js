@@ -1,11 +1,7 @@
 /* ==============================================================
-   ATELIE.JS — v138
-   Correções:
-   - Modal de criar ateliê redireciona direto para o novo.
-   - Fundo de capa sólido quando não houver imagem.
-   - Avatar salva posição/zoom no banco (evita CORS).
-   - Zoom do avatar inicia no mínimo (1.0).
-   - Modal de vídeo simplificado: apenas 1 vídeo por vez.
+   ATELIE.JS — v150 (Refatorado e Otimizado)
+   Correções Críticas: Painel de Cores (Paint) no mobile, 
+   salvamento de avatar, redirecionamento e acessibilidade.
    ============================================================== */
 (function () {
     'use strict';
@@ -842,14 +838,34 @@
             });
             if (btnCor) btnCor.classList.toggle('ativo', document.queryCommandState('foreColor'));
         }
+        
+        // --- CORREÇÃO DO PAINEL DE CORES (PAINT) ---
         if (btnCor && painelCores) {
-            btnCor.addEventListener('mousedown', function (e) { e.preventDefault(); });
-            btnCor.addEventListener('click', function (e) { e.stopPropagation(); painelCores.hidden = !painelCores.hidden; });
-            document.addEventListener('click', function (e) { if (painelCores.hidden) return; if (btnCor.contains(e.target) || painelCores.contains(e.target)) return; painelCores.hidden = true; });
-            painelCores.addEventListener('mousedown', function (e) { e.preventDefault(); });
-            painelCores.querySelectorAll('.cor-btn').forEach(function (b) { b.addEventListener('click', function () { conteudo.focus(); document.execCommand('foreColor', false, b.dataset.cor); btnCor.classList.add('ativo'); }); });
+            btnCor.addEventListener('pointerdown', function(e) { e.preventDefault(); });
+            btnCor.addEventListener('click', function(e) { 
+                e.stopPropagation(); 
+                var vaiAbrir = painelCores.hidden;
+                painelCores.hidden = !vaiAbrir; 
+                if (vaiAbrir) btnCor.classList.add('ativo'); else btnCor.classList.remove('ativo');
+            });
+            document.addEventListener('pointerdown', function(e) { 
+                if (painelCores.hidden) return; 
+                if (btnCor.contains(e.target) || painelCores.contains(e.target)) return; 
+                painelCores.hidden = true; 
+                btnCor.classList.remove('ativo');
+            });
+            painelCores.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+            
+            painelCores.querySelectorAll('.cor-btn').forEach(function(b) { 
+                b.addEventListener('click', function(e) { 
+                    e.stopPropagation();
+                    conteudo.focus(); document.execCommand('foreColor', false, b.dataset.cor); 
+                    btnCor.classList.add('ativo'); painelCores.hidden = true; 
+                }); 
+            });
         }
-        if (inputCor) inputCor.addEventListener('input', function (e) { conteudo.focus(); document.execCommand('foreColor', false, e.target.value); btnCor.classList.add('ativo'); atualizarContadores(); });
+        if (inputCor) inputCor.addEventListener('input', function(e) { conteudo.focus(); document.execCommand('foreColor', false, e.target.value); btnCor.classList.add('ativo'); });
+
         conteudo.addEventListener('paste', function (e) { e.preventDefault(); var texto = (e.clipboardData || window.clipboardData).getData('text/plain'); document.execCommand('insertText', false, texto); });
         conteudo.addEventListener('dragstart', function (e) { if (e.target.tagName === 'IMG') e.preventDefault(); });
         function normalizarBlocos() {
