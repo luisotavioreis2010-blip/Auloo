@@ -1,11 +1,8 @@
 ﻿@charset "UTF-8";
 /* ==============================================
-   ESTANTE.CSS — v27 (Botões e Layout Refinados)
+   ESTANTE.CSS — v32 (Sem conflitos com Atelie)
    ============================================== */
 
-/* ==============================================
-   1. VARIÁVEIS
-   ============================================== */
 :root {
     --papel: #F0E8D8;
     --papel-claro: #F8F2E4;
@@ -38,7 +35,7 @@
 
     --navbar-h: 68px;
     --sidebar-w: 300px;
-    --ficha-w: 360px;
+    --ficha-w: 420px;
     --cal-w: 470px;
     --drawer-w: 70vw;
     --drawer-max: 400px;
@@ -76,14 +73,9 @@
     --dia-size: 0.8rem;
 }
 
-/* ==============================================
-   2. RESET, BASE E NAVBAR
-   ============================================== */
 *, *::before, *::after { box-sizing: border-box; }
 * { margin: 0; padding: 0; }
-
 [hidden] { display: none !important; }
-
 .sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
 
 html {
@@ -109,455 +101,108 @@ body {
 }
 
 input, textarea, .ficha-email { -webkit-user-select: text; user-select: text; }
-
-:where(a, button, [tabindex]):focus-visible {
-    outline: 2px solid var(--dourado);
-    outline-offset: 2px;
-}
+:where(a, button, [tabindex]):focus-visible { outline: 2px solid var(--dourado); outline-offset: 2px; }
 
 .navbar {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    height: var(--navbar-h);
-    padding: 0 var(--navbar-px);
-    background: var(--papel-claro);
-    border-bottom: 3px double var(--dourado);
+    position: sticky; top: 0; z-index: 100;
+    display: flex; justify-content: space-between; align-items: center;
+    height: var(--navbar-h); padding: 0 var(--navbar-px);
+    background: var(--papel-claro); border-bottom: 3px double var(--dourado);
 }
 
 .navbar-left, .navbar-right { display: flex; align-items: center; gap: 1rem; }
-
-.logo {
-    font-family: var(--fonte-display);
-    font-size: var(--logo-size);
-    font-weight: 700;
-    font-style: italic;
-    letter-spacing: var(--logo-ls);
-    color: var(--vinho);
-}
-
+.logo { font-family: var(--fonte-display); font-size: var(--logo-size); font-weight: 700; font-style: italic; letter-spacing: var(--logo-ls); color: var(--vinho); }
 .logo-dot { color: var(--dourado); font-style: normal; }
 
 .perfil-botao { padding: 0; background: transparent; border: none; cursor: pointer; }
-.perfil-usuario {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: var(--avatar-size);
-    height: var(--avatar-size);
-    aspect-ratio: 1 / 1;
-    overflow: hidden;
-    background: var(--papel-escuro);
-    border: 2px solid var(--dourado);
-    border-radius: 50%;
-    cursor: pointer;
-    transition: box-shadow var(--transicao);
-}
+.perfil-usuario { display: flex; align-items: center; justify-content: center; width: var(--avatar-size); height: var(--avatar-size); aspect-ratio: 1 / 1; overflow: hidden; background: var(--papel-escuro); border: 2px solid var(--dourado); border-radius: 50%; cursor: pointer; transition: box-shadow var(--transicao); }
 @media (hover: hover) { .perfil-usuario:hover { box-shadow: 0 0 0 3px var(--dourado-fraco); } }
 
 .foto-perfil { display: block; width: 100%; height: 100%; object-fit: cover; }
-.avatar-iniciais {
-    display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;
-    background: var(--vinho); color: var(--papel); font-family: var(--fonte-display);
-    font-size: 0.75rem; font-style: italic; font-weight: 600;
-}
+.avatar-iniciais { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; background: var(--vinho); color: var(--papel); font-family: var(--fonte-display); font-size: 0.75rem; font-style: italic; font-weight: 600; }
 
-.btn-hamburger {
-    display: none; align-items: center; justify-content: center;
-    width: var(--hamb-size); height: var(--hamb-size); padding: 0;
-    background: transparent; color: var(--tinta); border: 1px solid var(--tinta);
-    border-radius: 2px; font-size: 1.2rem; line-height: 1; cursor: pointer;
-    transition: color var(--transicao), background-color var(--transicao);
-}
+.btn-hamburger { display: none; align-items: center; justify-content: center; width: var(--hamb-size); height: var(--hamb-size); padding: 0; background: transparent; color: var(--tinta); border: 1px solid var(--tinta); border-radius: 2px; font-size: 1.2rem; line-height: 1; cursor: pointer; transition: color var(--transicao), background-color var(--transicao); }
 @media (hover: hover) { .btn-hamburger:hover { background: var(--tinta); color: var(--papel); } }
 
-.gaveta-overlay {
-    display: none; position: fixed; inset: 0; z-index: 9998;
-    background: rgba(26, 22, 20, 0.65); opacity: 0; pointer-events: none;
-    cursor: pointer; transition: opacity 0.3s ease;
-}
+.gaveta-overlay { display: none; position: fixed; inset: 0; z-index: 9998; background: rgba(26, 22, 20, 0.65); opacity: 0; pointer-events: none; cursor: pointer; transition: opacity 0.3s ease; }
 .gaveta-overlay.ativa { opacity: 1; pointer-events: auto; }
 
-/* ==============================================
-   3. BOTÃO MORPH (SAIR / VOLTAR)
-   ============================================== */
-.morph-btn-sair {
-  position: relative;
-  padding: 8px 20px;
-  font-family: var(--fonte-corpo);
-  font-size: 0.65rem;
-  font-weight: 600;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: #ffffff;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  overflow: visible;
-  isolation: isolate;
-  outline: none;
-}
+.morph-btn-sair { position: relative; padding: 8px 20px; font-family: var(--fonte-corpo); font-size: 0.65rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: #ffffff; background: transparent; border: none; cursor: pointer; overflow: visible; isolation: isolate; outline: none; }
+#btn-voltar-redacao { margin-right: 1rem; }
+.morph-btn-sair .btn-fill { position: absolute; inset: 0; background: #0d0d0d; border-radius: 2px; transition: border-radius 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55); z-index: 1; }
+.morph-btn-sair:hover .btn-fill { border-radius: 20px; animation: jelly 0.5s ease; }
+@keyframes jelly { 0% { transform: scale(1, 1); } 30% { transform: scale(1.15, 0.85); } 50% { transform: scale(0.9, 1.1); } 70% { transform: scale(1.05, 0.95); } 100% { transform: scale(1, 1); } }
 
-/* Espaçamento extra entre Voltar e Sair */
-#btn-voltar-redacao {
-    margin-right: 1rem;
-}
-
-.morph-btn-sair .btn-fill {
-  position: absolute;
-  inset: 0;
-  background: #0d0d0d;
-  border-radius: 2px;
-  transition: border-radius 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  z-index: 1;
-}
-
-.morph-btn-sair:hover .btn-fill {
-  border-radius: 20px;
-  animation: jelly 0.5s ease;
-}
-
-@keyframes jelly {
-  0% { transform: scale(1, 1); }
-  30% { transform: scale(1.15, 0.85); }
-  50% { transform: scale(0.9, 1.1); }
-  70% { transform: scale(1.05, 0.95); }
-  100% { transform: scale(1, 1); }
-}
-
-.morph-btn-sair .orbit-dots {
-  position: absolute;
-  inset: -15px;
-  pointer-events: none;
-}
-
-.morph-btn-sair .orbit-dots span {
-  position: absolute;
-  width: 4px;
-  height: 4px;
-  background: #0d0d0d;
-  border-radius: 50%;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
+.morph-btn-sair .orbit-dots { position: absolute; inset: -15px; pointer-events: none; }
+.morph-btn-sair .orbit-dots span { position: absolute; width: 4px; height: 4px; background: #0d0d0d; border-radius: 50%; opacity: 0; transition: opacity 0.3s ease; }
 .morph-btn-sair:hover .orbit-dots span { opacity: 1; }
-
 .morph-btn-sair .orbit-dots span:nth-child(1) { top: 0; left: 50%; animation: orbit1 3s linear infinite; }
 .morph-btn-sair .orbit-dots span:nth-child(2) { bottom: 0; left: 50%; animation: orbit2 3s linear infinite; }
 .morph-btn-sair .orbit-dots span:nth-child(3) { top: 50%; left: 0; animation: orbit3 4s linear infinite; }
 .morph-btn-sair .orbit-dots span:nth-child(4) { top: 50%; right: 0; animation: orbit4 4s linear infinite; }
+@keyframes orbit1 { 0% { transform: translateX(-50%) translateY(0) scale(1); } 25% { transform: translateX(15px) translateY(5px) scale(0.6); } 50% { transform: translateX(-50%) translateY(10px) scale(1); } 75% { transform: translateX(-40px) translateY(5px) scale(0.6); } 100% { transform: translateX(-50%) translateY(0) scale(1); } }
+@keyframes orbit2 { 0% { transform: translateX(-50%) translateY(0) scale(0.6); } 25% { transform: translateX(-40px) translateY(-5px) scale(1); } 50% { transform: translateX(-50%) translateY(-10px) scale(0.6); } 75% { transform: translateX(15px) translateY(-5px) scale(1); } 100% { transform: translateX(-50%) translateY(0) scale(0.6); } }
+@keyframes orbit3 { 0% { transform: translateY(-50%) translateX(0) scale(0.8); } 50% { transform: translateY(-50%) translateX(-8px) scale(1.2); } 100% { transform: translateY(-50%) translateX(0) scale(0.8); } }
+@keyframes orbit4 { 0% { transform: translateY(-50%) translateX(0) scale(1.2); } 50% { transform: translateY(-50%) translateX(8px) scale(0.8); } 100% { transform: translateY(-50%) translateX(0) scale(1.2); } }
 
-@keyframes orbit1 {
-  0% { transform: translateX(-50%) translateY(0) scale(1); }
-  25% { transform: translateX(15px) translateY(5px) scale(0.6); }
-  50% { transform: translateX(-50%) translateY(10px) scale(1); }
-  75% { transform: translateX(-40px) translateY(5px) scale(0.6); }
-  100% { transform: translateX(-50%) translateY(0) scale(1); }
-}
-@keyframes orbit2 {
-  0% { transform: translateX(-50%) translateY(0) scale(0.6); }
-  25% { transform: translateX(-40px) translateY(-5px) scale(1); }
-  50% { transform: translateX(-50%) translateY(-10px) scale(0.6); }
-  75% { transform: translateX(15px) translateY(-5px) scale(1); }
-  100% { transform: translateX(-50%) translateY(0) scale(0.6); }
-}
-@keyframes orbit3 {
-  0% { transform: translateY(-50%) translateX(0) scale(0.8); }
-  50% { transform: translateY(-50%) translateX(-8px) scale(1.2); }
-  100% { transform: translateY(-50%) translateX(0) scale(0.8); }
-}
-@keyframes orbit4 {
-  0% { transform: translateY(-50%) translateX(0) scale(1.2); }
-  50% { transform: translateY(-50%) translateX(8px) scale(0.8); }
-  100% { transform: translateY(-50%) translateX(0) scale(1.2); }
-}
+.morph-btn-sair .btn-text { position: relative; display: inline-block; z-index: 3; }
+.morph-btn-sair .btn-text span { display: inline-block; transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); transition-delay: calc(var(--i) * 0.03s); }
+.morph-btn-sair:hover .btn-text span { transform: translateY(-100%); animation: letterBounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards; animation-delay: calc(var(--i) * 0.03s); }
+@keyframes letterBounce { 0% { transform: translateY(0); } 40% { transform: translateY(-120%); } 70% { transform: translateY(10%); } 100% { transform: translateY(0); } }
 
-.morph-btn-sair .btn-text {
-  position: relative;
-  display: inline-block;
-  z-index: 3;
-}
-
-.morph-btn-sair .btn-text span {
-  display: inline-block;
-  transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  transition-delay: calc(var(--i) * 0.03s);
-}
-
-.morph-btn-sair:hover .btn-text span {
-  transform: translateY(-100%);
-  animation: letterBounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
-  animation-delay: calc(var(--i) * 0.03s);
-}
-
-@keyframes letterBounce {
-  0% { transform: translateY(0); }
-  40% { transform: translateY(-120%); }
-  70% { transform: translateY(10%); }
-  100% { transform: translateY(0); }
-}
-
-.morph-btn-sair .corners span {
-  position: absolute;
-  width: 6px;
-  height: 6px;
-  border: 1px solid #0d0d0d;
-  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  opacity: 0;
-  z-index: 2;
-}
-
+.morph-btn-sair .corners span { position: absolute; width: 6px; height: 6px; border: 1px solid #0d0d0d; transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); opacity: 0; z-index: 2; }
 .morph-btn-sair .corners span:nth-child(1) { top: -4px; left: -4px; border-right: none; border-bottom: none; }
 .morph-btn-sair .corners span:nth-child(2) { top: -4px; right: -4px; border-left: none; border-bottom: none; }
 .morph-btn-sair .corners span:nth-child(3) { bottom: -4px; left: -4px; border-right: none; border-top: none; }
 .morph-btn-sair .corners span:nth-child(4) { bottom: -4px; right: -4px; border-left: none; border-top: none; }
-
 .morph-btn-sair:hover .corners span { opacity: 1; }
 .morph-btn-sair:hover .corners span:nth-child(1) { transform: translate(-2px, -2px) rotate(-5deg); }
 .morph-btn-sair:hover .corners span:nth-child(2) { transform: translate(2px, -2px) rotate(5deg); }
 .morph-btn-sair:hover .corners span:nth-child(3) { transform: translate(-2px, 2px) rotate(5deg); }
 .morph-btn-sair:hover .corners span:nth-child(4) { transform: translate(2px, 2px) rotate(-5deg); }
-
 .morph-btn-sair:active .btn-fill { transform: scale(0.92); transition: transform 0.1s ease; }
 .morph-btn-sair:active .btn-text { transform: scale(0.95); transition: transform 0.1s ease; }
 
-/* ==============================================
-   4. BOTÃO ADD ITEM (NOVO ATELIÊ / VÍDEO)
-   ============================================== */
-.btn-add-custom {
-  --main-focus: #2d8cf0;
-  --font-color: #323232;
-  --bg-color-sub: #dedede;
-  --bg-color: #eee;
-  --main-color: #323232;
-  position: relative;
-  width: 220px;
-  height: 44px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding-right: 44px;
-  border: 2px solid var(--main-color);
-  box-shadow: 4px 4px var(--main-color);
-  background-color: var(--bg-color);
-  border-radius: 10px;
-  overflow: hidden;
-  transition: all 0.3s;
-}
+.btn-add-custom { position: relative; width: 220px; height: 44px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding-right: 44px; border: 2px solid #323232; box-shadow: 4px 4px #323232; background-color: #eee; border-radius: 10px; overflow: hidden; transition: all 0.3s; }
+.sidebar .btn-add-custom { width: 100%; margin: 0; }
+.video-header-acoes .btn-add-custom { margin: 0; }
+.btn-add-custom .button__text { color: #323232; font-weight: 600; font-family: var(--fonte-corpo); font-size: 0.75rem; letter-spacing: 1px; text-transform: uppercase; transition: all 0.3s; z-index: 2; }
+.btn-add-custom .button__icon { position: absolute; right: 0; top: 0; height: 100%; width: 44px; background-color: #dedede; display: flex; align-items: center; justify-content: center; transition: all 0.3s; border-left: 2px solid #323232; z-index: 1; }
+.btn-add-custom .svg { width: 20px; fill: none; stroke: #323232; stroke-width: 2; }
+.btn-add-custom:hover .button__text { color: transparent; }
+.btn-add-custom:hover .button__icon { width: 100%; border-left: none; transform: translateX(0); }
+.btn-add-custom:active { transform: translate(4px, 4px); box-shadow: 0px 0px #323232; }
 
-/* Novo Ateliê: ocupa toda a largura dos cards da sidebar */
-.sidebar .btn-add-custom {
-  width: 100%;
-  margin: 0;
-}
-
-/* Adicionar Vídeo: alinhado à direita pelo flex-end do container */
-.video-header-acoes .btn-add-custom {
-  margin: 0;
-}
-
-.btn-add-custom .button__text {
-  color: var(--font-color);
-  font-weight: 600;
-  font-family: var(--fonte-corpo);
-  font-size: 0.75rem;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  transition: all 0.3s;
-  z-index: 2;
-}
-
-.btn-add-custom .button__icon {
-  position: absolute;
-  right: 0;
-  top: 0;
-  transform: none;
-  height: 100%;
-  width: 44px;
-  background-color: var(--bg-color-sub);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s;
-  border-left: 2px solid var(--main-color);
-  z-index: 1;
-}
-
-.btn-add-custom .svg {
-  width: 20px;
-  fill: none;
-  stroke: var(--main-color);
-  stroke-width: 2;
-}
-
-.btn-add-custom:hover .button__text {
-  color: transparent;
-}
-
-.btn-add-custom:hover .button__icon {
-  width: 100%;
-  border-left: none;
-  transform: translateX(0);
-}
-
-.btn-add-custom:active {
-  transform: translate(4px, 4px);
-  box-shadow: 0px 0px var(--main-color);
-}
-
-/* ==============================================
-   5. SIDEBAR ESQUERDA (SCROLL UNIFICADO)
-   ============================================== */
-.sidebar {
-    position: fixed;
-    top: var(--navbar-h);
-    bottom: 0;
-    left: 0;
-    z-index: 50;
-    width: var(--sidebar-w);
-    background: linear-gradient(180deg, var(--sidebar-bg-1) 0%, var(--sidebar-bg-2) 50%, var(--sidebar-bg-3) 100%);
-    border-right: 3px double var(--dourado);
-    box-shadow: 4px 0 30px rgba(61, 15, 15, 0.35);
-    overflow: hidden;
-}
-
-.sidebar-scroll {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    height: 100%;
-    padding: var(--secao-pt) var(--secao-px) 0;
-    overflow-y: auto;
-    overflow-x: hidden;
-    scrollbar-width: none;
-}
+.sidebar { position: fixed; top: var(--navbar-h); bottom: 0; left: 0; z-index: 50; width: var(--sidebar-w); background: linear-gradient(180deg, var(--sidebar-bg-1) 0%, var(--sidebar-bg-2) 50%, var(--sidebar-bg-3) 100%); border-right: 3px double var(--dourado); box-shadow: 4px 0 30px rgba(61, 15, 15, 0.35); overflow: hidden; }
+.sidebar-scroll { display: flex; flex-direction: column; width: 100%; height: 100%; padding: var(--secao-pt) var(--secao-px) 0; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; }
 .sidebar-scroll::-webkit-scrollbar { display: none; }
-
-.sidebar-ornamento {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 1.5rem;
-    color: var(--dourado);
-    opacity: 0.8;
-    margin-bottom: 1rem;
-    margin-top: -0.5rem;
-    flex-shrink: 0;
-}
-
-.sidebar-titulo {
-    min-height: 1.2rem; margin-bottom: 1.2rem; padding-left: 1rem;
-    white-space: nowrap; font-family: var(--fonte-display); font-size: var(--titulo-size);
-    font-weight: 700; font-style: italic; letter-spacing: var(--titulo-ls);
-    color: var(--dourado); flex-shrink: 0;
-}
-
-.sidebar-filete {
-    height: 1px; margin: 0 1rem 1.5rem; background: var(--dourado);
-    opacity: 0.6; flex-shrink: 0;
-}
-
-.sidebar-menu {
-    display: flex; flex-direction: column; align-items: stretch;
-    gap: var(--menu-gap); width: 100%; flex-shrink: 0;
-}
-
-.sidebar-link {
-    position: relative; display: flex; align-items: center; gap: 1rem;
-    flex-shrink: 0; width: 100%; padding: var(--link-pad-y) var(--link-pad-x);
-    overflow: hidden; white-space: nowrap; text-align: left; text-decoration: none;
-    color: rgba(248, 242, 228, 0.85); background: transparent; border: none;
-    border-left: 3px solid transparent; border-radius: 2px; cursor: pointer;
-    transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
-}
-@media (hover: hover) {
-    .sidebar-link:hover { color: var(--dourado); background: rgba(184, 137, 74, 0.12); border-left-color: var(--dourado); }
-}
-
-.sidebar-icone {
-    display: inline-flex; align-items: center; justify-content: center;
-    flex-shrink: 0; width: var(--icone-size); height: var(--icone-size);
-    line-height: 1; color: var(--dourado);
-}
+.sidebar-ornamento { display: flex; justify-content: center; align-items: center; font-size: 1.5rem; color: var(--dourado); opacity: 0.8; margin-bottom: 1rem; margin-top: -0.5rem; flex-shrink: 0; }
+.sidebar-titulo { min-height: 1.2rem; margin-bottom: 1.2rem; padding-left: 1rem; white-space: nowrap; font-family: var(--fonte-display); font-size: var(--titulo-size); font-weight: 700; font-style: italic; letter-spacing: var(--titulo-ls); color: var(--dourado); flex-shrink: 0; }
+.sidebar-filete { height: 1px; margin: 0 1rem 1.5rem; background: var(--dourado); opacity: 0.6; flex-shrink: 0; }
+.sidebar-menu { display: flex; flex-direction: column; align-items: stretch; gap: var(--menu-gap); width: 100%; flex-shrink: 0; }
+.sidebar-link { position: relative; display: flex; align-items: center; gap: 1rem; flex-shrink: 0; width: 100%; padding: var(--link-pad-y) var(--link-pad-x); overflow: hidden; white-space: nowrap; text-align: left; text-decoration: none; color: rgba(248, 242, 228, 0.85); background: transparent; border: none; border-left: 3px solid transparent; border-radius: 2px; cursor: pointer; transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease; }
+@media (hover: hover) { .sidebar-link:hover { color: var(--dourado); background: rgba(184, 137, 74, 0.12); border-left-color: var(--dourado); } }
+.sidebar-icone { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: var(--icone-size); height: var(--icone-size); line-height: 1; color: var(--dourado); }
 .sidebar-icone svg { display: block; width: 100%; height: 100%; fill: none; stroke: currentColor; }
-
-.sidebar-romano {
-    display: none; flex-shrink: 0; min-width: 1.8rem; font-family: var(--fonte-display);
-    font-size: var(--romano-size); font-style: italic; font-weight: 700;
-    line-height: 1; letter-spacing: 1px; text-align: center; color: var(--dourado);
-}
-
-.sidebar-nome {
-    font-family: var(--fonte-display); font-size: var(--nome-size);
-    font-weight: 600; letter-spacing: var(--nome-ls); text-transform: uppercase; white-space: nowrap;
-}
-
-/* --- CARDS DE ATELIÊ --- */
-.sidebar-atelies-lista {
-    list-style: none; padding: 0; margin: 0;
-    display: flex; flex-direction: column; gap: var(--menu-gap); width: 100%; flex-shrink: 0;
-}
-
-.sidebar-atelie-card {
-    position: relative; background: var(--papel-claro); border: 1px solid rgba(184, 137, 74, 0.25);
-    border-radius: 10px; overflow: hidden; cursor: pointer; text-decoration: none;
-    display: flex; flex-direction: column; flex-shrink: 0; width: 100%;
-    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
-}
+.sidebar-romano { display: none; flex-shrink: 0; min-width: 1.8rem; font-family: var(--fonte-display); font-size: var(--romano-size); font-style: italic; font-weight: 700; line-height: 1; letter-spacing: 1px; text-align: center; color: var(--dourado); }
+.sidebar-nome { font-family: var(--fonte-display); font-size: var(--nome-size); font-weight: 600; letter-spacing: var(--nome-ls); text-transform: uppercase; white-space: nowrap; }
+.sidebar-atelies-lista { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: var(--menu-gap); width: 100%; flex-shrink: 0; }
+.sidebar-atelie-card { position: relative; background: var(--papel-claro); border: 1px solid rgba(184, 137, 74, 0.25); border-radius: 10px; overflow: hidden; cursor: pointer; text-decoration: none; display: flex; flex-direction: column; flex-shrink: 0; width: 100%; transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease; }
 .sidebar-atelie-card:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15); border-color: rgba(184, 137, 74, 0.6); }
 .sidebar-atelie-card.ativo { border-color: var(--dourado); box-shadow: 0 0 0 2px var(--dourado); }
-
 .sidebar-atelie-capa { width: 100%; height: 80px; background: var(--papel-escuro); position: relative; overflow: hidden; }
 .sidebar-atelie-capa img { width: 100%; height: 100%; object-fit: cover; opacity: 0.85; }
-
-.sidebar-atelie-avatar {
-    position: absolute; top: 80px; left: 50%; transform: translate(-50%, -50%);
-    width: 46px; height: 46px; border-radius: 50%; background: var(--vinho);
-    border: 2px solid var(--papel-claro); display: flex; align-items: center;
-    justify-content: center; overflow: hidden; z-index: 2;
-    font-family: var(--fonte-titulo); font-size: 1.1rem; font-style: italic; color: var(--papel);
-}
+.sidebar-atelie-avatar { position: absolute; top: 80px; left: 50%; transform: translate(-50%, -50%); width: 46px; height: 46px; border-radius: 50%; background: var(--vinho); border: 2px solid var(--papel-claro); display: flex; align-items: center; justify-content: center; overflow: hidden; z-index: 2; font-family: var(--fonte-titulo); font-size: 1.1rem; font-style: italic; color: var(--papel); }
 .sidebar-atelie-avatar img { width: 100%; height: 100%; object-fit: cover; }
-
 .sidebar-atelie-info { padding: 2rem 0.5rem 0.75rem; text-align: center; min-height: 60px; }
-.sidebar-atelie-nome {
-    font-family: var(--fonte-titulo); font-size: 1rem; font-style: italic;
-    color: var(--vinho); margin: 0; white-space: nowrap; overflow: hidden;
-    text-overflow: ellipsis; line-height: 1.2;
-}
-
-/* --- RODAPÉ --- */
-.sidebar-selo {
-    display: flex; align-items: center; justify-content: center; gap: 0.5rem;
-    width: 100%; margin-top: auto; padding: 3rem 0 var(--selo-pb);
-    white-space: nowrap; color: var(--dourado); opacity: 0.75; flex-shrink: 0;
-}
+.sidebar-atelie-nome { font-family: var(--fonte-titulo); font-size: 1rem; font-style: italic; color: var(--vinho); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; }
+.sidebar-selo { display: flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%; margin-top: auto; padding: 3rem 0 var(--selo-pb); white-space: nowrap; color: var(--dourado); opacity: 0.75; flex-shrink: 0; }
 .selo-texto { display: inline-block; font-family: var(--fonte-display); font-size: 0.75rem; font-style: italic; letter-spacing: 1px; text-align: center; }
-
-.sidebar-volume {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 0.4rem; width: 100%; padding: 1.2rem 0 2rem; text-align: center;
-    border-top: 1px solid rgba(184, 137, 74, 0.25); flex-shrink: 0;
-}
+.sidebar-volume { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.4rem; width: 100%; padding: 1.2rem 0 2rem; text-align: center; border-top: 1px solid rgba(184, 137, 74, 0.25); flex-shrink: 0; }
 .volume-numero { font-family: var(--fonte-display); font-size: 0.9rem; font-style: italic; line-height: 1; letter-spacing: 2px; color: var(--dourado); }
 .volume-ano { font-family: var(--fonte-corpo); font-size: 0.5rem; line-height: 1; letter-spacing: 3px; text-transform: uppercase; color: rgba(184, 137, 74, 0.55); }
 
-/* ==============================================
-   6. FICHA DO LEITOR (Sidebar Direita)
-   ============================================== */
-.sidebar-direita {
-    position: fixed; top: var(--navbar-h); right: 0; bottom: 0; z-index: 9999;
-    display: flex; flex-direction: column; width: var(--ficha-w); padding: var(--ficha-pad);
-    overflow-x: hidden; overflow-y: auto; -webkit-overflow-scrolling: touch;
-    background: var(--papel-claro); border-left: 1px solid var(--papel-sombra);
-    box-shadow: -20px 0 40px rgba(26, 22, 20, 0.2); transform: translateX(100%);
-    visibility: hidden; transition: transform 0.4s var(--ease), visibility 0s linear 0.4s;
-}
+.sidebar-direita { position: fixed; top: var(--navbar-h); right: 0; bottom: 0; z-index: 40; display: flex; flex-direction: column; width: var(--ficha-w); padding: var(--ficha-pad); overflow-x: hidden; overflow-y: auto; -webkit-overflow-scrolling: touch; background: var(--papel-claro); border-left: 1px solid var(--papel-sombra); box-shadow: -20px 0 40px rgba(26, 22, 20, 0.2); transform: translateX(100%); visibility: hidden; transition: transform 0.4s var(--ease), visibility 0s linear 0.4s; }
 .sidebar-direita.ativa { transform: translateX(0); visibility: visible; transition: transform 0.4s var(--ease), visibility 0s; }
 .sidebar-direita > * { flex-shrink: 0; }
 
@@ -565,7 +210,6 @@ input, textarea, .ficha-email { -webkit-user-select: text; user-select: text; }
 .ficha-titulo { font-family: var(--fonte-corpo); font-size: 0.65rem; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; color: var(--tinta-clara); }
 .ficha-fechar { padding: 0.3rem; font-size: 0.9rem; line-height: 1; color: var(--tinta-suave); background: transparent; border: none; cursor: pointer; transition: color var(--transicao); }
 @media (hover: hover) { .ficha-fechar:hover { color: var(--vinho); } }
-
 .ficha-filete { height: 1px; margin: 1rem 0; background: var(--tinta-clara); opacity: 0.3; }
 .ficha-perfil { display: flex; align-items: center; gap: 1rem; padding: 0.5rem 0; }
 .ficha-foto { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: var(--foto-size); height: var(--foto-size); overflow: hidden; background: var(--papel-escuro); border: 2px solid var(--dourado); border-radius: 50%; }
@@ -581,9 +225,6 @@ input, textarea, .ficha-email { -webkit-user-select: text; user-select: text; }
 .ficha-romano { min-width: 2rem; font-family: var(--fonte-display); font-size: 1rem; font-style: italic; font-weight: 600; color: var(--dourado); }
 .ficha-texto { font-family: var(--fonte-corpo); font-size: 0.75rem; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; }
 
-/* ==============================================
-   7. CONTAINERS EXPANSIVOS
-   ============================================== */
 .container-expansivel { position: relative; flex-shrink: 0; margin: 0.4rem 0 0.6rem; padding: 1.2rem 1.3rem 1.4rem; background: linear-gradient(180deg, var(--papel) 0%, var(--papel-claro) 100%); border: 1px solid var(--dourado); border-left-width: 2px; transform-origin: top; animation: surgirContainer 0.35s var(--ease); }
 .container-expansivel:not(#container-saiba-mais)::before { content: '\2766'; position: absolute; top: 0.4rem; right: 0.6rem; font-size: 0.85rem; color: var(--dourado); opacity: 0.6; pointer-events: none; }
 @keyframes surgirContainer { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
@@ -623,9 +264,6 @@ input, textarea, .ficha-email { -webkit-user-select: text; user-select: text; }
 .mensagem-sidebar--erro    { color: var(--erro);    background: rgba(178, 58, 46, 0.1); }
 .mensagem-sidebar.saindo   { opacity: 0; }
 
-/* ==============================================
-   8. CONTEÚDO PRINCIPAL E CALENDÁRIO
-   ============================================== */
 .dashboard-main { display: flex; align-items: center; justify-content: center; gap: var(--main-gap); min-height: calc(100vh - var(--navbar-h)); min-height: calc(100dvh - var(--navbar-h)); margin-left: var(--sidebar-w); padding: var(--main-pad); }
 .ilustracao-container { flex: 1; display: flex; align-items: center; justify-content: center; max-width: 600px; }
 .ilustracao-central { display: block; width: 100%; height: auto; filter: drop-shadow(0 20px 40px rgba(92, 26, 26, 0.08)); animation: flutuar 6s ease-in-out infinite; }
@@ -646,32 +284,14 @@ input, textarea, .ficha-email { -webkit-user-select: text; user-select: text; }
 .calendario-dias span.dia-atual { font-family: var(--fonte-display); font-size: 0.95rem; font-style: italic; font-weight: 600; color: #FAF6EE; background: var(--vinho); box-shadow: 0 2px 6px rgba(74, 14, 14, 0.3); }
 .calendario-dias span.dia-outro-mes { opacity: 0.25; }
 
-/* ==============================================
-   9. DESKTOP E NOTEBOOKS (>= 1025px) — Sidebar sempre aberta
-   ============================================== */
 @media (min-width: 1025px) {
-    .sidebar {
-        transform: none !important;
-        visibility: visible !important;
-        position: fixed;
-        top: var(--navbar-h);
-        bottom: 0;
-        left: 0;
-        width: var(--sidebar-w);
-        z-index: 50;
-    }
-
-    /* Esconde o botão hamburger e overlay no desktop */
+    .sidebar { transform: none !important; visibility: visible !important; position: fixed; top: var(--navbar-h); bottom: 0; left: 0; width: var(--sidebar-w); z-index: 50; }
     .btn-hamburger { display: none !important; }
     .gaveta-overlay { display: none !important; }
     .sidebar-icone { display: inline-flex !important; }
     .sidebar-romano { display: none !important; }
-    
-    /* Ajusta a dashboard da estante */
-    .dashboard-main {
-        margin-left: var(--sidebar-w);
-        transition: margin 0.4s var(--ease);
-    }
+    .dashboard-main { margin-left: var(--sidebar-w); transition: margin 0.4s var(--ease); }
+    body.ficha-aberta .dashboard-main { margin-right: var(--ficha-w); }
 }
 
 @media (min-width: 1367px) {
@@ -683,14 +303,13 @@ input, textarea, .ficha-email { -webkit-user-select: text; user-select: text; }
         --foto-size: 76px; --cal-titulo-size: 1.5rem; 
     }
     .sidebar { width: var(--sidebar-w); }
-    body.ficha-aberta .dashboard-main { margin-right: var(--ficha-w); }
 }
 
 @media (min-width: 1441px) {
     :root { 
         --navbar-h: 90px; --navbar-px: 3.5rem; --logo-size: 2.2rem; 
         --sair-pad: 0.7rem 1.6rem; --sair-size: 0.72rem; --avatar-size: 48px; 
-        --sidebar-w: 320px; --ficha-w: 400px; --cal-w: 540px; 
+        --sidebar-w: 320px; --ficha-w: 420px; --cal-w: 540px; 
         --secao-pt: 4rem; --secao-px: 1.5rem; --menu-gap: 1.2rem; 
         --link-pad-y: 1.3rem; --link-pad-x: 1.1rem; --icone-size: 26px; 
         --titulo-size: 1.1rem; --titulo-ls: 3px; --nome-size: 0.95rem; 
@@ -700,150 +319,36 @@ input, textarea, .ficha-email { -webkit-user-select: text; user-select: text; }
     }
 }
 
-/* ==============================================
-   10. COMPACTO: Tablets e Celulares (<= 1024px)
-   ============================================== */
 @media (max-width: 1024px) {
-    html, body { 
-        position: fixed; 
-        top: 0; 
-        left: 0; 
-        width: 100%; 
-        height: var(--viewport-h); 
-        overflow: hidden; 
-        overscroll-behavior: none; 
-        touch-action: manipulation; 
-    }
-    
+    html, body { position: fixed; top: 0; left: 0; width: 100%; height: var(--viewport-h); overflow: hidden; overscroll-behavior: none; touch-action: manipulation; }
     .navbar { touch-action: manipulation; }
     .btn-hamburger { display: flex !important; }
     .gaveta-overlay { display: block; }
-
-    /* Sidebar escondida por padrão, vira gaveta */
-    .sidebar {
-        top: 0; 
-        bottom: auto; 
-        z-index: 9999; 
-        width: var(--drawer-w); 
-        max-width: var(--drawer-max); 
-        height: var(--viewport-h);
-        transform: translateX(-100%); 
-        visibility: hidden; 
-        transition: transform 0.4s var(--ease), visibility 0s linear 0.4s;
-    }
-    .sidebar.aberta { 
-        transform: translateX(0); 
-        visibility: visible; 
-        transition: transform 0.4s var(--ease), visibility 0s; 
-    }
-    
+    .sidebar { top: 0; bottom: auto; z-index: 9999; width: var(--drawer-w); max-width: var(--drawer-max); height: var(--viewport-h); transform: translateX(-100%); visibility: hidden; transition: transform 0.4s var(--ease), visibility 0s linear 0.4s; }
+    .sidebar.aberta { transform: translateX(0); visibility: visible; transition: transform 0.4s var(--ease), visibility 0s; }
     .sidebar-icone { display: none !important; }
     .sidebar-romano { display: inline-block !important; }
-
-    .sidebar-direita { 
-        top: 0; 
-        bottom: auto; 
-        z-index: 9999; 
-        width: 100%; 
-        height: var(--viewport-h); 
-        overscroll-behavior: none; 
-        box-shadow: none; 
-    }
-    
+    .sidebar-direita { top: 0; bottom: auto; z-index: 9999; width: var(--ficha-w); max-width: 100vw; height: var(--viewport-h); overscroll-behavior: none; box-shadow: none; }
     body.campo-focado .sidebar-direita { padding-bottom: 50vh; }
-
-    .dashboard-main {
-        flex-direction: column; 
-        align-items: stretch; 
-        justify-content: flex-start; 
-        gap: 0.5rem;
-        height: calc(var(--viewport-h) - var(--navbar-h)); 
-        min-height: 0; 
-        margin: 0;
-        padding: 0.5rem 1.5rem 2rem; 
-        overflow-x: hidden; 
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch; 
-        overscroll-behavior: contain;
-    }
-    
+    .dashboard-main { flex-direction: column; align-items: stretch; justify-content: flex-start; gap: 0.5rem; height: calc(var(--viewport-h) - var(--navbar-h)); min-height: 0; margin: 0; padding: 0.5rem 1.5rem 2rem; overflow-x: hidden; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
     .dashboard-main > * { flex-shrink: 0; }
     .ilustracao-container { flex: 0 0 auto; order: 1; max-width: 60%; margin: -1rem auto 0; }
     .calendario-container { flex: 0 0 auto; order: 2; max-width: 100%; }
 }
 
-/* Mantém as regras responsivas originais que você já tinha para telas menores */
 @media (max-width: 767px) {
-    :root:where(:not([data-layout="row"])) { 
-        --navbar-h: 56px; --navbar-px: 1.1rem; --logo-size: 1.35rem; 
-        --logo-ls: 3px; --sair-pad: 0.45rem 0.9rem; --sair-size: 0.56rem; 
-        --avatar-size: 34px; --hamb-size: 34px; --drawer-w: 82vw; 
-        --drawer-max: 360px; --ficha-pad: 2rem 1.4rem 1.5rem; 
-        --cal-titulo-size: 1.25rem; --dia-pad: 0.5rem; --dia-size: 0.78rem; 
-    }
+    :root:where(:not([data-layout="row"])) { --navbar-h: 56px; --navbar-px: 1.1rem; --logo-size: 1.35rem; --logo-ls: 3px; --sair-pad: 0.45rem 0.9rem; --sair-size: 0.56rem; --avatar-size: 34px; --hamb-size: 34px; --drawer-w: 82vw; --drawer-max: 360px; --ficha-pad: 2rem 1.4rem 1.5rem; --cal-titulo-size: 1.25rem; --dia-pad: 0.5rem; --dia-size: 0.78rem; }
     html:not([data-layout="row"]) .btn-hamburger { font-size: 1.05rem; }
     html:not([data-layout="row"]) .dashboard-main { gap: 0.8rem; padding: 0.8rem 1.2rem 2rem; }
     html:not([data-layout="row"]) .ilustracao-container { max-width: 65%; margin-top: -0.5rem; }
 }
 
 @media (max-width: 480px) {
-    :root:where(:not([data-layout="row"])) { 
-        --navbar-h: 52px; --navbar-px: 1rem; --logo-size: 1.2rem; 
-        --logo-ls: 2.5px; --sair-pad: 0.4rem 0.8rem; --sair-size: 0.52rem; 
-        --avatar-size: 32px; --hamb-size: 32px; --drawer-w: 88vw; 
-        --drawer-max: 340px; --secao-pt: 2rem; --secao-px: 1.1rem; 
-        --menu-gap: 1.1rem; --ficha-pad: 1.8rem 1.2rem 1.5rem; 
-        --cal-titulo-size: 1.15rem; --dias-pad: 0.55rem; --dia-pad: 0.45rem; --dia-size: 0.72rem; 
-    }
+    :root:where(:not([data-layout="row"])) { --navbar-h: 52px; --navbar-px: 1rem; --logo-size: 1.2rem; --logo-ls: 2.5px; --sair-pad: 0.4rem 0.8rem; --sair-size: 0.52rem; --avatar-size: 32px; --hamb-size: 32px; --drawer-w: 88vw; --drawer-max: 340px; --secao-pt: 2rem; --secao-px: 1.1rem; --menu-gap: 1.1rem; --ficha-pad: 1.8rem 1.2rem 1.5rem; --cal-titulo-size: 1.15rem; --dias-pad: 0.55rem; --dia-pad: 0.45rem; --dia-size: 0.72rem; }
     html:not([data-layout="row"]) .dashboard-main { gap: 0.6rem; padding: 0.6rem 1rem 2rem; }
     html:not([data-layout="row"]) .ilustracao-container { max-width: 70%; }
 }
 
 @media (max-width: 360px) {
-    :root:where(:not([data-layout="row"])) { 
-        --logo-size: 1.05rem; --sair-pad: 0.35rem 0.7rem; --sair-size: 0.48rem; 
-        --avatar-size: 30px; --drawer-w: 90vw; --secao-pt: 1.5rem; 
-        --cal-titulo-size: 1.05rem; --dia-size: 0.68rem; 
-    }
-}/* ==============================================
-   11. CORREÇÃO DA FICHA DO PERFIL (>= 1025px)
-   ============================================== */
-
-/* Força a ficha a ter a mesma largura da gaveta do ateliê */
-@media (min-width: 1025px) {
-    :root {
-        --ficha-w: 420px; /* Igual ao --gaveta-w do atelie.css */
-    }
-
-    /* Empurra o conteúdo principal para a esquerda quando a ficha abre */
-    body.ficha-aberta .atelie-main,
-    body.ficha-aberta .dashboard-main,
-    body.ficha-aberta .main-mural {
-        margin-right: var(--ficha-w) !important;
-        padding-right: 1rem;
-        transition: margin-right 0.4s var(--ease), padding 0.4s var(--ease);
-    }
-
-    /* Ajusta o encaixe da ficha na tela */
-    .sidebar-direita {
-        width: var(--ficha-w);
-        top: var(--navbar-h);
-        height: calc(100vh - var(--navbar-h));
-        height: calc(100dvh - var(--navbar-h));
-        transform: translateX(100%);
-        visibility: hidden;
-        transition: transform 0.4s var(--ease), visibility 0s linear 0.4s;
-        z-index: 9999;
-    }
-
-    .sidebar-direita.ativa {
-        transform: translateX(0);
-        visibility: visible;
-        transition: transform 0.4s var(--ease), visibility 0s;
-    }
-
-    /* Corrige o empilhamento para não esconder a navbar */
-    .sidebar-direita {
-        z-index: 40; /* Fica abaixo da navbar */
-    }
+    :root:where(:not([data-layout="row"])) { --logo-size: 1.05rem; --sair-pad: 0.35rem 0.7rem; --sair-size: 0.48rem; --avatar-size: 30px; --drawer-w: 90vw; --secao-pt: 1.5rem; --cal-titulo-size: 1.05rem; --dia-size: 0.68rem; }
 }

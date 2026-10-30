@@ -1,8 +1,5 @@
 /* ==============================================
-   LAYOUT.JS — v43
-   Correções:
-   - Botão "Novo Ateliê" abre o modal em vez de recarregar
-     quando já estamos na página atelie.html.
+   LAYOUT.JS — v44 (Redirecionamento Novo Ateliê)
    ============================================== */
 (function () {
     'use strict';
@@ -285,12 +282,14 @@
             </span>
         `;
         btn.addEventListener('click', () => {
+            // CORREÇÃO: Se estiver em outra página, manda o parâmetro ?novo=true
             const noAtelie = window.location.pathname.includes('atelie.html');
             const temModal = typeof window.abrirModalCriarAtelie === 'function';
+            
             if (noAtelie && temModal) {
                 window.abrirModalCriarAtelie();
             } else {
-                window.location.href = 'atelie.html';
+                window.location.href = 'atelie.html?novo=true';
             }
         });
         return btn;
@@ -377,7 +376,7 @@
     window.utils.renderizarCardsAtelies = renderizarCardsAtelies;
 
     /* ============================================
-       RESTO DO LAYOUT (perfil, ficha, logout)
+       RESTO DO LAYOUT
        ============================================ */
     function usuarioTemSenha() {
         const usuario = perfil.usuario;
@@ -539,7 +538,6 @@
         if (!btnSair) {
             const navbarDir = document.querySelector('.navbar-right') || document.querySelector('.editor-topo-dir') || document.querySelector('.navbar-left');
             if (navbarDir) {
-                // Fallback caso não tenha no HTML
                 btnSair = document.createElement('button');
                 btnSair.type = 'button';
                 btnSair.className = 'morph-btn-sair';
