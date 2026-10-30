@@ -1,11 +1,5 @@
 /* ==============================================================
-   ATELIE.JS — v505
-   - Fix: A+ no 1º clique aumentava em vez de diminuir
-   - Fontes 8-72px passo 1 (determinístico)
-   - Marca-texto
-   - Leitura inline
-   - Recaptura seleção após formatar
-   - Scrollbar custom
+   ATELIE.JS — v604 (Complete, Skeleton Loader & Marca Texto)
    ============================================================== */
 (function () {
     'use strict';
@@ -21,7 +15,10 @@
     var EXT = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };
     var REGEX_IMG = /^image\/(jpeg|png|webp|gif)$/;
     var MOBILE_MAX = 768;
-    var FONTE_MIN = 8, FONTE_MAX = 72, FONTE_PASSO = 1, FONTE_PADRAO = 16;
+    
+    // FONTE: Padrão Word (máximo 28)
+    var FONTE_MIN = 8, FONTE_MAX = 28, FONTE_PADRAO = 16;
+    var TAMANHOS_WORD = [8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28];
 
     var $ = U.$;
     var escapar = U.escapar;
@@ -136,8 +133,17 @@
         var alvo = $('leitura-inline-conteudo');
         if (!container || !alvo) return;
 
-        alvo.innerHTML =
-            '<div class="loader-leitura" style="text-align:center;font-family:var(--fonte-corpo);color:var(--dourado);margin-top:4rem;">Carregando artigo...</div>';
+        // SKELETON LOADER
+        alvo.innerHTML = `
+            <div class="leitura-skeleton">
+                <div class="leitura-sk-capa"></div>
+                <div class="leitura-sk-titulo"></div>
+                <div class="leitura-sk-meta"></div>
+                <div class="leitura-sk-paragrafo"></div>
+                <div class="leitura-sk-paragrafo"></div>
+                <div class="leitura-sk-paragrafo" style="width: 70%;"></div>
+            </div>
+        `;
 
         document.body.classList.add('atelie-modo-leitura');
         document.body.classList.remove('atelie-modo-redacao');
@@ -557,7 +563,7 @@
         card.className = 'canal-post';
         card.innerHTML =
             (post.cover_url ? '<div class="canal-post-capa"><img src="' + escapar(post.cover_url) + '" alt="" loading="lazy" referrerpolicy="no-referrer"></div>' : '') +
-            '<div class="canal-post-corpo"><div class="canal-post-meta">' +
+                        '<div class="canal-post-corpo"><div class="canal-post-meta">' +
                 (post.category ? '<span class="canal-post-categoria">' + escapar(post.category) + '</span>' : '') +
                 '<span>' + escapar(formatarData(post.created_at)) + '</span>' +
             '</div>' +
@@ -735,6 +741,11 @@
         var te = $('editor-topo-custom'); if (te) te.hidden = !red;
         var bv = $('btn-voltar-redacao'); if (bv) bv.hidden = !red;
         Gaveta.mostrarPainel(red ? 'redacao' : 'canal');
+        
+        if (red && !estado.postEditandoId && editor) {
+            editor.resetar();
+        }
+
         if (nome === 'canal') carregarCanal();
         if (nome === 'videos') carregarVideos();
         if (red) {
@@ -764,7 +775,7 @@
     }
 
     /* ==============================================
-       EDITOR
+       EDITOR (COM MARCA TEXTO)
        ============================================== */
     function criarEditor() {
         var conteudo = $('input-conteudo');
@@ -802,7 +813,7 @@
             atualizarBarra();
         });
 
-        /* ---------- FONTE (FIX v505) ---------- */
+        /* ---------- FONTE (Padrão Word) ---------- */
         function getTamanhoBase() {
             var fs = parseFloat(getComputedStyle(conteudo).fontSize);
             if (isNaN(fs)) return FONTE_PADRAO;
@@ -890,10 +901,18 @@
             if (cm) cm.textContent = minutos + ' min de leitura';
             if (typeof window.__atelieAtualizarScrollbar === 'function') window.__atelieAtualizarScrollbar();
         }
+        
         function temConteudo() {
             var t = $('input-titulo');
-            return !!((t && t.value.trim()) || conteudo.textContent.trim() || conteudo.querySelector('img'));
+            if (t && t.value.trim()) return true;
+            
+            var txt = conteudo.textContent.replace(/[\u200B\u00A0\s]/g, '').trim();
+            
+            if (txt.length > 0) return true;
+            if (conteudo.querySelector('img, figure')) return true;
+            return false;
         }
+        
         function agendarPosicao() {
             if (quadroPend) return;
             quadroPend = true;
@@ -921,19 +940,28 @@
             });
         });
 
-        /* ---------- FONTE +/- ---------- */
+        /* ---------- FONTE +/- (Padrão Word) ---------- */
         function passoFonte(delta) {
             var atual = getTamanhoAtual();
-            var novo = limitar(atual + delta, FONTE_MIN, FONTE_MAX);
+            var idx = TAMANHOS_WORD.indexOf(atual);
+            
+            if (idx === -1) {
+                idx = TAMANHOS_WORD.findIndex(function(s) { return s >= atual; });
+                if (idx === -1) idx = TAMANHOS_WORD.length - 1;
+            }
+            
+            var novoIdx = limitar(idx + delta, 0, TAMANHOS_WORD.length - 1);
+            var novo = TAMANHOS_WORD[novoIdx];
+            
             if (novo !== atual) aplicarFonte(novo);
         }
         if (btnAum) {
             btnAum.addEventListener('mousedown', function (e) { e.preventDefault(); });
-            btnAum.addEventListener('click', function (e) { e.preventDefault(); passoFonte(FONTE_PASSO); });
+            btnAum.addEventListener('click', function (e) { e.preventDefault(); passoFonte(1); });
         }
         if (btnDim) {
             btnDim.addEventListener('mousedown', function (e) { e.preventDefault(); });
-            btnDim.addEventListener('click', function (e) { e.preventDefault(); passoFonte(-FONTE_PASSO); });
+            btnDim.addEventListener('click', function (e) { e.preventDefault(); passoFonte(-1); });
         }
 
         /* ---------- ATUALIZAR BARRA ---------- */

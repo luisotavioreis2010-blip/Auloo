@@ -1,5 +1,5 @@
 /* ==============================================
-   LAYOUT.JS — v44 (Redirecionamento Novo Ateliê)
+   LAYOUT.JS — v45 (Ajuste de sobreposição da ficha)
    ============================================== */
 (function () {
     'use strict';
@@ -282,7 +282,6 @@
             </span>
         `;
         btn.addEventListener('click', () => {
-            // CORREÇÃO: Se estiver em outra página, manda o parâmetro ?novo=true
             const noAtelie = window.location.pathname.includes('atelie.html');
             const temModal = typeof window.abrirModalCriarAtelie === 'function';
             
